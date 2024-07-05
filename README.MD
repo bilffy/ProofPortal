@@ -11,21 +11,29 @@ Before you begin, ensure you have the following installed on your system:
 
 ### Installation:
 1. Clone the MSP repository:
-> git clone <repository_url>
+
+```
+$ git clone <repository_url>
+```
 2. Navigate to the project directory:
-> cd <app_directory>
+``` 
+$ cd <app_directory>
+```
 3. Copy the file `.env.example` to `.env` file
 
 Make sure to replace your_database_name, your_database_user, and your_database_password with your preferred values.
 
 4. Start the Docker containers by running the following command:
-> docker-compose up -d --build
-
+ 
+```
+$ docker-compose up -d --build
+```
 This command will build the necessary Docker container and images and start the services defined in the docker-compose.yml file.
 
 5. Ensure to access the PHP container and run `composer install`:
 ```
 $ docker-compose exec php bash
+
 $ composer install
 ```
 
