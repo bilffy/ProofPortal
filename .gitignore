@@ -1,0 +1,13 @@
+/.env
+
+###< uploaded media files ###
+.idea/
+
+###> docker ###
+docker-compose.override.yml
+/docker/mysql/
+###< docker ###
+
+###> macOS custom attributes  ###
+.DS_Store
+###< macOS ###
