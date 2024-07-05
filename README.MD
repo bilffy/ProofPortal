@@ -14,15 +14,8 @@ Before you begin, ensure you have the following installed on your system:
 > git clone <repository_url>
 2. Navigate to the project directory:
 > cd <app_directory>
-3. Add the following environment variables to your `.env` file
-```
-# DATABASE
-DB_PORT_HOST=3306
-DB_PORT_CONTAINER=3306
-DB_NAME=msp
-DB_USER=msp
-DB_PASSWORD=root
-```
+3. Copy the file `.env.example` to `.env` file
+
 Make sure to replace your_database_name, your_database_user, and your_database_password with your preferred values.
 
 4. Start the Docker containers by running the following command:
