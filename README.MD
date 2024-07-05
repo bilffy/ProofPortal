@@ -23,7 +23,13 @@ Make sure to replace your_database_name, your_database_user, and your_database_p
 
 This command will build the necessary Docker container and images and start the services defined in the docker-compose.yml file.
 
-5. Once the containers are up and running, you can access the App at http://localhost:8080.
+5. Ensure to access the PHP container and run `composer install`:
+```
+$ docker-compose exec php bash
+$ composer install
+```
+
+6. Once the containers are up and running, you can access the App at http://localhost:8080.
 
 ### Additional Notes:
 You can customize ports and environment variables in the .env file to suit your preferences.
