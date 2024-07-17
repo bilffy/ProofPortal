@@ -39,6 +39,14 @@ $ composer install
 
 6. Once the containers are up and running, you can access the App at http://localhost:8080.
 
+### Installation (Frontend):
+After running backend, check docker container for frontend (msp-node) and run `npm install`
+```
+$ docker-compose exec node bash
+
+$ npm install
+```
+
 ### Additional Notes:
 You can customize ports and environment variables in the .env file to suit your preferences.
 Make sure Docker is running and properly configured on your system before starting the containers.

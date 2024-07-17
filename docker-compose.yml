@@ -1,5 +1,5 @@
 name: msp
-version: '3.8'
+# version: '3.8'
 
 services:
   php:
@@ -11,6 +11,22 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - msp
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    image: msp_node
+    container_name: msp_node
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/node_modules
     networks:
       - msp
 
@@ -43,6 +59,7 @@ services:
       MYSQL_ROOT_PASSWORD: root_secret
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./blueprintData.sql:/docker-entrypoint-initdb.d/data.sql
     ports:
       - "3311:3306"
     networks:
