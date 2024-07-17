@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "form.scss";
+@import "button.scss";
+
+:root {
+  --primary: #00B3DF;
+  --secondary: #E86C00;
+  --tertiary: #B5D334;
+
+  --accent-teacher: #7BC4AC;
+  --accent-coordinator: #2D6A6A;
+  --accent-franchisee: #FBB900;
+  --accent-resource: #7CC6D6;
+
+  --success: #00E86C;
+  --warning: #E8E000;
+  --alert: #E80008;
+
+  --hint: #D9DDE2;
+  --shadow: #005C91;
+
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
