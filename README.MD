@@ -35,6 +35,8 @@ This command will build the necessary Docker container and images and start the 
 $ docker-compose exec php bash
 
 $ composer install
+
+$ php artisan migrate
 ```
 
 6. Once the containers are up and running, you can access the App at http://localhost:8080.
