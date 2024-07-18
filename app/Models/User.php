@@ -11,6 +11,12 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    // Define the relationship with franchise_users
+    public function franchiseUsers()
+    {
+        return $this->hasMany(FranchiseUser::class, 'user_id');
+    }
+    
     /**
      * The attributes that are mass assignable.
      *
