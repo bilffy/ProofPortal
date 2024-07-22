@@ -23,6 +23,12 @@ class User extends Authenticatable
         return $this->belongsTo(Status::class, 'active_status_id');
     }
     
+    // Define the relationship with the user_roles table
+    public function userRoles()
+    {
+        return $this->hasMany(UserRole::class, 'user_id');
+    }
+    
     /**
      * The attributes that are mass assignable.
      *
