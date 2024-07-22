@@ -16,6 +16,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(FranchiseUser::class, 'user_id');
     }
+
+    // Define the relationship with the status table
+    public function status()
+    {
+        return $this->belongsTo(Status::class, 'active_status_id');
+    }
     
     /**
      * The attributes that are mass assignable.
@@ -26,6 +32,20 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'firstname',
+        'lastname',
+        'username',
+        'address',
+        'suburb',
+        'postcode',
+        'state',
+        'country',
+        'contact',
+        'active_status_id',
+        'activation_date',
+        'expiry_date',
+        'password_expiry',
+        'password_expiry_date',
     ];
 
     /**
@@ -48,6 +68,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'activation_date' => 'datetime',
+            'expiry_date' => 'datetime',
+            'password_expiry_date' => 'datetime',
         ];
     }
 }
