@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3'
 import Navbar from '@/components/Global/Navbar.vue'
-import Footer from '../components/Global/Footer.vue'
+import Footer from '@/components/Global/Footer.vue';
 import DropdownLink from '@/components/DropdownLink.vue';
 import Dropdown from '@/components/Dropdown.vue';
 
