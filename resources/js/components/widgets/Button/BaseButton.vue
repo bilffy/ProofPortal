@@ -1,5 +1,8 @@
 <template>
-  <button @click="close" type="button"><slot /></button>
+  <button @click="close" type="button" 
+    class="px-3 py-2 rounded-md bg-[#E86C00]">
+    <slot />
+  </button>
 </template>
 
 <script lang="ts">
@@ -12,3 +15,4 @@
     },
   };
 </script>
+
