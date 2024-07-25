@@ -16,4 +16,4 @@
     "skipLibCheck": true,
     "types": ["vite/client"],
   }
-}
+} 
