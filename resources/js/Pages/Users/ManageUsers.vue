@@ -4,17 +4,17 @@
       <h3 class="text-2xl">Manage Users</h3>
       <div class="flex justify-center">
         <form class="max-w-md mx-auto">
-            <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+            <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only">Search</label>
             <div class="relative ">
                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                    <svg class="w-4 h-4 text-gray-500" aria-hidden="true" fill="none" viewBox="0 0 20 20">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                     </svg>
                 </div>
                 <input 
                   type="search" 
                   id="default-search" 
-                  class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-gray-50 dark:text-white bg-[#F5F7FA]" 
+                  class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-gray-50 bg-[#F5F7FA]" 
                   placeholder="Search..." 
                   required />
             </div>
@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="relative overflow-x-auto">
-      <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+      <table class="w-full text-sm text-left rtl:text-right">
         <thead>
           <tr>
             <TableHeaderCell>Email</TableHeaderCell>
@@ -45,7 +45,7 @@
             <TableCell>MSP Adelaide South</TableCell>
             <TableCell>New</TableCell>
             <TableCell class="w-[100px]">
-              <ButtonLink class="bg-none hover:bg-gray">
+              <ButtonLink>
                 <img src="../../../Images/more.svg" alt="">
               </ButtonLink>
             </TableCell>
@@ -146,9 +146,7 @@
   import ButtonLink from '../../components/widgets/Button/ButtonLink.vue';
 
   import TableHeaderCell from '../../components/widgets/Table/TableHeaderCell.vue';
-  import TableHeaderCellEmpty from '../../components/widgets/Table/TableHeaderCellEmpty.vue';
   import TableCell from '../../components/widgets/Table/TableCell.vue';
-  import TableCellMore from '../../components/widgets/Table/TableCellMore.vue';
 
 </script>
 
