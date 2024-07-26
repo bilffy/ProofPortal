@@ -20,7 +20,7 @@
             </div>
         </form>
         <div class="ml-4 mr-4 border-r-2 border-[#D9DDE2] my-3"></div>
-        <ButtonPrimary>Add New user</ButtonPrimary>
+        <ButtonPrimary>Add New User</ButtonPrimary>
       </div>
     </div>
     <div class="relative overflow-x-auto">
