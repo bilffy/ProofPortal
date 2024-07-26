@@ -1,7 +1,7 @@
 <template>
   <Layout class="place-content-center">
     <div class="py-4 flex items-center justify-between">
-      <h3 class="text-3xl">Title</h3>
+      <h3 class="text-2xl">Manage Users</h3>
       <div class="flex justify-center">
         <form class="max-w-md mx-auto">
             <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
@@ -23,42 +23,127 @@
         <ButtonPrimary>Add New user</ButtonPrimary>
       </div>
     </div>
-    <div>
-      <div class="Table w-full">
-        <div class="TableRow TableHeader flex flex-row justify-evenly">
-          <TableHeaderCell>Email</TableHeaderCell>
-          <TableHeaderCell>First Name</TableHeaderCell>
-          <TableHeaderCell>Last Name</TableHeaderCell>
-          <TableHeaderCell>Role</TableHeaderCell>
-          <TableHeaderCell>Franchise/School</TableHeaderCell>
-          <TableHeaderCell>User Status</TableHeaderCell>
-          <TableHeaderCellEmpty></TableHeaderCellEmpty>
-        </div>
-        <div class="TableRow flex flex-row">
-          <TableCell>email1@msp.com</TableCell>
-          <TableCell>Adelaide</TableCell>
-          <TableCell>Hernandez</TableCell>
-          <TableCell>School Admin</TableCell>
-          <TableCell>MSP Adelaide South</TableCell>
-          <TableCell>New</TableCell>
-          <TableCellMore>
-            <ButtonPrimary>test
-              <img width="16px" class="w-4 h-4" src="../../../Images/more.png" alt="">
-            </ButtonPrimary>
-          </TableCellMore>
-        </div>
-      </div>
+    <div class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <thead>
+          <tr>
+            <TableHeaderCell>Email</TableHeaderCell>
+            <TableHeaderCell>First Name</TableHeaderCell>
+            <TableHeaderCell>Last Name</TableHeaderCell>
+            <TableHeaderCell>Role</TableHeaderCell>
+            <TableHeaderCell>Franchise/School</TableHeaderCell>
+            <TableHeaderCell>User Status</TableHeaderCell>
+            <TableHeaderCell class="w-[60px]"></TableHeaderCell>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <TableCell>email1@msp.com</TableCell>
+            <TableCell>Adelaide</TableCell>
+            <TableCell>Hernandez</TableCell>
+            <TableCell>School Admin</TableCell>
+            <TableCell>MSP Adelaide South</TableCell>
+            <TableCell>New</TableCell>
+            <TableCell class="w-[100px]">
+              <ButtonLink class="bg-none hover:bg-gray">
+                <img src="../../../Images/more.svg" alt="">
+              </ButtonLink>
+            </TableCell>
+          </tr>
+          <tr>
+            <TableCell scope="row">email1@msp.com</TableCell>
+            <TableCell scope="row">Adelaide</TableCell>
+            <TableCell scope="row">Hernandez</TableCell>
+            <TableCell scope="row">School Admin</TableCell>
+            <TableCell scope="row">MSP Adelaide South</TableCell>
+            <TableCell scope="row">New</TableCell>
+            <TableCell scope="row" class="w-[100px]">
+              <ButtonLink class="bg-none">
+                <img src="../../../Images/more.svg" alt="">
+              </ButtonLink>
+            </TableCell>
+          </tr>
+          <tr>
+            <TableCell scope="row">email1@msp.com</TableCell>
+            <TableCell scope="row">Adelaide</TableCell>
+            <TableCell scope="row">Hernandez</TableCell>
+            <TableCell scope="row">School Admin</TableCell>
+            <TableCell scope="row">MSP Adelaide South</TableCell>
+            <TableCell scope="row">New</TableCell>
+            <TableCell scope="row" class="w-[100px]">
+              <ButtonLink>
+                <img src="../../../Images/more.svg" alt="">
+              </ButtonLink>
+            </TableCell>
+          </tr>
+          <tr>
+            <TableCell scope="row">email1@msp.com</TableCell>
+            <TableCell scope="row">Adelaide</TableCell>
+            <TableCell scope="row">Hernandez</TableCell>
+            <TableCell scope="row">School Admin</TableCell>
+            <TableCell scope="row">MSP Adelaide South</TableCell>
+            <TableCell scope="row">New</TableCell>
+            <TableCell scope="row" class="w-[100px]">
+              <ButtonLink>
+                <img src="../../../Images/more.svg" alt="">
+              </ButtonLink>
+            </TableCell>
+          </tr>
+          <tr>
+            <TableCell scope="row">email1@msp.com</TableCell>
+            <TableCell scope="row">Adelaide</TableCell>
+            <TableCell scope="row">Hernandez</TableCell>
+            <TableCell scope="row">School Admin</TableCell>
+            <TableCell scope="row">MSP Adelaide South</TableCell>
+            <TableCell scope="row">New</TableCell>
+            <TableCell scope="row" class="w-[100px]">
+              <ButtonLink class="bg-none">
+                <img src="../../../Images/more.svg" alt="">
+              </ButtonLink>
+            </TableCell>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <h1 class="text-3xl font-bold underline col-span-2 ">Welcome!</h1>
-    <h2 class="bg-color-200">Test component: </h2>
+
+    <div class="w-full flex items-center justify-center py-4">
+
+      <nav aria-label="Page navigation example">
+        <ul class="inline-flex -space-x-px text-sm">
+          <li>
+            <a href="#" class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white rounded-s-lg hover:bg-gray-100 hover:text-gray-700"><img src="../../../Images/Chevron_Left.png" alt=""> Previous</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700">1</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700">2</a>
+          </li>
+          <li>
+            <a href="#" aria-current="page" class="flex items-center justify-center px-3 h-8 text-blue-600 bg-[#e9e6e3] hover:bg-blue-100 hover:text-blue-700">3</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700">4</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700">5</a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white rounded-e-lg hover:bg-gray-100 hover:text-gray-700">Next <img src="../../../Images/Chevron_Right.png" alt=""></a>
+          </li>
+        </ul>
+      </nav>
+
+    </div>
     
-    <div class="p-4">Main Footer</div>
+    <!-- <div class="p-4">Main Footer</div> -->
   </Layout>
 </template>
 
 <script lang="ts" setup>
   import Layout from '../../Shared/Layout.vue'
   import ButtonPrimary from '../../components/widgets/Button/ButtonPrimary.vue';
+  import ButtonLink from '../../components/widgets/Button/ButtonLink.vue';
 
   import TableHeaderCell from '../../components/widgets/Table/TableHeaderCell.vue';
   import TableHeaderCellEmpty from '../../components/widgets/Table/TableHeaderCellEmpty.vue';

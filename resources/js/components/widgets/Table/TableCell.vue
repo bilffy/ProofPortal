@@ -1,7 +1,7 @@
 <template>
-    <div class="w-full border-b-[1px] border-[#E6E7E8] p-4">
+    <td scope="row" class="border-b-[1px] border-[#E6E7E8] p-4">
         <slot />
-    </div>
+    </td>
 </template>
 
 <script lang="ts" setup>

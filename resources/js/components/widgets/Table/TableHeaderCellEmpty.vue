@@ -1,7 +1,7 @@
 <template>
-    <div class="TableHeaderCell w-4 border-b-2 border-[#00A7D9] p-4">
+    <th class="border-b-2 border-[#00A7D9] p-4">
         <slot />
-    </div>
+    </th>
 </template>
 
 <script lang="ts" setup>
