@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col w-[300px]">
-    <NavItem imgSrc="../../../Images/Navigation/Home.png">Home</NavItem>
+    <NavItem>Home</NavItem>
     <span class="text-sm ml-4 text-primary">PHOTOGRAPHY</span>
     <NavItem>Portraits</NavItem>
     <NavItem>Group</NavItem>
@@ -18,8 +18,6 @@
   import { ref } from 'vue'
   import NavItem from './NavItem.vue';
 
-  const activeNav = ref(true)
-  
   const navItem = ref([
   { id: 0, navText: "Home", navIcon: "../../../Images/Navigation/Home.png" },
   { id: 1, navText: "Portraits", navIcon: "../../../Images/Navigation/Portraits.png" },

@@ -15,7 +15,7 @@
   import Layout from '../Shared/Layout.vue'
   import { Head } from '@inertiajs/vue3'
   import {User} from '../models/User.model'
-import type { PropType } from 'vue';
+  import type { PropType } from 'vue';
 
   let props = defineProps({
     test_val: String,
