@@ -11,8 +11,8 @@ class UserInviteMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $inviteLink;
+    private User $user;
+    private string $inviteLink;
 
     /**
      * Create a new message instance.
@@ -31,7 +31,7 @@ class UserInviteMail extends Mailable
      * @return $this
      */
     public function build()
-    {
+    {   
         return $this->markdown('emails.user_invite')
             ->with([
                 'user' => $this->user,
