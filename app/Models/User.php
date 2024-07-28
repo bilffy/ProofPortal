@@ -17,6 +17,12 @@ class User extends Authenticatable
         return $this->hasMany(FranchiseUser::class, 'user_id');
     }
 
+    // Define the relationship with user_invite_tokens
+    public function userInviteTokens()
+    {
+        return $this->hasMany(UserInviteToken::class, 'user_id');
+    }
+    
     // Define the relationship with the status table
     public function status()
     {
