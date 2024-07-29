@@ -33,6 +33,13 @@ export default {
       },
       borderRadius: {
         '4xl': '2rem',
+      },
+      colors: {
+        white: '#ffffff',
+        black: '#000000',
+        primary: {
+          DEFAULT: '',
+        }
       }
     }
   },
