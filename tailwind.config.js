@@ -64,6 +64,14 @@ export default {
       h5: ['21px', '24px'],
       h6: ['18px', '20px'],
     },
+    fontSize: {
+      h1: ['38px', '44px'],
+      h2: ['33px', '36px'],
+      h3: ['28px', '32px'],
+      h4: ['24px', '28px'],
+      h5: ['21px', '24px'],
+      h6: ['18px', '20px'],
+    },
     colors: {
       'blue': '#1fb6ff',
       'purple': '#7e5bef',
