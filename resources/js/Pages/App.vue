@@ -1,5 +1,5 @@
 <template>
-  <AuthenticatedLayout class="place-content-center">
+  <AuthenticatedLayout class="place-content-center">\
     <!-- <h1 class="text-3xl font-bold underline col-span-2 ">Welcome, {{ user?.name }}!</h1> -->
     <div class="p-4">
       <h3>Title</h3>
@@ -13,10 +13,9 @@
 </template>
 
 <script setup lang="ts">
-import AuthenticatedLayout from '@/Shared/AuthenticatedLayout.vue';
-import { usePage } from '@inertiajs/vue3'
-import { Head } from '@inertiajs/vue3'
+  import AuthenticatedLayout from '@/Shared/AuthenticatedLayout.vue';
+  import { usePage } from '@inertiajs/vue3'
 
-const {...pageProps} = usePage().props;
-const {...user} = pageProps.auth.user;
+  const {...pageProps} = usePage().props;
+  const {...user} = pageProps.auth.user;
 </script>
