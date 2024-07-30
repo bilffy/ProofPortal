@@ -135,7 +135,6 @@
       </nav>
 
     </div>
-    
     <!-- <div class="p-4">Main Footer</div> -->
   </Layout>
 </template>
