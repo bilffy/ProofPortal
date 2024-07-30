@@ -1,6 +1,3 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-// import forms from '@tailwindcss/forms';
-
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
@@ -31,6 +28,14 @@ export default {
             sans: ['Graphik', 'sans-serif'],
             serif: ['Merriweather', 'serif'],
         },
+        fontSize: {
+            h1: ['38px', '44px'],
+            h2: ['33px', '36px'],
+            h3: ['28px', '32px'],
+            h4: ['24px', '28px'],
+            h5: ['21px', '24px'],
+            h6: ['18px', '20px'],
+        },
         extend: {
             spacing: {
                 '128': '32rem',
@@ -39,11 +44,14 @@ export default {
             borderRadius: {
                 '4xl': '2rem',
             },
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-            },
+            colors: {
+                white: '#ffffff',
+                black: '#000000',
+                primary: {
+                    DEFAULT: '',
+                }
+            }
         },
     },
     plugins: [],
-    // plugins: [forms],
 };

@@ -50,17 +50,15 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-  import { usePage } from '@inertiajs/vue3'
-  import Navbar from '@/components/Global/Navbar.vue'
-  import Footer from '../components/Global/Footer.vue'
-  import DropdownLink from '@/components/DropdownLink.vue';
-  import Dropdown from '@/components/Dropdown.vue';
+<script setup lang="ts">
+import { usePage } from '@inertiajs/vue3'
+import Navbar from '@/components/Global/Navbar.vue'
+import Footer from '../components/Global/Footer.vue'
+import DropdownLink from '@/components/DropdownLink.vue';
+import Dropdown from '@/components/Dropdown.vue';
 
-  const {...pageProps} = usePage().props;
-  const {...user} = pageProps.auth.user;
-
-  console.log({user});
+const {...pageProps} = usePage().props;
+const {...user} = pageProps.auth.user;
 </script>
 
 <style scoped>
