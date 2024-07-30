@@ -2,21 +2,30 @@
     <Link 
         class="flex-1 flex pl-4 pr-4 pt-2 pb-2 border-l-4 border-transparent" 
         :class="{'border-primary':activeNav}"
-        href="/home">
+        :href="href">
         <img
             class="mr-4"
-            src="../../../Images/Navigation/Home.png" alt=""> 
+            :src="imageSrc" alt=""> 
         <slot />
     </Link>
-  </template>
+</template>
   
-  <script lang="ts" setup>
-    import { ref } from 'vue'
-    import { Link } from '@inertiajs/vue3'
-    
-    const activeNav = ref(true)
+<script setup lang="ts">
+import { ref } from 'vue'
+import { Link } from '@inertiajs/vue3'
+import { getAssetUrl } from '@/helpers/image.helper';
 
-  </script>
+const props = defineProps({
+    href: {
+        type: String,
+        required: true,
+    },
+    imgSrc: {
+        type: String,
+        default: "Home"
+    }
+});
 
-<style>
-</style>
+const imageSrc = getAssetUrl(`images/Navigation/${props.imgSrc}.png`);
+const activeNav = ref(true)
+</script>

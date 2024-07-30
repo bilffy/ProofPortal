@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use Auth;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Route;
 
 class TestController extends Controller
 {
     public function index()
     {
-      // $user = User::where('id', 1)->first();
       return Inertia::render('App', [
-        'test_val' => 'Prop value',
-        // 'user' => $user
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'user' => new UserResource(Auth::user())
       ]);
     }
 }

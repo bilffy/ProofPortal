@@ -1,59 +1,89 @@
 <template>
-  <AuthLayout>
-    <!-- <Head title="Login" /> -->
-    <!-- <form class="mt-8 bg-white rounded-lg shadow-xl overflow-hidden" @submit.prevent="login">
-      <div class="px-10 py-12">
-        <h1 class="text-center text-3xl font-bold">Welcome Back!</h1>
-        <div class="mt-6 mx-auto w-24 border-b-2" />
-        <text-input v-model="form.email" :error="form.errors.email" class="mt-10" label="Email" type="email" autofocus autocapitalize="off" />
-        <text-input v-model="form.password" :error="form.errors.password" class="mt-6" label="Password" type="password" />
-        <label class="flex items-center mt-6 select-none" for="remember">
-          <input id="remember" v-model="form.remember" class="mr-1" type="checkbox" />
-          <span class="text-sm">Remember Me</span>
-        </label>
+  <GuestLayout>
+      <Head title="Login" />
+      <h1 class="text-3xl text-[#02B3DF] mb-4"> Login</h1>
+
+      <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
+          {{ status }}
       </div>
-      <div class="flex px-10 py-4 bg-gray-100 border-t border-gray-100">
-        <loading-button :loading="form.processing" class="btn-indigo ml-auto" type="submit">Login</loading-button>
-      </div>
-    </form> -->
-    <h1 class="text-3xl text-[#02B3DF] mb-4"> Login</h1>
-    <form @submit.prevent="login">
-      <InputText>Email</InputText>
-      <InputText>Password</InputText>
-      <div class="flex w-full items-center justify-between">
-        <BaseButton>Login</BaseButton>
-        Forgot Password
-      </div>
-    </form>
-  </AuthLayout>
+
+      <form @submit.prevent="submit">
+          <div>
+              <TextInput
+                  id="email"
+                  type="email"
+                  class="mt-1 block w-full"
+                  v-model="form.email"
+                  required
+                  autofocus
+                  autocomplete="username"
+                  label="Email"
+                  placeholder="Email"
+              />
+
+              <InputError class="mt-1 mb-2" :message="form.errors.email" />
+          </div>
+
+          <div class="mt-4">
+              <TextInput
+                  id="password"
+                  type="password"
+                  class="mt-1 block w-full"
+                  v-model="form.password"
+                  required
+                  autocomplete="current-password"
+                  label="Password"
+                  placeholder="Password"
+              />
+
+              <InputError class="mt-1 mb-2" :message="form.errors.password" />
+          </div>
+
+          <div class="flex w-full items-center justify-between">
+              <BaseButton
+                  :type="submit"
+                  :class="{ 'opacity-25': form.processing }"
+                  :disabled="form.processing"
+              >
+                  Login
+                </BaseButton>
+              <Link
+                  v-if="canResetPassword"
+                  :href="route('password.request')"
+                  class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                  Forgot your password?
+              </Link>
+          </div>
+      </form>
+  </GuestLayout>
 </template>
 
-<script lang="ts">
-import { Head } from '@inertiajs/vue3'
-import AuthLayout from '../../Shared/AuthLayout.vue';
-import InputText from '../../components/widgets/InputText.vue';
-import BaseButton from '../../components/widgets/Button/BaseButton.vue';
+<script setup lang="ts">
+import GuestLayout from '@/Shared/GuestLayout.vue';
+import InputError from '@/components/InputError.vue';
+import TextInput from '@/components/TextInput.vue';
+import BaseButton from '@/components/Button/BaseButton.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 
-export default {
-  components: {
-    Head,
-    AuthLayout,
-    InputText,
-    BaseButton
-  },
-  data() {
-    return {
-      form: this.$inertia.form({
-        email: 'johndoe@example.com',
-        password: 'secret',
-        remember: false,
-      }),
-    }
-  },
-  methods: {
-    login() {
-      this.form.post('/login')
+defineProps({
+    canResetPassword: {
+        type: Boolean,
     },
-  },
-}
+    status: {
+        type: String,
+    },
+});
+
+const form = useForm({
+    email: '',
+    password: '',
+    remember: false,
+});
+
+const submit = () => {
+    form.post(route('login'), {
+        onFinish: () => form.reset('password'),
+    });
+};
 </script>

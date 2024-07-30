@@ -1,11 +1,10 @@
 <template>
-  <button @click="close" type="button" 
-    class="px-3 py-2 rounded-md bg-[#E86C00]">
+  <button class="px-3 py-2 rounded-md bg-[#E86C00]">
     <slot />
   </button>
 </template>
 
-<script lang="ts">
+<!-- <script lang="ts">
   export default {
     setup(props, { emit }) {
       const close = () => {
@@ -14,5 +13,5 @@
       return { close };
     },
   };
-</script>
+</script> -->
 
