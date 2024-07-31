@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
-import vue from "@vitejs/plugin-vue";
 import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     server: {
@@ -12,10 +12,17 @@ export default defineConfig({
         host: true,
     },
     plugins: [
-        vue(),
         laravel({
-            input: ['resources/css/app.scss', 'resources/js/app.ts'],
+            input: ['resources/js/app.ts', 'resources/css/app.scss'],
             refresh: true,
+        }),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    base: null,
+                    includeAbsolute: false,
+                },
+            },
         }),
     ],
 });

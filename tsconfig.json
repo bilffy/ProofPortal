@@ -15,5 +15,11 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["vite/client"],
-  }
-}
+    "baseUrl": ".",
+    "paths": {
+        "@/*": ["resources/js/*"],
+        "ziggy-js": ["./vendor/tightenco/ziggy"]
+    }
+  },
+  "exclude": ["node_modules", "public"],
+} 

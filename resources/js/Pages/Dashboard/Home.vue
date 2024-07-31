@@ -1,22 +1,22 @@
 <template>
   <div class="home">
-    <Modal @close="toggleModal" :modalActive="modalActive">
+    <BaseModal @close="toggleModal" :modalActive="modalActive">
       <div class="modal-content">
-        <h1>This is a Modal Header</h1>
+        <h1>This is a Modal Header!</h1>
         <p>This is a modal message</p>
       </div>
-    </Modal>
+    </BaseModal>
     <button @click="toggleModal" type="button">Open Modal</button>
   </div>
 </template>
 
 <script lang="ts">
-import Modal from "@/Shared/modals/BaseModal.vue";
+import BaseModal from "../../Shared/modals/BaseModal.vue";
 import { ref } from "vue";
 export default {
   name: "Home",
   components: {
-    Modal,
+    BaseModal,
   },
   setup() {
     const modalActive = ref(false);
