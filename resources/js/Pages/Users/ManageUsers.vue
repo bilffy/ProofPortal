@@ -46,7 +46,7 @@
               <TableCell>New</TableCell>
               <TableCell class="w-[100px]">
                 <ButtonLink>
-                  <img src="../../../Images/more.svg" alt="">
+                  <img :src="moreImageUrl" alt="">
                 </ButtonLink>
               </TableCell>
             </tr>
@@ -59,7 +59,7 @@
               <TableCell scope="row">New</TableCell>
               <TableCell scope="row" class="w-[100px]">
                 <ButtonLink class="bg-none">
-                  <img src="../../../Images/more.svg" alt="">
+                  <img :src="moreImageUrl" alt="">
                 </ButtonLink>
               </TableCell>
             </tr>
@@ -72,7 +72,7 @@
               <TableCell scope="row">New</TableCell>
               <TableCell scope="row" class="w-[100px]">
                 <ButtonLink>
-                  <img src="../../../Images/more.svg" alt="">
+                  <img :src="moreImageUrl" alt="">
                 </ButtonLink>
               </TableCell>
             </tr>
@@ -85,7 +85,7 @@
               <TableCell scope="row">New</TableCell>
               <TableCell scope="row" class="w-[100px]">
                 <ButtonLink>
-                  <img src="../../../Images/more.svg" alt="">
+                  <img :src="moreImageUrl" alt="">
                 </ButtonLink>
               </TableCell>
             </tr>
@@ -98,7 +98,7 @@
               <TableCell scope="row">New</TableCell>
               <TableCell scope="row" class="w-[100px]">
                 <ButtonLink class="bg-none">
-                  <img src="../../../Images/more.svg" alt="">
+                  <img :src="moreImageUrl" alt="">
                 </ButtonLink>
               </TableCell>
             </tr>
@@ -106,12 +106,12 @@
         </table>
       </div>
 
-      <div class="w-full flex items-center justify-center py-4">
+        <div class="w-full flex items-center justify-center py-4">
 
         <nav aria-label="Page navigation example">
           <ul class="inline-flex -space-x-px text-sm">
             <li>
-              <a href="#" class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white rounded-s-lg hover:bg-gray-100 hover:text-gray-700"><img src="../../../Images/Chevron_Left.png" alt=""> Previous</a>
+              <a href="#" class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white rounded-s-lg hover:bg-gray-100 hover:text-gray-700"><img :src="chevronLeftUrl" alt=""> Previous</a>
             </li>
             <li>
               <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700">1</a>
@@ -129,7 +129,7 @@
               <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700">5</a>
             </li>
             <li>
-              <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white rounded-e-lg hover:bg-gray-100 hover:text-gray-700">Next <img src="../../../Images/Chevron_Right.png" alt=""></a>
+              <a href="#" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white rounded-e-lg hover:bg-gray-100 hover:text-gray-700">Next <img :src="chevronRightUrl" alt=""></a>
             </li>
           </ul>
         </nav>
@@ -145,4 +145,9 @@ import ButtonPrimary from '@/components/Button/ButtonPrimary.vue';
 import ButtonLink from '@/components/Button/ButtonLink.vue';
 import TableHeaderCell from '@/components/Table/TableHeaderCell.vue';
 import TableCell from '@/components/Table/TableCell.vue';
+import { getAssetUrl } from '@/helpers/image.helper';
+
+const moreImageUrl = getAssetUrl('images/more.svg');
+const chevronLeftUrl = getAssetUrl('images/Chevron_Left.png');
+const chevronRightUrl = getAssetUrl('images/Chevron_Right.png');
 </script>

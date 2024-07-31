@@ -1,7 +1,7 @@
 <template>
     <Link
-        class="flex pl-4 pr-4 pt-2 pb-2 border-l-4 border-l-blue"
-        :class="{'border-primary':activeNav}"
+        class="flex pl-4 pr-4 pt-2 pb-2 border-l-4 border-transparent"
+        :class="{'border-l-blue' : props.activeNav}"
         :href="href">
         <img
             class="mr-4"
@@ -23,9 +23,15 @@ const props = defineProps({
     imgSrc: {
         type: String,
         default: "Home"
+    },
+    activeNav: {
+        type: Boolean,
+        default: false
     }
 });
 
+console.log({img: props.imgSrc, active: props.activeNav})
+
 const imageSrc = getAssetUrl(`images/Navigation/${props.imgSrc}.png`);
-const activeNav = ref(true)
+// const activeNav = ref(true)
 </script>

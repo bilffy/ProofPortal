@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/test', [TestController::class, 'index']); // FOR TESTING ONLY; DELETE WHEN DEPLOYING
-Route::inertia('/users', 'Users/ManageUsers'); // Temp: Change to controller
+Route::inertia('/users', 'Users/ManageUsers')->name('users.manage'); // Temp: Change to controller
 
 Route::get('/', function () {
     return Inertia::render('App');

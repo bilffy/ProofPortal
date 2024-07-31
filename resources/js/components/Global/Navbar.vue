@@ -1,6 +1,6 @@
 <template>
     <div class="flex flex-col w-[300px]">
-        <NavItem imgSrc="Home" :href="route('dashboard')">Home</NavItem>
+        <NavItem imgSrc="Home" :href="route('dashboard')" :activeNav=true>Home</NavItem>
         <span class="text-sm ml-4 text-primary">PHOTOGRAPHY</span>
         <NavItem imgSrc="Portraits" :href="route('dashboard')">Portraits</NavItem>
         <NavItem imgSrc="Groups" :href="route('dashboard')">Group</NavItem>
@@ -9,7 +9,7 @@
         <span class="text-sm ml-4 text-primary">PROOFING</span>
         <NavItem imgSrc="Proofing" :href="route('dashboard')">Proofing</NavItem>
         <span class="text-sm ml-4 text-primary">ADMIN TOOLS</span>
-        <NavItem imgSrc="Manage Users" :href="route('dashboard')">Manage Users</NavItem>
+        <NavItem imgSrc="Manage Users" :href="route('users.manage')">Manage Users</NavItem>
         <NavItem imgSrc="Reports" :href="route('dashboard')">Reports</NavItem>
     </div>
 </template>
