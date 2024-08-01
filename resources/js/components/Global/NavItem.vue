@@ -1,6 +1,6 @@
 <template>
     <Link
-        class="flex items-center pl-4 pr-4 pt-2 pb-2 border-l-4 border-blue"
+        class="flex items-center pl-4 pr-4 pt-2 pb-2 border-l-4 border-white"
         :class="{'border-l-primary bg-neutral-200 rounded-e-md' : props.activeNav}"
         :href="href">
         <img
