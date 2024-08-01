@@ -41,6 +41,19 @@ $ php artisan migrate
 
 6. Once the containers are up and running, you can access the App at http://localhost:8080.
 
+### Queuing Setup:
+To enable and configure Laravel's queue system for background processing:
+
+1. **Configure Queue Connection:**
+
+   Update the `.env` file to set the `QUEUE_CONNECTION` to `database`:
+
+2. To start processing queued jobs, run the following command:
+
+ ```
+ $ php artisan queue
+ ```
+
 ### Installation (Frontend):
 After running backend, check docker container for frontend (msp-node) and run `npm install`
 ```

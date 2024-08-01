@@ -33,7 +33,7 @@ class InviteController extends Controller
         /** @var User $user */
         $user = User::findOrFail($id);
 
-        $this->userService->sendInvite($user->email, $user);
+        $this->userService->sendInvite($user);
 
         // Return a JSON response to indicate success
         return response()->json([
@@ -63,7 +63,7 @@ class InviteController extends Controller
 
         // Send invitations to each user
         foreach ($users as $user) {
-            $this->userService->sendInvite($user->email, $user);
+            $this->userService->sendInvite($user);
         }
 
         // Return a JSON response to indicate success
