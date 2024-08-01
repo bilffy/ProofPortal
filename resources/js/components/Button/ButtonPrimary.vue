@@ -1,5 +1,5 @@
 <template>
-    <BaseButton class="bg-primary-800 text-sm hover:bg-primary-hover transition-all hover:transition-all"><slot/></BaseButton>
+    <BaseButton class="bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all"><slot/></BaseButton>
 </template>
 
 <script setup lang="ts">
