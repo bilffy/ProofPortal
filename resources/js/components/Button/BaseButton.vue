@@ -1,6 +1,6 @@
 <template>
   <button type="button" 
-    class="px-3 py-2 rounded-md bg-none text-sm cursor-pointer text-[#ffffff]">
+    class="rounded-md bg-none text-sm cursor-pointer text-[#ffffff] flex flex-row gap-1">
     <slot />
   </button>
 </template>

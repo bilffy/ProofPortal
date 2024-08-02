@@ -1,5 +1,8 @@
 <template>
-    <div class="flex flex-col w-[300px] mt-2">
+    <div class="flex flex-col w-[190px] mt-2">
+        <div>
+          <img :src="Logo" alt="">
+        </div>
         <NavItem imgSrc="Home" :href="route('dashboard')" :activeNav=true>Home</NavItem>
         <span class="text-sm ml-4 font-bold mt-4">PHOTOGRAPHY</span>
         <NavItem imgSrc="Portraits" :href="route('dashboard')">Portraits</NavItem>
@@ -17,6 +20,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import NavItem from './NavItem.vue';
+import { getAssetUrl } from '@/helpers/image.helper';
+
+const Logo = getAssetUrl(`images/MSP-Logo_400x400.png`);
 
 const activeNav = ref(true)
 
