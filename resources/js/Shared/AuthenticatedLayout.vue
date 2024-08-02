@@ -1,6 +1,6 @@
 <template>
   <div>
-      <header class="w-full flex justify-between pl-4 pr-4 header-border">
+      <header class="w-full flex justify-between pl-4 pr-4 fancy-border-bottom">
       <img src="../../assets/images/MSP-Logo_400x400.png" alt="">
       <div class="flex flex-col justify-end">
         <div>HILLVIEW PRIMARY SCHOOL</div>
@@ -64,7 +64,7 @@ console.log({user});
 </script>
 
 <style scoped>
-.header-border {
+.fancy-border-bottom {
   border-width: 0.5rem;
   border-style: solid;
   border-image: linear-gradient(to right, #6059A9, #447AC7, #19ABD7, #8CE5D3, #F9F8EB, #FDCF8D, #FE9F6E, #FF6573, #FF456E) 1;
