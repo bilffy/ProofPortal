@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-class OtpHelper
+class OTPHelper
 {
     /**
      * Generate a random 6-digit OTP.
