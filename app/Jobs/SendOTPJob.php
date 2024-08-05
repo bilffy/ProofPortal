@@ -40,7 +40,7 @@ class SendOTPJob implements ShouldQueue
         // Generate the otp
         $otp = OTPHelper::generateOtp();
         
-        // Send the invite email
+        // Send the otp to the user
         Mail::to($this->user->email)->send(new OTPMail($this->user, $otp));
 
         // Get OTP expiration time from .env
