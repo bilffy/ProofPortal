@@ -2,7 +2,7 @@
     <div class="flex flex-col mb-4">
         <label v-if="label" class="mb-2" for="">{{ label }}</label>
         <input
-            class="border rounded-md p-2 border-[#6F6F6E]"
+            class="border rounded-md p-2 border-neutral"
             v-model=model
             :placeholder=placeholder
             ref="input"

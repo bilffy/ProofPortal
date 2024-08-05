@@ -22,8 +22,8 @@
             <div class="flex flex-row gap-4 max-w-screen-md">
                 <div class="w-full">
                     <TextInput
-                        id="email"
-                        type="email"
+                        id="fname"
+                        type="text"
                         class="mt-1 block w-full"
                         required
                         autofocus
@@ -35,8 +35,8 @@
                 </div>
                 <div class="w-full">
                     <TextInput
-                        id="email"
-                        type="email"
+                        id="lname"
+                        type="text"
                         class="mt-1 block w-full"
                         required
                         autofocus
