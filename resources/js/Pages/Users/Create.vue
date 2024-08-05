@@ -4,20 +4,23 @@
             <h3 class="text-2xl">Add New User</h3>
             <div></div>
         </div>
-        <div class="relative overflow-x-auto mb-8">
-            <div class="max-w-screen-md">
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    required
-                    autofocus
-                    autocomplete="username"
-                    label="Email"
-                    placeholder="Email"
-                />
+        <div class="relative overflow-x-auto mb-8 gap-4">
+            <div class="flex flex-row gap-4 max-w-screen-md">
+                <div class="w-full">
+                    <TextInput
+                        id="email"
+                        type="email"
+                        class="mt-1 block w-full"
+                        required
+                        autofocus
+                        autocomplete="username"
+                        label="Email"
+                        placeholder="Email"
+                    />
 
-                <InputError class="mt-1 mb-2" />
+                    <InputError class="mt-1 mb-2" />
+                </div>
+                <div class="w-full"></div>
             </div>
             <div class="flex flex-row gap-4 max-w-screen-md">
                 <div class="w-full">
@@ -48,9 +51,15 @@
                 </div>
             </div>
 
-            <div class="max-w-screen-md">
-                <Select>User Role</Select>
+            <div class="flex flex-row gap-4 max-w-screen-md">
+                <div class="w-full">
+                    <Select>User Role</Select>
+                </div>
+                <div class="w-full"></div>
+
             </div>
+
+            
         </div>
 
           
