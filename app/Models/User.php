@@ -22,6 +22,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserInviteToken::class, 'user_id');
     }
+
+    // Define the relationship with user_otps
+    public function userOtps()
+    {
+        return $this->hasMany(UserOtp::class, 'user_id');
+    }
     
     // Define the relationship with the status table
     public function status()
@@ -84,5 +90,11 @@ class User extends Authenticatable
             'expiry_date' => 'datetime',
             'password_expiry_date' => 'datetime',
         ];
+    }
+
+    // Get the latest otp
+    public function getLatestOtp()
+    {
+        return $this->userOtps()->latest()->first();
     }
 }
