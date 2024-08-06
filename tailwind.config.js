@@ -121,34 +121,5 @@ export default {
             },
         },
     },
-    fontSize: {
-      h1: ['38px', '44px'],
-      h2: ['33px', '36px'],
-      h3: ['28px', '32px'],
-      h4: ['24px', '28px'],
-      h5: ['21px', '24px'],
-      h6: ['18px', '20px'],
-    },
-    fontSize: {
-      h1: ['38px', '44px'],
-      h2: ['33px', '36px'],
-      h3: ['28px', '32px'],
-      h4: ['24px', '28px'],
-      h5: ['21px', '24px'],
-      h6: ['18px', '20px'],
-    },
-    fontFamily: {
-      sans: ['Graphik', 'sans-serif'],
-      serif: ['Merriweather', 'serif'],
-    },
-    extend: {
-      spacing: {
-        '128': '32rem',
-        '144': '36rem',
-      },
-      borderRadius: {
-        '4xl': '2rem',
-      },
-    },
     plugins: [],
 };
