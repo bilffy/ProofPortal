@@ -11,6 +11,8 @@ Route::get('/test', [TestController::class, 'index']); // FOR TESTING ONLY; DELE
 Route::inertia('/users', 'Users/ManageUsers')->name('users.manage'); // Temp: Change to controller
 Route::inertia('/create', 'Users/Create');
 Route::inertia('/setup', 'Auth/AccountSetup');
+Route::inertia('/verification', 'Auth/Verification');
+
 
 Route::get('/', function () {
     return Inertia::render('App');

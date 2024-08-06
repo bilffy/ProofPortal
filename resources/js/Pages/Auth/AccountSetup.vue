@@ -55,7 +55,6 @@
 
             <div class="flex w-full items-center justify-between">
                 <ButtonPrimary>Next</ButtonPrimary>
-               
             </div>
         </form>
     </GuestLayout>
@@ -65,18 +64,8 @@
 import GuestLayout from '@/Shared/GuestLayout.vue';
 import InputError from '@/components/InputError.vue';
 import TextInput from '@/components/TextInput.vue';
-import BaseButton from '@/components/Button/BaseButton.vue';
 import ButtonPrimary from '@/components/Button/ButtonPrimary.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-
-defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
+import { Head, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
     email: '',
