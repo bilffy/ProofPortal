@@ -21,7 +21,7 @@
               :class="[widthClass, alignmentClasses]"
               style="display: none"
               @click="open = false"
-          >
+          ><h1></h1>
               <div class="rounded-md ring-1 ring-black ring-opacity-5" :class="contentClasses">
                   <slot name="content" />
               </div>

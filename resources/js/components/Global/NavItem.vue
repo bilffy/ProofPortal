@@ -1,9 +1,11 @@
 <template>
     <Link
-        class="flex pl-4 pr-4 pt-2 pb-2 border-l-4 border-transparent"
-        :class="{'border-l-blue' : props.activeNav}"
+        class="flex items-center pl-4 pr-4 pt-2 pb-2 border-l-4 border-white"
+        :class="{'border-l-primary bg-neutral-200 rounded-e-md' : props.activeNav}"
         :href="href">
         <img
+            width="20px"
+            height="20px"
             class="mr-4"
             :src="imageSrc" alt=""> 
         <slot />
@@ -11,7 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { getAssetUrl } from '@/helpers/image.helper';
 

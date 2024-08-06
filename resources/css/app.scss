@@ -4,6 +4,7 @@
 
 @import "form.scss";
 @import "button.scss";
+@import "typography.scss";
 
 :root {
   --primary: #00B3DF;
@@ -25,4 +26,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+body {
+  background-color: #F5F7FA;
 }
