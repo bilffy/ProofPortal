@@ -60,18 +60,18 @@
             </div>
 
             <div class="ml-4 mb-4">
-                <ul class="list-disc">
-                    <li class="text-success font-semibold">At least 12 characters</li>
-                    <li>Include at least 1 of uppercase letter</li>
-                    <li class="text-success font-semibold">At least 1 lowercase letter</li>
-                    <li class="text-success font-semibold">At least 1 number</li>
-                </ul>
+              <ul class="list-disc">
+                <li :class="{'text-success font-semibold': isMinLength, 'text-gray-500': !isMinLength}">At least 12 characters</li>
+                <li :class="{'text-success font-semibold': hasUppercase, 'text-gray-500': !hasUppercase}">Include at least 1 uppercase letter</li>
+                <li :class="{'text-success font-semibold': hasLowercase, 'text-gray-500': !hasLowercase}">At least 1 lowercase letter</li>
+                <li :class="{'text-success font-semibold': hasNumber, 'text-gray-500': !hasNumber}">At least 1 number</li>
+              </ul>
             </div>
 
             <div class="flex w-full items-center justify-between">
-                <ButtonPrimary :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                  Next
-                </ButtonPrimary>
+              <ButtonPrimary :class="{ 'opacity-25': form.processing || !isFormValid }" :disabled="form.processing || !isFormValid">
+                Next
+              </ButtonPrimary>
             </div>
         </form>
     </GuestLayout>
@@ -83,6 +83,7 @@ import InputError from '@/components/InputError.vue';
 import TextInput from '@/components/TextInput.vue';
 import ButtonPrimary from '@/components/Button/ButtonPrimary.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps({
   email: {
@@ -109,6 +110,13 @@ const form = useForm({
   password: '',
   password_confirmation: '',
 });
+
+const isMinLength = computed(() => form.password.length >= 12);
+const hasUppercase = computed(() => /[A-Z]/.test(form.password));
+const hasLowercase = computed(() => /[a-z]/.test(form.password));
+const hasNumber = computed(() => /[0-9]/.test(form.password));
+const passwordsMatch = computed(() => form.password === form.password_confirmation);
+const isFormValid = computed(() => isMinLength.value && hasUppercase.value && hasLowercase.value && hasNumber.value && passwordsMatch.value);
 
 const submit = () => {
   form.post(route('account.setup.store'), {
