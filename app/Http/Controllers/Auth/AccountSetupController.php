@@ -19,7 +19,7 @@ class AccountSetupController extends Controller
     /**
      * Display the account/password setup view.
      */
-    public function setup(Request $request): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('Auth/AccountSetup', [
             'email' => $request->email,

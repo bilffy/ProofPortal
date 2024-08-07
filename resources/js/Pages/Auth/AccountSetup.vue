@@ -15,33 +15,48 @@
         </div>
 
         <form @submit.prevent="submit">
+          <div class="hidden">
+            <TextInput
+                id="email"
+                type="email"
+                class="mt-1 block w-full"
+                v-model="form.email"
+                required
+                autofocus
+                autocomplete="username"
+            />
+
+            <InputError class="mt-2" :message="form.errors.email" />
+          </div>
             <div>
                 <TextInput
                     id="password"
                     type="password"
                     class="mt-1 block w-full"
+                    v-model="form.password"
                     required
-                    autofocus
-                    autocomplete="username"
-                    label="Password"
                     placeholder="Password"
+                    autocomplete="new-password"
                 />
-
-                <InputError class="mt-1 mb-2" :message="form.errors.email" />
+  
+                <InputError class="mt-2" :message="form.errors.password" />
+              
             </div>
 
             <div class="mt-4">
                 <TextInput
-                    id="password"
+                    id="password_confirmation"
                     type="password"
                     class="mt-1 block w-full"
+                    v-model="form.password_confirmation"
                     required
-                    autocomplete="current-password"
-                    label="Repeat Password"
                     placeholder="Repeat Password"
+                    autocomplete="new-password"
                 />
-
-                <InputError class="mt-1 mb-2" :message="form.errors.password" />
+  
+                <InputError class="mt-1 mb-2" :message="form.errors.password_confirmation" />
+              
+              
             </div>
 
             <div class="ml-4 mb-4">
@@ -54,7 +69,9 @@
             </div>
 
             <div class="flex w-full items-center justify-between">
-                <ButtonPrimary>Next</ButtonPrimary>
+                <ButtonPrimary :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                  Next
+                </ButtonPrimary>
             </div>
         </form>
     </GuestLayout>
@@ -67,15 +84,27 @@ import TextInput from '@/components/TextInput.vue';
 import ButtonPrimary from '@/components/Button/ButtonPrimary.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
+const props = defineProps({
+  email: {
+    type: String,
+    required: true,
+  },
+  token: {
+    type: String,
+    required: true,
+  },
+});
+
 const form = useForm({
-    email: '',
-    password: '',
-    remember: false,
+  token: props.token,
+  email: props.email,
+  password: '',
+  password_confirmation: '',
 });
 
 const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
-    });
+  form.post(route('account.setup.store'), {
+    onFinish: () => form.reset('password', 'password_confirmation'),
+  });
 };
 </script>
