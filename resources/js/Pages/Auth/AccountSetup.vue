@@ -6,11 +6,11 @@
         <div class="mb-4 font-medium text-green-600 flex flex-row">
             <div class="w-full">
                 <label for="">Name</label>
-                <p class="font-semibold">FirstName LastName</p>
+                <p class="font-semibold">{{ firstName }} {{ lastName }}</p>
             </div>
             <div class="w-full">
                 <label for="">Email</label>
-                <p class="font-semibold">name@mail.com</p>
+                <p class="font-semibold">{{email}}</p>
             </div>
         </div>
 
@@ -90,6 +90,14 @@ const props = defineProps({
     required: true,
   },
   token: {
+    type: String,
+    required: true,
+  },
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
     type: String,
     required: true,
   },
