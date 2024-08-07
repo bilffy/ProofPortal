@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 
 class SendUserInviteJob implements ShouldQueue
 {
@@ -35,17 +36,18 @@ class SendUserInviteJob implements ShouldQueue
      */
     public function handle()
     {
-        // Generate the invite link
-        $token = \Str::random(40);
-        $inviteLink = url("/invite/{$token}");
+        $token = Password::createToken($this->user);
+
+        $setupUrl = url(config('app.url').route('account.setup', 
+                [
+                    'token' => $token, 
+                    'email' => $this->user->email
+                ], 
+                false
+            )
+        );
 
         // Send the invite email
-        Mail::to($this->user->email)->send(new UserInviteMail($this->user, $inviteLink));
-
-        // Save the token to the database
-        UserInviteToken::create([
-            'user_id' => $this->user->id,
-            'token' => $token,
-        ]);
+        Mail::to($this->user->email)->send(new UserInviteMail($this->user, $setupUrl));
     }
 }
