@@ -1,9 +1,9 @@
 <template>
   <GuestLayout>
       <Head title="Reset Password" />
-
+      <h3 class="text-2xl text-[#02B3DF] mb-4"> Reset Password</h3>
       <form @submit.prevent="submit">
-          <div>
+          <div class="hidden">
               <InputLabel for="email" value="Email" />
 
               <TextInput
