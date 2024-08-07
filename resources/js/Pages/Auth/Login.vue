@@ -40,13 +40,13 @@
             </div>
 
             <div class="flex w-full items-center justify-between">
-                <BaseButton
+                <ButtonPrimary
                     :type="submit"
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
                     Login
-                  </BaseButton>
+                  </ButtonPrimary>
                 <Link
                     v-if="canResetPassword"
                     :href="route('password.request')"
@@ -63,7 +63,7 @@
 import GuestLayout from '@/Shared/GuestLayout.vue';
 import InputError from '@/components/InputError.vue';
 import TextInput from '@/components/TextInput.vue';
-import BaseButton from '@/components/Button/BaseButton.vue';
+import ButtonPrimary from '@/components/Button/ButtonPrimary.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 defineProps({
