@@ -1,10 +1,13 @@
 @component('mail::message')
-    # Hello {{ $user->name }},
+# Hello {{ $user->name }},
 
-    Your OTP is: {{ $otp  }}
+Your OTP is: {{ $otp  }}
 
-    If you did not request this, no further action is required.
+Please note that this code will expire in {{ $expiration }} minutes. 
 
-    Thanks,<br>
-    {{ config('app.name') }}
+If you did not request this code, please disregard this message.
+
+Regards,
+
+**MSP Team**
 @endcomponent

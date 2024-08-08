@@ -33,6 +33,7 @@ class UserInviteMail extends Mailable
     public function build()
     {   
         return $this->markdown('emails.user_invite')
+            ->subject('MSP account setup')
             ->with([
                 'user' => $this->user,
                 'inviteLink' => $this->inviteLink,

@@ -12,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Config;
 
 class SendOTPJob implements ShouldQueue
 {
@@ -44,12 +43,12 @@ class SendOTPJob implements ShouldQueue
         Mail::to($this->user->email)->send(new OTPMail($this->user, $otp));
 
         // Get OTP expiration time from .env
-        $expirationMinutes = Config::get('otp.expiration_minutes', 60);
+        $expirationMinutes = (int) config('app.otp.expiration_minutes', 60);
     
         // Save the otp to the database
         UserOtp::create([
             'user_id' => $this->user->id,
-            'otp' => $otp,
+            'otp' => OTPHelper::encryptOtp($otp),
             'expire_on' => now()->addMinutes($expirationMinutes),
         ]);
     }

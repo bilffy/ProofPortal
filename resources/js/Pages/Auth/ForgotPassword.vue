@@ -29,9 +29,9 @@
           </div>
 
           <div class="flex items-center justify-end mt-4">
-              <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+              <ButtonPrimary :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                   Email Password Reset Link
-              </PrimaryButton>
+              </ButtonPrimary>
           </div>
       </form>
   </GuestLayout>
@@ -41,7 +41,7 @@
 import GuestLayout from '@/Shared/GuestLayout.vue';
 import InputError from '@/components/InputError.vue';
 import InputLabel from '@/components/InputLabel.vue';
-import PrimaryButton from '@/components/PrimaryButton.vue';
+import ButtonPrimary from '@/components/Button/ButtonPrimary.vue';
 import TextInput from '@/components/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
