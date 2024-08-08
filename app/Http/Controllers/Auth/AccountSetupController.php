@@ -51,13 +51,16 @@ class AccountSetupController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-    {
+    {   
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
+        
+        /** @var User $user */
+        $user = User::where('email', $request->email)->firstOrFail();
+        
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) use ($request) {
@@ -73,9 +76,11 @@ class AccountSetupController extends Controller
             }
         );
 
-        
         if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+            return redirect()->route(
+                'otp.show.form', 
+                ['token' => $request->token])
+                ->with('msp-user', $request->email);
         }
 
         throw ValidationException::withMessages([

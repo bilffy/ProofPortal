@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Jobs\SendUserInviteJob;
 use App\Jobs\SendOTPJob;
+use App\Models\UserOtp;
 
 class UserService
 {
@@ -24,5 +25,12 @@ class UserService
     {
         // Dispatch the email sending an otp job to the queue
         SendOTPJob::dispatch($user);
+    }
+    
+    public function getRecentOtp(User $user)
+    {
+        return UserOtp::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
     }
 }

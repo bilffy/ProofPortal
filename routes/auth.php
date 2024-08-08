@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\OtpController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -40,6 +41,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('account-setup', [AccountSetupController::class, 'store'])
         ->name('account.setup.store');
+    
+    Route::get('/otp/{token}', [OtpController::class, 'showForm'])
+        ->name('otp.show.form');
+    
+    Route::post('/verify-otp', [OtpController::class, 'verify'])
+        ->name('otp.verify');
+    
 });
 
 Route::middleware('auth')->group(function () {

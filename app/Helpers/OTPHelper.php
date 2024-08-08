@@ -19,10 +19,10 @@ class OTPHelper
     /**
      * Encrypt the given OTP using the security pin.
      *
-     * @param int $otp
+     * @param $otp
      * @return string
      */
-    public static function encryptOtp(int $otp): string
+    public static function encryptOtp($otp): string
     {
         $securityPin = config('app.otp.secret_pin');
         return Crypt::encryptString($otp . $securityPin);

@@ -2,7 +2,9 @@
     <GuestLayout>
         <Head title="Login" />
         <h1 class="text-3xl text-[#02B3DF] mb-4"> Account Setup</h1>
-
+        
+        <InputError class="mt-2" :message="form.errors.email" />
+      
         <div class="mb-4 font-medium text-green-600 flex flex-row">
             <div class="w-full">
                 <label for="">Name</label>
@@ -25,8 +27,6 @@
                 autofocus
                 autocomplete="username"
             />
-
-            <InputError class="mt-2" :message="form.errors.email" />
           </div>
             <div>
                 <TextInput
@@ -38,9 +38,7 @@
                     placeholder="Password"
                     autocomplete="new-password"
                 />
-  
                 <InputError class="mt-2" :message="form.errors.password" />
-              
             </div>
 
             <div class="mt-4">
@@ -53,10 +51,7 @@
                     placeholder="Repeat Password"
                     autocomplete="new-password"
                 />
-  
                 <InputError class="mt-1 mb-2" :message="form.errors.password_confirmation" />
-              
-              
             </div>
 
             <div class="ml-4 mb-4">
