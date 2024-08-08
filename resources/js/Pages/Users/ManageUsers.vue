@@ -14,7 +14,7 @@
                         <input 
                           type="search" 
                           id="default-search" 
-                          class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-gray-50 bg-[#F5F7FA]" 
+                          class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 bg-[#F5F7FA]" 
                           placeholder="Search..." 
                           required />
                     </div>

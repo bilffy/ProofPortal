@@ -12,6 +12,7 @@ Route::inertia('/users', 'Users/ManageUsers')->name('users.manage'); // Temp: Ch
 Route::inertia('/create', 'Users/Create');
 Route::inertia('/setup', 'Auth/AccountSetup');
 Route::inertia('/verification', 'Auth/Verification');
+Route::inertia('/dashboard', 'Dashboard/Home');
 
 
 Route::get('/', function () {

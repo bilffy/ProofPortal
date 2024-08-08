@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col w-[190px] mt-2">
+    <div class="flex flex-col w-[210px] mt-2">
         <div>
           <img :src="Logo" alt="">
         </div>
