@@ -125,5 +125,6 @@ return [
     
     'otp' => [
         'expiration_minutes' => env('OTP_EXPIRATION_MINUTES', 60),
+        'secret_pin' => env('OTP_SECRET_PIN'),
     ],
 ];
