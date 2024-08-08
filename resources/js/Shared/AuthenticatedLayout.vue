@@ -5,20 +5,20 @@
             <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2">
                 <div class="flex flex-1 items-center justify-center">
                     <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
-                        <div class="flex flex-row items-center gap-2 text-primary">
+                        <div class="flex flex-row items-center gap-2 text-primary text-sm">
                             <img :src="Info" alt="" width="20px" height="20px">
-                            You’re viewing as <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege
+                            You're impersonating <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege
                             </div>
                         <div>
                             <BaseButton class="bg-alert p-1">
-                                Exit Preview
+                                Exit
                                 <img :src="CloseAlert" alt="" width="20px" height="20px">
                             </BaseButton>
                         </div>
                     </div>
                 </div>
                 <div class="flex flex-row items-center">
-                    <div class="flex items-center text-[#586B78] bg-[#D9D9D9] rounded-full px-2 py-0.5">MSP RESOURCE CENTRE</div>
+                    <div class="flex items-center text-sm text-[#586B78] bg-[#D9D9D9] rounded-full px-2 py-0.5">MSP RESOURCE CENTRE</div>
                     <div class="ms-3 relative">
                         <Dropdown width="48">
                             <template #trigger>

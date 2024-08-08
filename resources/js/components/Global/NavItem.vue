@@ -1,13 +1,16 @@
 <template>
     <Link
-        class="flex items-center pl-4 pr-4 pt-2 pb-2 border-l-4 border-white"
-        :class="{'border-l-primary bg-neutral-200 rounded-e-md' : props.activeNav}"
+        class="flex items-center pl-4 pr-4 pt-2 pb-2 border-white"
+        :class="{'bg-primary text-white rounded-e-md' : props.activeNav}"
         :href="href">
+        
         <img
             width="20px"
             height="20px"
-            class="mr-4"
-            :src="imageSrc" alt=""> 
+            class="mr-4 fill-purple"
+            :class="{'fill-white':props.activeNav}"
+            :src="imageSrc" 
+            alt="">
         <slot />
     </Link>
 </template>
@@ -33,6 +36,6 @@ const props = defineProps({
 
 console.log({img: props.imgSrc, active: props.activeNav})
 
-const imageSrc = getAssetUrl(`images/Navigation/${props.imgSrc}.png`);
+const imageSrc = getAssetUrl(`images/Navigation/${props.imgSrc}.svg`);
 // const activeNav = ref(true)
 </script>

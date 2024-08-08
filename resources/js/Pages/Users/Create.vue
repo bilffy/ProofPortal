@@ -55,7 +55,9 @@
                 <div class="w-full">
                     <Select>User Role</Select>
                 </div>
-                <div class="w-full"></div>
+                <div class="w-full">
+                    <Select>Franchise</Select>
+                </div>
 
             </div>
 

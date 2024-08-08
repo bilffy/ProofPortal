@@ -1,5 +1,5 @@
 <template>
-    <th scope="col" class="TableHeaderCell border-b-2 border-[#00A7D9] p-4">
+    <th scope="col" class="TableHeaderCell border-b-2  border-neutral-300 p-4">
         <div class="flex flex-row justify-between">
             <div class="flex flex-row gap-1 items-center">
                 <slot />
