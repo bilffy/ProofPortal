@@ -72,7 +72,16 @@ services:
       - "6380:6379"
     networks:
       - msp
-
+  
+  mailhog:
+    image: mailhog/mailhog
+    container_name: msp_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - msp
+  
 networks:
   msp:
 
