@@ -123,5 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
     
-    'expiration_minutes' => env('OTP_EXPIRATION_MINUTES', 60),
+    'otp' => [
+        'expiration_minutes' => env('OTP_EXPIRATION_MINUTES', 60),
+    ],
 ];

@@ -31,11 +31,16 @@ class OTPMail extends Mailable
      * @return $this
      */
     public function build()
-    {   
+    {
+        // Get OTP expiration time from .env
+        $expiration = config('app.otp.expiration_minutes', 60);
+        
         return $this->markdown('emails.otp')
+            ->subject('Your MSP OTP')
             ->with([
                 'user' => $this->user,
                 'otp' => $this->otp,
+                'expiration' => $expiration,
             ]);
     }
 }

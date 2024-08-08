@@ -38,7 +38,7 @@ class SendUserInviteJob implements ShouldQueue
     {
         $token = Password::createToken($this->user);
 
-        $setupUrl = url(config('app.url').route('account.setup', 
+        $setupUrl = url(config('app.url').route('account.setup.create', 
                 [
                     'token' => $token, 
                     'email' => $this->user->email

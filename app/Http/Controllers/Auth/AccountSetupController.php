@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,18 @@ use Inertia\Response;
 
 class AccountSetupController extends Controller
 {
+    protected UserService $userService;
+    
+    /**
+     * Create a new controller instance.
+     *
+     * @param UserService $userService
+     */
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+    
     /**
      * Display the account/password setup view.
      */
@@ -52,7 +65,10 @@ class AccountSetupController extends Controller
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
                 ])->save();
-
+                
+                // Send OTP to the user
+                $this->userService->sendOtp($user);
+                
                 event(new PasswordReset($user));
             }
         );
