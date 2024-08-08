@@ -48,7 +48,7 @@ class SendOTPJob implements ShouldQueue
         // Save the otp to the database
         UserOtp::create([
             'user_id' => $this->user->id,
-            'otp' => $otp,
+            'otp' => OTPHelper::encryptOtp($otp),
             'expire_on' => now()->addMinutes($expirationMinutes),
         ]);
     }
