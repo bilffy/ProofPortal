@@ -34,8 +34,5 @@ const props = defineProps({
     }
 });
 
-console.log({img: props.imgSrc, active: props.activeNav})
-
 const imageSrc = getAssetUrl(`images/Navigation/${props.imgSrc}.svg`);
-// const activeNav = ref(true)
 </script>

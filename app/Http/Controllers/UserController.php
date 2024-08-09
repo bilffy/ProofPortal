@@ -10,7 +10,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = $request->input('perPage', 10);
+        $perPage = $request->input('perPage', 20);
         $usersQuery = User::query();
         // TODO: Add initial filter for list of users only visible to this user's permission level
         $this->applySearch($usersQuery, $request->input('search', ''));
