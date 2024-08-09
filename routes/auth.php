@@ -47,7 +47,9 @@ Route::middleware('guest')->group(function () {
     
     Route::post('/verify-otp', [OtpController::class, 'verify'])
         ->name('otp.verify');
-    
+
+    Route::get('/otp/resend/{email}', [OtpController::class, 'resendOtp'])
+        ->name('otp.resend');
 });
 
 Route::middleware('auth')->group(function () {

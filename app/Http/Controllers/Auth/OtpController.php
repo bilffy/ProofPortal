@@ -92,4 +92,19 @@ class OtpController extends Controller
         Auth::loginUsingId($recentOtp->user->id);
         return redirect()->intended(route('dashboard', absolute: false));
     }
+
+    public function resendOtp(Request $request)
+    {
+        /** @var User $user */
+        $user = User::where('email', $request->email)->firstOrFail();
+
+        // Send OTP to the user
+        $this->userService->sendOtp($user);
+
+        return Inertia::render('Auth/Verification', [
+            'message' => 'Verification code resent successfully.',
+            'otp' => '',
+            'email' => $request->email
+        ]);
+    }
 }
