@@ -3,17 +3,14 @@
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestController;
-use App\Http\Resources\UserResource;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/test', [TestController::class, 'index']); // FOR TESTING ONLY; DELETE WHEN DEPLOYING
-Route::inertia('/users', 'Users/ManageUsers')->name('users.manage'); // Temp: Change to controller
-Route::inertia('/create', 'Users/Create');
 Route::inertia('/setup', 'Auth/AccountSetup');
 Route::inertia('/verification', 'Auth/Verification');
 Route::inertia('/dashboard', 'Dashboard/Home');
-
 
 Route::get('/', function () {
     return Inertia::render('App');
@@ -27,6 +24,9 @@ Route::middleware('auth')->group(function () {
     // Route for inviting a single user
     Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
     Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
+    // Users routes
+    Route::get('/users', [UserController::class, 'index'])->name('users.manage');
+    Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
 });
 
 require __DIR__.'/auth.php';

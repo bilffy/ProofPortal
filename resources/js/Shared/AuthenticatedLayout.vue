@@ -77,8 +77,6 @@ const CloseAlert = getAssetUrl(`images/close-round-alert.svg`);
 
 const {...pageProps} = usePage().props;
 const {...user} = pageProps.auth.user;
-
-console.log({user});
 </script>
 
 <style scoped>
