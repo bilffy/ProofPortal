@@ -15,6 +15,8 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AccountSetupController extends Controller
 {
@@ -33,9 +35,20 @@ class AccountSetupController extends Controller
     /**
      * Display the account/password setup view.
      */
-    public function create(Request $request): Response
+    public function create(Request $request): Response|RedirectResponse
     {
         $user = User::where('email', $request->email)->firstOrFail();
+
+        // Retrieve the token creation date from the `password_reset_tokens` table
+        $tokenData = DB::table('password_reset_tokens')->where('email', $request->email)->first();
+        
+        $inviteExpireDays = config('app.invite.expiration_days');
+        
+        // Check if the token is older than 14 days
+        if (!$tokenData || Carbon::parse($tokenData->created_at)->addDays((int)$inviteExpireDays)->isPast()) {
+            return redirect()->route('password.request')
+                ->with('status', 'The token is invalid or expired.');
+        }
         
         return Inertia::render('Auth/AccountSetup', [
             'email' => $request->email,

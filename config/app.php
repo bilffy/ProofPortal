@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'MSP'),
 
     /*
     |--------------------------------------------------------------------------
@@ -121,6 +121,10 @@ return [
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
+    ],
+    
+    'invite' => [
+        'expiration_days' => env('INVITE_EXPIRATION_DAYS', 14), 
     ],
     
     'otp' => [
