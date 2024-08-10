@@ -38,7 +38,12 @@ class AccountSetupController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = User::where('email', $request->email)->firstOrFail();
-
+        
+        // check if the user has already completed the setup
+        if ($user->is_setup_complete) {
+            return redirect()->route('invite.expired');
+        }
+        
         // Retrieve the token creation date from the `password_reset_tokens` table
         $tokenData = DB::table('password_reset_tokens')->where('email', $request->email)->first();
         
@@ -46,8 +51,7 @@ class AccountSetupController extends Controller
         
         // Check if the token is older than 14 days
         if (!$tokenData || Carbon::parse($tokenData->created_at)->addDays((int)$inviteExpireDays)->isPast()) {
-            return redirect()->route('password.request')
-                ->with('status', 'The token is invalid or expired.');
+            return redirect()->route('invite.expired');
         }
         
         return Inertia::render('Auth/AccountSetup', [
@@ -80,6 +84,7 @@ class AccountSetupController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'is_setup_complete' => true,
                 ])->save();
                 
                 // Send OTP to the user

@@ -64,6 +64,7 @@ class User extends Authenticatable
         'expiry_date',
         'password_expiry',
         'password_expiry_date',
+        'is_setup_complete',
     ];
 
     /**

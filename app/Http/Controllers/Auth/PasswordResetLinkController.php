@@ -53,4 +53,12 @@ class PasswordResetLinkController extends Controller
             'email' => [trans($status)],
         ]);
     }
+
+    /**
+     * Display the link expired view.
+     */
+    public function expired(): Response
+    {
+        return Inertia::render('Auth/LinkExpired');
+    }
 }
