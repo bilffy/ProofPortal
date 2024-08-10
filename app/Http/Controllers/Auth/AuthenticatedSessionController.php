@@ -4,15 +4,31 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    protected UserService $userService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param UserService $userService
+     */
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+    
     /**
      * Display the login view.
      */
@@ -26,14 +42,33 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     * @param LoginRequest $request
+     * @return RedirectResponse
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+        
+        // Validate the user credentials, if valid, send OTP to the user
+        // without authenticating the user
+        if (Auth::validate($request->only('email', 'password'))) {
+            /** @var User $user */
+            $user = User::where('email', $request->email)->firstOrFail();
+            // Send OTP to the user
+            $this->userService->sendOtp($user);
+            return redirect()->route(
+                'otp.show.form',
+                ['token' => Str::random(60)])
+                ->with('msp-user', $request->email);
+        }
 
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        throw ValidationException::withMessages([
+            'email' => ['The provided credentials is invalid.'],
+        ]);
     }
 
     /**
