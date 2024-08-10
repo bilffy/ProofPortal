@@ -64,7 +64,7 @@
     },
     message: {
       type: String,
-      default: 'A Verification Code has been sent to your email',
+      default: 'A Verification Code has been sent to your email address.',
     }
   });
 
@@ -84,14 +84,14 @@
   
   const submit = () => {
       form.post(route('otp.verify'), {
-          onFinish: () => form.reset(),
+          onFinish: () => form.reset('otp'),
       });
   };
 
   const resendOtp = async () => {
     try {
-      const response = await router.get(route('otp.resend', form.email));
-      message.value = response.message;
+      await router.get(route('otp.resend', form.email));
+      //message.value = 'Verification code resent successfully.';
     } catch (error) {
       console.error(error);
     }

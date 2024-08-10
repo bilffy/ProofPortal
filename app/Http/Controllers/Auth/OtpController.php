@@ -38,13 +38,19 @@ class OtpController extends Controller
      * Display the account/password setup view.
      */
     public function showForm(Request $request): Response
-    {
-        $email = $request->session()->get('msp-user');
-
+    {   
+        $email = $request->session()->has('msp-user') 
+            ? $request->session()->get('msp-user') 
+            : $request->email; 
+        $isResendOtp = $request->session()->has('resend-otp');
+        
         return Inertia::render('Auth/Verification', [
             'token' => $request->route('token'),
             'otp' => '',
-            'email' => $email
+            'email' => $email,
+            'message' => $isResendOtp ? 
+                'OTP has been resent to your email.' : 
+                'A Verification Code has been sent to your email address.',
         ]);
     }
 
@@ -54,7 +60,12 @@ class OtpController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function verify(Request $request): RedirectResponse
-    {   
+    {
+        // Set the msp-user session key before any validation,
+        // If any Validation or Exception found, Laravel always redirect back to the previous page
+        // (usually the form page) with the validation errors. This is the default behavior of Laravel's validation system.
+        $request->session()->put('msp-user', $request->email);
+        
         $request->validate([
             'otp' => 'required',
             'email' => 'required|email',
@@ -64,7 +75,7 @@ class OtpController extends Controller
         $user = User::where('email', $request->email)->firstOrFail();
         
         $recentOtp = $this->userService->getRecentOtp($user);
-
+        
         if ($recentOtp === null) {
             throw ValidationException::withMessages([
                 'otp' => ['OTP is Invalid!'],
@@ -84,27 +95,32 @@ class OtpController extends Controller
                 'otp' => ['OTP has expired!'],
             ]);
         }
-
+        
         // Set the OTP as expired
         $recentOtp->expire_on = now();
         $recentOtp->save();
+
+        // Reset the msp-user session key
+        $request->session()->forget('msp-user');
         
         Auth::loginUsingId($recentOtp->user->id);
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    public function resendOtp(Request $request)
+    public function resendOtp(Request $request): RedirectResponse
     {
         /** @var User $user */
         $user = User::where('email', $request->email)->firstOrFail();
 
         // Send OTP to the user
         $this->userService->sendOtp($user);
-
-        return Inertia::render('Auth/Verification', [
-            'message' => 'Verification code resent successfully.',
-            'otp' => '',
-            'email' => $request->email
-        ]);
+        
+        return redirect()->route(
+            'otp.show.form',
+            [
+                'token' => Str::random(60)
+            ])
+            ->with('msp-user', $request->email)
+            ->with('resend-otp', true);
     }
 }
