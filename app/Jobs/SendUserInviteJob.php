@@ -46,7 +46,11 @@ class SendUserInviteJob implements ShouldQueue
                 false
             )
         );
-
+        
+        // Set the user status to invited
+        $this->user->status = User::STATUS_INVITED;
+        $this->user->save();
+        
         // Send the invite email
         Mail::to($this->user->email)->send(new UserInviteMail($this->user, $setupUrl));
     }

@@ -67,7 +67,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         throw ValidationException::withMessages([
-            'email' => ['The provided credentials is invalid.'],
+            'email' => ['Invalid username/password.'],
         ]);
     }
 

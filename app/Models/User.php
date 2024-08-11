@@ -10,7 +10,12 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-
+    
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_INVITED = 'invited';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_DISABLED = 'disabled';
+    
     // Define the relationship with franchise_users
     public function franchiseUsers()
     {
@@ -65,6 +70,7 @@ class User extends Authenticatable
         'password_expiry',
         'password_expiry_date',
         'is_setup_complete',
+        'status',
     ];
 
     /**

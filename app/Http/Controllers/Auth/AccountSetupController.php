@@ -85,6 +85,7 @@ class AccountSetupController extends Controller
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
                     'is_setup_complete' => true,
+                    'status' => User::STATUS_ACTIVE,
                 ])->save();
                 
                 // Send OTP to the user
