@@ -3,20 +3,56 @@
         <div class="flex flex-row justify-between">
             <div class="flex flex-row gap-1 items-center">
                 <slot />
-                <img :src="Sort" alt="">
+                <img :src="sortImgUrl" alt="" v-if="sortable" @click="$emit('sortWithField', mySort)"/>
             </div>
-            <ButtonLink><img :src="Filter" alt=""></ButtonLink>
+            <ButtonLink v-if="filterable"><img :src="getAssetUrl(`images/Table/Filter.svg`)" alt=""></ButtonLink>
         </div>
     </th>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import ButtonLink from '../Button/ButtonLink.vue';
 import { getAssetUrl } from '@/helpers/image.helper';
 
-    const Sort = getAssetUrl(`images/Table/Sort.svg`);
-    const SortUp = getAssetUrl(`images/Table/SortUp.svg`);
-    const SortDown = getAssetUrl(`images/Table/SortDown.svg`);
-    const Filter = getAssetUrl(`images/Table/Filter.svg`);
+const props = defineProps({
+    id: {
+        type: String,
+        default: '',
+    },
+    sortable: {
+        type: Boolean,
+        default: true,
+    },
+    filterable: {
+        type: Boolean,
+        default: true,
+    },
+    sort: {
+        type: String,
+        default: '',
+    },
+    filters: {
+        type: Array,
+        default: [],
+    }
+});
+const { id, sortable, filterable, sort } = props;
 
+const mySort = computed(() => {
+    if (id === sort) {
+        return `-${id}`;
+    }
+    return id;
+});
+
+const sortImgUrl = computed(() => {
+    if (id === sort) {
+        return getAssetUrl(`images/Table/SortUp.svg`);
+    }
+    if (sort.startsWith('-') && sort === `-${id}`) {
+        return getAssetUrl(`images/Table/SortDown.svg`);
+    }
+    return getAssetUrl(`images/Table/Sort.svg`);
+});
 </script>
