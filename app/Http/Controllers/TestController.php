@@ -13,10 +13,15 @@ class TestController extends Controller
 {
     public function index()
     {
-      return Inertia::render('App', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'user' => new UserResource(Auth::user())
-      ]);
+    //   return Inertia::render('App', [
+    //     'canLogin' => Route::has('login'),
+    //     'canRegister' => Route::has('register'),
+    //     'user' => new UserResource(Auth::user())
+    //   ]);
+        return view('test', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'user' => new UserResource(Auth::user())
+        ]);
     }
 }

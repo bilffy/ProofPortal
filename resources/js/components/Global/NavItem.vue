@@ -1,5 +1,20 @@
 <template>
+    <a
+        v-if="isBlade"
+        class="flex items-center pl-4 pr-4 pt-2 pb-2 border-white"
+        :class="{'bg-primary text-white rounded-e-md' : props.activeNav}"
+        :href="href">
+        <img
+            width="20px"
+            height="20px"
+            class="mr-4 fill-purple"
+            :class="{'fill-white':props.activeNav}"
+            :src="imageSrc" 
+            alt="">
+        <slot />
+    </a>
     <Link
+        v-else
         class="flex items-center pl-4 pr-4 pt-2 pb-2 border-white"
         :class="{'bg-primary text-white rounded-e-md' : props.activeNav}"
         :href="href">
@@ -29,6 +44,10 @@ const props = defineProps({
         default: "Home"
     },
     activeNav: {
+        type: Boolean,
+        default: false
+    },
+    isBlade: {
         type: Boolean,
         default: false
     }

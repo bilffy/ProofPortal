@@ -5,6 +5,7 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import { ZiggyVue } from '../../vendor/tightenco/ziggy/src/js';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import FontAwesomeIcon from './fontawesome-icons';
+import { LAYOUT_RENDER } from './helpers/constants.helper';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -15,6 +16,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .component('font-awesome-icon', FontAwesomeIcon)
+            .provide('layout_render', LAYOUT_RENDER.INERTIA)
             .use(plugin)
             .use(ZiggyVue)
             .mount(el)

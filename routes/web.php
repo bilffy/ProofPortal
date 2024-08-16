@@ -27,6 +27,8 @@ Route::middleware('auth')->group(function () {
     // Users routes
     Route::get('/users', [UserController::class, 'index'])->name('users.manage');
     Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
+
+    Route::get('/proofing', [TestController::class, 'index'])->name('proofing'); // FOR TESTING
 });
 
 require __DIR__.'/auth.php';
