@@ -13,7 +13,7 @@ Route::inertia('/verification', 'Auth/Verification');
 Route::inertia('/dashboard', 'Dashboard/Home');
 
 Route::get('/', function () {
-    return Inertia::render('App');
+    return Inertia::render('Dashboard/Home');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
