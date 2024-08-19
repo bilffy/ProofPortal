@@ -54,7 +54,7 @@
                     </div>
                 </div>
             </header>
-            <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden">
+            <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden border-2 border-alert">
               <slot />
           </main>
           <Footer />
