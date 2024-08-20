@@ -13,3 +13,7 @@
 //     .mount("#app_blade_vue");
 
 // TODO: Remove if not needed after blade conversions
+
+import.meta.glob([
+    '../assets/**',
+]);
