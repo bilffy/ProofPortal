@@ -6,6 +6,6 @@
             <!-- <img :src="sortImgUrl" alt="" v-if="sortable" @click="$emit('sortWithField', mySort)"/> -->
         </div>
         <!-- <ButtonLink v-if="filterable"><img :src="getAssetUrl(`images/Table/Filter.svg`)" alt=""></ButtonLink> -->
-         <x-button.buttonLink><img src="{{ Vite::asset('resources/assets/images/Table/Filter.svg') }}" alt=""/></x-button.buttonLink>
+         <x-button.link><img src="{{ Vite::asset('resources/assets/images/Table/Filter.svg') }}" alt=""/></x-button.link>
     </div>
 </th>

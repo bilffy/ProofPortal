@@ -25,56 +25,56 @@
             <table class="w-full text-sm text-left rtl:text-right">
                 <thead>
                     <tr>
-                        <x-table.tHeaderCell>School Key</x-table.tHeaderCell>
-                        <x-table.tHeaderCell>School Name</x-table.tHeaderCell>
-                        <x-table.tHeaderCell class="w-[60px]"></x-table.tHeaderCell>
+                        <x-table.headerCell>School Key</x-table.headerCell>
+                        <x-table.headerCell>School Name</x-table.headerCell>
+                        <x-table.headerCell class="w-[60px]"></x-table.headerCell>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <x-table.tCell>email1@msp.com</x-table.tCell>
-                        <x-table.tCell>Adelaide</x-table.tCell>
-                        <x-table.tCell class="w-[100px]">
+                        <x-table.cell>email1@msp.com</x-table.cell>
+                        <x-table.cell>Adelaide</x-table.cell>
+                        <x-table.cell class="w-[100px]">
                             <x-button.link>
                                 <img :src="moreImageUrl" alt="">
                             </x-button.link>
-                        </x-table.tCell>
+                        </x-table.cell>
                     </tr>
                     <tr>
-                        <x-table.tCell scope="row">email1@msp.com</x-table.tCell>
-                        <x-table.tCell scope="row">Adelaide</x-table.tCell>
-                        <x-table.tCell scope="row" class="w-[100px]">
+                        <x-table.cell scope="row">email1@msp.com</x-table.cell>
+                        <x-table.cell scope="row">Adelaide</x-table.cell>
+                        <x-table.cell scope="row" class="w-[100px]">
                             <x-button.link class="bg-none">
                                 <img :src="moreImageUrl" alt="">
                             </x-button.x-button.link>
-                        </x-table.tCell>
+                        </x-table.cell>
                     </tr>
                     <tr>
-                        <x-table.tCell scope="row">email1@msp.com</x-table.tCell>
-                        <x-table.tCell scope="row">Adelaide</x-table.tCell>
-                        <x-table.tCell scope="row" class="w-[100px]">
+                        <x-table.cell scope="row">email1@msp.com</x-table.cell>
+                        <x-table.cell scope="row">Adelaide</x-table.cell>
+                        <x-table.cell scope="row" class="w-[100px]">
                             <x-button.link>
                                 <img :src="moreImageUrl" alt="">
                             </x-button.link>
-                        </x-table.tCell>
+                        </x-table.cell>
                     </tr>
                     <tr>
-                        <x-table.tCell scope="row">email1@msp.com</x-table.tCell>
-                        <x-table.tCell scope="row">Adelaide</x-table.tCell>
-                        <x-table.tCell scope="row" class="w-[100px]">
+                        <x-table.cell scope="row">email1@msp.com</x-table.cell>
+                        <x-table.cell scope="row">Adelaide</x-table.cell>
+                        <x-table.cell scope="row" class="w-[100px]">
                             <x-button.link>
                                 <img :src="moreImageUrl" alt="">
                             </x-button.link>
-                        </x-table.tCell>
+                        </x-table.cell>
                     </tr>
                     <tr>
-                        <x-table.tCell scope="row">email1@msp.com</x-table.tCell>
-                        <x-table.tCell scope="row">Adelaide</x-table.tCell>
-                        <x-table.tCell scope="row" class="w-[100px]">
+                        <x-table.cell scope="row">email1@msp.com</x-table.cell>
+                        <x-table.cell scope="row">Adelaide</x-table.cell>
+                        <x-table.cell scope="row" class="w-[100px]">
                             <x-button.link class="bg-none">
                                 <img :src="moreImageUrl" alt="">
                             </x-button.link>
-                        </x-table.tCell>
+                        </x-table.cell>
                     </tr>
                 </tbody>
             </table>
