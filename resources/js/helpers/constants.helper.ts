@@ -1,3 +1,8 @@
+export const LAYOUT_RENDER = {
+    INERTIA: 1,
+    BLADE: 2
+}
+
 export const ROLES = {
     RCIT: {
       SUPER_ADMIN: 1,

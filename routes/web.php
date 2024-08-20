@@ -13,7 +13,7 @@ Route::inertia('/verification', 'Auth/Verification');
 Route::inertia('/dashboard', 'Dashboard/Home');
 
 Route::get('/', function () {
-    return Inertia::render('App');
+    return Inertia::render('Dashboard/Home');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -27,6 +27,8 @@ Route::middleware('auth')->group(function () {
     // Users routes
     Route::get('/users', [UserController::class, 'index'])->name('users.manage');
     Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
+
+    Route::get('/proofing', [TestController::class, 'index'])->name('proofing'); // FOR TESTING
 });
 
 require __DIR__.'/auth.php';
