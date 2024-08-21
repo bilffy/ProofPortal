@@ -9,13 +9,15 @@
             @error('email') <span class="error">{{ $message }}</span> @enderror
         </div>
         <div>
-            <input type="password" wire:model="otp" required autocomplete="otp" autofocus />
+            <div class="flex flex-col mb-4">
+                <input class="border rounded-md p-2 border-neutral" type="password" wire:model="otp" required autocomplete="otp" autofocus />
+            </div>
             @error('otp') <span class="error">{{ $message }}</span> @enderror
         </div>
 
         <div class="flex w-full items-center justify-between">
-            <button type="submit">Verify</button>
-            <button type="button" wire:click="resendOtp('{{ $email }}')">Resend Verification Code</button>
+            <button class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" type="submit">Verify</button>
+            <button class="rounded-md bg-none px-3 py-2 bg-none text-neutral-600 hover:bg-[#f0eeec] transition-all hover:transition-all" type="button" wire:click="resendOtp('{{ $email }}')">Resend Verification Code</button>
         </div>
     </form>
 </main>
