@@ -1,5 +1,5 @@
 <div class="flex flex-row gap-5">
-    <div class="bg-neutral-200 border-neutral-300 border-[1px] h-full w-3/4 rounded-md overflow-hidden shadow-lg">
+    <div class=" border-neutral-300 border-[1px] h-full w-3/4 rounded-md overflow-hidden">
         <div class="p-4 flex items-center justify-between">
             <h3 class="text-2xl">Title</h3>
             <div class="flex justify-center">
@@ -81,10 +81,9 @@
         </div>
     </div>
     
-    <div class="bg-neutral-200 border-neutral-300 border-[1px] h-full w-1/4 rounded-md overflow-hidden shadow-lg">
-        <div class="flex flex-row justify-between items-center border-b-[1px] border-b-neutral-300 p-4">
+    <div class=" border-neutral-300 border-[1px] h-full w-1/4 rounded-md overflow-hidden">
+        <div class="flex flex-row items-center border-b-[1px] border-b-neutral-300 p-4">
             <span class="font-semibold text-neutral-600">My Tasks</span>
-            <x-button.primary>+</x-button.primary>
         </div>
         <div class="border-b-[1px] border-b-neutral-300 p-4">
             <p class="font-semibold ">Task 1</p>
