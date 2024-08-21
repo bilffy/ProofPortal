@@ -19,13 +19,13 @@
             <input type="email" wire:model="email" required autofocus autocomplete="username" />
             <input type="password" wire:model="token" required autofocus autocomplete="username" />
         </div>
-        <div>
-            <input type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />
+        <div class="flex flex-col mb-4">
+            <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />
             @error('password') <span class="error">{{ $message }}</span> @enderror
         </div>
 
-        <div class="mt-4">
-            <input type="password" wire:model="password_confirmation" required placeholder="Repeat Password" autocomplete="new-password" />
+        <div class="flex flex-col mb-4">
+            <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password_confirmation" required placeholder="Repeat Password" autocomplete="new-password" />
             @error('password_confirmation') <span class="error">{{ $message }}</span> @enderror
         </div>
 
@@ -39,7 +39,7 @@
         </div>
 
         <div class="flex w-full items-center justify-between">
-            <button type="submit" :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">Next</button>
+            <button class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all"  type="submit" :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">Next</button>
         </div>
     </form>
 </main>

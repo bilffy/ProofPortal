@@ -8,8 +8,9 @@
     @endif
     
     <form wire:submit.prevent="submit">
-        <div>
+        <div class="flex flex-col mb-4">
             <input
+                    class="border rounded-md p-2 border-neutral"
                     type="email"
                     wire:model="email"
                     required
@@ -21,8 +22,9 @@
             @error('email') <span class="mt-1 mb-2 text-red-600">{{ $message }}</span> @enderror
         </div>
     
-        <div class="mt-4">
+        <div class="flex flex-col mb-4">
             <input
+                    class="border rounded-md p-2 border-neutral"
                     type="password"
                     wire:model="password"
                     required
@@ -34,7 +36,7 @@
         </div>
     
         <div class="flex w-full items-center justify-between mt-4">
-            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+            <button type="submit" class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" wire:loading.attr="disabled">
                 Login
             </button>
             @if (Route::has('password.request'))
