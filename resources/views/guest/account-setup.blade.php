@@ -1,0 +1,45 @@
+<main class="mt-8 bg-white rounded-lg overflow-hidden border-[#969696] border-2 p-8 px-12">
+    <h1 class="text-3xl text-[#02B3DF] mb-4"> Account Setup</h1>
+
+    @error('email') <span class="error">{{ $message }}</span> @enderror
+
+    <div class="mb-4 font-medium text-green-600 flex flex-row">
+        <div class="w-full">
+            <label for="">Name</label>
+            <p class="font-semibold">{{ $firstName }} {{ $lastName }}</p>
+        </div>
+        <div class="w-full">
+            <label for="">Email</label>
+            <p class="font-semibold">{{ $email }}</p>
+        </div>
+    </div>
+    
+    <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
+        <div class="hidden">
+            <input type="email" wire:model="email" required autofocus autocomplete="username" />
+            <input type="password" wire:model="token" required autofocus autocomplete="username" />
+        </div>
+        <div>
+            <input type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />
+            @error('password') <span class="error">{{ $message }}</span> @enderror
+        </div>
+
+        <div class="mt-4">
+            <input type="password" wire:model="password_confirmation" required placeholder="Repeat Password" autocomplete="new-password" />
+            @error('password_confirmation') <span class="error">{{ $message }}</span> @enderror
+        </div>
+
+        <div class="ml-4 mb-4">
+            <ul class="list-disc">
+                <li :class="{ 'text-success font-semibold': password.length >= 12, 'text-gray-500': password.length < 12 }">At least 12 characters</li>
+                <li :class="{ 'text-success font-semibold': /[A-Z]/.test(password), 'text-gray-500': !/[A-Z]/.test(password) }">Include at least 1 uppercase letter</li>
+                <li :class="{ 'text-success font-semibold': /[a-z]/.test(password), 'text-gray-500': !/[a-z]/.test(password) }">At least 1 lowercase letter</li>
+                <li :class="{ 'text-success font-semibold': /[0-9]/.test(password), 'text-gray-500': !/[0-9]/.test(password) }">At least 1 number</li>
+            </ul>
+        </div>
+
+        <div class="flex w-full items-center justify-between">
+            <button type="submit" :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">Next</button>
+        </div>
+    </form>
+</main>
