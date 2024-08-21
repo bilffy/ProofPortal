@@ -17,6 +17,7 @@
     <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
         <div class="hidden">
             <input type="email" wire:model="email" required autofocus autocomplete="username" />
+            <input type="password" wire:model="token" required autofocus autocomplete="username" />
         </div>
         <div>
             <input type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />

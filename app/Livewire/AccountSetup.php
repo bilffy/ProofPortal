@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use App\Services\UserService;
@@ -37,7 +38,8 @@ class AccountSetup extends Component
         
         // Check if the user has already completed the setup
         if ($user->is_setup_complete) {
-            return redirect()->route('invite.expired');
+            $this->linkExpired = true;
+            return;
         }
 
         $this->firstName = $user->firstname;
@@ -51,15 +53,17 @@ class AccountSetup extends Component
 
         // Check if the token is older than the given days
         if (!$tokenData || Carbon::parse($tokenData->created_at)->addDays((int)$inviteExpireDays)->isPast()) {
-            return redirect()->route('invite.expired');
+            $this->linkExpired = true;
+            return;
         }
     }
 
     public function submit()
     {
         $this->validate();
-
-        $user = User::where('email', $this->email)->firstOrFail();
+        
+        // Check if the user exists otherwise throw an exception
+        User::where('email', $this->email)->firstOrFail();
 
         $status = Password::reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password, 'token' => $this->token],
@@ -89,6 +93,10 @@ class AccountSetup extends Component
 
     public function render()
     {
+        if (isset($this->linkExpired) && $this->linkExpired) {
+            return view('guest.auth.invite-link-expired');
+        }
+        
         return view('guest.account-setup');
     }
 }
