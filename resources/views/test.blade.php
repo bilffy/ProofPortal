@@ -3,6 +3,7 @@
 @section('content')
     <div class="container3 border-success border-2 p-4">
         <h3>PROOFING CONTENT HERE!</h3>
+        <x-modal.base/>
         @include('partials.dashboard.franchise')
     </div>
     <!-- <x-button.base type="submit" textColor="#000" >Test</x-button.base>
