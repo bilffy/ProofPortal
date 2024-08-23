@@ -16,8 +16,8 @@
         </div>
 
         <div class="flex w-full items-center justify-between">
-            <button class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" type="submit">Verify</button>
-            <button class="rounded-md bg-none px-3 py-2 bg-none text-neutral-600 hover:bg-[#f0eeec] transition-all hover:transition-all" type="button" wire:click="resendOtp('{{ $email }}')">Resend Verification Code</button>
+            <x-button.primary type="submit">Verify</x-button.primary>
+            <x-button.link  type="button" wire:click="resendOtp('{{ $email }}')">Resend Verification Code</x-button.link>
         </div>
     </form>
 </main>

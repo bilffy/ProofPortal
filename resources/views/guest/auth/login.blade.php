@@ -10,35 +10,35 @@
     <form wire:submit.prevent="submit">
         <div class="flex flex-col mb-4">
             <input
-                    class="border rounded-md p-2 border-neutral"
-                    type="email"
-                    wire:model="email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                    placeholder="Email"
-                    class="mt-1 block w-full"
+                class="border rounded-md p-2 border-neutral"
+                type="email"
+                wire:model="email"
+                required
+                autofocus
+                autocomplete="username"
+                placeholder="Email"
+                class="mt-1 block w-full"
             />
             @error('email') <span class="mt-1 mb-2 text-red-600">{{ $message }}</span> @enderror
         </div>
     
         <div class="flex flex-col mb-4">
             <input
-                    class="border rounded-md p-2 border-neutral"
-                    type="password"
-                    wire:model="password"
-                    required
-                    autocomplete="current-password"
-                    placeholder="Password"
-                    class="mt-1 block w-full"
+                class="border rounded-md p-2 border-neutral"
+                type="password"
+                wire:model="password"
+                required
+                autocomplete="current-password"
+                placeholder="Password"
+                class="mt-1 block w-full"
             />
             @error('password') <span class="mt-1 mb-2 text-red-600">{{ $message }}</span> @enderror
         </div>
     
         <div class="flex w-full items-center justify-between mt-4">
-            <button type="submit" class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" wire:loading.attr="disabled">
+            <x-button.primary type="submit" class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" wire:loading.attr="disabled">
                 Login
-            </button>
+            </x-button.primary>
             @if (Route::has('password.request'))
                 <a href="{{ route('password.request') }}" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Forgot your password?
