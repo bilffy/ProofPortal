@@ -5,7 +5,8 @@
     href="{{ $href }}">
     {{-- Replace with Fontawesome --}}
     <span class=" w-[20px] h-[20px] flex items-center justify-center">
-        <i class="fa fa-{{ $navIcon }}"></i>
+        {{-- <i class="fa fa-{{ $icon }}"></i> --}}
+        <x-icon icon="{{ $navIcon }}"/>
     </span>
     
     {{ $slot }}
