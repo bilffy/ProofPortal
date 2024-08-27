@@ -1,3 +1,3 @@
 @props(['icon' => 'ban'])
 
-<i class="fa fa-{{ $icon }}"></i>
+<i {{ $attributes->merge([ 'class' => "fa fa-$icon" ]) }}></i>
