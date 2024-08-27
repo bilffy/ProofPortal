@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap">
 
     <!-- Scripts -->
-    @vite(['resources/js/app.ts', 'resources/css/app.scss', 'resources/css/output.scss'])
+    @vite(['resources/js/app.ts', 'resources/css/app.scss'])
     @livewireStyles
 </head>
 <body class="font-sans antialiased">
