@@ -1,0 +1,88 @@
+name: msp
+# version: '3.8'
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: msp_php
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - msp
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    image: msp_node
+    container_name: msp_node
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/node_modules
+    networks:
+      - msp
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: msp_nginx
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf:/etc/nginx/conf.d
+    ports:
+      - "80:80" 
+    depends_on:
+      - php
+    networks:
+      - msp
+
+  redis:
+    image: redis:alpine
+    container_name: msp_redis
+    ports:
+      - "6380:6379"
+    networks:
+      - msp
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: msp_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - msp
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: msp_phpmyadmin
+    environment:
+      PMA_HOST: ${DB_HOST}
+      PMA_PORT: ${DB_PORT}
+      PMA_USER: ${DB_USERNAME}
+      PMA_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /etc/nginx/.htpasswd:/var/www/html/passwd
+    ports:
+      - "8090:80"
+    depends_on:
+      - php
+    networks:
+      - msp
+
+
+networks:
+  msp:
+
+volumes:
+  mysql_data:
