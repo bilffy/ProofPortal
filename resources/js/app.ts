@@ -1,4 +1,5 @@
-// import './bootstrap';
+import './bootstrap';
+// import '.exports';
 // import { createApp } from 'vue2';
 // import Test from './components/Test.vue';
 // import BladeAuthenticatedLayout from './Shared/BladeAuthenticatedLayout.vue';
@@ -14,6 +15,7 @@
 
 // TODO: Remove if not needed after blade conversions
 
+// import { getCurrentNav } from './helpers/utils.helper.ts';
 import.meta.glob([
     '../assets/**',
 ]);

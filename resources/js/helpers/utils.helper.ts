@@ -18,6 +18,23 @@ export const getCurrentNav = (): string => {
     }
 };
 
+export const getNavTabId = (tab: string): string => {
+    const { HOME, MANAGE_USERS, PROOFING } = NAV_TABS;
+    const path = window.location.pathname.split('/')[1];
+
+    switch(tab) {
+        case '':
+        case HOME:
+          return 'tabHome';
+        case MANAGE_USERS:
+            return 'tabManageUsers';
+        case PROOFING:
+            return 'tabProofing';
+        default:
+          return 'tabHome';
+    }
+};
+
 export const getRoute = (routeName: string): string => {
     if (LAYOUT_RENDER.INERTIA === inject('layout_render')) {
         return route(routeName);

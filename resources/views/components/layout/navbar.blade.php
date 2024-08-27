@@ -1,22 +1,28 @@
-<div class="flex flex-col w-[210px] mt-2">
+<div id="navbarWrapper" class="flex flex-col w-[210px] mt-2">
     <div>
-        <img :src="Logo" alt="">
+        <img src="{{ Vite::asset('resources/assets/images/MSP-Logo_400x400.png') }}" alt="">
     </div>
-    <x-layout.navItem navIcon="home" href="dashboard" activeNav={{true}}>Home</x-layout.navItem>
+    <x-layout.navItem id="tabHome" navIcon="home" href="dashboard">Home</x-layout.navItem>
     <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">PHOTOGRAPHY</span>
-    <x-layout.navItem navIcon="user" href="dashboard" activeNav={{false}}>Portraits</x-layout.navItem>
-    <x-layout.navItem navIcon="users" href="dashboard" activeNav={{false}}>Group</x-layout.navItem>
-    <x-layout.navItem navIcon="graduation-cap" href="dashboard" activeNav={{false}}>Special Events</x-layout.navItem>
-    <x-layout.navItem navIcon="camera" href="dashboard" activeNav={{false}}>Promo Photos</x-layout.navItem>
+    <x-layout.navItem id="tabPortraits" navIcon="user" href="dashboard">Portraits</x-layout.navItem>
+    <x-layout.navItem id="tabGroups" navIcon="users" href="dashboard">Group</x-layout.navItem>
+    <x-layout.navItem id="tabSpecialEvents" navIcon="graduation-cap" href="dashboard">Special Events</x-layout.navItem>
+    <x-layout.navItem id="tabPromoPhotos" navIcon="camera" href="dashboard">Promo Photos</x-layout.navItem>
     <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">PROOFING</span>
-    <x-layout.navItem navIcon="th" href="proofing" activeNav={{false}}>Proofing</x-layout.navItem>
+    <x-layout.navItem id="tabProofing" navIcon="th" href="proofing">Proofing</x-layout.navItem>
     <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span>
-    <x-layout.navItem navIcon="user-plus" href="usersanage')" activeNav={{false}}>Manage Users</x-layout.navItem>
-    <x-layout.navItem navIcon="list-ul" href="dashboard" activeNav={{false}}>Reports</x-layout.navItem>
+    <x-layout.navItem id="tabManageUsers" navIcon="user-plus" href="{{ route('users.manage') }}">Manage Users</x-layout.navItem>
+    <x-layout.navItem id="tabReports" navIcon="list-ul" href="dashboard">Reports</x-layout.navItem>
 </div>
 
-<!-- @push('scripts')
-  <script src="{{ asset('js/welcome.js') }}">
+@push('scripts')
+<script type="module">
+    import { NAV_TABS } from "{{ Vite::asset('resources/js/helpers/constants.helper.ts') }}"
+    import { getCurrentNav, getNavTabId } from "{{ Vite::asset('resources/js/helpers/utils.helper.ts') }}"
+    window.addEventListener("load", function () {
+        const targetElement = `#${getNavTabId(getCurrentNav())}`;
+        $(targetElement).addClass('bg-primary text-white rounded-e-md');
+    }, false);
+</script>
 
-  </script>
-@endpush -->
+@endpush

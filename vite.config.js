@@ -26,9 +26,10 @@ export default defineConfig({
         }),
     ],
     base: process.env.ASSET_URL || '/',	
-    // resolve: {
-    //     alias: {
-    //         'vue2': 'vue/dist/vue.esm-bundler.js'
-    //     },
-    // },
+    resolve: {
+        alias: {
+            // '@helper': 'resources/js/helpers'
+            // 'vue2': 'vue/dist/vue.esm-bundler.js'
+        },
+    },
 });
