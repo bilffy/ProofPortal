@@ -2,10 +2,13 @@
     <div class="flex flex-row justify-between">
         <div class="flex flex-row gap-1 items-center">
             {{ $slot }}
-            <img src="{{ Vite::asset('resources/assets/images/Table/Sort.svg') }}" alt=""/>
+            <x-icon icon="sort fa-sm" /> 
+            {{-- sort-desc | sort-asc --}}
+            
             <!-- <img :src="sortImgUrl" alt="" v-if="sortable" @click="$emit('sortWithField', mySort)"/> -->
         </div>
-        <!-- <ButtonLink v-if="filterable"><img :src="getAssetUrl(`images/Table/Filter.svg`)" alt=""></ButtonLink> -->
-         <x-button.link><img src="{{ Vite::asset('resources/assets/images/Table/Filter.svg') }}" alt=""/></x-button.link>
+         <x-button.link>
+            <x-icon icon="filter fa-sm"/>
+        </x-button.link>
     </div>
 </th>

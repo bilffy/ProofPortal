@@ -1,7 +1,7 @@
 @extends('layouts.authenticated')
 
 @section('content')
-    <div class="container3 border-success border-2 p-4">
+    <div class="container3 p-4">
         <h3>PROOFING CONTENT HERE!</h3>
         @include('partials.dashboard.franchise')
     </div>
