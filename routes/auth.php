@@ -4,12 +4,13 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
-use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
-use App\Livewire\AccountSetup;
+use App\Livewire\Auth\AccountSetup;
+use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\OtpVerification;
@@ -21,42 +22,14 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
-    /*Route::get('login', [AuthenticatedSessionController::class, 'create'])
-                ->name('login');
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);*/
-
     Route::get('login', Login::class)->name('login');
     
-    /*Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
-                ->name('password.request');
-
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
-                ->name('password.email');*/
-
     Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
     
-    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-                ->name('password.reset');
-
-    Route::post('reset-password', [NewPasswordController::class, 'store'])
-                ->name('password.store');
-
-    /*Route::get('account-setup/{token}', [AccountSetupController::class, 'create'])
-                ->name('account.setup.create');
-    Route::post('account-setup', [AccountSetupController::class, 'store'])
-        ->name('account.setup.store');*/
+    Route::get('reset-password/{token}', ResetPassword::class)->name('password.reset');
     
     Route::get('account-setup/{token}/{email}', AccountSetup::class)->name('account.setup.create');
     
-    /*Route::get('/otp/{token}', [OtpController::class, 'showForm'])
-        ->name('otp.show.form');
-    
-    Route::post('/verify-otp', [OtpController::class, 'verify'])
-        ->name('otp.verify');
-
-    Route::get('/otp/resend/{email}', [OtpController::class, 'resendOtp'])
-        ->name('otp.resend');*/
-
     Route::get('/otp/{token}', OtpVerification::class)->name('otp.show.form');
     
     Route::get('invite-expired', [PasswordResetLinkController::class, 'expired'])
@@ -67,22 +40,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
                 ->name('verification.notice');
-
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
                 ->middleware(['signed', 'throttle:6,1'])
                 ->name('verification.verify');
-
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
                 ->middleware('throttle:6,1')
                 ->name('verification.send');
-
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
                 ->name('password.confirm');
-
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
-
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
-
     Route::match(['get', 'post'],'logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });
