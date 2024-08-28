@@ -43,6 +43,6 @@ class ForgotPassword extends Component
     
     public function render()
     {
-        return view('guest.auth.reset-password');
+        return view('guest.auth.send-reset-password-link');
     }
 }

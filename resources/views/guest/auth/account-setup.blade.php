@@ -35,11 +35,17 @@
                 <li :class="{ 'text-success font-semibold': /[A-Z]/.test(password), 'text-gray-500': !/[A-Z]/.test(password) }">Include at least 1 uppercase letter</li>
                 <li :class="{ 'text-success font-semibold': /[a-z]/.test(password), 'text-gray-500': !/[a-z]/.test(password) }">At least 1 lowercase letter</li>
                 <li :class="{ 'text-success font-semibold': /[0-9]/.test(password), 'text-gray-500': !/[0-9]/.test(password) }">At least 1 number</li>
+                <li :class="{ 'text-success font-semibold': password === password_confirmation, 'text-gray-500': password !== password_confirmation }">Password Match</li>
             </ul>
         </div>
 
         <div class="flex w-full items-center justify-between">
-            <button class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all"  type="submit" :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">Next</button>
+            <button 
+                    class="rounded-md text-sm cursor-pointer bg-none text-[#ffffff] flex flex-row gap-1 px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" 
+                    type="submit" 
+                    :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">
+                Next
+            </button>
         </div>
     </form>
 </main>
