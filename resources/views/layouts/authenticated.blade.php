@@ -32,7 +32,7 @@
                             <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
                             <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
                         </button>
-                        <ul id="dropOptions" role="list" hidden>
+                        <ul id="dropOptions" role="list" hidden class="absolute top-8 bg-white rounded shadow left-3">
                             <li>
                                 <x-button.dropdownLink href="{{ route('profile.edit') }}" class="hover:bg-primary hover:text-white">
                                     Profile
@@ -47,6 +47,7 @@
                     </span>
                 </div>
             </div>
+            
         </header>
         <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden">
             @yield('content')
