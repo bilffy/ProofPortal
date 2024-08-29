@@ -32,7 +32,7 @@
                             <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
                             <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
                         </button>
-                        <ul id="dropOptions" role="list" hidden class="absolute top-8 bg-white rounded shadow left-3">
+                        <ul id="dropOptions" role="list" hidden class="absolute top-8 bg-white rounded shadow right-3">
                             <li>
                                 <x-button.dropdownLink href="{{ route('profile.edit') }}" class="hover:bg-primary hover:text-white">
                                     Profile
@@ -61,11 +61,11 @@
     function toggleUserOptions() {
         showOptions = !showOptions;
         if (showOptions) {
-            $('#dropOptions').show("fast");
+            $('#dropOptions').slideDown("fast");
             $('#namebarIconUp').show();
             $('#namebarIconDown').hide();
         } else {
-            $('#dropOptions').hide("fast");
+            $('#dropOptions').slideUp("fast");
             $('#namebarIconUp').hide();
             $('#namebarIconDown').show();
         }
