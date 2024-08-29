@@ -1,6 +1,6 @@
 <x-button.base
 {{ $attributes->merge([
-    'flavor'=>'primary',
+    'flavor'=>'warning',
     'class'=>'px-3 py-2 transition-all hover:transition-all',
 ]) }}
   >

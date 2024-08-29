@@ -1,6 +1,6 @@
 <div id="navbarWrapper" class="flex flex-col w-[210px] mt-2">
     <div>
-        <img src="{{ Vite::asset('resources/assets/images/MSP-Logo_400x400.png') }}" alt="">
+        <img src="{{ Vite::asset('resources/assets/images/MSP-Logo_400x400.png') }}" alt=""/>
     </div>
     <x-layout.navItem id="tabHome" navIcon="home" href="dashboard">Home</x-layout.navItem>
     <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">PHOTOGRAPHY</span>
