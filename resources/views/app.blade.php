@@ -10,6 +10,7 @@
         <!-- Fonts -->
         <link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap">
         <!-- Scripts -->
+        @livewireStyles
         @vite(['resources/css/app.scss','resources/js/app.ts'])
     </head>
     <body class="font-sans antialiased">
