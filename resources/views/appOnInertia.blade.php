@@ -12,7 +12,7 @@
 
         <!-- Scripts -->
         @routes
-        @vite(['resources/js/inertia.ts', 'resources/css/app.scss', 'resources/css/output.scss'])
+        @vite(['resources/js/inertia.ts', 'resources/css/app.scss'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

@@ -13,7 +13,7 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: ['resources/js/app.ts', 'resources/css/app.scss'],
+            input: ['resources/js/app.ts', 'resources/js/inertia.ts', 'resources/css/app.scss'],
             refresh: true,
         }),
         vue({
@@ -25,7 +25,7 @@ export default defineConfig({
             },
         }),
     ],
-    base: process.env.ASSET_URL || '/',	
+    base: process.env.ASSET_URL || '/build/',	
     resolve: {
         alias: {
             // '@helper': 'resources/js/helpers'
