@@ -74,8 +74,12 @@ class OtpVerification extends Component
     }
     public function resendOtp(UserService $userService, $email)
     {
-        $user = User::where('email', $email)->firstOrFail();
+        $user = User::where('email', $email)->first();
 
+        if (!$user) {
+            return redirect()->route('login');
+        }
+        
         // Send OTP to the user
         $userService->sendOtp($user);
 

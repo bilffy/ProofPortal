@@ -1,4 +1,4 @@
-@props(['type' => 'type', 'textColor' => '#ffffff', 'bg' => 'bg-none', 'flavor'=>'none', 'hollow' => false])
+@props(['type' => 'button', 'textColor' => '#ffffff', 'bg' => 'bg-none', 'flavor'=>'none', 'hollow' => false])
 
 <button
     {{ $attributes->merge([
