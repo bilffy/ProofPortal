@@ -25,18 +25,23 @@ case "$1" in
 esac
 
 # Pull the latest changes from the main branch
+echo "Pull the latest changes from the main branch"
 git pull origin main
 
 # Stop any running services from the selected Docker Compose file
+echo "Stop any running services from the selected Docker Compose file"
 docker-compose -f $COMPOSE_FILE stop
 
 # Re-run the docker containers
-docker-compose -f $COMPOSE_FILE up -d
+echo "Re-run the docker containers"
+docker-compose -f $COMPOSE_FILE up -d --build
 
-# Access the node container and execute the required commands  
-docker exec -it msp_node sh -c "composer install && npm run build"
+# Access the node container and execute the required commands
+echo "Access the node container and execute the required commands: npm install && npm run build && exit;"
+docker exec -it msp_node sh -c "npm install && npm run build && exit;"
 
 # Access the PHP container and execute the required commands
+echo "Access the PHP container and execute the required commands"
 docker exec -it msp_php sh -c "
   composer install &&
   php artisan migrate &&
@@ -44,5 +49,8 @@ docker exec -it msp_php sh -c "
   php artisan config:clear &&
   php artisan view:clear &&
   php artisan cache:clear &&
-  php artisan queue:work
+  php artisan queue:work &&
+  exit;
 "
+
+
