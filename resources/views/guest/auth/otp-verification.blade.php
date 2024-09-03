@@ -17,7 +17,7 @@
 
         <div class="flex w-full items-center justify-between">
             <x-button.primary type="submit">Verify</x-button.primary>
-            <x-button.link  type="button" wire:click="resendOtp('{{ $email }}')">Resend Verification Code</x-button.link>
+            <x-button.link wire:click="resendOtp('{{ $email }}')">Resend Verification Code</x-button.link>
         </div>
     </form>
 </main>
