@@ -13,7 +13,18 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: ['resources/js/app.ts', 'resources/js/inertia.ts', 'resources/css/app.scss'],
+	    input: 
+                [
+                    'resources/js/app.ts', 
+                    'resources/js/inertia.ts', 
+                    'resources/css/app.scss',
+                    'resources/js/helpers/constants.helper.ts',
+                    'resources/js/helpers/image.helper.ts',
+                    'resources/js/helpers/pagination.helper.ts',
+                    'resources/js/helpers/roles.helper.ts',
+                    'resources/js/helpers/types.helper.ts',
+                    'resources/js/helpers/utils.helper.ts'
+                ], 
             refresh: true,
         }),
         vue({
@@ -28,7 +39,7 @@ export default defineConfig({
     base: process.env.ASSET_URL || '/build/',	
     resolve: {
         alias: {
-            // '@helper': 'resources/js/helpers'
+             //'@helper': 'resources/js/helpers'
             // 'vue2': 'vue/dist/vue.esm-bundler.js'
         },
     },

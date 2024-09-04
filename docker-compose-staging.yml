@@ -17,7 +17,7 @@ services:
   node:
     build:
       context: .
-      dockerfile: docker/node/DockerfileStaging
+      dockerfile: docker/node/Dockerfile
     image: msp_node
     container_name: msp_node
     ports:
