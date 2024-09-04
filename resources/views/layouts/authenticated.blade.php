@@ -9,7 +9,7 @@
                     <div class="flex flex-row items-center gap-2 text-primary text-sm">
                         <img src="{{ Vite::asset('resources/assets/images/Info.svg') }}" alt="" width="20px" height="20px">
                         You're impersonating <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege
-                    </div>
+                        </div>
                     <div>
                         <x-button.base class="bg-alert p-1">
                             Exit
@@ -32,9 +32,9 @@
                             <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
                             <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
                         </button>
-                        <ul id="dropOptions" role="list" hidden class="absolute top-8 bg-white rounded shadow right-3">
+                        <x-form.dropdownPanel>
                             <li>
-                                <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">
+                                <x-button.dropdownLink href="{{ route('profile.edit') }}" class="hover:bg-primary hover:text-white">
                                     Profile
                                 </x-button.dropdownLink>
                             </li>
@@ -43,7 +43,7 @@
                                     Log Out
                                 </x-button.dropdownLink>
                             </li>
-                        </ul>
+                        </x-form.dropdownPanel>
                     </span>
                 </div>
             </div>
@@ -70,16 +70,6 @@
             $('#namebarIconDown').show();
         }
     }
-    // Handle clicking outside of dropdown menu for user should automatically close the open menu
-    window.addEventListener("load", function () {
-        $(document).on("click", function (event) {
-            const isOutsideDropdown = $(event.target).closest("#dropOptions").length === 0;
-            const isOutsideButton= $(event.target).closest("#userBtn").length === 0;
-            if (showOptions && isOutsideDropdown && isOutsideButton) {
-                toggleUserOptions();
-            }
-        });
-    });
 </script>
 
 @stack('scripts')
