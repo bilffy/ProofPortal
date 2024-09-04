@@ -1,20 +1,17 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/test', [TestController::class, 'index']); // FOR TESTING ONLY; DELETE WHEN DEPLOYING
 Route::inertia('/setup', 'Auth/AccountSetup');
 Route::inertia('/verification', 'Auth/Verification');
-Route::inertia('/dashboard', 'Dashboard/Home');
 
-Route::get('/', function () {
-    return Inertia::render('Dashboard/Home');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     // Profile routes
