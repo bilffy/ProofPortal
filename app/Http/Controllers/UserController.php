@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Auth;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,14 +16,18 @@ class UserController extends Controller
         // TODO: Add initial filter for list of users only visible to this user's permission level
         $this->applySearch($usersQuery, $request->input('search', ''));
         $this->applySort($usersQuery, $request->input('sort', ''));
-        return Inertia::render('Users/ManageUsers', [
+        return view('manageUsers', [
+            'user' => new UserResource(Auth::user()),
             'results' => UserResource::collection($usersQuery->paginate($perPage)->withQueryString())
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Users/Create', []);
+        // return Inertia::render('Users/Create', []);
+        return view('newUser', [
+            'user' => new UserResource(Auth::user()),
+        ]);
     }
 
     protected function applySearch($query, $search)
