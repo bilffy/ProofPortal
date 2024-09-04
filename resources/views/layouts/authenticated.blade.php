@@ -1,6 +1,6 @@
 @extends('app')
 
-<div class="flex flex-row test">
+<div class="flex flex-row">
     <x-layout.navBar />
     <div class="flex flex-col w-full h-screen">
         <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2">
