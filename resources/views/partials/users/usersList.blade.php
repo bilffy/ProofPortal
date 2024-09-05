@@ -20,13 +20,44 @@
                     <x-table.cell>[role]</x-table.cell>
                     <x-table.cell>[school/franchise]</x-table.cell>
                     <x-table.cell>[status]</x-table.cell>
-                    <x-table.cell class="w-[100px]">
+                    <x-table.cell class="w-[100px] relative">
                         <x-button.link>
-                            <x-icon class="px-2" icon="ellipsis" />
+                            <x-icon class="px-2" icon="ellipsis" onclick="toggleDropdown({{ $user->id }})" />
                         </x-button.link>
+                        <x-form.dropdownPanel id="dropdown-{{ $user->id }}">
+                            <li>
+                                <x-button.dropdownLink  class="hover:bg-primary hover:text-white">
+                                    Invite
+                                </x-button.dropdownLink>
+                            </li>
+                            {{--
+                            <li>
+                                <x-button.dropdownLink  class="hover:bg-primary hover:text-white">
+                                    View
+                                </x-button.dropdownLink>
+                            </li>
+                            <li>
+                                <x-button.dropdownLink --}}{{--href="{{ route('users.destroy', $user) }}"--}}{{-- method="delete" as="button" class="hover:bg-primary hover:text-white">
+                                    Delete
+                                </x-button.dropdownLink>
+                            </li>--}}
+                        </x-form.dropdownPanel>
                     </x-table.cell>
                 </tr>
             @endforeach
         </tbody>
     </table>
 </div>
+
+<script>
+    function toggleDropdown(userId) {
+        const dropdown = $(`#dropdown-${userId}`);
+        if (dropdown.is(':hidden')) {
+            dropdown.slideDown("fast");
+        } else {
+            dropdown.slideUp("fast");
+        }
+    }
+</script>
+
+@stack('scripts')
