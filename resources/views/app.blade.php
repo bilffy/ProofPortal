@@ -14,6 +14,10 @@
         @vite(['resources/css/app.scss','resources/js/app.ts'])
     </head>
     <body class="font-sans antialiased">
+        @if(session('success'))
+            <x-toast-success message="{{  session('success') }}" />
+        @endif
+
         @yield('main')
         @livewireScripts
     </body>
