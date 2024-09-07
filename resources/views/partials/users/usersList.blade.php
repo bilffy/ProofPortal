@@ -19,7 +19,20 @@
                     <x-table.cell>{{ $user->lastname }}</x-table.cell>
                     <x-table.cell>[role]</x-table.cell>
                     <x-table.cell>[school/franchise]</x-table.cell>
-                    <x-table.cell>{{ $user->status }}</x-table.cell>
+                    <x-table.cell>
+                        @php
+                            if ($user->status == 'active') :
+                                $badge = 'gray';
+                            elseif ($user->status == 'invited') :
+                                $badge = 'blue';
+                            elseif ($user->status == 'disabled') :
+                                $badge = 'red';
+                            else :
+                                $badge = 'green';
+                            endif;
+                        @endphp
+                        <x-badge text="{{ ucfirst($user->status) }}" badge="{{ $badge }}" />
+                    </x-table.cell>
                     <x-table.cell class="w-[100px] relative">
                         <x-button.link>
                             <x-icon class="px-2 cursor-pointer" icon="ellipsis" data-dropdown-toggle="userDropdownAction-{{ $user->id }}" />
