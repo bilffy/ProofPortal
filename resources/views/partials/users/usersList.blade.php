@@ -65,7 +65,7 @@
     <x-slot name="footer">
         <x-modal.footer>
             <x-button.secondary data-modal-hide="inviteModal">Cancel</x-button.secondary>
-            <x-button.primary id="accept-invite" data-invite-route="" data-modal-hide="inviteModal">Invite</x-button.primary>
+            <x-button.primary  id="accept-invite" data-invite-route="">Invite</x-button.primary>
         </x-modal.footer>
     </x-slot>
 </x-modal.base>
@@ -82,6 +82,8 @@
         });
     
         $('#accept-invite').on('click', function() {
+            $(this).@disabled(true);
+            $(this).html(`<x-spinner.button />`);
             window.location.href = $(this).attr('data-invite-route');
         });
     }, false);
