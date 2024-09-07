@@ -19,29 +19,22 @@
                     <x-table.cell>{{ $user->lastname }}</x-table.cell>
                     <x-table.cell>[role]</x-table.cell>
                     <x-table.cell>[school/franchise]</x-table.cell>
-                    <x-table.cell>[status]</x-table.cell>
+                    <x-table.cell>{{ $user->status }}</x-table.cell>
                     <x-table.cell class="w-[100px] relative">
                         <x-button.link>
-                            <x-icon class="px-2" icon="ellipsis" onclick="toggleDropdown({{ $user->id }})" />
+                            <x-icon class="px-2 cursor-pointer" icon="ellipsis" data-dropdown-toggle="userDropdownAction-{{ $user->id }}" />
                         </x-button.link>
-                        <x-form.dropdownPanel id="dropdown-{{ $user->id }}">
-                            <li>
-                                <x-button.dropdownLink  class="hover:bg-primary hover:text-white">
-                                    Invite
-                                </x-button.dropdownLink>
-                            </li>
-                            {{--
-                            <li>
-                                <x-button.dropdownLink  class="hover:bg-primary hover:text-white">
-                                    View
-                                </x-button.dropdownLink>
-                            </li>
-                            <li>
-                                <x-button.dropdownLink --}}{{--href="{{ route('users.destroy', $user) }}"--}}{{-- method="delete" as="button" class="hover:bg-primary hover:text-white">
-                                    Delete
-                                </x-button.dropdownLink>
-                            </li>--}}
-                        </x-form.dropdownPanel>
+                        <!-- Dropdown menu -->
+                        <div id="userDropdownAction-{{ $user->id }}" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton-{{ $user->id }}">
+                                <li>
+                                    <a href="#" data-invite-route="{{ route("invite.single", ["id" => $user->id ]) }}"  data-modal-target="inviteModal" data-modal-toggle="inviteModal" data-user-id="{{ $user->id }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Invite</a>
+                                </li>
+                                <li>
+                                    <a href="#"  class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
+                                </li>
+                            </ul>
+                        </div>
                     </x-table.cell>
                 </tr>
             @endforeach
@@ -49,15 +42,35 @@
     </table>
 </div>
 
-<script>
-    function toggleDropdown(userId) {
-        const dropdown = $(`#dropdown-${userId}`);
-        if (dropdown.is(':hidden')) {
-            dropdown.slideDown("fast");
-        } else {
-            dropdown.slideUp("fast");
-        }
-    }
-</script>
+<!-- Main modal -->
+<x-modal.base id="inviteModal" title="Invite new User" body="components.modal.body" footer="components.modal.footer">
+    <x-slot name="body">
+        <x-modal.body>
+            <p id="modal-email"></p>
+        </x-modal.body>
+    </x-slot>
+    <x-slot name="footer">
+        <x-modal.footer>
+            <x-button.secondary data-modal-hide="inviteModal">Cancel</x-button.secondary>
+            <x-button.primary id="accept-invite" data-invite-route="" data-modal-hide="inviteModal">Invite</x-button.primary>
+        </x-modal.footer>
+    </x-slot>
+</x-modal.base>
 
-@stack('scripts')
+@push('scripts')
+<script type="module">
+    window.addEventListener("load", function () {
+        $('[data-modal-toggle="inviteModal"]').on('click', function() {
+            const email = $(this).closest('tr').find('td:first-child').text().trim();
+            const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+            const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
+            $('#accept-invite').attr('data-invite-route', $(this).attr('data-invite-route'));
+            $('#modal-email').html("Are you sure you want to invite <b>" + fname + " " + lname + " (" + email + ")?</b>");
+        });
+    
+        $('#accept-invite').on('click', function() {
+            window.location.href = $(this).attr('data-invite-route');
+        });
+    }, false);
+</script>
+@endpush
