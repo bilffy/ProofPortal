@@ -3,6 +3,17 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+    build: {
+	target: 'esnext',
+        minify: true,
+        sourcemap: true,    
+        esbuild: {
+            keepNames: true, // Preserve variable names
+        },
+        rollupOptions: {
+	    preserveEntrySignatures: 'exports-only',
+        },
+    },	    
     server: {
         hmr: {
             host: "0.0.0.0",
