@@ -21,17 +21,11 @@
                     <x-table.cell>[school/franchise]</x-table.cell>
                     <x-table.cell>
                         @php
-                            if ($user->status == 'active') :
-                                $badge = 'gray';
-                            elseif ($user->status == 'invited') :
-                                $badge = 'blue';
-                            elseif ($user->status == 'disabled') :
-                                $badge = 'red';
-                            else :
-                                $badge = 'green';
-                            endif;
+                            $status = $user->status;
+                            $badge = $UserStatusHelper->getBadge($status);
                         @endphp
-                        <x-badge text="{{ ucfirst($user->status) }}" badge="{{ $badge }}" />
+                        
+                        <x-badge text="{{ ucfirst($status) }}" badge="{{ $badge }}" />
                     </x-table.cell>
                     <x-table.cell class="w-[100px] relative">
                         <x-button.link>
@@ -40,9 +34,18 @@
                         <!-- Dropdown menu -->
                         <div id="userDropdownAction-{{ $user->id }}" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
                             <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton-{{ $user->id }}">
-                                <li>
-                                    <a href="#" data-invite-route="{{ route("invite.single", ["id" => $user->id ]) }}"  data-modal-target="inviteModal" data-modal-toggle="inviteModal" data-user-id="{{ $user->id }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Invite</a>
-                                </li>
+                                @if ($status == $User::STATUS_NEW || $status == $User::STATUS_INVITED)
+                                    <li>
+                                        <a href="#" 
+                                           data-invite-route="{{ route("invite.single", ["id" => $user->id ]) }}"  
+                                           data-modal-target="inviteModal" 
+                                           data-modal-toggle="inviteModal" 
+                                           data-user-id="{{ $user->id }}" 
+                                           class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                            {{ $status == $User::STATUS_INVITED ? 'Re-invited' : 'Invite' }}
+                                        </a>
+                                    </li>
+                                @endif
                                 <li>
                                     <a href="#"  class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
                                 </li>
