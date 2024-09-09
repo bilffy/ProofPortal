@@ -44,7 +44,8 @@
                     class="rounded-md text-sm cursor-pointer bg-none text-[#ffffff] flex flex-row gap-1 px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" 
                     type="submit" 
                     :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">
-                Next
+                <span wire:loading.remove>Next</span>
+                <span wire:loading><x-spinner.button label="Next" /></span>
             </button>
         </div>
     </form>

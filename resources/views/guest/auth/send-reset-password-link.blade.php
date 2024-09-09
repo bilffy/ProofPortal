@@ -14,7 +14,7 @@
 
     <form wire:submit.prevent="submit">
         @error('email')
-            <div class="mb-4 font-medium text-sm text-green-600 text-[#FF0000]">        
+            <div class="mb-4 font-medium text-sm text-red-600 text-[#FF0000]">        
                 {{ $message }}
             </div>
         @enderror
@@ -34,7 +34,10 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <x-button.primary type="submit" wire:loading.attr="disabled">Email Password Reset Link</x-button.primary>
+            <x-button.primary type="submit" wire:loading.attr="disabled">
+                <span wire:loading.remove>Email Password Reset Link</span>
+                <span wire:loading><x-spinner.button label="Email Password Reset Link" /></span>
+            </x-button.primary>
         </div>
     </form>
 </main>
