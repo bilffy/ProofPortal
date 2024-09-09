@@ -37,7 +37,8 @@
     
         <div class="flex w-full items-center justify-between mt-4">
             <x-button.primary type="submit" class="rounded-md bg-none px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" wire:loading.attr="disabled">
-                Login
+                <span wire:loading.remove>Login</span>
+                <span wire:loading><x-spinner.button label="Login" /></span>
             </x-button.primary>
             @if (Route::has('password.request'))
                 <a href="{{ route('password.request') }}" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -47,3 +48,4 @@
         </div>
     </form>
 </main>
+

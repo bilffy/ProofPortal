@@ -42,22 +42,25 @@ class OtpVerification extends Component
         $recentOtp = $userService->getRecentOtp($user);
 
         if ($recentOtp === null) {
+            $this->message = 'OTP is Invalid!';
             throw ValidationException::withMessages([
-                'otp' => ['OTP is Invalid!'],
+                'otp' => [$this->message],
             ]);
         }
 
         $decryptOtp = OTPHelper::decryptOtp($recentOtp->otp);
 
         if ($decryptOtp !== (int)$this->otp) {
+            $this->message = 'OTP is Invalid!';
             throw ValidationException::withMessages([
-                'otp' => ['OTP is Invalid!'],
+                'otp' => [$this->message],
             ]);
         }
 
         if (Carbon::parse($recentOtp->expire_on)->isPast()) {
+            $this->message = 'OTP has expired!';
             throw ValidationException::withMessages([
-                'otp' => ['OTP has expired!'],
+                'otp' => [$this->message],
             ]);
         }
 
@@ -85,6 +88,7 @@ class OtpVerification extends Component
 
         // Update the message
         $this->message = 'OTP has been resent to your email.';
+        $this->resetErrorBag();
     }
     
     public function render()
