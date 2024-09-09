@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
+use App\Helpers\UserStatusHelper;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        view()->share('User', User::class);
+        view()->share('UserStatusHelper', new UserStatusHelper());
         JsonResource::withoutWrapping();
     }
 }

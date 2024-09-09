@@ -11,7 +11,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
     
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_NEW = 'new';
     public const STATUS_INVITED = 'invited';
     public const STATUS_ACTIVE = 'active';
     public const STATUS_DISABLED = 'disabled';

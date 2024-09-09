@@ -1,4 +1,5 @@
 import './bootstrap';
+import 'flowbite';
 // import '.exports';
 // import { createApp } from 'vue2';
 // import Test from './components/Test.vue';
