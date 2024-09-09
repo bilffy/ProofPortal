@@ -1,11 +1,6 @@
 @props(['id' => 'dropOptions'])
-<ul
-        {{ $attributes->merge([
-            'id' => $id,
-        ]) }}
-        class="absolute top-10 bg-white rounded shadow right-3 overflow-hidden"        
-        role="list"
-        hidden 
->
-    {{ $slot}}
-</ul>
+<div id="{{ $id }}" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton-{{ $id }}">
+        {{ $slot}}
+    </ul>
+</div>

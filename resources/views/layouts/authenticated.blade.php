@@ -25,14 +25,14 @@
                         <button
                             id="userBtn"
                             type="button"
-                            onclick="toggleUserOptions()"
+                            data-dropdown-toggle="userSettingsAction"
                             class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800"
                         >
                             {{ $user->name }}
                             <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
                             <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
                         </button>
-                        <x-form.dropdownPanel>
+                        <x-form.dropdownPanel id="userSettingsAction">
                             <li>
                                 <x-button.dropdownLink href="{{ route('profile.edit') }}" class="hover:bg-primary hover:text-white">
                                     Profile
@@ -61,11 +61,11 @@
     function toggleUserOptions() {
         showOptions = !showOptions;
         if (showOptions) {
-            $('#dropOptions').slideDown("fast");
+            //$('#dropOptions').slideDown("fast");
             $('#namebarIconUp').show();
             $('#namebarIconDown').hide();
         } else {
-            $('#dropOptions').slideUp("fast");
+            //$('#dropOptions').slideUp("fast");
             $('#namebarIconUp').hide();
             $('#namebarIconDown').show();
         }

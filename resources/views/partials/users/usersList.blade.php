@@ -23,6 +23,7 @@
                         @php
                             $status = $user->status;
                             $badge = $UserStatusHelper->getBadge($status);
+                            $inviteRoute = route("invite.single", ["id" => $user->id ]);
                         @endphp
                         
                         <x-badge text="{{ ucfirst($status) }}" badge="{{ $badge }}" />
@@ -32,25 +33,24 @@
                             <x-icon class="px-2 cursor-pointer" icon="ellipsis" data-dropdown-toggle="userDropdownAction-{{ $user->id }}" />
                         </x-button.link>
                         <!-- Dropdown menu -->
-                        <div id="userDropdownAction-{{ $user->id }}" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton-{{ $user->id }}">
-                                @if ($status == $User::STATUS_NEW || $status == $User::STATUS_INVITED)
-                                    <li>
-                                        <a href="#" 
-                                           data-invite-route="{{ route("invite.single", ["id" => $user->id ]) }}"  
-                                           data-modal-target="inviteModal" 
-                                           data-modal-toggle="inviteModal" 
-                                           data-user-id="{{ $user->id }}" 
-                                           class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                                            {{ $status == $User::STATUS_INVITED ? 'Re-invited' : 'Invite' }}
-                                        </a>
-                                    </li>
-                                @endif
+                        <x-form.dropdownPanel id="userDropdownAction-{{ $user->id }}">
+                            @if ($status == $User::STATUS_NEW || $status == $User::STATUS_INVITED):
                                 <li>
-                                    <a href="#"  class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
+                                    <x-button.dropdownLink
+                                        href="#" 
+                                        data-invite-route="{{ $inviteRoute }}"  
+                                        data-modal-target="inviteModal" 
+                                        data-modal-toggle="inviteModal" 
+                                        data-user-id="{{ $user->id }}" 
+                                        class="hover:bg-primary hover:text-white">
+                                        {{ $status == $User::STATUS_INVITED ? 'Re-invited' : 'Invite' }}
+                                    </x-button.dropdownLink>
                                 </li>
-                            </ul>
-                        </div>
+                            @endif
+                            <li>
+                                <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">Edit</x-button.dropdownLink>
+                            </li>
+                        </x-form.dropdownPanel>
                     </x-table.cell>
                 </tr>
             @endforeach
