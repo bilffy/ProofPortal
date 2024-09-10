@@ -7,10 +7,6 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/test', [TestController::class, 'index']); // FOR TESTING ONLY; DELETE WHEN DEPLOYING
-Route::inertia('/setup', 'Auth/AccountSetup');
-Route::inertia('/verification', 'Auth/Verification');
-
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
