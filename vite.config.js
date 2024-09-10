@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     build: {
@@ -27,7 +26,6 @@ export default defineConfig({
 	    input: 
                 [
                     'resources/js/app.ts', 
-                    'resources/js/inertia.ts', 
                     'resources/css/app.scss',
                     'resources/js/helpers/constants.helper.ts',
                     'resources/js/helpers/image.helper.ts',
@@ -37,14 +35,6 @@ export default defineConfig({
                     'resources/js/helpers/utils.helper.ts'
                 ], 
             refresh: true,
-        }),
-        vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
-            },
         }),
     ],
     base: process.env.ASSET_URL || '/build/',	
