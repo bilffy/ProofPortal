@@ -1,3 +1,4 @@
+<x-tabs.tabTest/>
 <div class="flex flex-row gap-5">
     <div class=" border-neutral-300 border-[1px] h-full w-3/4 rounded-md overflow-hidden">
         <div class="p-4 flex items-center justify-between">
