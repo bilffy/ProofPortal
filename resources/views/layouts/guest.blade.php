@@ -18,7 +18,7 @@
     <div class="flex items-center justify-center p-6 min-h-screen">
         <div class="w-full max-w-md">
             <div class="flex align-middle justify-center">
-                <img src="{{ Vite::asset('resources/assets/images/MSP-Logo.svg') }}" alt="">
+                <img src="{{ Vite::asset('resources/assets/images/MSP-Logo.svg') }}" width="150" alt="">
             </div>
             {{ $slot }}
         </div>
