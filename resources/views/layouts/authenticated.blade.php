@@ -24,10 +24,10 @@
                     <div class="ms-3 relative">
                         <span class="inline-flex rounded-md float-right">
                             <button
-                                id="userBtn"
-                                type="button"
-                                data-dropdown-toggle="userSettingsAction"
-                                class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800"
+                                    id="userBtn"
+                                    type="button"
+                                    data-dropdown-toggle="userSettingsAction"
+                                    class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800"
                             >
                                 {{ $user->name }}
                                 <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
@@ -48,7 +48,7 @@
                         </span>
                     </div>
                 </div>
-                
+
             </header>
             <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden">
                 @yield('content')
@@ -76,5 +76,3 @@
     @stack('scripts')
 @endsection
   
-
-
