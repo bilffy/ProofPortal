@@ -6,11 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
-    
+    use HasFactory, Notifiable, HasRoles;
+
     public const STATUS_NEW = 'new';
     public const STATUS_INVITED = 'invited';
     public const STATUS_ACTIVE = 'active';
@@ -20,6 +21,12 @@ class User extends Authenticatable
     public function franchiseUsers()
     {
         return $this->hasMany(FranchiseUser::class, 'user_id');
+    }
+
+    // Define the relationship with school_users
+    public function schoolUsers()
+    {
+        return $this->hasMany(SchoolUser::class, 'user_id');
     }
 
     // Define the relationship with user_invite_tokens
@@ -99,9 +106,44 @@ class User extends Authenticatable
         ];
     }
 
+    public function isAdmin()
+    {
+        return $this->hasRole([Role::ROLE_SUPER_ADMIN, Role::ROLE_ADMIN]);
+    }
+
+    public function isFranchiseLevel()
+    {
+        return $this->hasRole([Role::ROLE_FRANCHISE]);
+    }
+
+    public function isSchoolLevel()
+    {
+        return $this->hasRole([Role::ROLE_SCHOOL_ADMIN, Role::ROLE_PHOTO_COORDINATOR, Role::ROLE_TEACHER]);
+    }
+
     // Get the latest otp
     public function getLatestOtp()
     {
         return $this->userOtps()->latest()->first();
+    }
+
+    public function getRole()
+    {
+        return $this->getRoleNames()->first();
+    }
+    
+    public function getFranchise()
+    {
+        return $this->franchiseUsers()->firstOrFail()->franchise;
+    }
+
+    public function getSchool()
+    {
+        return $this->schoolUsers()->firstOrFail()->school;
+    }
+
+    public function getSchoolOrFranchise()
+    {
+        return $this->isAdmin() ? "" : ( $this->isFranchiseLevel() ? $this->getFranchise()->name : $this->getSchool()->name );
     }
 }

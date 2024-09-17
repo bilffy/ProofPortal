@@ -8,6 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Role extends Model
 {
     use HasFactory;
+
+    public const ROLE_SUPER_ADMIN = 'Super Admin';
+    public const ROLE_ADMIN = 'Admin';
+    public const ROLE_FRANCHISE = 'Franchise';
+    public const ROLE_PHOTO_COORDINATOR = 'Photo Coordinator';
+    public const ROLE_SCHOOL_ADMIN = 'School Admin';
+    public const ROLE_TEACHER = 'Teacher';
     
     protected $table = 'roles';
     
@@ -20,6 +27,51 @@ class Role extends Model
         'name',
         'notes',
     ];
+
+    public static function getAllowedRoles($role)
+    {
+        $allowedRoles = [];
+        switch ($role) {
+            case self::ROLE_SUPER_ADMIN:
+                $allowedRoles = [
+                    self::ROLE_SUPER_ADMIN,
+                    self::ROLE_ADMIN,
+                    self::ROLE_FRANCHISE,
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            case self::ROLE_ADMIN:
+                $allowedRoles = [
+                    self::ROLE_ADMIN,
+                    self::ROLE_FRANCHISE,
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            case self::ROLE_FRANCHISE:
+                $allowedRoles = [
+                    self::ROLE_FRANCHISE,
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            case self::ROLE_SCHOOL_ADMIN:
+                $allowedRoles = [
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            default:
+                $allowedRoles = [];
+        }
+
+        return Role::whereIn('name', $allowedRoles)->get()->all();
+    }
     
     /**
      * Get the users associated with the role.

@@ -44,7 +44,7 @@ export const getRoute = (routeName: string): string => {
         switch (routeName) {
             case 'dashboard':
                 return `${root}`
-            case 'users.manage':
+            case 'users':
                 return `${root}/users`;
             default:
                 return `${root}/${routeName}`;

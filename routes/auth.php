@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use App\Livewire\Auth\AccountSetup;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Livewire\Auth\ForgotPassword;
@@ -17,6 +18,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('register', [UserController::class, 'store'])->name('user.register');
     Route::match(['get', 'post'],'logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });

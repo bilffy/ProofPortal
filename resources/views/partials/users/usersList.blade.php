@@ -17,8 +17,8 @@
                     <x-table.cell>{{ $user->email }}</x-table.cell>
                     <x-table.cell>{{ $user->firstname }}</x-table.cell>
                     <x-table.cell>{{ $user->lastname }}</x-table.cell>
-                    <x-table.cell>[role]</x-table.cell>
-                    <x-table.cell>[school/franchise]</x-table.cell>
+                    <x-table.cell>{{ $user->getRole() }}</x-table.cell>
+                    <x-table.cell>{{ $user->getSchoolOrFranchise() }}</x-table.cell>
                     <x-table.cell>
                         @php
                             $status = $user->status;
