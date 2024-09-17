@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
+use App\Helpers\RoleHelper;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RoleSeeder extends Seeder
 {
@@ -14,20 +15,20 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         $roles = [
-            Role::ROLE_SUPER_ADMIN,
-            Role::ROLE_ADMIN,
-            Role::ROLE_FRANCHISE,
-            Role::ROLE_SCHOOL_ADMIN,
-            Role::ROLE_PHOTO_COORDINATOR,
-            Role::ROLE_TEACHER,
+            RoleHelper::ROLE_SUPER_ADMIN,
+            RoleHelper::ROLE_ADMIN,
+            RoleHelper::ROLE_FRANCHISE,
+            RoleHelper::ROLE_SCHOOL_ADMIN,
+            RoleHelper::ROLE_PHOTO_COORDINATOR,
+            RoleHelper::ROLE_TEACHER,
         ];
 
         // Create or get 'create user' Permission
         $permission = Permission::createOrFirst(['name' => 'create user']);
         foreach ($roles as $roleName) {
-            $role = \Spatie\Permission\Models\Role::createOrFirst(['name' => $roleName]);
+            $role = Role::createOrFirst(['name' => $roleName]);
             // Add 'create user' permission to roles except Photo Coordinator and Teacher
-            if (!in_array($roleName, [Role::ROLE_PHOTO_COORDINATOR, Role::ROLE_TEACHER])) {
+            if (!in_array($roleName, [RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER])) {
                 $role->givePermissionTo($permission);
             }
         }

@@ -1,34 +1,25 @@
 <?php
 
-namespace App\Models;
+namespace App\Helpers;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role;
 
-class Role extends Model
+class RoleHelper
 {
-    use HasFactory;
-
     public const ROLE_SUPER_ADMIN = 'Super Admin';
     public const ROLE_ADMIN = 'Admin';
     public const ROLE_FRANCHISE = 'Franchise';
     public const ROLE_PHOTO_COORDINATOR = 'Photo Coordinator';
     public const ROLE_SCHOOL_ADMIN = 'School Admin';
     public const ROLE_TEACHER = 'Teacher';
-    
-    protected $table = 'roles';
-    
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'notes',
-    ];
 
-    public static function getAllowedRoles($role)
+    /**
+     * Get allowed roles based on the given role.
+     *
+     * @param string $role
+     * @return array
+     */
+    public static function getAllowedRoles(string $role): array
     {
         $allowedRoles = [];
         switch ($role) {
@@ -71,21 +62,5 @@ class Role extends Model
         }
 
         return Role::whereIn('name', $allowedRoles)->get()->all();
-    }
-    
-    /**
-     * Get the users associated with the role.
-     */
-    public function users()
-    {
-        return $this->hasMany(UserRole::class, 'role_id');
-    }
-    
-    /**
-     * Get the permissions associated with the role.
-     */
-    public function permissions()
-    {
-        return $this->hasMany(RolePermission::class, 'role_id');
     }
 }

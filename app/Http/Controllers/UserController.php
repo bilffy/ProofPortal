@@ -5,17 +5,17 @@ use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
 use App\Models\Franchise;
 use App\Models\FranchiseUser;
-use App\Models\Role;
+use App\Helpers\RoleHelper;
 use App\Models\School;
 use App\Models\SchoolUser;
 use App\Models\User;
-use App\Models\UserRole;
 use Auth;
 use DB;
 use Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -43,7 +43,7 @@ class UserController extends Controller
                 : School::orderBy('name')->where('id', '=', $user->getSchool()->id)->get() );
         return view('newUser', [
             'user' => new UserResource($user),
-            'roles' => RoleResource::collection(Role::getAllowedRoles($user->getRole())),
+            'roles' => RoleResource::collection(RoleHelper::getAllowedRoles($user->getRole())),
             'franchises' => $franchiseList,
             'schools' => $schoolList,
         ]);
@@ -84,15 +84,15 @@ class UserController extends Controller
     
             switch ($role)
             {
-                case Role::ROLE_FRANCHISE:
+                case RoleHelper::ROLE_FRANCHISE:
                     FranchiseUser::create([
                         'user_id' => $user->id,
                         'franchise_id' => $request->franchise
                     ]);
                     break;
-                case Role::ROLE_SCHOOL_ADMIN:
-                case Role::ROLE_PHOTO_COORDINATOR:
-                case Role::ROLE_TEACHER:
+                case RoleHelper::ROLE_SCHOOL_ADMIN:
+                case RoleHelper::ROLE_PHOTO_COORDINATOR:
+                case RoleHelper::ROLE_TEACHER:
                     SchoolUser::create([
                         'user_id' => $user->id,
                         'school_id' => $request->school
