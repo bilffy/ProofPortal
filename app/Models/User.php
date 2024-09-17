@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Helpers\RoleHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -45,12 +46,6 @@ class User extends Authenticatable
     public function status()
     {
         return $this->belongsTo(Status::class, 'active_status_id');
-    }
-    
-    // Define the relationship with the user_roles table
-    public function userRoles()
-    {
-        return $this->hasMany(UserRole::class, 'user_id');
     }
     
     /**
@@ -108,17 +103,17 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        return $this->hasRole([Role::ROLE_SUPER_ADMIN, Role::ROLE_ADMIN]);
+        return $this->hasRole([RoleHelper::ROLE_SUPER_ADMIN, RoleHelper::ROLE_ADMIN]);
     }
 
     public function isFranchiseLevel()
     {
-        return $this->hasRole([Role::ROLE_FRANCHISE]);
+        return $this->hasRole([RoleHelper::ROLE_FRANCHISE]);
     }
 
     public function isSchoolLevel()
     {
-        return $this->hasRole([Role::ROLE_SCHOOL_ADMIN, Role::ROLE_PHOTO_COORDINATOR, Role::ROLE_TEACHER]);
+        return $this->hasRole([RoleHelper::ROLE_SCHOOL_ADMIN, RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER]);
     }
 
     // Get the latest otp
