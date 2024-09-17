@@ -75,9 +75,7 @@
 
 @push('scripts')
 <script type="module">
-    console.log("HWRE0");
     window.addEventListener("load", function () {
-        console.log("HWRE");
         $('[data-modal-toggle="inviteModal"]').on('click', function() {
             const email = $(this).closest('tr').find('td:first-child').text().trim();
             const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();

@@ -145,12 +145,12 @@
         updateSelectByRole(roles[event.target.value]);
     };
 
-    setTimeout(() => {
+    window.addEventListener('load', () => {
         $('#select_role').select2({minimumResultsForSearch: Infinity});
         $('#select_role').change(toggleLevelOptions);
         $('#select_school').select2();
         $('#select_franchise').select2();
         updateSelectByRole(user.role);
-    }, 500);
+    });
 </script>
 @endpush

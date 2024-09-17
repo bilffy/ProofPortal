@@ -35,7 +35,7 @@
                             </button>
                             <x-form.dropdownPanel id="userSettingsAction">
                                 <li>
-                                    <x-button.dropdownLink href="{{ route('profile.edit') }}" class="hover:bg-primary hover:text-white">
+                                    <x-button.dropdownLink href="{{ route('dashboard') }}" class="hover:bg-primary hover:text-white">
                                         Profile
                                     </x-button.dropdownLink>
                                 </li>
