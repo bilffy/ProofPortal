@@ -18,7 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
     Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
     // Users routes
-    Route::get('/users', [UserController::class, 'index'])->name('users.manage');
+    Route::get('/users', [UserController::class, 'index'])->name('users');
     Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
 
     Route::get('/proofing', [TestController::class, 'index'])->name('proofing'); // FOR TESTING

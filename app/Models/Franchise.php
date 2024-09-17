@@ -35,4 +35,12 @@ class Franchise extends Model
     {
         return $this->hasMany(FranchiseUser::class, 'franchise_id');
     }
+
+    /**
+     * Get the schools associated with the franchise.
+     */
+    public function schools()
+    {
+        return $this->hasMany(SchoolFranchise::class, 'franchise_id');
+    }
 }

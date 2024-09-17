@@ -17,8 +17,8 @@
                     <x-table.cell>{{ $user->email }}</x-table.cell>
                     <x-table.cell>{{ $user->firstname }}</x-table.cell>
                     <x-table.cell>{{ $user->lastname }}</x-table.cell>
-                    <x-table.cell>[role]</x-table.cell>
-                    <x-table.cell>[school/franchise]</x-table.cell>
+                    <x-table.cell>{{ $user->getRole() }}</x-table.cell>
+                    <x-table.cell>{{ $user->getSchoolOrFranchise() }}</x-table.cell>
                     <x-table.cell>
                         @php
                             $status = $user->status;
@@ -75,7 +75,9 @@
 
 @push('scripts')
 <script type="module">
+    console.log("HWRE0");
     window.addEventListener("load", function () {
+        console.log("HWRE");
         $('[data-modal-toggle="inviteModal"]').on('click', function() {
             const email = $(this).closest('tr').find('td:first-child').text().trim();
             const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();

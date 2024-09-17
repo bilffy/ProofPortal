@@ -35,7 +35,7 @@ class InviteController extends Controller
 
         $this->userService->sendInvite($user);
 
-        return redirect()->route('users.manage')->with('success', 'Invitation sent successfully to ' . $user->email);
+        return redirect()->route('users')->with('success', 'Invitation sent successfully to ' . $user->email);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 @if (!empty($errorMessage))
     <div>
-        <p class="text-sm text-red-600">
+        <p class="text-sm text-alert">
             {{ $errorMessage }}
         </p>
     </div>
