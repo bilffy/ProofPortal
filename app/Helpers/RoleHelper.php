@@ -14,12 +14,12 @@ class RoleHelper
     public const ROLE_TEACHER = 'Teacher';
 
     /**
-     * Get allowed roles based on the given role.
+     * Get allowed role names based on the given role.
      *
      * @param string $role
      * @return array
      */
-    public static function getAllowedRoles(string $role): array
+    public static function getAllowedRoleNames(string $role): array
     {
         $allowedRoles = [];
         switch ($role) {
@@ -60,6 +60,17 @@ class RoleHelper
                 $allowedRoles = [];
         }
 
-        return Role::whereIn('name', $allowedRoles)->get()->all();
+        return $allowedRoles;
+    }
+
+    /**
+     * Get allowed roles based on the given role.
+     *
+     * @param string $role
+     * @return array
+     */
+    public static function getAllowedRoles(string $role): array
+    {
+        return Role::whereIn('name', self::getAllowedRoleNames($role))->get()->all();
     }
 }

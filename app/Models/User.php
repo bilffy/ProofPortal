@@ -141,4 +141,10 @@ class User extends Authenticatable
     {
         return $this->isAdmin() ? "" : ( $this->isFranchiseLevel() ? $this->getFranchise()->name : $this->getSchool()->name );
     }
+
+    public function getInvitableRoles()
+    {
+        // Todo: Update logic using permissions
+        return RoleHelper::getAllowedRoleNames($this->getRole());
+    }
 }

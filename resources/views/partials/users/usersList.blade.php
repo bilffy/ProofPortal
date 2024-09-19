@@ -1,3 +1,13 @@
+@php
+    use App\Models\User;
+    
+    $canInviteUser = function ($user) {
+        $isValidStatus = $user->status == User::STATUS_NEW || $user->status == User::STATUS_INVITED;
+        $isInvitable = in_array($user->getRole(), auth()->user()->getInvitableRoles());
+        $isNotUser = auth()->user()->id !== $user->id;
+        return $isInvitable && $isValidStatus && $isNotUser;
+    }
+@endphp
 <div class="relative overflow-x-auto">
     <table class="w-full text-sm text-left rtl:text-right">
         <thead>
@@ -34,7 +44,7 @@
                         </x-button.link>
                         <!-- Dropdown menu -->
                         <x-form.dropdownPanel id="userDropdownAction-{{ $user->id }}">
-                            @if ($status == $User::STATUS_NEW || $status == $User::STATUS_INVITED):
+                            @if ($canInviteUser($user)):
                                 <li>
                                     <x-button.dropdownLink
                                         href="#" 
