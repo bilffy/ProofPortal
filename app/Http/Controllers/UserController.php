@@ -9,12 +9,12 @@ use App\Helpers\RoleHelper;
 use App\Models\School;
 use App\Models\SchoolUser;
 use App\Models\User;
+use App\Rules\MspEmailValidation;
 use Auth;
 use DB;
 use Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -25,7 +25,7 @@ class UserController extends Controller
         $usersQuery = User::query();
         // TODO: Add initial filter for list of users only visible to this user's permission level
         $this->applySearch($usersQuery, $request->input('search', ''));
-        $this->applySort($usersQuery, $request->input('sort', ''));
+        $this->applySort($usersQuery, $request->input('sort', 'lastname'));
         return view('manageUsers', [
             'user' => new UserResource(Auth::user()),
             'results' => UserResource::collection($usersQuery->paginate($perPage)->withQueryString())
@@ -59,7 +59,15 @@ class UserController extends Controller
         $request->validate([
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'max:255',
+                'email',
+                'unique:'.User::class,
+                new MspEmailValidation(),
+            ],
             'role' => 'required|integer',
         ],
         [

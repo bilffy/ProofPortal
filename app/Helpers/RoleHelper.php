@@ -28,18 +28,12 @@ class RoleHelper
                     self::ROLE_SUPER_ADMIN,
                     self::ROLE_ADMIN,
                     self::ROLE_FRANCHISE,
-                    self::ROLE_SCHOOL_ADMIN,
-                    self::ROLE_PHOTO_COORDINATOR,
-                    self::ROLE_TEACHER,
                 ];
                 break;
             case self::ROLE_ADMIN:
                 $allowedRoles = [
                     self::ROLE_ADMIN,
                     self::ROLE_FRANCHISE,
-                    self::ROLE_SCHOOL_ADMIN,
-                    self::ROLE_PHOTO_COORDINATOR,
-                    self::ROLE_TEACHER,
                 ];
                 break;
             case self::ROLE_FRANCHISE:
@@ -47,12 +41,17 @@ class RoleHelper
                     self::ROLE_FRANCHISE,
                     self::ROLE_SCHOOL_ADMIN,
                     self::ROLE_PHOTO_COORDINATOR,
-                    self::ROLE_TEACHER,
                 ];
                 break;
             case self::ROLE_SCHOOL_ADMIN:
                 $allowedRoles = [
                     self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            case self::ROLE_PHOTO_COORDINATOR:
+                $allowedRoles = [
                     self::ROLE_PHOTO_COORDINATOR,
                     self::ROLE_TEACHER,
                 ];

@@ -8,8 +8,8 @@
     <title>{{ config('app.name', 'MSP') }}</title>
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap">
-
+    <!-- <link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap"> -->
+    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
     <!-- Scripts -->
     @vite(['resources/js/app.ts', 'resources/css/app.scss'])
     @livewireStyles
