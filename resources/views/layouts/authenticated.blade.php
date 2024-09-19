@@ -20,7 +20,6 @@
                     </div>--}}
                 </div>
                 <div class="flex flex-row items-center">
-                    <div class="flex items-center text-sm text-[#586B78] bg-[#D9D9D9] rounded-full px-2 py-0.5">MSP RESOURCE CENTRE</div>
                     <div class="ms-3 relative">
                         <span class="inline-flex rounded-md float-right">
                             <button

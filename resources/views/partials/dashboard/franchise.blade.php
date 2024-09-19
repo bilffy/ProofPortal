@@ -1,23 +1,9 @@
-<x-tabs.tabDEMO/>
 <div class="flex flex-row gap-5">
     <div class=" border-neutral-300 border-[1px] h-full w-3/4 rounded-md overflow-hidden">
         <div class="p-4 flex items-center justify-between">
             <h3 class="text-2xl">Title</h3>
             <div class="flex justify-center">
-                <form class="max-w-md mx-auto">
-                    <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only">Search</label>
-                    <div class="relative ">
-                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                            <x-icon icon="search"/>
-                        </div>
-                        <input 
-                        type="search" 
-                        id="default-search" 
-                        class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300" 
-                        placeholder="Search..." 
-                        required />
-                    </div>
-                </form>
+                <x-form.input.search/>
             </div>
         </div>
         <div class="relative overflow-x-auto">
