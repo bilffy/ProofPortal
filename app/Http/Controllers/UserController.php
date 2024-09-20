@@ -64,9 +64,9 @@ class UserController extends Controller
                 'string',
                 'lowercase',
                 'max:255',
-                'email',
+                'email:rfc,dns', // Basic check for email format and domain (dns)
                 'unique:'.User::class,
-                new MspEmailValidation(),
+                // new MspEmailValidation(), //Disable for now
             ],
             'role' => 'required|integer',
         ],
