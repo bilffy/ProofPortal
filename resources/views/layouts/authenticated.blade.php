@@ -4,12 +4,12 @@
     <div class="flex flex-row">
         <x-layout.navBar />
         <div class="flex flex-col w-full h-screen">
-            <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2">
+            <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2 min-h-[68px]">
                 <div class="flex flex-1 items-center justify-center">
-                    {{--<div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
+                    <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
                         <div class="flex flex-row items-center gap-2 text-primary text-sm">
                             <img src="{{ Vite::asset('resources/assets/images/Info.svg') }}" alt="" width="20px" height="20px">
-                            You're impersonating <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege--}}{{--
+                            You're impersonating <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege
                         </div>
                         <div>
                             <x-button.base class="bg-alert p-1">
@@ -17,7 +17,7 @@
                                 <img src="{{ Vite::asset('resources/assets/images/close-round-alert.svg') }}" alt="" width="20px" height="20px">
                             </x-button.base>
                         </div>
-                    </div>--}}
+                    </div>
                 </div>
                 <div class="flex flex-row items-center">
                     <div class="ms-3 relative">

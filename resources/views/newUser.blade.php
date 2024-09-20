@@ -79,7 +79,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-row gap-4 max-w-screen-md">
+            <div class="flex flex-row gap-4 max-w-screen-md mb-8">
                 <div class="w-full">
                     <x-form.select context="role" :options="$roleOptions" required>User Role</x-form.select>
                 </div>
