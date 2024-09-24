@@ -1,4 +1,4 @@
-<div id="navbarWrapper" class="flex flex-col w-[210px] mt-2">
+<div id="navbarWrapper" class="flex flex-col w-[190px] min-w-[190px] mt-2">
     <div class="p-4 flex justify-center">
         <img 
         src="{{ Vite::asset('resources/assets/images/MSP-Logo.svg') }}" 
