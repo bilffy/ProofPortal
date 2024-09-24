@@ -34,7 +34,7 @@
                         </x-button.link>
                         <!-- Dropdown menu -->
                         <x-form.dropdownPanel id="userDropdownAction-{{ $user->id }}">
-                            @if ($status == $User::STATUS_NEW || $status == $User::STATUS_INVITED):
+                            @if ($UserAbilitiesHelper->canInviteUser(auth()->user(), $user)):
                                 <li>
                                     <x-button.dropdownLink
                                         href="#" 
@@ -43,7 +43,7 @@
                                         data-modal-toggle="inviteModal" 
                                         data-user-id="{{ $user->id }}" 
                                         class="hover:bg-primary hover:text-white">
-                                        {{ $status == $User::STATUS_INVITED ? 'Re-invited' : 'Invite' }}
+                                        {{ $status == $User::STATUS_INVITED ? 'Re-invite' : 'Invite' }}
                                     </x-button.dropdownLink>
                                 </li>
                             @endif

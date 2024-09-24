@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\UserAbilitiesHelper;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         
         view()->share('User', User::class);
         view()->share('UserStatusHelper', new UserStatusHelper());
+        view()->share('UserAbilitiesHelper', new UserAbilitiesHelper());
         JsonResource::withoutWrapping();
     }
 }

@@ -102,8 +102,8 @@ export default {
           },
         },
         fontFamily: {
-            sans: ['Graphik', 'sans-serif'],
-            serif: ['Merriweather', 'serif'],
+            sans: ['Montserrat', 'sans-serif'],
+            serif: ['Montserrat', 'serif'],
         },
         fontSize: {
             h1: ['38px', '44px'],
