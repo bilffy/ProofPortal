@@ -38,14 +38,12 @@ class RoleHelper
                 break;
             case self::ROLE_FRANCHISE:
                 $allowedRoles = [
-                    self::ROLE_FRANCHISE,
                     self::ROLE_SCHOOL_ADMIN,
                     self::ROLE_PHOTO_COORDINATOR,
                 ];
                 break;
             case self::ROLE_SCHOOL_ADMIN:
                 $allowedRoles = [
-                    self::ROLE_SCHOOL_ADMIN,
                     self::ROLE_PHOTO_COORDINATOR,
                     self::ROLE_TEACHER,
                 ];
@@ -71,6 +69,6 @@ class RoleHelper
      */
     public static function getAllowedRoles(string $role): array
     {
-        return Role::whereIn('name', self::getAllowedRoleNames($role))->get()->all();
+        return Role::whereIn('name', self::getAllowedRoleNames($role))->orderBy('id')->get()->all();
     }
 }

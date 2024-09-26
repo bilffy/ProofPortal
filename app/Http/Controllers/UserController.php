@@ -15,15 +15,60 @@ use DB;
 use Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    protected function validator(array $data)
+    {
+        return Validator::make($data,
+        [
+                'firstname' => 'required|string|max:255',
+                'lastname' => 'required|string|max:255',
+                'email' => [
+                    'required',
+                    'string',
+                    'lowercase',
+                    'max:255',
+                    'email:rfc,dns', // Basic check for email format and domain (dns)
+                    'unique:'.User::class,
+                    // new MspEmailValidation(), //Disable for now
+                ],
+                'role' => 'required|integer',
+            ],
+            [
+                'firstname' => 'First Name is required.',
+                'lastname' => 'Last Name is required.',
+                'email.email' => 'Invalid format.',
+                'email.unique' => 'This email address is already used by another account.'
+            ]
+        );
+    }
+
     public function index(Request $request)
     {
         $perPage = $request->input('perPage', 20);
-        $usersQuery = User::query();
-        // TODO: Add initial filter for list of users only visible to this user's permission level
+        /** @var User $user */
+        $user = Auth::user();
+        // $filters = [];
+        if ($user->isFranchiseLevel()) {
+            $franchise = $user->getFranchise();
+            $franchiseId = $franchise->id;
+            $schools = $franchise->schools()->get()->pluck('id');
+            // $filters['franchise'][] = $franchise->id;
+            // $filters['school'] = $schools;
+            $usersQuery = User::whereHas('schools', function ($sQuery) use ($schools) {
+                $sQuery->whereIn('schools.id', $schools);
+            })->orWhereHas('franchises', function ($fQuery) use ($franchiseId) {
+                $fQuery->where('franchises.id', $franchiseId);
+            });
+        } elseif($user->isSchoolLevel()) {
+            $usersQuery = $user->getSchool()->users();
+        } else {
+            $usersQuery = User::query();
+        }
+        // $this->applyFilter($usersQuery, $filters);
         $this->applySearch($usersQuery, $request->input('search', ''));
         $this->applySort($usersQuery, $request->input('sort', 'lastname'));
         return view('manageUsers', [
@@ -56,24 +101,10 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'max:255',
-                'email:rfc,dns', // Basic check for email format and domain (dns)
-                'unique:'.User::class,
-                // new MspEmailValidation(), //Disable for now
-            ],
-            'role' => 'required|integer',
-        ],
-        [
-            'email.email' => 'Invalid format.',
-            'email.unique' => 'This email address is already used by another account.'
-        ]);
+        $validator = $this->validator($request->all());
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->withErrors($validator);
+        }
 
         DB::beginTransaction();
         try {
@@ -116,24 +147,47 @@ class UserController extends Controller
         return redirect(route('users', absolute: false));
     }
 
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $search
+     * 
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
     protected function applySearch($query, $search)
     {
         return $query->when($search, function ($q, $searchString) {
             $q->where('email', 'like', "%{$searchString}%")
                 ->orWhere('firstname', 'like', "%{$searchString}%")
                 ->orWhere('lastname', 'like', "%{$searchString}%")
-                // ->orWhere('name', 'like', "%{$searchString}%")
             ;
         });
     }
 
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array $filters
+     * 
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
     protected function applyFilter($query, $filters)
     {
-        // foreach($filters as $filter => $values) {
-        // }
+        foreach($filters as $filter => $values) {
+            switch($filter) {
+                case 'franchise':
+                    break;
+                case 'school':
+                    break;
+            }
+        }
         return $query;
     }
     
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $value
+     * 
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
     protected function applySort($query, $value)
     {
         if (!empty($value)) {

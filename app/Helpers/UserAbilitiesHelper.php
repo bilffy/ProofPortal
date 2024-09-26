@@ -13,4 +13,13 @@ class UserAbilitiesHelper
         $isNotUser = $inviter->id !== $invitee->id;
         return $isInvitable && $isValidStatus && $isNotUser;
     }
+
+    // TODO: Update helpers based on future role-permission implementation
+    public static function canUseAdminTools($userRole)
+    {
+        $restrictedRoles = [
+            RoleHelper::ROLE_TEACHER,
+        ];
+        return !in_array($userRole, $restrictedRoles);
+    }
 }

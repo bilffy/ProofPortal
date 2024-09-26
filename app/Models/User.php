@@ -18,16 +18,16 @@ class User extends Authenticatable
     public const STATUS_ACTIVE = 'active';
     public const STATUS_DISABLED = 'disabled';
     
-    // Define the relationship with franchise_users
-    public function franchiseUsers()
+    // Define the relationship with franchise using franchise_users
+    public function franchises()
     {
-        return $this->hasMany(FranchiseUser::class, 'user_id');
+        return $this->belongsToMany(Franchise::class, 'franchise_users');
     }
 
-    // Define the relationship with school_users
-    public function schoolUsers()
+    // Define the relationship with school using school_users
+    public function schools()
     {
-        return $this->hasMany(SchoolUser::class, 'user_id');
+        return $this->belongsToMany(School::class, 'school_users');
     }
 
     // Define the relationship with user_invite_tokens
@@ -129,12 +129,12 @@ class User extends Authenticatable
     
     public function getFranchise()
     {
-        return $this->franchiseUsers()->firstOrFail()->franchise;
+        return $this->franchises()->firstOrFail();
     }
 
     public function getSchool()
     {
-        return $this->schoolUsers()->firstOrFail()->school;
+        return $this->schools()->firstOrFail();
     }
 
     public function getSchoolOrFranchise()
