@@ -26,6 +26,8 @@ class AccountSetup extends Component
 
     protected $rules = [
         'password' => ['required', 'confirmed', 'min:12', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
+        'firstName' => 'required',
+        'lastName' => 'required',
         'password_confirmation' => 'required',
     ];
 
@@ -70,6 +72,8 @@ class AccountSetup extends Component
             function ($user) {
                 $user->forceFill([
                     'password' => Hash::make($this->password),
+                    'firstname' => $this->firstName,
+                    'lastname' => $this->lastName,
                     'remember_token' => Str::random(60),
                     'is_setup_complete' => true,
                     'status' => User::STATUS_ACTIVE,

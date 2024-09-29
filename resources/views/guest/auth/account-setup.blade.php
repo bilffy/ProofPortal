@@ -3,22 +3,24 @@
 
     @error('email') <span class="error">{{ $message }}</span> @enderror
 
-    <div class="mb-4 font-medium text-green-600 flex flex-row">
-        <div class="w-full">
-            <label for="">Name</label>
-            <p class="font-semibold">{{ $firstName }} {{ $lastName }}</p>
-        </div>
-        <div class="w-full">
-            <label for="">Email</label>
-            <p class="font-semibold">{{ $email }}</p>
-        </div>
-    </div>
-    
     <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
         <div class="hidden">
             <input type="email" wire:model="email" required autofocus autocomplete="username" />
             <input type="password" wire:model="token" required autofocus autocomplete="username" />
         </div>
+
+        <div class="flex flex-col mb-4">
+            <label for="firstName" class="text-neutral-600">First Name</label>
+            <input class="border rounded-md p-2 border-neutral" wire:model="firstName" required placeholder="First Name" autocomplete="firstName" />
+            @error('firstName') <span class="error">{{ $message }}</span> @enderror
+        </div>
+
+        <div class="flex flex-col mb-4">
+            <label for="lastName" class="text-neutral-600">Last Name</label>
+            <input class="border rounded-md p-2 border-neutral" wire:model="lastName" required placeholder="Last Name" autocomplete="lastName" />
+            @error('lastName') <span class="error">{{ $message }}</span> @enderror
+        </div>
+        
         <div class="flex flex-col mb-4">
             <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />
             @error('password') <span class="error">{{ $message }}</span> @enderror
