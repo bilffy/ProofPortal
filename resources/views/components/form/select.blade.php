@@ -10,7 +10,7 @@
     {{ $attributes->merge([
         'id' => "select_{$context}",
         'name' => $context,
-        'class' => "select2 bg-gray-50 border border-neutral rounded-md block w-full p-2.5"
+        'class' => "bg-gray-50 border border-neutral rounded-md block w-full p-2.5"
     ]) }}
 >
     @foreach ($options as $id => $name)

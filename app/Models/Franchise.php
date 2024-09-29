@@ -33,7 +33,8 @@ class Franchise extends Model
      */
     public function users()
     {
-        return $this->hasMany(FranchiseUser::class, 'franchise_id');
+        return $this->belongsToMany(User::class, 'franchise_users');
+        // return $this->hasMany(FranchiseUser::class, 'franchise_id');
     }
 
     /**
@@ -41,6 +42,7 @@ class Franchise extends Model
      */
     public function schools()
     {
-        return $this->hasMany(SchoolFranchise::class, 'franchise_id');
+        return $this->belongsToMany(School::class, 'school_franchises');
+        // return $this->hasMany(SchoolFranchise::class, 'franchise_id');
     }
 }

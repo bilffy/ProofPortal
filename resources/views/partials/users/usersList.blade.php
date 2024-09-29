@@ -34,7 +34,7 @@
                         </x-button.link>
                         <!-- Dropdown menu -->
                         <x-form.dropdownPanel id="userDropdownAction-{{ $user->id }}">
-                            @if ($UserAbilitiesHelper->canInviteUser(auth()->user(), $user)):
+                            @if ($UserAbilitiesHelper->canInviteUser(auth()->user(), $user))
                                 <li>
                                     <x-button.dropdownLink
                                         href="#" 

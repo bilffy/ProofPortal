@@ -14,9 +14,11 @@
     <x-layout.navItem id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Promo Photos</x-layout.navItem>
     <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">PROOFING</span>
     <x-layout.navItem id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
-    <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span>
-    <x-layout.navItem id="tabManageUsers" navIcon="user-plus" href="{{ route('users') }}">Manage Users</x-layout.navItem>
-    <x-layout.navItem id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+    @if ($UserAbilitiesHelper->canUseAdminTools(auth()->user()->getRole()))
+        <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span>
+        <x-layout.navItem id="tabManageUsers" navIcon="user-plus" href="{{ route('users') }}">Manage Users</x-layout.navItem>
+        <x-layout.navItem id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+    @endif
 </div>
 
 @push('scripts')
