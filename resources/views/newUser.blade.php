@@ -27,7 +27,7 @@
             @csrf
             <div class="flex flex-row gap-4 max-w-screen-md">
                 <div class="w-full">
-                    <div class="mt-1 block w-full flex flex-col mb-2">
+                    <div class="mt-1 w-full flex flex-col mb-2">
                         <x-form.input.text
                             id="email"
                             name="email"
@@ -44,7 +44,7 @@
             </div>
             <div class="flex flex-row gap-4 max-w-screen-md">
                 <div class="w-full">
-                    <div class="mt-1 block w-full flex flex-col mb-2">
+                    <div class="mt-1 w-full flex flex-col mb-2">
                         <x-form.input.text
                             id="fname"
                             name="firstname"
@@ -58,7 +58,7 @@
                     </div>
                 </div>
                 <div class="w-full">
-                    <div class="mt-1 block w-full flex flex-col mb-2">
+                    <div class="mt-1hz w-full flex flex-col mb-2">
                         <x-form.input.text
                             id="lname"
                             name="lastname"

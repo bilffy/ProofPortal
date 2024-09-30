@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
 
     Route::get('/proofing', [TestController::class, 'index'])->name('proofing'); // FOR TESTING
+    Route::get('/schoolhome', [TestController::class, 'test2'])->name('test2'); // FOR TESTING
 });
 
 require __DIR__.'/auth.php';
