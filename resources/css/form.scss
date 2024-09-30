@@ -1,0 +1,14 @@
+.select2 {
+    .selection {
+        .select2-selection {
+            /* background-color: red; */
+            padding: .5rem;
+            height: 40px;
+            .select2-selection__arrow {
+                top: 6px;
+                right: 8px
+            }
+        }
+        
+    }
+}
