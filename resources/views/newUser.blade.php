@@ -148,7 +148,7 @@
         $('#select_role').change(toggleLevelOptions);
         $('#select_school').select2();
         $('#select_franchise').select2();
-        updateSelectByRole(user.role);
+        updateSelectByRole(roles[Object.keys(roles)[0]]);
     });
 </script>
 @endpush
