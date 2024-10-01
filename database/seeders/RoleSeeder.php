@@ -28,7 +28,7 @@ class RoleSeeder extends Seeder
         foreach ($roles as $roleName) {
             $role = Role::createOrFirst(['name' => $roleName]);
             // Add 'create user' permission to roles except Photo Coordinator and Teacher
-            if (!in_array($roleName, [RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER])) {
+            if (!in_array($roleName, [RoleHelper::ROLE_TEACHER]) && !$role->hasPermissionTo($permission)) {
                 $role->givePermissionTo($permission);
             }
         }
