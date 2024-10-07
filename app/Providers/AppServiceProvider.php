@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 use App\Helpers\UserStatusHelper;
+use App\Helpers\AvatarHelper;
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         view()->share('UserStatusHelper', new UserStatusHelper());
         view()->share('UserAbilitiesHelper', new UserAbilitiesHelper());
         view()->share('PermissionHelper', new PermissionHelper());
+        view()->share('AvatarHelper', new AvatarHelper());
         JsonResource::withoutWrapping();
     }
 }
