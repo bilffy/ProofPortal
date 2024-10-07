@@ -14,18 +14,18 @@
         <tbody>
             @foreach ($users as $user)
                 <tr>
+                    @php
+                        $status = $user->status;
+                        $badge = $UserStatusHelper->getBadge($status);
+                        $inviteRoute = route("invite.single", ["id" => $user->id ]);
+                        $role = is_null($user->getRole()) ? '' : $user->getRole();
+                    @endphp
                     <x-table.cell>{{ $user->email }}</x-table.cell>
                     <x-table.cell>{{ $user->firstname }}</x-table.cell>
                     <x-table.cell>{{ $user->lastname }}</x-table.cell>
-                    <x-table.cell>{{ $user->getRole() }}</x-table.cell>
+                    <x-table.cell>{{ $role }}</x-table.cell>
                     <x-table.cell>{{ $user->getSchoolOrFranchise() }}</x-table.cell>
                     <x-table.cell>
-                        @php
-                            $status = $user->status;
-                            $badge = $UserStatusHelper->getBadge($status);
-                            $inviteRoute = route("invite.single", ["id" => $user->id ]);
-                        @endphp
-                        
                         <x-badge text="{{ ucfirst($status) }}" badge="{{ $badge }}" />
                     </x-table.cell>
                     <x-table.cell class="w-[100px] relative">
@@ -34,7 +34,7 @@
                         </x-button.link>
                         <!-- Dropdown menu -->
                         <x-form.dropdownPanel id="userDropdownAction-{{ $user->id }}">
-                            @if ($UserAbilitiesHelper->canInviteUser(auth()->user(), $user))
+                            @can ($PermissionHelper->toPermission($PermissionHelper::ACT_INVITE, $role))
                                 <li>
                                     <x-button.dropdownLink
                                         href="#" 
@@ -46,7 +46,7 @@
                                         {{ $status == $User::STATUS_INVITED ? 'Re-invite' : 'Invite' }}
                                     </x-button.dropdownLink>
                                 </li>
-                            @endif
+                            @endcan
                             <li>
                                 <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">Edit</x-button.dropdownLink>
                             </li>
