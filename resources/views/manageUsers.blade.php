@@ -5,7 +5,7 @@
         <h3 class="text-2xl">Manage Users</h3>
         <div class="flex justify-center">
             <x-form.input.search/>
-            @can('create user')
+            @can($PermissionHelper->toPermission($PermissionHelper::ACT_CREATE, $PermissionHelper::SUB_USER))
                 <div class="ml-4 mr-4 border-r-2 border-[#D9DDE2] my-3"></div>
                 <x-button.primary onclick="window.location='{{ route('users.create') }}'">Add New User</x-button.primary>
             @endcan

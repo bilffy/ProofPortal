@@ -8,31 +8,31 @@
     </div>
     <x-layout.navItem id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
 
-    @hasanyrole('Franchise|School Admin|Photo Coordinator|Teacher')
+    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PHOTOGRAPHY))
         <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">PHOTOGRAPHY</span>
         <x-layout.navItem id="tabPortraits" navIcon="user" href="{{ route('dashboard') }}">Portraits</x-layout.navItem>
         <x-layout.navItem id="tabGroups" navIcon="users" href="{{ route('dashboard') }}">Groups</x-layout.navItem>
         <x-layout.navItem id="tabSpecialEvents" navIcon="graduation-cap" href="{{ route('dashboard') }}">Special Events</x-layout.navItem>
         <x-layout.navItem id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Promo Photos</x-layout.navItem>
-    @endhasanyrole
+    @endcan
     
-    @hasanyrole('Franchise|Photo Coordinator|Teacher')
+    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
         <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">PROOFING</span>
         <x-layout.navItem id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
-    @endhasanyrole
+    @endcan
 
-    @hasanyrole('School Admin')
+    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">ORDERING</span>
         <x-layout.navItem id="tabProofing" navIcon="th" href="{{ route('dashboard') }}">ID Cards</x-layout.navItem>
         <x-layout.navItem id="tabProofing" navIcon="th" href="{{ route('dashboard') }}">Photos</x-layout.navItem>
         <x-layout.navItem id="tabProofing" navIcon="th" href="{{ route('dashboard') }}">Yearbooks</x-layout.navItem>
-    @endhasanyrole
+    @endcan
     
-    @if ($UserAbilitiesHelper->canUseAdminTools(auth()->user()->getRole()))
+    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <span class="text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span>
         <x-layout.navItem id="tabManageUsers" navIcon="user-plus" href="{{ route('users') }}">Manage Users</x-layout.navItem>
         <x-layout.navItem id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
-    @endif
+    @endcan
     <span class="text-sm ml-4 font-bold mt-4 text-alert">TESTING PAGE</span>
     <x-layout.navItem id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">School Home</x-layout.navItem>
 </div>
