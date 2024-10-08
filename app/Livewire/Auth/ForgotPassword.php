@@ -12,6 +12,7 @@ use Livewire\Attributes\Layout;
 #[Layout('layouts.guest')]
 class ForgotPassword extends Component
 {
+    public bool $resetLinkStatus = false;
     public $email;
 
     protected $rules = [
@@ -26,14 +27,15 @@ class ForgotPassword extends Component
 
         if ($user) {
             $token = Password::createToken($user);
-            $user->notify(new ResetPassword($token));
+            $user->notify(new ResetPassword($token, $user));
             $status = Password::RESET_LINK_SENT;
         } else {
             $status = Password::INVALID_USER;
         }
 
         if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', __($status));
+            $this->resetLinkStatus = true;
+            //return back()->with('status', __($status));
         }
 
         throw ValidationException::withMessages([
@@ -43,6 +45,10 @@ class ForgotPassword extends Component
     
     public function render()
     {
+        if ($this->resetLinkStatus) {
+            return view('guest.auth.reset-password-link-sent');
+        }
+        
         return view('guest.auth.send-reset-password-link');
     }
 }

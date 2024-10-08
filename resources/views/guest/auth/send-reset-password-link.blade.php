@@ -2,8 +2,7 @@
     <h1 class="text-3xl text-[#02B3DF] mb-4">Forgot Password</h1>
 
     <div class="mb-4 text-sm text-gray-600">
-        Forgot your password? No problem. Just let us know your email address and we will email you a password reset
-        link that will allow you to choose a new one.
+        A password reset link will be sent to your registered email address.
     </div>
     
     @if (session()->has('status'))
@@ -33,11 +32,14 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
+        <div class="flex w-full items-center justify-between mt-4">
             <x-button.primary type="submit" wire:loading.attr="disabled">
-                <span wire:loading.remove>Email Password Reset Link</span>
-                <span wire:loading><x-spinner.button label="Email Password Reset Link" /></span>
+                <span wire:loading.remove>Send Link</span>
+                <span wire:loading><x-spinner.button label="Send Link" /></span>
             </x-button.primary>
+            <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Back to login
+            </a>
         </div>
     </form>
 </main>
