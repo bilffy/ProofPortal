@@ -54,7 +54,7 @@ class ResetPassword extends Component
         $this->validate();
         
         // Check if the user exists otherwise throw an exception
-        User::where('email', $this->email)->firstOrFail();
+        $user = User::where('email', $this->email)->firstOrFail();
 
         $status = Password::reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password, 'token' => $this->token],
@@ -69,6 +69,12 @@ class ResetPassword extends Component
         );
 
         if ($status == Password::PASSWORD_RESET) {
+            // Update the user status to active if the user is new or invited
+            if ($user->status == User::STATUS_NEW || $user->status == User::STATUS_INVITED) {
+                $user->status = User::STATUS_ACTIVE;
+                $user->save();
+            }
+            
             return redirect()->route('login');
         }
 
