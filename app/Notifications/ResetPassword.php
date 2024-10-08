@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -13,11 +14,13 @@ use Illuminate\Notifications\Messages\MailMessage;
  */
 class ResetPassword extends Notification
 {
+    private User $user;
     public $token;
 
-    public function __construct($token)
+    public function __construct($token, User $user)
     {
         $this->token = $token;
+        $this->user = $user;
     }
 
     public function via($notifiable)
@@ -29,10 +32,12 @@ class ResetPassword extends Notification
     {
         $expiration = config('auth.passwords.users.expire');
         $resetUrl = url(config('app.url').route('password.reset', ['token' => $this->token, 'email' => $notifiable->getEmailForPasswordReset()], false));
-
+        $fullName = ucfirst($this->user->firstname) .' '. ucfirst($this->user->lastname);
+        
         return (new MailMessage)
-            ->subject('Reset Password Notification')
+            ->subject('Request password reset for '. $fullName)
             ->markdown('emails.reset_password', [
+                'firstname' => $this->user->firstname,
                 'resetUrl' => $resetUrl,
                 'expiration' => $expiration,
             ]);
