@@ -5,12 +5,8 @@ namespace App\Livewire\Profile;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Auth;
-
-//#[Layout('layouts.guest')]
-
 
 class ResetMyPassword extends Component
 {
