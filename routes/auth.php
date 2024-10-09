@@ -7,6 +7,7 @@ use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\OtpVerification;
 use App\Livewire\Auth\ResetPassword;
+use App\Livewire\Profile\ResetMyPassword;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -19,6 +20,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('register', [UserController::class, 'store'])->name('user.register');
+    Route::get('/reset-password', ResetMyPassword::class)->name('reset.my.password');
     Route::match(['get', 'post'],'logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });

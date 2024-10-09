@@ -34,7 +34,7 @@
                             </button>
                             <x-form.dropdownPanel id="userSettingsAction">
                                 <li>
-                                    <x-button.dropdownLink href="{{ route('dashboard') }}" class="hover:bg-primary hover:text-white">
+                                    <x-button.dropdownLink href="{{ route('reset.my.password') }}" class="hover:bg-primary hover:text-white">
                                         Profile
                                     </x-button.dropdownLink>
                                 </li>
@@ -50,7 +50,11 @@
 
             </header>
             <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden">
-                @yield('content')
+                @if (isset($slot))
+                    {{ $slot }}
+                @else
+                    @yield('content')
+                @endif
             </main>
             <x-layout.footer />
         </div>
