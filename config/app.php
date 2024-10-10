@@ -131,4 +131,6 @@ return [
         'expiration_minutes' => env('OTP_EXPIRATION_MINUTES', 60),
         'secret_pin' => env('OTP_SECRET_PIN'),
     ],
+
+    'password_min_length' => 13,
 ];

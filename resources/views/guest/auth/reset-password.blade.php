@@ -1,3 +1,7 @@
+@php
+    $passwordMinLength = config('app.password_min_length');
+@endphp
+
 <main class="mt-8 bg-white rounded-lg overflow-hidden border-[#969696] border-2 p-8 px-12">
     <h1 class="text-3xl text-[#02B3DF] mb-4">Reset Password</h1>
 
@@ -20,7 +24,7 @@
 
         <div class="ml-4 mb-4">
             <ul class="list-disc">
-                <li :class="{ 'text-success font-semibold': password.length >= 12, 'text-gray-500': password.length < 12 }">At least 12 characters</li>
+                <li :class="{ 'text-success font-semibold': password.length >= {{ $passwordMinLength }}, 'text-gray-500': password.length < {{ $passwordMinLength }} }">At least {{ $passwordMinLength }} characters</li>
                 <li :class="{ 'text-success font-semibold': /[A-Z]/.test(password), 'text-gray-500': !/[A-Z]/.test(password) }">Include at least 1 uppercase letter</li>
                 <li :class="{ 'text-success font-semibold': /[a-z]/.test(password), 'text-gray-500': !/[a-z]/.test(password) }">At least 1 lowercase letter</li>
                 <li :class="{ 'text-success font-semibold': /[0-9]/.test(password), 'text-gray-500': !/[0-9]/.test(password) }">At least 1 number</li>
@@ -32,7 +36,7 @@
             <button 
                     class="rounded-md text-sm cursor-pointer bg-none text-[#ffffff] flex flex-row gap-1 px-3 py-2 bg-primary text-sm hover:bg-primary-hover transition-all hover:transition-all" 
                     type="submit" 
-                    :disabled="!(password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">
+                    :disabled="!(password.length >= {{ $passwordMinLength }} && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && password === password_confirmation)">
                 <span wire:loading.remove>Reset</span>
                 <span wire:loading><x-spinner.button label="Reset" /></span>
             </button>
