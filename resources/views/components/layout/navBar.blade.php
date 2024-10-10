@@ -9,7 +9,7 @@
         class="hideOnCollapse"
         />
         <img 
-        src="{{ Vite::asset('resources/assets/images/MSP-logo-sm.svg') }}" 
+        src="{{ Vite::asset('resources/assets/images/MSP-Logo-sm.svg') }}" 
         alt=""
         width=47px
         class="showOnCollapse"
