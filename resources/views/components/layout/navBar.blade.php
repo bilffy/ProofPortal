@@ -53,36 +53,42 @@
 
 @push('scripts')
 <script type="module">
-    let navCollapsed = false;
+    //let navCollapsed = false;
     import { NAV_TABS } from "{{ Vite::asset('resources/js/helpers/constants.helper.ts') }}"
     import { getCurrentNav, getNavTabId } from "{{ Vite::asset('resources/js/helpers/utils.helper.ts') }}"
+
+    // Retrieve navCollapsed state from localStorage or default to false
+    let navCollapsed = JSON.parse(localStorage.getItem('navCollapsed')) || false;
+    
     window.addEventListener("load", function () {
         const targetElement = `#${getNavTabId(getCurrentNav())}`;
         
         $(targetElement).addClass('bg-primary text-white rounded-e-md');
         
+        // Set initial state based on navCollapsed value
+        if (navCollapsed) {
+            $('span.hideOnCollapse').hide();
+            $('#btnCollapse').addClass("fa-arrow-right").removeClass("fa-arrow-left");
+            $('img.hideOnCollapse').hide();
+            $('img.showOnCollapse').show();
+        } else {
+            $('#btnCollapse').addClass("fa-arrow-left").removeClass("fa-arrow-right");
+            $('img.hideOnCollapse').show();
+            $('img.showOnCollapse').hide();
+            $('span.hideOnCollapse').show();
+        }
 
-        //TODO temporary implmentation. waiting for State Management
-        $('img.showOnCollapse').toggle()
         $('#btnToggleNavBar').on("click", function() {
-            if (navCollapsed) {
-                // Toggle icon
-                $('#btnCollapse ').toggleClass("fa-arrow-left fa-arrow-right")
-                $('img.hideOnCollapse').animate({width: 'toggle'})
-                $('img.showOnCollapse').animate({width: 'toggle'})
-                
-                $('span.hideOnCollapse').animate({width: 'toggle'})
-            } else {
-                // Toggle icon
-                $('#btnCollapse ').toggleClass("fa-arrow-left fa-arrow-right")
-                $('img.hideOnCollapse').animate({width: 'toggle'})
-                $('img.showOnCollapse').animate({width: 'toggle'})
+            navCollapsed = !navCollapsed;
+            localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
 
-                $('span.hideOnCollapse').animate({width: 'toggle'})
-            }
-            navCollapsed =!navCollapsed
+            // Toggle icon
+            $('#btnCollapse').toggleClass("fa-arrow-left fa-arrow-right");
+            $('img.hideOnCollapse').animate({width: 'toggle'});
+            $('img.showOnCollapse').animate({width: 'toggle'});
+            $('span.hideOnCollapse').animate({width: 'toggle'});
         });
-     
+        
     }, false);
 </script>
 
