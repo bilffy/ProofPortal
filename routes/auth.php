@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\UserController;
-use App\Livewire\Auth\AccountSetup;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Livewire\Auth\ForgotPassword;
-use App\Livewire\Auth\Login;
-use App\Livewire\Auth\OtpVerification;
-use App\Livewire\Auth\ResetPassword;
-use App\Livewire\Profile\ResetMyPassword;
+use App\Http\Controllers\UserController;
+use App\Http\Livewire\Auth\AccountSetup;
+use App\Http\Livewire\Auth\ForgotPassword;
+use App\Http\Livewire\Auth\Login;
+use App\Http\Livewire\Auth\OtpVerification;
+use App\Http\Livewire\Auth\ResetPassword;
+use App\Http\Livewire\Profile\ResetMyPassword;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {

@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Livewire\SchoolList;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -28,6 +29,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
         Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
     });
+    
+    // Schools routes
+    Route::get('/school', SchoolList::class)->name('school.list');
 });
 
 
