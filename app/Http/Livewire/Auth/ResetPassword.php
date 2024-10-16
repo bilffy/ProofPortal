@@ -73,8 +73,7 @@ class ResetPassword extends Component
                 $user->status = User::STATUS_ACTIVE;
                 $user->save();
             }
-            
-            return redirect()->route('login');
+            return redirect()->route('login')->with('status', 'Password updated, please sign in');
         }
 
         throw ValidationException::withMessages([

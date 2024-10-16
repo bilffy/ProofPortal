@@ -2,7 +2,7 @@
     <h1 class="text-3xl text-[#02B3DF] mb-4">Login</h1>
     
     @if (session('status'))
-        <div class="mb-4 font-medium text-sm text-green-600">
+        <div class="mb-4 font-bold text-3xl text-green-600 bg-[#eaf3e7]">
             {{ session('status') }}
         </div>
     @endif
