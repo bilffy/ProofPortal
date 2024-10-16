@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Livewire\Auth;
+namespace App\Http\Livewire\Auth;
 
-use Livewire\Component;
-use App\Models\User;
 use App\Helpers\OTPHelper;
+use App\Models\User;
 use App\Services\UserService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.guest')]
 class OtpVerification extends Component

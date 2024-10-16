@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Livewire\Profile;
+namespace App\Http\Livewire\Profile;
 
 use App\Http\Resources\UserResource;
+use Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Livewire\Component;
-use Auth;
 
 class ResetMyPassword extends Component
 {

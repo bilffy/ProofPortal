@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Livewire\Auth;
+namespace App\Http\Livewire\Auth;
 
 use App\Models\User;
 use App\Services\UserService;
-use Illuminate\Support\Str;
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.guest')]
 class Login extends Component
