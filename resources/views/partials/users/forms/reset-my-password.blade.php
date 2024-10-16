@@ -3,11 +3,10 @@
     $passwordMinLength = config('app.password_min_length');
 @endphp
 
-<div class="relative w-1/3">
+<div class="relative w-1/3 ml-8">
     
-        <div class="py-4 flex items-center justify-between">
+        <div class="py-4 flex items-center justify-between mb-3">
             <h3 class="text-2xl">Update Password</h3>
-            <div></div>
         </div>
         <div class="relative overflow-x-auto mb-2 gap-4">
             <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
