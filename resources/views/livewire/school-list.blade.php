@@ -13,7 +13,12 @@
                         placeholder="Search schools..."
                         class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
                 />
-            </div>    
+                <button type="button" class="absolute inset-y-0 end-0 flex items-center pe-3" wire:click="clearSearch">
+                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
     <table class="w-full text-sm text-left rtl:text-right">
