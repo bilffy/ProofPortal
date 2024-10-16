@@ -25,9 +25,14 @@ class SchoolList extends Component
     public function performSearch()
     {
         $this->resetPage();
-        //$this->render();
     }
 
+    public function clearSearch()
+    {
+        $this->search = '';
+        $this->resetPage();
+    }
+    
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
@@ -51,7 +56,7 @@ class SchoolList extends Component
                     ->orWhere('franchises.name', 'like', '%' . $this->search . '%');
             })
             ->orderBy($this->sortField === 'franchise_name' ? 'franchises.name' : 'schools.' . $this->sortField, $this->sortDirection)
-            ->paginate(10);
+            ->paginate(20);
         
         return view('livewire.school-list',
             [
