@@ -35,7 +35,7 @@
         </tbody>
     </table>
 
-    <div class="w-full mt-10">
+    <div class="w-full flex items-center justify-center py-4">
         {{ $schools->links() }}
     </div>
 </div>
