@@ -19,9 +19,9 @@
     <table class="w-full text-sm text-left rtl:text-right">
         <thead>
             <tr>
-                <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" filterable="{{false}}">School Key</x-table.headerCell>
-                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" filterable="{{false}}">School Name</x-table.headerCell>
-                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
+                <x-table.headerCell class="cursor-pointer" id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" filterable="{{false}}">School Key</x-table.headerCell>
+                <x-table.headerCell class="cursor-pointer" id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" filterable="{{false}}">School Name</x-table.headerCell>
+                <x-table.headerCell class="cursor-pointer" id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
             </tr>
         </thead>
         <tbody>
@@ -36,6 +36,6 @@
     </table>
 
     <div class="w-full flex items-center justify-center py-4">
-        {{ $schools->links() }}
+        {{ $schools->links('vendor.livewire.pagination') }}
     </div>
 </div>
