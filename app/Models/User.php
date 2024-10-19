@@ -129,17 +129,17 @@ class User extends Authenticatable
     
     public function getFranchise()
     {
-        return $this->franchises()->firstOrFail();
+        return $this->franchises()->first();
     }
 
     public function getSchool()
     {
-        return $this->schools()->firstOrFail();
+        return $this->schools()->first();
     }
 
     public function getSchoolOrFranchise()
     {
-        return $this->isAdmin() ? "" : ( $this->isFranchiseLevel() ? $this->getFranchise()->name : $this->getSchool()->name );
+        return $this->isAdmin() ? "" : ( $this->isFranchiseLevel() ? $this->getFranchise()?->name : $this->getSchool()?->name );
     }
 
     public function getInvitableRoles()
