@@ -1,4 +1,4 @@
-@props(['href' => '', 'activeNav' => false, 'navIcon' => '', 'id' => '', 'collapsed'])
+@props(['href' => '', 'activeNav' => false, 'navIcon' => '', 'id' => '', 'collapsed', 'visibility' => ''])
 
 <a
     id="{{ $id }}"
@@ -8,5 +8,5 @@
         <x-icon icon="{{ $navIcon }}"/>
     </span>
     {{-- <span class="{{ $collapsed? 'hidden':''}}">{{ $slot }}</span> --}}
-    <span class="hideOnCollapse">{{ $slot }}</span>
+    <span class="hideOnCollapse {{ $visibility }}">{{ $slot }}</span>
 </a>
