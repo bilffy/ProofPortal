@@ -2,24 +2,70 @@
 
 namespace App\Helpers;
 
-use App\Models\User;
+use App\Helpers\PermissionHelper as PH;
+use Spatie\Permission\Models\Role;
 
 class UserAbilitiesHelper
 {
-    public static function canInviteUser($inviter, $invitee)
+        
+    public static function getDefaultPageAccessPermissions()
     {
-        $isValidStatus = $invitee->status == User::STATUS_NEW || $invitee->status == User::STATUS_INVITED;
-        $isInvitable = in_array($invitee->getRole(), $inviter->getInvitableRoles());
-        $isNotUser = $inviter->id !== $invitee->id;
-        return $isInvitable && $isValidStatus && $isNotUser;
+        return [
+            PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
+            PH::getAccessToPage(PH::SUB_ORDERING),
+            PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
+            PH::getAccessToPage(PH::SUB_PROOFING),
+            PH::getAccessToPage(PH::SUB_REPORTS),
+        ];
+    }
+    
+    public static function getDefaultUserInvitePermissions()
+    {
+        return [
+            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SUPER_ADMIN),
+            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_ADMIN),
+            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_FRANCHISE),
+            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SCHOOL_ADMIN),
+            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_PHOTO_COORDINATOR),
+            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_TEACHER),
+        ];
     }
 
-    // TODO: Update helpers based on future role-permission implementation
-    public static function canUseAdminTools($userRole)
+    public static function getDefaultUserDisablePermissions()
     {
-        $restrictedRoles = [
-            RoleHelper::ROLE_TEACHER,
+        return [
+            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SUPER_ADMIN),
+            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_ADMIN),
+            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_FRANCHISE),
+            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
+            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_PHOTO_COORDINATOR),
+            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_TEACHER),
         ];
-        return !in_array($userRole, $restrictedRoles);
+    }
+
+    public static function getDefaultUserRevokePermissions()
+    {
+        return [
+            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_FRANCHISE),
+            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_SCHOOL_ADMIN),
+            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_PHOTO_COORDINATOR),
+            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_TEACHER),
+        ];
+    }
+
+    public static function getDefaultUserImpersonationPermissions()
+    {
+        return [
+            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_FRANCHISE),
+            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_SCHOOL_ADMIN),
+            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_PHOTO_COORDINATOR),
+            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_TEACHER),
+        ];
+    }
+
+    public static function removeRolePermission(string $roleName, string $permissionString)
+    {
+        $role = Role::findByName($roleName);
+        $role->revokePermissionTo($permissionString);
     }
 }

@@ -35,17 +35,19 @@
                         <!-- Dropdown menu -->
                         <x-form.dropdownPanel id="userDropdownAction-{{ $user->id }}">
                             @can ($PermissionHelper->toPermission($PermissionHelper::ACT_INVITE, $role))
-                                <li>
-                                    <x-button.dropdownLink
-                                        href="#" 
-                                        data-invite-route="{{ $inviteRoute }}"  
-                                        data-modal-target="inviteModal" 
-                                        data-modal-toggle="inviteModal" 
-                                        data-user-id="{{ $user->id }}" 
-                                        class="hover:bg-primary hover:text-white">
-                                        {{ $status == $User::STATUS_INVITED ? 'Re-invite' : 'Invite' }}
-                                    </x-button.dropdownLink>
-                                </li>
+                                @if ($user->id != auth()->id())
+                                    <li>
+                                        <x-button.dropdownLink
+                                            href="#" 
+                                            data-invite-route="{{ $inviteRoute }}"  
+                                            data-modal-target="inviteModal" 
+                                            data-modal-toggle="inviteModal" 
+                                            data-user-id="{{ $user->id }}" 
+                                            class="hover:bg-primary hover:text-white">
+                                            {{ $status == $User::STATUS_INVITED ? 'Re-invite' : 'Invite' }}
+                                        </x-button.dropdownLink>
+                                    </li>
+                                @endif
                             @endcan
                             <li>
                                 <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">Edit</x-button.dropdownLink>
