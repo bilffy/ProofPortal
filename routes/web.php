@@ -8,6 +8,8 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
+use App\Http\Controllers\NavBarController;
+
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -32,6 +34,7 @@ Route::middleware('auth')->group(function () {
     
     // Schools routes
     Route::get('/school', SchoolList::class)->name('school.list');
+    Route::post('/navbar/toggle-collapse', [NavBarController::class, 'toggleCollapse'])->name('navbar.toggleCollapse');
 });
 
 
