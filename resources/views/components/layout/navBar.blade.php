@@ -50,7 +50,9 @@
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span>
         <x-layout.navItem visibility="{{ $visibility }}" id="tabManageUsers" navIcon="user-plus" href="{{ route('users') }}">Manage Users</x-layout.navItem>
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+        @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+        @endcan
     @endcan
     <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm ml-4 font-bold mt-4 text-alert">TESTING PAGE</span>
     <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">School Home</x-layout.navItem>

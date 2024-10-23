@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Helpers\PermissionHelper as PH;
 use App\Helpers\RoleHelper;
+use App\Helpers\UserAbilitiesHelper;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -15,48 +16,13 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $defaultPageAccessPermissions = [
-            PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
-            PH::getAccessToPage(PH::SUB_ORDERING),
-            PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
-            PH::getAccessToPage(PH::SUB_PROOFING),
-        ];
-        $defaultUserInvitePermissions = [
-            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SUPER_ADMIN),
-            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_ADMIN),
-            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_FRANCHISE),
-            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SCHOOL_ADMIN),
-            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_PHOTO_COORDINATOR),
-            PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_TEACHER),
-        ];
-        $defaultUserDisablePermissions = [
-            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SUPER_ADMIN),
-            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_ADMIN),
-            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_FRANCHISE),
-            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
-            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_PHOTO_COORDINATOR),
-            PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_TEACHER),
-        ];
-        $defaultUserRevokePermissions = [
-            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_FRANCHISE),
-            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_SCHOOL_ADMIN),
-            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_PHOTO_COORDINATOR),
-            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_TEACHER),
-        ];
-        $defaultImpersonationPermissions = [
-            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_FRANCHISE),
-            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_SCHOOL_ADMIN),
-            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_PHOTO_COORDINATOR),
-            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_TEACHER),
-        ];
-
         $defaultPermissions = array_merge(
             (array) PH::toPermission(PH::ACT_CREATE, PH::SUB_USER),
-            $defaultPageAccessPermissions,
-            $defaultUserInvitePermissions,
-            $defaultUserDisablePermissions,
-            $defaultUserRevokePermissions,
-            $defaultImpersonationPermissions
+            UserAbilitiesHelper::getDefaultPageAccessPermissions(),
+            UserAbilitiesHelper::getDefaultUserInvitePermissions(),
+            UserAbilitiesHelper::getDefaultUserDisablePermissions(),
+            UserAbilitiesHelper::getDefaultUserRevokePermissions(),
+            UserAbilitiesHelper::getDefaultUserImpersonationPermissions(),
         );
 
         // Create Permissions
@@ -81,38 +47,43 @@ class PermissionSeeder extends Seeder
             PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_PHOTO_COORDINATOR),
             PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_TEACHER),
         ];
+        $adminToolsAccess = [
+            PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
+            PH::getAccessToPage(PH::SUB_REPORTS),
+        ];
 
+        // Prepare permissions per role:
         $rolePermissions = [
             RoleHelper::ROLE_SUPER_ADMIN => array_merge(
                 [
-                    PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
                     PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SUPER_ADMIN),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SUPER_ADMIN),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_PHOTO_COORDINATOR),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_TEACHER),
                 ],
+                $adminToolsAccess,
                 $adminAndFranchise,
             ),
             RoleHelper::ROLE_ADMIN => array_merge(
                 [
-                    PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_PHOTO_COORDINATOR),
                     PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_PHOTO_COORDINATOR),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_TEACHER),
                 ],
+                $adminToolsAccess,
                 $adminAndFranchise,
             ),
             RoleHelper::ROLE_FRANCHISE => array_merge(
                 [
                     PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
                     PH::getAccessToPage(PH::SUB_PROOFING),
-                    PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
                     PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_SCHOOL_ADMIN),
                 ],
+                $adminToolsAccess,
                 $coordinatorAndTeacher,
             ),
             RoleHelper::ROLE_SCHOOL_ADMIN => array_merge(
