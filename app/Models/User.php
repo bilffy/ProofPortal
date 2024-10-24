@@ -47,6 +47,11 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Status::class, 'active_status_id');
     }
+
+    public function uiSettings()
+    {
+        return $this->hasMany(UiSetting::class, 'user_id');
+    }
     
     /**
      * The attributes that are mass assignable.
@@ -146,5 +151,10 @@ class User extends Authenticatable
     {
         // Todo: Update logic using permissions
         return RoleHelper::getAllowedRoleNames($this->getRole());
+    }
+
+    public function getUiSetting()
+    {
+        return $this->uiSettings()->first();
     }
 }
