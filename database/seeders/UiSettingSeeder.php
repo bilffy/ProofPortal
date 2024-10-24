@@ -16,13 +16,10 @@ class UiSettingSeeder extends Seeder
         // Storing settings
         $settings = [
             'navigation' => [
-                'collapse' => true,
-            ],
-            'notification' => [
-                'otp' => true,
+                'collapse' => false,
             ],
         ];
 
-        UiSetting::create(['settings' => $settings]);
+        UiSetting::create(['settings' => $settings, 'user_id' => 1]);
     }
 }

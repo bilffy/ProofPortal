@@ -12,6 +12,7 @@ class UiSetting extends Model
     protected $table = 'ui_settings';
 
     protected $fillable = [
+        'user_id',
         'settings',
     ];
 
@@ -24,13 +25,25 @@ class UiSetting extends Model
      * @param $collapsed
      * @return void
      */
-    public static function setNavCollapsed($collapsed)
-    {
-        $setting = self::firstOrCreate([]);
-        
+    public static function setNavCollapsed($collapsed, User $user): void
+    {   
+        // check if the user has a setting
+        if ($user->getUiSetting()) {
+            $setting = $user->getUiSetting();
+        } else {
+            $settings = [
+                'navigation' => [
+                    'collapse' => false,
+                ],
+            ];
+            
+            $setting = self::create(['user_id' => $user->id, 'settings' => $settings]);
+        }
+
         $settings = $setting->settings;
         $settings['navigation']['collapse'] = $collapsed;
         $setting->settings = $settings;
+        
         $setting->save();
     }
 
