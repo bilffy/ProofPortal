@@ -10,6 +10,7 @@ use App\Models\School;
 use App\Models\SchoolUser;
 use App\Models\User;
 use App\Rules\MspEmailValidation;
+use App\Services\UserService;
 use Auth;
 use DB;
 use Hash;
@@ -20,6 +21,18 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    protected UserService $userService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param UserService $userService
+     */
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+    
     protected function validator(array $data)
     {
         return Validator::make($data,
@@ -143,7 +156,10 @@ class UserController extends Controller
             DB::rollBack();
             return redirect()->back()->withInput()->withErrors($e->getMessage());
         }
-
+        
+        // Send invitation email
+        $this->userService->sendInvite($user);
+        
         return redirect(route('users', absolute: false));
     }
 
