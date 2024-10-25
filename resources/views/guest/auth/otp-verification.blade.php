@@ -15,7 +15,7 @@
         </div>
         <div>
             <div class="flex flex-col mb-4">
-                <input placeholder="Enter OTP" class="border rounded-md p-2 border-neutral" type="password" wire:model="otp" required autocomplete="otp" autofocus />
+                <input name="otp" placeholder="Enter OTP" class="border rounded-md p-2 border-neutral" type="password" wire:model="otp" required autocomplete="one-time-code" autofocus />
             </div>
         </div>
 
