@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Helpers\PermissionHelper;
+use App\Helpers\RoleHelper;
 use App\Helpers\UserAbilitiesHelper;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         view()->share('UserStatusHelper', new UserStatusHelper());
         view()->share('UserAbilitiesHelper', new UserAbilitiesHelper());
         view()->share('PermissionHelper', new PermissionHelper());
+        view()->share('RoleHelper', new RoleHelper());
         view()->share('AvatarHelper', new AvatarHelper());
         view()->share('UiSettingHelper', new UiSettingHelper());
         JsonResource::withoutWrapping();
