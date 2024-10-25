@@ -89,6 +89,7 @@ class PermissionSeeder extends Seeder
             RoleHelper::ROLE_SCHOOL_ADMIN => array_merge(
                 [
                     PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
+                    PH::getAccessToPage(PH::SUB_PROOFING),
                     PH::getAccessToPage(PH::SUB_ORDERING),
                     PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
                 ],
