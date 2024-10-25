@@ -28,22 +28,26 @@
     <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PHOTOGRAPHY))
-{{--        <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">PHOTOGRAPHY</span>--}}
-{{--        <x-layout.navItem visibility="{{ $visibility }}" id="tabPortraits" navIcon="user" href="{{ route('dashboard') }}">Portraits</x-layout.navItem>--}}
-{{--        <x-layout.navItem visibility="{{ $visibility }}" id="tabGroups" navIcon="users" href="{{ route('dashboard') }}">Groups</x-layout.navItem>--}}
-{{--        <x-layout.navItem visibility="{{ $visibility }}" id="tabSpecialEvents" navIcon="graduation-cap" href="{{ route('dashboard') }}">Special Events</x-layout.navItem>--}}
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Photography</x-layout.navItem>
+        @unlessrole($RoleHelper::ROLE_FRANCHISE)
+            <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">PHOTOGRAPHY</span>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabPortraits" navIcon="user" href="{{ route('dashboard') }}">Portraits</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabGroups" navIcon="users" href="{{ route('dashboard') }}">Groups</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabSpecialEvents" navIcon="graduation-cap" href="{{ route('dashboard') }}">Special Events</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Photography</x-layout.navItem>
+        @endunlessrole
     @endcan
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
-        {{--<span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">PROOFING</span>--}}
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+        @unlessrole($RoleHelper::ROLE_FRANCHISE)
+            <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">PROOFING</span>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+        @endunlessrole
     @endcan
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
-        {{--<span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ORDERING</span>
+        <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ORDERING</span>
         <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('dashboard') }}">ID Cards</x-layout.navItem>
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('dashboard') }}">Photos</x-layout.navItem>--}}
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('dashboard') }}">Photos</x-layout.navItem>
         <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="credit-card" href="{{ route('dashboard') }}">Ordering</x-layout.navItem>
     @endcan
     
