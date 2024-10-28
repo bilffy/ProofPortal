@@ -3,7 +3,6 @@
 @php 
     $visibility = $UiSettingHelper->getUiSetting($UiSettingHelper::UI_SETTING_NAV_COLLAPSED) ? 'hidden' : '';
 @endphp
-
 <div class="flex flex-col mt-2 mr-2">
     <div class="py-4 px-2 flex justify-center">
         <img 

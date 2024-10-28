@@ -4,9 +4,34 @@
     <div class="flex flex-row">
         <x-layout.navBar />
         <div class="flex flex-col w-full h-screen">
-            <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2 min-h-[68px]">
+            <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2 min-h-[68px] ">
+                <div class="flex items-center">
+                    <x-icon class="px-2" icon="arrow-left" />
+                    Back
+                    <x-icon class="px-2" icon="chevron-right fa-xs text-neutral-400" />
+                    <button
+                                    id="userBtn"
+                                    type="button"
+                                    data-dropdown-toggle="BreadcrumbSelectSchool"
+                                    class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800"
+                            >
+                            Hillview Primary School
+                                <x-icon  class="px-2" icon="caret-up" hidden />
+                                <x-icon  class="px-2" icon="caret-down" />
+                            </button>
+                            <x-form.dropdownPanel id="BreadcrumbSelectSchool">
+                                <li>
+                                    insert Search field here
+                                </li>
+                                <li>
+                                    <x-button.dropdownLink href="" class="hover:bg-primary hover:text-white">
+                                        School
+                                    </x-button.dropdownLink>
+                                </li>
+                            </x-form.dropdownPanel>
+                </div>
                 <div class="flex flex-1 items-center justify-center">
-                    {{-- <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
+                    <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
                         <div class="flex flex-row items-center gap-2 text-primary text-sm">
                             <img src="{{ Vite::asset('resources/assets/images/Info.svg') }}" alt="" width="20px" height="20px">
                             You're impersonating <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege
@@ -17,7 +42,7 @@
                                 <img src="{{ Vite::asset('resources/assets/images/close-round-alert.svg') }}" alt="" width="20px" height="20px">
                             </x-button.base>
                         </div>
-                    </div> --}}
+                    </div>
                 </div>
                 <div class="flex flex-row items-center">
                     <div class="ms-3 relative">
