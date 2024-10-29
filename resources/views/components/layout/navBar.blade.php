@@ -75,7 +75,7 @@
 
         $(targetElement).addClass('bg-primary text-white rounded-e-md');
 
-        $('#btnToggleNavBar').on("click", function() {
+        /*$('#btnToggleNavBar').on("click", function() {
             navCollapsed = !navCollapsed;
             localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
 
@@ -104,8 +104,38 @@
                 },
                 success: function(response) {}
             });    
-        });
+        });*/
 
+        $('#btnToggleNavBar').on("click", function() {
+            navCollapsed = !navCollapsed;
+            localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
+
+            // Animate toggle button icon
+            $('#btnCollapse').toggleClass('fa-arrow-left fa-arrow-right');
+
+            // Group animations for smoother transitions
+            var elementsToToggle = $('span.hideOnCollapse, img.hideOnCollapse, img.showOnCollapse');
+
+            elementsToToggle.each(function() {
+                $(this).animate({width: 'toggle'}, function() {
+                    $(this).toggleClass('hidden visible');
+                });
+            });
+
+            // AJAX call to save collapsed state
+            $.ajax({
+                url: '{{ route("navbar.toggleCollapse") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    collapsed: navCollapsed
+                },
+                success: function(response) {
+                    // Optionally handle the response
+                }
+            });
+        });
+        
     }, false);
 </script>
 
