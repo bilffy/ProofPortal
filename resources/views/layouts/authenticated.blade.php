@@ -74,7 +74,7 @@
                 </div>
 
             </header>
-            <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden">
+            <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4">
                 @if (isset($slot))
                     {{ $slot }}
                 @else
