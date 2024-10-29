@@ -111,6 +111,15 @@ class UserController extends Controller
             : ( $user->isFranchiseLevel()
                 ? School::orderBy('name')->with('franchises')->whereHas('franchises', function ($q) use ($user) { $q->where('franchise_id', $user->getFranchise()->id); })->get()
                 : School::orderBy('name')->where('id', '=', $user->getSchool()->id)->get() );
+
+        // Check if it has school context
+        // This override the franchise level context from the selected school
+        if (SchoolContextHelper::isSchoolContext()) {
+            $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
+            $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
+        }
+        
+        
         return view('newUser', [
             'user' => new UserResource($user),
             'roles' => RoleResource::collection(RoleHelper::getAllowedRoles($user->getRole())),
