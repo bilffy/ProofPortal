@@ -12,7 +12,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($users as $user)
+            @forelse ($users as $user)
                 <tr>
                     @php
                         $status = $user->status;
@@ -55,7 +55,11 @@
                         </x-form.dropdownPanel>
                     </x-table.cell>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <x-table.cell colspan="7" class="text-center">There are no users!</x-table.cell>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 </div>
