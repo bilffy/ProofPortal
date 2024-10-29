@@ -26,9 +26,9 @@ class SchoolContextHelper
         return Session::has('school_context-sid');
     }
 
-    public function getCurrentSchoolContext(): School|null
+    public static function getCurrentSchoolContext(): School|null
     {
-        if ($this->isSchoolContext()) {
+        if (self::isSchoolContext()) {
             return School::find(Session::get('school_context-sid'));
         }
     

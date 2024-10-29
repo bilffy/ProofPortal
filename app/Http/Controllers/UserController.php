@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
 use App\Models\Franchise;
@@ -80,10 +81,10 @@ class UserController extends Controller
             
             // Check if it has school context
             // This override the franchise level context from the selected school
-            if (Session::has('school_context-sid')) {
-                $schoolContext = Session::get('school_context-sid');
+            if (SchoolContextHelper::isSchoolContext()) {
+                $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
                 $usersQuery = User::whereHas('schools', function ($sQuery) use ($schoolContext) {
-                    $sQuery->where('schools.id', $schoolContext);
+                    $sQuery->where('schools.id', $schoolContext->id);
                 });
             }
             
