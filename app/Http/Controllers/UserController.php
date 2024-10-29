@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
 use App\Models\Franchise;
@@ -18,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
 {
@@ -76,6 +78,16 @@ class UserController extends Controller
             })->orWhereHas('franchises', function ($fQuery) use ($franchiseId) {
                 $fQuery->where('franchises.id', $franchiseId);
             });
+            
+            // Check if it has school context
+            // This override the franchise level context from the selected school
+            if (SchoolContextHelper::isSchoolContext()) {
+                $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
+                $usersQuery = User::whereHas('schools', function ($sQuery) use ($schoolContext) {
+                    $sQuery->where('schools.id', $schoolContext->id);
+                });
+            }
+            
         } elseif($user->isSchoolLevel()) {
             $usersQuery = $user->getSchool()->users();
         } else {

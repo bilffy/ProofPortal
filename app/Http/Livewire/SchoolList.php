@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Auth;
@@ -15,6 +16,23 @@ class SchoolList extends Component
     public $search = '';
     public $sortField = 'name';
     public $sortDirection = 'asc';
+
+    public function mount()
+    {
+        $this->checkUserRole();
+    }
+
+    public function checkUserRole()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Check if the user is neither an admin nor a franchise
+        if (!$user->isRcUser() && !$user->isFranchiseLevel()) {
+            return redirect()->route('dashboard');
+        }
+    }
+
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -45,7 +63,12 @@ class SchoolList extends Component
     }
     
     public function render()
-    {
+    {   
+        /** @var User $user */
+        $user = Auth::user();
+        
+        $hideFranchise = $user->isFranchiseLevel() ? true : false;
+        
         $schools = School::query()
             ->leftJoin('school_franchises', 'schools.id', '=', 'school_franchises.school_id')
             ->leftJoin('franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
@@ -54,13 +77,19 @@ class SchoolList extends Component
                 $query->where('schools.name', 'like', '%' . $this->search . '%')
                     ->orWhere('schools.schoolkey', 'like', '%' . $this->search . '%')
                     ->orWhere('franchises.name', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy($this->sortField === 'franchise_name' ? 'franchises.name' : 'schools.' . $this->sortField, $this->sortDirection)
-            ->paginate(20);
+            });
+
+        if ($user->isFranchiseLevel()) {
+            $franchise = $user->getFranchise();
+            $schools->where('franchises.id', $franchise->id);    
+        }
         
+        $schools->orderBy($this->sortField === 'franchise_name' ? 'franchises.name' : 'schools.' . $this->sortField, $this->sortDirection);
+
         return view('livewire.school-list',
             [
-                'schools' => $schools,
+                'schools' => $schools->paginate(20),
+                'hideFranchise' => $hideFranchise,
             ])
             ->layout('layouts.authenticated', [
                 'user' => new UserResource(Auth::user()),

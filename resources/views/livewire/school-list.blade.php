@@ -26,15 +26,25 @@
             <tr>
                 <x-table.headerCell class="cursor-pointer" id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" filterable="{{false}}">School Key</x-table.headerCell>
                 <x-table.headerCell class="cursor-pointer" id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" filterable="{{false}}">School Name</x-table.headerCell>
-                <x-table.headerCell class="cursor-pointer" id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
+                <x-table.headerCell class="cursor-pointer {{ $hideFranchise ? 'hidden' : '' }}" id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
             </tr>
         </thead>
         <tbody>
             @foreach ($schools as $school)
                 <tr>
-                    <x-table.cell>{{ $school->schoolkey }}</x-table.cell>
-                    <x-table.cell>{{ $school->name }}</x-table.cell>
-                    <x-table.cell>{{ $school->franchise_name }}</x-table.cell>
+                    <x-table.cell>
+                        <a href="{{ route('school.view', ['id' => $school->id]) }}">
+                            {{ $school->schoolkey }}
+                        </a>
+                    </x-table.cell>
+                    <x-table.cell>
+                        <a href="{{ route('school.view', ['id' => $school->id]) }}">
+                            {{ $school->name }}
+                        </a>
+                    </x-table.cell>
+                    <x-table.cell  class="{{ $hideFranchise ? 'hidden' : '' }}">
+                        {{ $school->franchise_name }}
+                    </x-table.cell>
                 </tr>
             @endforeach
         </tbody>

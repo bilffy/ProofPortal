@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Helpers\PermissionHelper;
 use App\Helpers\RoleHelper;
+use App\Helpers\SchoolContextHelper;
 use App\Helpers\UserAbilitiesHelper;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         view()->share('RoleHelper', new RoleHelper());
         view()->share('AvatarHelper', new AvatarHelper());
         view()->share('UiSettingHelper', new UiSettingHelper());
+        view()->share('SchoolContextHelper', new SchoolContextHelper());
         JsonResource::withoutWrapping();
     }
 }

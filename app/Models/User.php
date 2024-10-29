@@ -111,6 +111,11 @@ class User extends Authenticatable
         return $this->hasRole([RoleHelper::ROLE_SUPER_ADMIN, RoleHelper::ROLE_ADMIN]);
     }
 
+    public function isRcUser()
+    {
+        return $this->hasRole([RoleHelper::ROLE_ADMIN]);
+    }
+    
     public function isFranchiseLevel()
     {
         return $this->hasRole([RoleHelper::ROLE_FRANCHISE]);
