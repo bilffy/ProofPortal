@@ -34,7 +34,7 @@
                 <div class="flex flex-col w-full min-h-[300px] bg-neutral-200 p-4">
                     <div class=" bg-primary flex mb-2">
                         <div class=" flex h-full">
-                            <img src="https://placehold.co/600x250" alt="">
+                            <img src="https://placehold.co/800x650" alt="">
                         </div>
                     </div>
                     <div class="text-center">
