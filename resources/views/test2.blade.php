@@ -31,14 +31,21 @@
                 </div>
             </div>
             <div class="flex flex-col w-full gap-4">
-                <div class="flex flex-col w-full min-h-[300px] bg-neutral-200 p-4">
+                <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
                     <div class=" bg-primary flex mb-2">
                         <div class=" flex h-full">
-                            <img src="https://placehold.co/600x250" alt="">
+                            {{-- <img src="../assets/images/Portrait.png" alt=""> --}}
+                            <img 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p23.png') }}" 
+                            alt=""
+                            {{-- width=125px --}}
+                            />
                         </div>
                     </div>
-                    <div class="text-center">
-                        Pagination
+                    <div class="flex text-center absolute bottom-8 gap-1 w-full justify-center">
+                        <div class="w-[12px] h-[12px] bg-neutral-400 rounded-full overflow-hidden"></div>
+                        <div class="w-[12px] h-[12px] bg-neutral-400 rounded-full overflow-hidden"></div>
+                        <div class="w-[12px] h-[12px] bg-neutral-400 rounded-full overflow-hidden"></div>
                     </div>
                 </div>
             </div>
@@ -47,3 +54,9 @@
 
 @endsection
 
+<style>
+    .slideShow {
+        /* background-color: red; */
+        /* background-image: url("../assets/images/ads/1964138_p2.png"); */
+    }
+</style>

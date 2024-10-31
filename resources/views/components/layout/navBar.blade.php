@@ -4,7 +4,7 @@
     $visibility = $UiSettingHelper->getUiSetting($UiSettingHelper::UI_SETTING_NAV_COLLAPSED) ? 'hidden' : '';
 @endphp
 <div class="flex flex-col mt-2 mr-2">
-    <div class="py-4 px-2 flex justify-center">
+    <div class="py-4 px-2 flex justify-center "> {{-- min-w-[250px] --}}
         <img 
         src="{{ Vite::asset('resources/assets/images/MSP-Logo.svg') }}" 
         alt=""
@@ -19,9 +19,9 @@
         />
     </div>
     <div class="relative h-[40px] flex justify-end">
-        <span id="btnToggleNavBar" class="absolute bg-neutral p-2 hover:bg-primary-hover hover:cursor-pointer hover:transition -right-6 w-[32px] h-[32px] flex justify-center items-center rounded-full">
-            @php $arrow =  $visibility == 'hidden' ? 'arrow-right' : 'arrow-left'  @endphp
-            <x-icon id="btnCollapse" icon="{{ $arrow }}" style="color: #ffffff"/>
+        <span id="btnToggleNavBar" class="p-2 hover:cursor-pointer hover:transition -right-6 w-[32px] h-[32px] flex justify-center items-center rounded-full">
+            @php $arrow =  $visibility == 'hidden' ? 'chevron-right' : 'chevron-left'  @endphp
+            <x-icon id="btnCollapse" icon="{{ $arrow }}" style="color: #323232"/>
         </span>
     </div>
     <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
@@ -51,7 +51,7 @@
     @endcan
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
-        <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span>
+        {{-- <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span> --}}
         <x-layout.navItem visibility="{{ $visibility }}" id="tabManageUsers" navIcon="user-plus" href="{{ route('users') }}">Manage Users</x-layout.navItem>
         @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
             <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
@@ -80,20 +80,23 @@
             localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
 
             $('#btnCollapse').animate({}, 600, function() {
-                $(this).toggleClass('fa-arrow-left fa-arrow-right');
+                $(this).toggleClass('fa-chevron-left fa-chevron-right');
             });
 
             $('span.hideOnCollapse').animate({}, 600, function() {
                 $(this).toggleClass('hidden visible');
             });
+            // $('span.hideOnCollapse').toggle("slide", {direction: 'left'})
 
             $('img.hideOnCollapse').animate({}, 600, function() {
                 $(this).toggleClass('hidden visible');
             });
-
+            // $('img.hideOnCollapse').toggleSlide()
+            
             $('img.showOnCollapse').animate({}, 600, function() {
-                $(this).toggleClass('hidden visible');
+                $(this).toggleClass('visible hidden');
             });
+            // $('img.showOnCollapse').toggleSlide()
 
             $.ajax({
                 url: '{{ route("navbar.toggleCollapse") }}',
