@@ -5,7 +5,9 @@
 @endphp
 <div class="flex flex-col mt-2 mr-2">
     <div class="py-4 px-2 flex justify-center "> {{-- min-w-[250px] --}}
-        <img 
+        <div id="logo" class="{{ $visibility ? "logoSM" : "logoRegular" }}"></div>
+
+        {{-- <img 
         src="{{ Vite::asset('resources/assets/images/MSP-Logo.svg') }}" 
         alt=""
         width=125px
@@ -16,9 +18,9 @@
         alt=""
         width=47px
         class="showOnCollapse {{ $visibility != 'hidden' ? 'hidden' : '' }}"
-        />
+        /> --}}
     </div>
-    <div class="relative h-[40px] flex justify-end">
+    <div id="btnCollapseExpand" class="relative h-[40px] flex justify-end {{ $visibility ? "pr-4" : "pr-0" }}">
         <span id="btnToggleNavBar" class="p-2 hover:cursor-pointer hover:transition -right-6 w-[32px] h-[32px] flex justify-center items-center rounded-full">
             @php $arrow =  $visibility == 'hidden' ? 'chevron-right' : 'chevron-left'  @endphp
             <x-icon id="btnCollapse" icon="{{ $arrow }}" style="color: #323232"/>
@@ -57,7 +59,7 @@
             <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
         @endcan
     @endcan
-    <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm ml-4 font-bold mt-4 text-alert">TESTING PAGE</span>
+    {{-- <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm ml-4 font-bold mt-4 text-alert">TESTING PAGE</span> --}}
     <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">School Home</x-layout.navItem>
 </div>
 
@@ -115,15 +117,16 @@
 
             // Animate toggle button icon
             $('#btnCollapse').toggleClass('fa-arrow-left fa-arrow-right');
+            $('#logo').toggleClass('logoRegular logoSM');
+            $('#btnCollapseExpand').toggleClass('pr-0 pr-4')
+
 
             // Group animations for smoother transitions
-            var elementsToToggle = $('span.hideOnCollapse, img.hideOnCollapse, img.showOnCollapse');
+            // var elementsToToggle = $('span.hideOnCollapse');
 
-            elementsToToggle.each(function() {
-                $(this).animate({width: 'toggle'}, function() {
-                    $(this).toggleClass('hidden visible');
-                });
-            });
+            // elementsToToggle.each(function() {
+                $('span.hideOnCollapse').animate({width: 'toggle'});
+            // });
 
             // AJAX call to save collapsed state
             $.ajax({
@@ -143,3 +146,21 @@
 </script>
 
 @endpush
+
+<style>
+    .logoRegular, .logoSM {
+        background-repeat: no-repeat;
+    }
+    .logoRegular {
+        width: 125px;
+        min-height: 100px;
+        transition: .3s;
+        background-image: url( {{ Vite::asset('resources/assets/images/MSP-Logo.svg') }} );
+    }
+    .logoSM {
+        width: 47px;
+        min-height: 40px;
+        transition: .3s;
+        background-image: url( {{Vite::asset('resources/assets/images/MSP-Logo-sm.svg')}} );
+    }
+</style>
