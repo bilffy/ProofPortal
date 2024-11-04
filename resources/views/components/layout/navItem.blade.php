@@ -7,5 +7,5 @@
     <span class=" w-[20px] h-[20px] flex items-center justify-center">
         <x-icon icon="{{ $navIcon }}"/>
     </span>
-    <span class="hideOnCollapse {{ $visibility }}">{{ $slot }}</span>
+    <span class="hideOnCollapse {{ $visibility ?"hidden":"" }}">{{ $slot }}</span>
 </a>
