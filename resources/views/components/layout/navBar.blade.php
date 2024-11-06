@@ -127,15 +127,11 @@
     .textCollapsed {
         width: 0 !important;
         overflow: hidden;
-        /* transition: .25s all; */
     }
     .textExpanded {
-        /* width: auto !important; */
         width: 100%;
         overflow: hidden;
         transition: .2s all;
         padding-right: 3rem;
-        /* background: red; */
-        /* transition-delay: .1s; */
     }
 </style>
