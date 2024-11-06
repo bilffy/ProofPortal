@@ -78,40 +78,6 @@
 
         $(targetElement).addClass('bg-primary text-white rounded-e-md');
 
-        /*$('#btnToggleNavBar').on("click", function() {
-            navCollapsed = !navCollapsed;
-            localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
-
-            $('#btnCollapse').animate({}, 600, function() {
-                $(this).toggleClass('fa-chevron-left fa-chevron-right');
-            });
-
-            $('span.hideOnCollapse').animate({}, 600, function() {
-                $(this).toggleClass('hidden visible');
-            });
-            // $('span.hideOnCollapse').toggle("slide", {direction: 'left'})
-
-            $('img.hideOnCollapse').animate({}, 600, function() {
-                $(this).toggleClass('hidden visible');
-            });
-            // $('img.hideOnCollapse').toggleSlide()
-            
-            $('img.showOnCollapse').animate({}, 600, function() {
-                $(this).toggleClass('visible hidden');
-            });
-            // $('img.showOnCollapse').toggleSlide()
-
-            $.ajax({
-                url: '{{ route("navbar.toggleCollapse") }}',
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    collapsed: navCollapsed
-                },
-                success: function(response) {}
-            });    
-        });*/
-
         $('#btnToggleNavBar').on("click", function() {
             navCollapsed = !navCollapsed;
             localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
@@ -121,17 +87,7 @@
             $('#btnCollapse').toggleClass('fa-chevron-left fa-chevron-right');
             $('#btnCollapseExpand').toggleClass('pr-0 pr-5')
             $('div.hideOnCollapse').toggleClass('textCollapsed textExpanded')
-            // $('span.hideOnCollapse').animate({})
-
-
-
-            // Group animations for smoother transitions
-            // var elementsToToggle = $('span.hideOnCollapse');
-
-            // elementsToToggle.each(function() {
-                // $('span.hideOnCollapse').animate({width: 'toggle'});
-            // });
-
+            
             // AJAX call to save collapsed state
             $.ajax({
                 url: '{{ route("navbar.toggleCollapse") }}',

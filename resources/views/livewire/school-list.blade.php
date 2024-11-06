@@ -32,7 +32,7 @@
         <tbody>
             @foreach ($schools as $school)
                 <tr>
-                    <x-table.cell>
+                    <x-table.cell class="w-1/4">
                         <a href="{{ route('school.view', ['id' => $school->id]) }}">
                             {{ $school->schoolkey }}
                         </a>

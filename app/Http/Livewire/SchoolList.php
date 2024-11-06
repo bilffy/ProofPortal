@@ -73,10 +73,13 @@ class SchoolList extends Component
             ->leftJoin('school_franchises', 'schools.id', '=', 'school_franchises.school_id')
             ->leftJoin('franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
             ->select('schools.*', 'franchises.name as franchise_name')
-            ->where(function($query) {
+            ->where(function($query) use ($user) {
                 $query->where('schools.name', 'like', '%' . $this->search . '%')
-                    ->orWhere('schools.schoolkey', 'like', '%' . $this->search . '%')
-                    ->orWhere('franchises.name', 'like', '%' . $this->search . '%');
+                    ->orWhere('schools.schoolkey', 'like', '%' . $this->search . '%');
+
+                if (!$user->isFranchiseLevel()) {
+                    $query->orWhere('franchises.name', 'like', '%' . $this->search . '%');        
+                }
             });
 
         if ($user->isFranchiseLevel()) {
