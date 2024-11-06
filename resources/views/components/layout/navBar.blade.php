@@ -3,7 +3,7 @@
 @php 
     $visibility = $UiSettingHelper->getUiSetting($UiSettingHelper::UI_SETTING_NAV_COLLAPSED) ? 'hidden' : '';
 @endphp
-<div class="flex flex-col mt-2 mr-2">
+<div id="mainNav" class="flex flex-col mt-2 mr-2">
     <div class="py-4 px-2 flex justify-center "> {{-- min-w-[250px] --}}
         <div id="logo" class="{{ $visibility ? "logoSM" : "logoRegular" }}"></div>
 
@@ -20,10 +20,11 @@
         class="showOnCollapse {{ $visibility != 'hidden' ? 'hidden' : '' }}"
         /> --}}
     </div>
-    <div id="btnCollapseExpand" class="relative h-[40px] flex justify-end {{ $visibility ? "pr-4" : "pr-0" }}">
+    <div id="btnCollapseExpand" class="relative h-[40px] flex justify-end {{ $visibility ? "pr-5" : "pr-0" }}">
         <span id="btnToggleNavBar" class="p-2 hover:cursor-pointer hover:transition -right-6 w-[32px] h-[32px] flex justify-center items-center rounded-full">
             @php $arrow =  $visibility == 'hidden' ? 'chevron-right' : 'chevron-left'  @endphp
-            <x-icon id="btnCollapse" icon="{{ $arrow }}" style="color: #323232"/>
+            <x-icon id="btnCollapse" icon="{{ $arrow }}" style="color: #323232"/>    
+               
         </span>
     </div>
     <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
@@ -116,16 +117,19 @@
             localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
 
             // Animate toggle button icon
-            $('#btnCollapse').toggleClass('fa-arrow-left fa-arrow-right');
             $('#logo').toggleClass('logoRegular logoSM');
-            $('#btnCollapseExpand').toggleClass('pr-0 pr-4')
+            $('#btnCollapse').toggleClass('fa-chevron-left fa-chevron-right');
+            $('#btnCollapseExpand').toggleClass('pr-0 pr-5')
+            $('div.hideOnCollapse').toggleClass('textCollapsed textExpanded')
+            // $('span.hideOnCollapse').animate({})
+
 
 
             // Group animations for smoother transitions
             // var elementsToToggle = $('span.hideOnCollapse');
 
             // elementsToToggle.each(function() {
-                $('span.hideOnCollapse').animate({width: 'toggle'});
+                // $('span.hideOnCollapse').animate({width: 'toggle'});
             // });
 
             // AJAX call to save collapsed state
@@ -154,13 +158,28 @@
     .logoRegular {
         width: 125px;
         min-height: 100px;
-        transition: .3s;
+        transition: all .1s;
         background-image: url( {{ Vite::asset('resources/assets/images/MSP-Logo.svg') }} );
     }
     .logoSM {
         width: 47px;
         min-height: 40px;
-        transition: .3s;
+        transition: all .3s;
         background-image: url( {{Vite::asset('resources/assets/images/MSP-Logo-sm.svg')}} );
+    }
+
+    .textCollapsed {
+        width: 0 !important;
+        overflow: hidden;
+        /* transition: .25s all; */
+    }
+    .textExpanded {
+        /* width: auto !important; */
+        width: 100%;
+        overflow: hidden;
+        transition: .2s all;
+        padding-right: 3rem;
+        /* background: red; */
+        /* transition-delay: .1s; */
     }
 </style>
