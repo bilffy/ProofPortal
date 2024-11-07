@@ -55,7 +55,7 @@
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         {{-- <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span> --}}
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabManageUsers" navIcon="user-plus" href="{{ route('users') }}">Manage Users</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" sub id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
         @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
             <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
         @endcan
@@ -87,7 +87,7 @@
             $('#btnCollapse').toggleClass('fa-chevron-left fa-chevron-right');
             $('#btnCollapseExpand').toggleClass('pr-0 pr-5')
             $('div.hideOnCollapse').toggleClass('textCollapsed textExpanded')
-            
+
             // AJAX call to save collapsed state
             $.ajax({
                 url: '{{ route("navbar.toggleCollapse") }}',
@@ -127,15 +127,11 @@
     .textCollapsed {
         width: 0 !important;
         overflow: hidden;
-        /* transition: .25s all; */
     }
     .textExpanded {
-        /* width: auto !important; */
         width: 100%;
         overflow: hidden;
         transition: .2s all;
         padding-right: 3rem;
-        /* background: red; */
-        /* transition-delay: .1s; */
     }
 </style>
