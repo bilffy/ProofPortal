@@ -93,7 +93,19 @@
             $('#btnCollapse').toggleClass('fa-chevron-left fa-chevron-right');
             $('#btnCollapseExpand').toggleClass('pr-0 pr-5')
             $('div.hideOnCollapse').toggleClass('textCollapsed textExpanded')
-
+            
+            console.log(navCollapsed);
+            
+            var isSchoolContext = {{ $SchoolContextHelper->isSchoolContext() ? 1 : 0 }};
+            
+            if (!navCollapsed && isSchoolContext) {
+                $("#tabManageUsers").addClass("pl-8");
+                $("#tabReports").addClass("pl-8");
+            } else {
+                $("#tabManageUsers").removeClass("pl-8").addClass('pl-4');
+                $("#tabReports").removeClass("pl-8").addClass('pl-4');
+            }
+            
             // AJAX call to save collapsed state
             $.ajax({
                 url: '{{ route("navbar.toggleCollapse") }}',
