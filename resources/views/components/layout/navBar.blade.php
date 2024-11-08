@@ -2,6 +2,12 @@
 
 @php 
     $visibility = $UiSettingHelper->getUiSetting($UiSettingHelper::UI_SETTING_NAV_COLLAPSED) ? 'hidden' : '';
+    $subNav = false;
+    
+    if ($visibility != 'hidden' && $SchoolContextHelper->isSchoolContext()) {
+        $subNav = true;
+    }
+    
 @endphp
 <div id="mainNav" class="flex flex-col mt-2 mr-2">
     <div class="py-4 px-2 flex justify-center "> {{-- min-w-[250px] --}}
@@ -55,9 +61,9 @@
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         {{-- <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm text-neutral-600 ml-4 font-bold mt-4">ADMIN TOOLS</span> --}}
-        <x-layout.navItem visibility="{{ $visibility }}"  subNav="{{ $SchoolContextHelper->isSchoolContext() ? true : false }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}"  subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
         @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
-            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $SchoolContextHelper->isSchoolContext() ? true : false }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
         @endcan
     @endcan
     {{-- <span class="hideOnCollapse {{ $visibility }} whitespace-nowrap text-sm ml-4 font-bold mt-4 text-alert">TESTING PAGE</span> --}}
