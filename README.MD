@@ -96,3 +96,9 @@ If you encounter any issues during setup or while running the application, pleas
 
 If the issue persists, feel free to reach out to the development team for assistance.
 
+### Deployment (Staging):
+```
+./deploy.sh --staging
+```
+> To rebuild the container, just add --build parameter 
+

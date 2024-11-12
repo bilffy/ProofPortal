@@ -2,7 +2,7 @@
 
 # Function to display usage
 usage() {
-  echo "Usage: $0 --staging | --production [--build]"
+  echo "Usage: $0 --staging | --production [--build] [--install]"
   exit 1
 }
 
@@ -13,6 +13,7 @@ fi
 
 # Initialize variables
 BUILD_OPTION=false
+INSTALL_OPTION=false
 
 # Process input arguments
 for arg in "$@"
@@ -26,6 +27,9 @@ do
       ;;
     --build)
       BUILD_OPTION=true
+      ;;
+    --install)
+      INSTALL_OPTION=true
       ;;
     *)
       usage
@@ -66,6 +70,15 @@ if [ "$BUILD_OPTION" = true ]; then
     exit;
   "
 else
+  
+  # Access the node container and execute npm install if --install is specified
+  if [ "$INSTALL_OPTION" = true ]; then
+    echo "Running npm install in the msp_node container"
+    docker exec -it msp_node sh -c "npm install && rm -f public/hot && exit;"
+    echo "Running composer install in the msp_php container"
+    docker exec -it msp_php sh -c "composer install && exit;"
+  fi
+  
   echo "Accessing the node container to npm run build"
   docker exec -it msp_node sh -c "npm run build && exit;"
   # Access the PHP container and execute the required commands
