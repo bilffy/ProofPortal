@@ -25,7 +25,7 @@ class AccountSetup extends Component
     public $lastName;
 
     protected $rules = [
-        'password' => ['required', 'confirmed', 'min:12', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
+        'password' => ['required', 'confirmed', 'min:13', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
         'firstName' => 'required',
         'lastName' => 'required',
         'password_confirmation' => 'required',

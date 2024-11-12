@@ -22,7 +22,7 @@ class ResetPassword extends Component
     public $password_confirmation;
     
     protected $rules = [
-        'password' => ['required', 'confirmed', 'min:12', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
+        'password' => ['required', 'confirmed', 'min:13', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
         'password_confirmation' => 'required',
     ];
 
