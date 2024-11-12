@@ -2,55 +2,82 @@
 
 # Function to display usage
 usage() {
-  echo "Usage: $0 --staging | --production"
+  echo "Usage: $0 --staging | --production [--build]"
   exit 1
 }
 
-# Check if the correct number of arguments is provided
-if [ "$#" -ne 1 ]; then
+# Check if at least one argument is provided
+if [ "$#" -lt 1 ]; then
   usage
 fi
 
-# Determine the environment and set the Docker Compose file
-case "$1" in
-  --staging)
-    COMPOSE_FILE="docker-compose-staging.yml"
-    ;;
-  --production)
-    COMPOSE_FILE="docker-compose-production.yml"
-    ;;
-  *)
-    usage
-    ;;
-esac
+# Initialize variables
+BUILD_OPTION=false
+
+# Process input arguments
+for arg in "$@"
+do
+  case "$arg" in
+    --staging)
+      COMPOSE_FILE="docker-compose-staging.yml"
+      ;;
+    --production)
+      COMPOSE_FILE="docker-compose-production.yml"
+      ;;
+    --build)
+      BUILD_OPTION=true
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+# Check if environment variable is set
+if [ -z "$COMPOSE_FILE" ]; then
+  usage
+fi
 
 # Pull the latest changes from the main branch
-echo "Pull the latest changes from the main branch"
+echo "Pulling the latest changes from the main branch"
 git pull origin main
 
-# Stop any running services from the selected Docker Compose file
-echo "Stop any running services from the selected Docker Compose file"
-docker-compose -f $COMPOSE_FILE stop
+# Check if containers are already running
+RUNNING_CONTAINERS=$(docker-compose -f $COMPOSE_FILE ps -q)
 
-# Re-run the docker containers
-echo "Re-run the docker containers"
-docker-compose -f $COMPOSE_FILE up -d --build
+if [ -z "$RUNNING_CONTAINERS" ]; then
+  echo "No running containers detected. Starting fresh..."
+  docker-compose -f $COMPOSE_FILE up -d
+else
+  echo "Containers are already running..."
+fi
 
-# Access the node container and execute the required commands
-echo "Access the node container and execute the required commands: npm install && npm run build && exit;"
-docker exec -it msp_node sh -c "npm install && npm run build && exit;"
+# Re-run the docker containers with or without the --build flag
+if [ "$BUILD_OPTION" = true ]; then
+  echo "Re-running Docker containers with --build option"
+  docker-compose -f $COMPOSE_FILE up -d --build
+  # Access the node container and execute the required commands
+  echo "Accessing the node container to run npm install and npm run build"
+  docker exec -it msp_node sh -c "npm install && npm run build && exit;"
+  # Access the PHP container and execute the required commands
+  echo "Accessing the PHP container to run composer install commands"
+  docker exec -it msp_php sh -c "
+    composer install &&
+    exit;
+  "
+else
+  echo "Accessing the node container to npm run build"
+  docker exec -it msp_node sh -c "npm run build && exit;"
+  # Access the PHP container and execute the required commands
+  echo "Accessing the PHP container to run various Artisan commands"
+  docker exec -it msp_php sh -c "
+    php artisan migrate &&
+    php artisan route:clear &&
+    php artisan config:clear &&
+    php artisan view:clear &&
+    php artisan cache:clear &&
+    exit;
+  "
+fi
 
-# Access the PHP container and execute the required commands
-echo "Access the PHP container and execute the required commands"
-docker exec -it msp_php sh -c "
-  composer install &&
-  php artisan migrate &&
-  php artisan route:clear &&
-  php artisan config:clear &&
-  php artisan view:clear &&
-  php artisan cache:clear &&
-  php artisan queue:work &&
-  exit;
-"
-
-
+pm2 startOrRestart pm2.config.json
