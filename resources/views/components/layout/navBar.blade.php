@@ -44,6 +44,11 @@
             <x-layout.navItem visibility="{{ $visibility }}" id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Photography</x-layout.navItem>
         @endunlessrole
     @endcan
+
+    @php if ($SchoolContextHelper->isSchoolContext()) { @endphp
+        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Photography</x-layout.navItem>
+    <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+    @php } @endphp
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
