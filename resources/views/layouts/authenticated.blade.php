@@ -86,6 +86,9 @@
                     </div>
                 </div>--}}
                 <div class="flex flex-row items-center">
+                    
+                    {{ $user->resource->isSchoolLevel() ? $user->resource?->getSchool()?->name : '' }}
+                    
                     <div class="ms-3 relative">
         <span class="inline-flex rounded-md float-right">
             <button
