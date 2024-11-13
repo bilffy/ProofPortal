@@ -6,7 +6,7 @@
         <h3 class="mb-4">Welcome Alice! Let’s get started.</h3>
 
         <div class="flex w-full gap-4  min-h-[600px]">
-            <div class="w-full flex flex-col border rounded">
+            <div class="min-w-[66.6%] w-full flex flex-col border rounded">
                 <div class=" bg-neutral-200 p-4 w-full border-b"><h5>Header</h5></div>
                 <div class="p-4 border-b">
                     <div class="flex flex-row justify-between mb-2">
@@ -30,23 +30,47 @@
                     <div>Make necessary changes to the selected photos before approval.</div>
                 </div>
             </div>
-            <div class="flex flex-col w-full gap-4">
+            <div class="flex flex-col w-1/3 min-w-[400px] max-w-[400px] gap-4">
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
-                    <div class=" bg-primary flex mb-2">
-                        <div class=" flex h-full">
-                            {{-- <img src="../assets/images/Portrait.png" alt=""> --}}
+                    <div class="flex flex-col mb-2">
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_p23.png') }}" 
                             alt=""
-                            {{-- width=125px --}}
+                            height="100px"
+                            class="w-full h-fit"
+                            />
+                        </div>
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                            <img 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p22.png') }}" 
+                            alt=""
+                            height="100px"
+                            class="w-full h-fit"
+                            />
+                        </div>
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                            <img 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p21.png') }}" 
+                            alt=""
+                            height="100px"
+                            class="w-full h-fit"
+                            />
+                        </div>
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                            <img 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p2.png') }}" 
+                            alt=""
+                            height="100px"
+                            class="w-full h-fit"
                             />
                         </div>
                     </div>
-                    <div class="flex text-center absolute bottom-8 gap-1 w-full justify-center">
+                    {{-- <div class="flex text-center absolute bottom-8 gap-1 w-full justify-center">
                         <div class="w-[12px] h-[12px] bg-neutral-400 rounded-full overflow-hidden"></div>
                         <div class="w-[12px] h-[12px] bg-neutral-400 rounded-full overflow-hidden"></div>
                         <div class="w-[12px] h-[12px] bg-neutral-400 rounded-full overflow-hidden"></div>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
