@@ -22,7 +22,7 @@
         <h3 class="text-2xl">Add New User</h3>
         <div></div>
     </div>
-    <div class="relative overflow-x-auto mb-8 gap-4">
+    <div class="relative mb-8 gap-4">
         <form id="add-user-form" method="POST" action="{{ route('user.register') }}">
             @csrf
             <div class="flex flex-row gap-4 max-w-screen-md">
