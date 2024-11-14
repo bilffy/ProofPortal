@@ -130,7 +130,7 @@
         transition: all .1s;
         background-image: url( {{ Vite::asset('resources/assets/images/MSP-Logo.svg') }} );
     }
-    .logoSM {
+    /* .logoSM {
         width: 47px;
         min-height: 40px;
         transition: all .3s;
@@ -146,5 +146,5 @@
         overflow: hidden;
         transition: .2s all;
         padding-right: 3rem;
-    }
+    } */
 </style>
