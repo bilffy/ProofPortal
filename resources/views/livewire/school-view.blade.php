@@ -3,7 +3,7 @@
         <h3 class="mb-4">Welcome {{ $user->firstname }}! Let’s get started.</h3>
 
         <div class="flex w-full gap-4  min-h-[600px]">
-            <div class="min-w-[66.6%] w-full flex flex-col border rounded">
+            <div class=" w-full flex flex-col border rounded">
                 <div class=" bg-neutral-200 p-4 w-full border-b"><h5>Header</h5></div>
                 <div class="p-4 border-b">
                     <div class="flex flex-row justify-between mb-2">
@@ -27,7 +27,7 @@
                     <div>Make necessary changes to the selected photos before approval.</div>
                 </div>
             </div>
-            <div class="flex flex-col w-1/3 min-w-[400px] max-w-[400px] gap-4">
+            <div class="flex flex-col w-1/3 min-w-[500px] max-w-[500px] gap-4">
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
                     <div class="flex flex-col mb-2">
                         <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
