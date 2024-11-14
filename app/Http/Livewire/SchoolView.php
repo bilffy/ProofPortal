@@ -46,6 +46,7 @@ class SchoolView extends Component
         return view('livewire.school-view',
             [
                 'school' => $this->school,
+                'user' => $user
                 
             ])
             ->layout('layouts.authenticated', [

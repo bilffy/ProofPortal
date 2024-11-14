@@ -27,6 +27,10 @@ class DashboardController extends Controller
             return redirect()->route('school.list');
         }
         
+        if ($user->isSchoolLevel()) {
+            return redirect()->route('school.view', ['id' => $user->getSchool()->id]);
+        } 
+        
         return view('dashboard', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
