@@ -18,14 +18,19 @@ class OtpVerification extends Component
     public $email;
     public $message;
     public $token;
-
+    public $countdownTime = 300; // 5 minutes in seconds (5 * 60)
+    
     protected $rules = [
         'otp' => 'required',
         'email' => 'required|email',
     ];
 
     public function mount()
-    {
+    {   
+        if (!session('msp-user')) {
+            return redirect()->route('login');
+        }
+        
         $this->email = session('msp-user', request()->email);
         $this->message = session()->has('resend-otp')
             ? 'OTP has been resent to your email.'
@@ -82,13 +87,21 @@ class OtpVerification extends Component
         if (!$user) {
             return redirect()->route('login');
         }
-        
-        // Send OTP to the user
-        $userService->sendOtp($user);
 
-        // Update the message
-        $this->message = 'OTP has been resent to your email.';
-        $this->resetErrorBag();
+        $recentOtp = $userService->getRecentOtp($user);
+
+        if ($recentOtp === null) {
+            return redirect()->route('login');
+        }
+
+        if (Carbon::parse($recentOtp->expire_on)->isPast()) {
+            // Send the new OTP to the user
+            $userService->sendOtp($user);
+
+            // Update the message
+            $this->message = 'OTP has been resent to your email.';
+            $this->resetErrorBag();
+        }
     }
     
     public function render()
