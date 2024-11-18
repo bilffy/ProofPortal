@@ -39,21 +39,26 @@
             let countdownTime = {{ $countdownTime }}; // 5 minutes in seconds
             const countdownElement = $('#countdown-timer');
             const resendButton = $('#resend-button');
+            let endTime; // Variable to store the exact end time
 
             function startCountdown() {
                 resendButton.prop('disabled', true); // Disable the button initially
-                let timerInterval = setInterval(() => {
-                    if (countdownTime <= 0) {
+                endTime = Date.now() + countdownTime * 1000; // Calculate the exact end time
+
+                const timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    const timeLeft = Math.round((endTime - now) / 1000); // Calculate remaining seconds
+
+                    if (timeLeft <= 0) {
                         clearInterval(timerInterval); // Stop the timer when it reaches 0
                         countdownElement.text('');
                         resendButton.prop('disabled', false); // Enable the button
                     } else {
-                        let minutes = Math.floor(countdownTime / 60);
-                        let seconds = countdownTime % 60;
+                        const minutes = Math.floor(timeLeft / 60);
+                        const seconds = timeLeft % 60;
                         countdownElement.text(
                             `Please wait ${minutes}:${seconds < 10 ? '0' : ''}${seconds} before resending.`
                         );
-                        countdownTime--;
                     }
                 }, 1000);
             }
