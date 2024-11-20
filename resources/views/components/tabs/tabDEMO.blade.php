@@ -7,38 +7,40 @@
 <x-Tabs.tabContentContainer>
     <x-tabs.tabContent id="Portrait">
         <div class="flex flex-row gap-4">
-            <div>
+            <div class="w-[200px]">
                 <div class="mb-4">
                     <x-form.input.search/>
                 </div>
                 <x-form.input.text
                     placeholder="test"
-                    labelText="Year"/>
+                    class="mb-4"
+                    label="Year"/>
                 <x-form.input.text
                     placeholder="test"
-                    labelText="View"/>
+                    class="mb-4"
+                    label="View"/>
                 <x-form.input.text
                     placeholder="test"
-                    labelText="Classess"/>
+                    class="mb-4"
+                    label="Classess"/>
             </div>
-            <div>
-                <div class="flex justify-between gap-2 pb-4">
-                    <x-photography.portrait name="Harry Potter - 08A" active/>
-                    <x-photography.portrait name="William Jones - 08A"/>
-                    <x-photography.portrait name="Mia Martinez - 08A"/>
-                    <x-photography.portrait name="Daniel Thompson - 08A"/>
-                    <x-photography.portrait name="Ella White - 08A"/>
-                </div>
-                <div class="flex justify-between gap-2 pb-4">
-                    <x-photography.portrait name="Harry Potter - 08A" active/>
-                    <x-photography.portrait name="William Jones - 08A"/>
-                    <x-photography.portrait name="Mia Martinez - 08A"/>
-                    <x-photography.portrait name="Daniel Thompson - 08A"/>
-                    <x-photography.portrait name="Ella White - 08A"/>
-                </div>
-                <div class="text-center mt-4 mb-4">Insert Pagination here</div>
+
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <x-photography.portrait name="Harry Potter - 08A" active/>
+                <x-photography.portrait name="William Jones - 08A"/>
+                <x-photography.portrait name="Mia Martinez - 08A"/>
+                <x-photography.portrait name="Daniel Thompson - 08A"/>
+                <x-photography.portrait name="Ella White - 08A"/>
+                <x-photography.portrait name="Harry Potter - 08A" active/>
+                <x-photography.portrait name="William Jones - 08A"/>
+                <x-photography.portrait name="Mia Martinez - 08A"/>
+                <x-photography.portrait name="Daniel Thompson - 08A"/>
+                <x-photography.portrait name="Ella White - 08A"/>
             </div>
+
         </div>
+        <div class="text-center mt-4 mb-4">Insert Pagination here</div>
     </x-tabs.tabContent>
     <x-tabs.tabContent id="Groups">
         <h1>Groups</h1>
