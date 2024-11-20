@@ -71,4 +71,9 @@ class RoleHelper
     {
         return Role::whereIn('name', self::getAllowedRoleNames($role))->orderBy('id')->get()->all();
     }
+
+    public static function getAllRoles(): array
+    {
+        return Role::orderBy('id')->get()->all();
+    }
 }

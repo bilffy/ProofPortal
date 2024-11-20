@@ -77,8 +77,8 @@ class PermissionSeeder extends Seeder
             ),
             RoleHelper::ROLE_FRANCHISE => array_merge(
                 [
-                    PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
-                    PH::getAccessToPage(PH::SUB_PROOFING),
+                    // PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
+                    // PH::getAccessToPage(PH::SUB_PROOFING),
                     PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_SCHOOL_ADMIN),

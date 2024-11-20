@@ -10,7 +10,6 @@ use App\Helpers\RoleHelper;
 use App\Models\School;
 use App\Models\SchoolUser;
 use App\Models\User;
-use App\Rules\MspEmailValidation;
 use App\Services\UserService;
 use Auth;
 use DB;
@@ -19,7 +18,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
 {
@@ -34,7 +32,7 @@ class UserController extends Controller
     {
         $this->userService = $userService;
     }
-    
+
     protected function validator(array $data)
     {
         return Validator::make($data,
@@ -63,42 +61,8 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->input('perPage', 20);
-        /** @var User $user */
-        $user = Auth::user();
-        // $filters = [];
-        if ($user->isFranchiseLevel()) {
-            $franchise = $user->getFranchise();
-            $franchiseId = $franchise->id;
-            $schools = $franchise->schools()->get()->pluck('id');
-            // $filters['franchise'][] = $franchise->id;
-            // $filters['school'] = $schools;
-            $usersQuery = User::whereHas('schools', function ($sQuery) use ($schools) {
-                $sQuery->whereIn('schools.id', $schools);
-            })->orWhereHas('franchises', function ($fQuery) use ($franchiseId) {
-                $fQuery->where('franchises.id', $franchiseId);
-            });
-            
-            // Check if it has school context
-            // This override the franchise level context from the selected school
-            if (SchoolContextHelper::isSchoolContext()) {
-                $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
-                $usersQuery = User::whereHas('schools', function ($sQuery) use ($schoolContext) {
-                    $sQuery->where('schools.id', $schoolContext->id);
-                });
-            }
-            
-        } elseif($user->isSchoolLevel()) {
-            $usersQuery = $user->getSchool()->users();
-        } else {
-            $usersQuery = User::query();
-        }
-        // $this->applyFilter($usersQuery, $filters);
-        $this->applySearch($usersQuery, $request->input('search', ''));
-        $this->applySort($usersQuery, $request->input('sort', 'lastname'));
         return view('manageUsers', [
             'user' => new UserResource(Auth::user()),
-            'results' => UserResource::collection($usersQuery->paginate($perPage)->withQueryString())
         ]);
     }
 
@@ -118,7 +82,6 @@ class UserController extends Controller
             $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
             $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
         }
-        
         
         return view('newUser', [
             'user' => new UserResource($user),
@@ -173,6 +136,8 @@ class UserController extends Controller
                     break;
             }
             DB::commit();
+            // send invite immediately after user is saved successfully
+            $this->userService->sendInvite($user);
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->withErrors($e->getMessage());
