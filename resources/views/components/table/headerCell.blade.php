@@ -1,20 +1,24 @@
-@props(['sortable' => true, 'filterable' => true, 'isLivewire' => false, 'wireEvent' => '' ])
+@props(['sortable' => true, 'filterable' => true, 'filterModel' => '', 'filterOptions' => [], 'isLivewire' => false, 'wireEvent' => '', 'sortBy' => '', 'sortDirection' => 'asc'])
 
-<th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2  border-neutral-300 p-4" ]) }}
-    @if ($isLivewire) wire:click.prevent="{{ $wireEvent }}" @endif />
+<th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2  border-neutral-300 p-4" ]) }}>
     <div class="flex flex-row justify-between">
-        <div class="flex flex-row gap-1 items-center">
+        <div class="flex flex-row gap-1 items-center"  @if ($isLivewire) wire:click.prevent="{{ $wireEvent }}" @endif>
             {{ $slot }}
             @if ($sortable)
-                <x-icon icon="sort fa-sm"/>
-                {{-- sort-desc | sort-asc --}} 
-                {{-- <img :src="sortImgUrl" alt="" v-if="sortable" @click="$emit('sortWithField', mySort)"/> --}}
+                @if ($sortBy === $attributes['id'])
+                    {{-- sort-desc | sort-asc --}}
+                    @if ($sortDirection === 'asc')
+                        <x-icon icon="sort-asc fa-sm" class="text-[#CFD1DE]"/>
+                    @else
+                        <x-icon icon="sort-desc fa-sm" class="text-[#CFD1DE]"/>
+                    @endif
+                @else
+                    <x-icon icon="sort fa-sm" class="text-[#CFD1DE]"/>
+                @endif
             @endif
         </div>
-        @if ($filterable)
-            <x-button.link>
-                <x-icon icon="filter fa-sm"/>
-            </x-button.link>
+        @if (!empty($filterModel) && !empty($filterOptions))
+            <x-form.multiSelectDropdown id="filterDropdown-{{ $filterModel }}" wire:model="{{$filterModel}}" :options="$filterOptions" />
         @endif
     </div>
 </th>
