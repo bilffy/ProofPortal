@@ -1,4 +1,4 @@
-@props(['dropDownId', 'role', 'userId', 'userEmail', 'status', 'inviteRoute'])
+@props(['dropDownId', 'role', 'userId', 'userEmail', 'status', 'inviteRoute', 'impersonateRoute' => '', 'user' => null])
 
 <div id="options_{{$userId}}">
     <x-button.link id="btn_{{$dropDownId}}" data-dropdown-toggle={{$dropDownId}} data-initialized="false">
@@ -24,5 +24,20 @@
         <li>
             <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">Edit</x-button.dropdownLink>
         </li>
+            @canImpersonate($guard = null)
+                @if ($userId != auth()->id() && $status == $User::STATUS_ACTIVE)
+                    <li>
+                        <x-button.dropdownLink
+                                href="#"
+                                data-impersonate-route="{{ $impersonateRoute }}"
+                                data-modal-target="impersonateModal"
+                                data-modal-toggle="impersonateModal"
+                                data-user-id="{{ $userId }}"
+                                class="hover:bg-primary hover:text-white">
+                            Impersonate
+                        </x-button.dropdownLink>
+                    </li>
+               @endif
+            @endCanImpersonate
     </x-form.dropdownPanel>
 </div>

@@ -85,6 +85,28 @@
                         </div>
                     </div>
                 </div>--}}
+
+                @impersonating($guard = null)
+                    <div class="flex flex-1 items-center justify-center">
+                        <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
+                            <div class="flex flex-row items-center gap-2 text-primary text-sm">
+                                <img src="{{ Vite::asset('resources/assets/images/Info.svg') }}" alt="" width="20px" height="20px">
+                                    You're impersonating <span class="font-semibold">
+                                    {{ $user->resource->email }}</span> with <span class="font-semibold">{{ $user->resource->getRole() }}</span> 
+                                privilege
+                            </div>
+                            <div>
+                                <x-button.base class="bg-alert p-1">
+                                    <a href="{{ route('impersonate.leave') }}">
+                                        Exit
+                                        <img class="ml-1" align="right" src="{{ Vite::asset('resources/assets/images/close-round-alert.svg') }}" alt="" width="20px" height="20px">
+                                    </a>    
+                                </x-button.base>
+                            </div>
+                        </div>
+                    </div>
+                @endImpersonating
+                
                 <div class="flex flex-row items-center">
                     
                     {{ $user->resource->isSchoolLevel() ? $user->resource?->getSchool()?->name : '' }}

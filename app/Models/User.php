@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Lab404\Impersonate\Models\Impersonate;
+use Auth;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, Impersonate;
 
     public const STATUS_NEW = 'new';
     public const STATUS_INVITED = 'invited';
@@ -121,6 +123,11 @@ class User extends Authenticatable
         return $this->hasRole([RoleHelper::ROLE_FRANCHISE]);
     }
 
+    public function isSchoolAdmin()
+    {
+        return $this->hasRole([RoleHelper::ROLE_SCHOOL_ADMIN]);
+    }
+    
     public function isSchoolLevel()
     {
         return $this->hasRole([RoleHelper::ROLE_SCHOOL_ADMIN, RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER]);
@@ -162,4 +169,43 @@ class User extends Authenticatable
     {
         return $this->uiSettings()->first();
     }
+
+    /**
+     * @return bool
+     */
+    public function canImpersonate(): bool
+    {   
+        if ($this->isAdmin()) {
+            return true;
+        }
+        
+        if ($this->isRcUser()) {
+            return true;
+        }
+        
+        if ($this->isFranchiseLevel()) {
+            return true;
+        }
+
+        if ($this->isSchoolAdmin()) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+//    public function canBeImpersonated(): bool
+//    {
+//        return true;
+//
+//        if (Auth::user()->id == $this->id) {
+//            return false;
+//        }
+//        
+//        return true;
+//    }
+
 }

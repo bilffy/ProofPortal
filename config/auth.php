@@ -69,6 +69,7 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+        Lab404\Impersonate\ImpersonateServiceProvider::class,
     ],
 
     /*

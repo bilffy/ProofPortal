@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
 use App\Http\Controllers\NavBarController;
-
+use App\Http\Controllers\ImpersonateController;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -44,6 +44,10 @@ Route::middleware('auth')->group(function () {
     // Schools routes
     Route::get('/school', SchoolList::class)->name('school.list');
     Route::get('/school/{id}', SchoolView::class)->name('school.view');
+    
+    // Impersonation routes
+    Route::get('/impersonate/as/{id}', [ImpersonateController::class, 'store'])->name('impersonate.store');
+    Route::get('/impersonate/leave', [ImpersonateController::class, 'leave'])->name('impersonate.leave');
     
     // Navbar routes
     Route::post('/navbar/toggle-collapse', [NavBarController::class, 'toggleCollapse'])->name('navbar.toggleCollapse');

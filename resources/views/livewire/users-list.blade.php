@@ -60,6 +60,7 @@
                             $badge = $UserStatusHelper->getBadge($status);
                             $userId = $user->id;
                             $inviteRoute = route("invite.single", ["id" => $userId ]);
+                            $impersonateRoute = route("impersonate.store", ["id" => $userId ]);
                             $role = is_null($user->getRole()) ? '' : $user->getRole();
                             $dropDownId = "optionsDropdown" . $userId;
                         @endphp
@@ -80,6 +81,8 @@
                                 userEmail="{{$user->email}}"
                                 status="{{$status}}"
                                 inviteRoute="{{$inviteRoute}}"
+                                impersonateRoute="{{ $impersonateRoute }}"
+                                user="{{ $user }}"
                             />
                         </x-table.cell>
                     </tr>
@@ -105,7 +108,21 @@
                 <x-button.primary  id="accept-invite" data-invite-route="">Invite</x-button.primary>
             </x-modal.footer>
         </x-slot>
-    </x-modal.base>   
+    </x-modal.base>
+
+    <x-modal.base id="impersonateModal" title="Impersonate User" body="components.modal.body" footer="components.modal.footer">
+        <x-slot name="body">
+            <x-modal.body>
+                <p id="impersonate-modal-email"></p>
+            </x-modal.body>
+        </x-slot>
+        <x-slot name="footer">
+            <x-modal.footer>
+                <x-button.secondary data-modal-hide="impersonateModal">Cancel</x-button.secondary>
+                <x-button.primary  id="accept-impersonate" data-impersonate-route="">Impersonate</x-button.primary>
+            </x-modal.footer>
+        </x-slot>
+    </x-modal.base>
 
     <div class="w-full flex items-center justify-center py-4">
         {{ $users->onEachSide(1)->links('vendor.livewire.pagination') }}
@@ -125,6 +142,20 @@
                 $(this).@disabled(true);
                 $(this).html(`<x-spinner.button />`);
                 window.location.href = $(this).attr('data-invite-route');
+            });
+
+            $('[data-modal-toggle="impersonateModal"]').on('click', function() {
+                const email = $(this).closest('tr').find('td:first-child').text().trim();
+                const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+                const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
+                $('#accept-impersonate').attr('data-impersonate-route', $(this).attr('data-impersonate-route'));
+                $('#impersonate-modal-email').html("Are you sure you want to log out and log back in as  <b>" + fname + " " + lname + " (" + email + ")?</b>");
+            });
+
+            $('#accept-impersonate').on('click', function() {
+                $(this).@disabled(true);
+                $(this).html(`<x-spinner.button />`);
+                window.location.href = $(this).attr('data-impersonate-route');
             });
         }
 
