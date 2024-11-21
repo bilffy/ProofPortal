@@ -1,5 +1,6 @@
 @props([
     'id' => 'id',
+    'tabbButton' => ''
 ])
 <li class="me-2" role="presentation">
     <button 
