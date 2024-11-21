@@ -1,10 +1,11 @@
 @props([
     'id' => 'id',
     'name' => 'Name',
-    'active' => false
+    'active' => false,
+    'landscape' => ''
 ])
 
-<div class="rounded-md w-[186] px-2 pt-2 flex flex-col align-middle justify-center "> {{-- {{ $active ? "bg-primary-100":"bg-transparent" }} --}}
+<div class="rounded-md w-[186] px-2 pt-2 flex flex-col align-middle justify-center ">
     <div class="relative">
         <div class="absolute flex w-full justify-end pr-2 pt-2">
             <div class="group hover:cursor-pointer transition-all 

@@ -3,6 +3,11 @@
     <x-tabs.tab id="Groups">Groups</x-tabs.tab>
     <x-tabs.tab id="SpecialEvent">Special Event</x-tabs.tab>
     <x-tabs.tab id="PromoPhotos">Promo Photos</x-tabs.tab>
+    <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
+        <x-button.primary hollow class="border-none">Clear Selection</x-button.primary>
+        <x-button.primary>Download Selected</x-button.primary>
+    </div>
+    {{-- <x-tabs.tab>Download</x-tabs.tab> --}}
 </x-tabs.tabContainer>
 <x-Tabs.tabContentContainer>
     <x-tabs.tabContent id="Portrait">
