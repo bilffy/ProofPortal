@@ -4,6 +4,7 @@ use App\Helpers\PermissionHelper;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProofingController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -19,9 +20,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    Route::get('/proofing', [TestController::class, 'index'])->name('proofing'); // FOR TESTING
+    
+    // Test pages
     Route::get('/schoolhome', [TestController::class, 'test2'])->name('test2'); // FOR TESTING
+    Route::get('/test-photography', [TestController::class, 'index'])->name('test.photography'); // FOR TESTING
 
     $permissions = PermissionHelper::ACT_CREATE . " " . PermissionHelper::SUB_USER;
     Route::group(['middleware' => ["permission:{$permissions}"]], function () {
@@ -31,6 +33,12 @@ Route::middleware('auth')->group(function () {
         // Route for inviting a single user
         Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
         Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
+    });
+    
+    // Proofing
+    $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
+    Route::group(['middleware' => ["permission:{$permissionCanProof}"]], function () {
+        Route::get('/proofing', [ProofingController::class, 'index'])->name('proofing');
     });
     
     // Schools routes
