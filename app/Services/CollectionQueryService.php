@@ -21,11 +21,11 @@ class CollectionQueryService
     public function search(string|array $column, ?string $term = ""): self
     {
         if (is_array($column)) {
-            $firstCol = array_shift($column);
-            $this->query->where($firstCol, 'like', "%{$term}%");
-            foreach ($column as $restCol) {
-                $this->query->orWhere($restCol, 'like', "%{$term}%");
-            }
+            $this->query->where(function ($query) use ($column, $term) {
+                foreach ($column as $col) {
+                    $query->orWhere($col, 'like', "%{$term}%");
+                }
+            });
         } else {
             $this->query->where($column, 'like', "%{$term}%");
         }
@@ -60,7 +60,11 @@ class CollectionQueryService
     {
         foreach ($filters as $column => $values) {
             if (!empty($values)) {
-                $this->query->where($column, 'in', $values);
+                $this->query->where(function ($query) use ($column, $values) {
+                    foreach ($values as $term) {
+                        $query->orWhere($column, 'like', "%{$term}%");
+                    }
+                });
             }
         }
         return $this;

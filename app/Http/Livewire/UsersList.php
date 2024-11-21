@@ -146,20 +146,26 @@ class UsersList extends Component
         $user = Auth::user();
 
         if ($user->isFranchiseLevel()) {
-            $franchise = $user->getFranchise();
-            $franchiseId = $franchise->id;
             // Check if it has school context
             // This override the franchise level context from the selected school
-            $schools = SchoolContextHelper::isSchoolContext()
-                ? [SchoolContextHelper::getCurrentSchoolContext()->id]
-                : $franchise->schools()->get()->pluck('id');
-            $usersQuery = User::whereHas('schools', function ($sQuery) use ($schools) {
-                $sQuery->whereIn('schools.id', $schools);
-            })->orWhereHas('franchises', function ($fQuery) use ($franchiseId) {
-                $fQuery->where('franchises.id', $franchiseId);
-            });
+            if (SchoolContextHelper::isSchoolContext()) {
+                $schoolContextId = SchoolContextHelper::getCurrentSchoolContext()->id;
+                $usersQuery = User::whereHas('schools', function ($sQuery) use ($schoolContextId) {
+                    $sQuery->where('schools.id', $schoolContextId);
+                });
+            } else {
+                $franchise = $user->getFranchise();
+                $franchiseId = $franchise->id;
+                $usersQuery = User::whereHas('schools', callback: function ($sQuery) use ($franchise) {
+                    $sQuery->whereIn('schools.id', $franchise->schools()->get()->pluck('id'));
+                })->orWhereHas('franchises', function ($fQuery) use ($franchiseId) {
+                    $fQuery->where('franchises.id', $franchiseId);
+                });
+            }
         } elseif($user->isSchoolLevel()) {
-            $usersQuery = $user->getSchool()->users();
+            $usersQuery = User::whereHas('schools', function ($query) use ($user) {
+                $query->where('schools.id', $user->getSchool()->id);
+            });
         } else {
             $usersQuery = User::query();
         }
@@ -176,7 +182,7 @@ class UsersList extends Component
             ->select('users.id', 'users.email', 'users.firstname', 'users.lastname', 'users.status');
         $queryService = new CollectionQueryService($usersQuery);
         $users = $queryService
-            // ->filter($this->getFilterColumns($this->f))
+            ->filter($this->getFilterColumns($this->selectedFilters))
             ->search(['users.email', 'users.firstname', 'users.lastname', 'schools.name', 'franchises.name'], $this->search)
             ->sort($this->getSortColumns($this->sortBy), $this->sortDirection)
             ->paginate();
