@@ -9,7 +9,7 @@
     </div>
     {{-- <x-tabs.tab>Download</x-tabs.tab> --}}
 </x-tabs.tabContainer>
-<x-Tabs.tabContentContainer>
+<x-tabs.tabContentContainer>
     <x-tabs.tabContent id="Portrait">
         <div class="flex flex-row gap-4">
             <div class="w-[200px]">
@@ -56,4 +56,4 @@
     <x-tabs.tabContent id="PromoPhotos">
         <h1>Promo Photos</h1>
     </x-tabs.tabContent>
-</x-Tabs.tabContentContainer>
+</x-tabs.tabContentContainer>
