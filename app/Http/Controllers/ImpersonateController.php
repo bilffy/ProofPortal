@@ -16,15 +16,25 @@ class ImpersonateController extends Controller
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::findOrFail($id);
+
+        if (!session()->has('root_user_id')) {
+            session()->put('root_user_id', Auth::id());
+        }
         
         Auth::user()->impersonate($user);
-
+        
         return redirect()->route('dashboard')->with('success', 'You are logged in as ' . $user->email);
     }
 
     public function leave()
     {
+        $rootUserId = session()->pull('root_user_id');
+        
         Auth::user()->leaveImpersonation();
+
+        if ($rootUserId) {
+            Auth::loginUsingId($rootUserId);
+        }
 
         return redirect()->route('dashboard');
     }
