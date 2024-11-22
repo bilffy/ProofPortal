@@ -108,6 +108,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function isSuperAdmin()
+    {
+        return $this->hasRole([RoleHelper::ROLE_SUPER_ADMIN]);
+    }
+    
     public function isAdmin()
     {
         return $this->hasRole([RoleHelper::ROLE_SUPER_ADMIN, RoleHelper::ROLE_ADMIN]);

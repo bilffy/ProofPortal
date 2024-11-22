@@ -2,7 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\User;
 use Spatie\Permission\Models\Permission;
+use Auth;
 
 class PermissionHelper
 {
@@ -73,5 +75,54 @@ class PermissionHelper
     public static function getAccessToPage($page)
     {
         return self::toPermission(self::ACT_ACCESS, $page);
+    }
+
+    /**
+     * @return bool
+     */
+    public static function canImpersonate(int $userId): bool
+    {
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+
+        // Retrieve the user by ID
+        /** @var User $user */
+        $user = User::find($userId);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        if ($user->status != User::STATUS_ACTIVE) {
+            return false;
+        }
+        
+        if ($currentUser->id == $user->id) {
+            return false;
+        }
+        
+        if ($currentUser->isSuperAdmin()) {
+            if ($user->isSuperAdmin()) {
+                return false;
+            }
+            return true;
+        }
+    
+        if ($currentUser->isRcUser()) {
+            if ($user->isSuperAdmin() || $user->isRcUser()) {
+                return false;
+            }
+            return true;
+        }
+
+        if ($currentUser->isFranchiseLevel()) {
+            return true;
+        }
+
+        if ($currentUser->isSchoolAdmin()) {
+            return true;
+        }
+
+        return false;
     }
 }

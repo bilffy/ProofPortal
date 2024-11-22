@@ -24,8 +24,8 @@
         <li>
             <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">Edit</x-button.dropdownLink>
         </li>
-            @canImpersonate($guard = null)
-                @if ($userId != auth()->id() && $status == $User::STATUS_ACTIVE)
+{{--            @canImpersonate($guard = null)--}}
+                @if ($PermissionHelper::canImpersonate($userId))
                     <li>
                         <x-button.dropdownLink
                                 href="#"
@@ -38,6 +38,6 @@
                         </x-button.dropdownLink>
                     </li>
                @endif
-            @endCanImpersonate
+{{--            @endCanImpersonate--}}
     </x-form.dropdownPanel>
 </div>
