@@ -119,7 +119,7 @@
         <x-slot name="footer">
             <x-modal.footer>
                 <x-button.secondary data-modal-hide="impersonateModal">Cancel</x-button.secondary>
-                <x-button.primary  id="accept-impersonate" data-impersonate-route="">Impersonate</x-button.primary>
+                <x-button.primary  id="accept-impersonate" data-impersonate-route="">Yes</x-button.primary>
             </x-modal.footer>
         </x-slot>
     </x-modal.base>
