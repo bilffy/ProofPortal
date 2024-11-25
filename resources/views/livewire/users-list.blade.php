@@ -49,7 +49,7 @@
                     <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" filterModel="selectedFilters['roles']" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
                     <x-table.headerCell id="organization" isLivewire="{{true}}" wireEvent="sortColumn('organization')" filterModel="selectedFilters['organizations']" :filterOptions="$orgOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Franchise/School</x-table.headerCell>
                     <x-table.headerCell id="status" isLivewire="{{true}}" wireEvent="sortColumn('status')" filterModel="selectedFilters['status']" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">User Status</x-table.headerCell>
-                    <x-table.headerCell class="w-[60px]" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
+                    <x-table.headerCell class="w-[40px]" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
                 </tr>
             </thead>
             <tbody>
@@ -72,7 +72,7 @@
                         <x-table.cell>
                             <x-badge text="{{ ucfirst($status) }}" badge="{{ $badge }}" />
                         </x-table.cell>
-                        <x-table.cell class="w-[100px] relative">
+                        <x-table.cell class="w-[40px] relative">
                             <x-table.userOptions
                                 id="options_{{$userId}}"
                                 dropDownId="{{$dropDownId}}"
