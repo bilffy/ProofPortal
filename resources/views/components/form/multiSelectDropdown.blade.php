@@ -4,7 +4,7 @@
     </x-button.link>
 
     <div x-show="open" @click.away="open = false" class="absolute z-10 top-8 bg-white divide-y divide-gray-100 rounded-lg shadow">
-        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton-0">
+        <ul class="py-2 text-sm text-gray-700" aria-labelledby="dropdownDefaultButton-0">
             @foreach ($options as $key => $option)
                 <li class="flex items-center px-4 py-2">
                     <input type="checkbox" 

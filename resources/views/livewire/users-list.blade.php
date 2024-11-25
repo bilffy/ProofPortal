@@ -49,7 +49,7 @@
                     <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" filterModel="selectedFilters['roles']" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
                     <x-table.headerCell id="organization" isLivewire="{{true}}" wireEvent="sortColumn('organization')" filterModel="selectedFilters['organizations']" :filterOptions="$orgOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Franchise/School</x-table.headerCell>
                     <x-table.headerCell id="status" isLivewire="{{true}}" wireEvent="sortColumn('status')" filterModel="selectedFilters['status']" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">User Status</x-table.headerCell>
-                    <x-table.headerCell class="w-[60px]" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
+                    <x-table.headerCell class="w-[60px] bg-alert" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
                 </tr>
             </thead>
             <tbody>

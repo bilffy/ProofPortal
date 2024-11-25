@@ -2,18 +2,18 @@
 
 <th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2  border-neutral-300 p-4" ]) }}>
     <div class="flex flex-row justify-between">
-        <div class="flex flex-row gap-2 items-center"  @if ($isLivewire) wire:click.prevent="{{ $wireEvent }}" @endif>
+        <div class="flex flex-row gap-2 items-center hover:cursor-pointer"  @if ($isLivewire) wire:click.prevent="{{ $wireEvent }}" @endif>
             {{ $slot }}
             @if ($sortable)
                 @if ($sortBy === $attributes['id'])
                     {{-- sort-desc | sort-asc --}}
                     @if ($sortDirection === 'asc')
-                        <x-icon icon="sort-asc fa-sm" class="text-[#CFD1DE] hover:cursor-pointer hover:text-primary"/>
+                        <x-icon icon="sort-asc fa-sm" class="text-[#CFD1DE]"/>
                     @else
-                        <x-icon icon="sort-desc fa-sm" class="text-[#CFD1DE] hover:cursor-pointer hover:text-primary"/>
+                        <x-icon icon="sort-desc fa-sm" class="text-[#CFD1DE]"/>
                     @endif
                 @else
-                    <x-icon icon="sort fa-sm" class="text-[#CFD1DE] hover:cursor-pointer hover:text-primary"/>
+                    <x-icon icon="sort fa-sm" class="text-[#CFD1DE]"/>
                 @endif
             @endif
         </div>
