@@ -28,6 +28,10 @@ class ImpersonateController extends Controller
 
     public function leave()
     {
+        if (SchoolContextHelper::isSchoolContext()) {
+            SchoolContextHelper::removeSchoolContext();
+        }
+        
         $rootUserId = session()->pull('root_user_id');
         
         Auth::user()->leaveImpersonation();
