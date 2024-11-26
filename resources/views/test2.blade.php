@@ -30,39 +30,39 @@
                     <div>Make necessary changes to the selected photos before approval.</div>
                 </div>
             </div>
-            <div class="flex flex-col w-1/3 min-w-[500px] max-w-[500px] gap-4">
+            <div class="flex flex-col w-1/3 min-w-[400px] max-w-[400px] gap-4">
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
                     <div class="flex flex-col mb-2">
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
                             <img 
-                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p23.png') }}" 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_Yearbooks.jpg') }}" 
                             alt=""
-                            height="100px"
-                            class="w-full h-fit"
+                            height="140px"
+                            class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
                             <img 
-                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p22.png') }}" 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_Virtual Tours.jpg') }}" 
                             alt=""
-                            height="100px"
-                            class="w-full h-fit"
+                            height="140px"
+                            class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
                             <img 
-                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p21.png') }}" 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_Printing.jpg') }}" 
                             alt=""
-                            height="100px"
-                            class="w-full h-fit"
+                            height="140px"
+                            class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
+                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
                             <img 
-                            src="{{ Vite::asset('resources/assets/images/ads/1964138_p2.png') }}" 
+                            src="{{ Vite::asset('resources/assets/images/ads/1964138_Marketing.jpg') }}" 
                             alt=""
-                            height="100px"
-                            class="w-full h-fit"
+                            height="140px"
+                            class="w-full"
                             />
                         </div>
                     </div>
