@@ -91,8 +91,7 @@
                         <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
                             <div class="flex flex-row items-center gap-2 text-primary text-sm">
                                 <img src="{{ Vite::asset('resources/assets/images/Info.svg') }}" alt="" width="20px" height="20px">
-                                    You're impersonating <span class="font-semibold">
-                                    {{ $user->resource->email }}</span> with <span class="font-semibold">{{ $user->resource->getRole() }}</span> 
+                                    You're impersonating <span class="font-semibold">{{$user->resource->email}}</span> with <span class="font-semibold">{{ $user->resource->getRole() }}</span> 
                                 privilege
                             </div>
                             <div>
