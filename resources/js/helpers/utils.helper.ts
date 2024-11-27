@@ -1,8 +1,7 @@
-import { inject } from "vue";
-import { LAYOUT_RENDER, NAV_TABS } from "./constants.helper";
+import { NAV_TABS } from "./constants.helper";
 
 export const getCurrentNav = (): string => {
-    const { HOME, MANAGE_USERS, PROOFING } = NAV_TABS;
+    const { HOME, MANAGE_USERS, PROOFING, PHOTOGRAPHY } = NAV_TABS;
     const path = window.location.pathname.split('/')[1];
 
     switch(path) {
@@ -13,14 +12,15 @@ export const getCurrentNav = (): string => {
             return MANAGE_USERS;
         case 'proofing':
             return PROOFING;
+        case 'photography':
+            return PHOTOGRAPHY;
         default:
           return '';
     }
 };
 
 export const getNavTabId = (tab: string): string => {
-    const { HOME, MANAGE_USERS, PROOFING } = NAV_TABS;
-    const path = window.location.pathname.split('/')[1];
+    const { HOME, MANAGE_USERS, PROOFING, PHOTOGRAPHY } = NAV_TABS;
 
     switch(tab) {
         case '':
@@ -30,24 +30,9 @@ export const getNavTabId = (tab: string): string => {
             return 'tabManageUsers';
         case PROOFING:
             return 'tabProofing';
+        case PHOTOGRAPHY:
+            return 'tabPhotography';
         default:
           return 'tabHome';
     }
 };
-
-export const getRoute = (routeName: string): string => {
-    if (LAYOUT_RENDER.INERTIA === inject('layout_render')) {
-        return route(routeName);
-    } else {
-        // return routeName with from matched mappings, or return as is
-        const root = window.location.origin;
-        switch (routeName) {
-            case 'dashboard':
-                return `${root}`
-            case 'users':
-                return `${root}/users`;
-            default:
-                return `${root}/${routeName}`;
-        }
-    }
-}

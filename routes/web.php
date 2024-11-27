@@ -3,6 +3,7 @@
 use App\Helpers\PermissionHelper;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\PhotographyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProofingController;
 use App\Http\Controllers\TestController;
@@ -35,6 +36,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
     });
     
+    //Photography
+    $permissionCanAccessPhotos = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PHOTOGRAPHY;
+    Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}"]], function () {
+        Route::get('/photography', [PhotographyController::class, 'index'])->name('photography');
+    });
     // Proofing
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
     Route::group(['middleware' => ["permission:{$permissionCanProof}"]], function () {
