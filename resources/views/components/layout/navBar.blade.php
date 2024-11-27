@@ -41,14 +41,14 @@
             <x-layout.navItem visibility="{{ $visibility }}" id="tabPortraits" navIcon="user" href="{{ route('dashboard') }}">Portraits</x-layout.navItem>
             <x-layout.navItem visibility="{{ $visibility }}" id="tabGroups" navIcon="users" href="{{ route('dashboard') }}">Groups</x-layout.navItem>
             <x-layout.navItem visibility="{{ $visibility }}" id="tabSpecialEvents" navIcon="graduation-cap" href="{{ route('dashboard') }}">Special Events</x-layout.navItem>--}}
-            <x-layout.navItem visibility="{{ $visibility }}" id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Photography</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
         @endunlessrole
     @endcan
 
-    @php if ($SchoolContextHelper->isSchoolContext()) { @endphp
-        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPromoPhotos" navIcon="camera" href="{{ route('dashboard') }}">Photography</x-layout.navItem>
-    <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
-    @php } @endphp
+    @if ($SchoolContextHelper->isSchoolContext())
+        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+    @endif
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)

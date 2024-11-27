@@ -99,6 +99,7 @@ class UsersList extends Component
     public function updating($name, $value)
     {
         if (in_array($name, ['search'])) {
+            // $this->search = trim($this->search);
             $this->resetPage(); // Reset to page 1 when search changes
         }
     }
@@ -136,8 +137,8 @@ class UsersList extends Component
                 //     break;
                 case 'role':
                     $parsedFilters['roles.id'] = array_map(function ($value) {
-                        $x = base64_decode($value);
-                        return intval($x);
+                        $decodedValue = base64_decode($value);
+                        return intval($decodedValue);
                     }, $values);
                     break;
                 case 'status':
@@ -205,7 +206,7 @@ class UsersList extends Component
         $queryService = new CollectionQueryService($usersQuery);
         $users = $queryService
             ->filter($this->getFilterColumns($this->filterBy))
-            ->search(['users.email', 'users.firstname', 'users.lastname', 'schools.name', 'franchises.name'], $this->search)
+            ->search(['users.email', 'users.firstname', 'users.lastname', 'schools.name', 'franchises.name'], trim($this->search))
             ->sort($this->getSortColumns($this->sortBy), $this->sortDirection)
             ->paginate();
         return view('livewire.users-list', compact('users'));
