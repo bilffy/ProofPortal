@@ -68,7 +68,7 @@
             <div class="flex flex-col w-1/3 min-w-[400px] max-w-[400px] gap-4">
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
                     <div class="flex flex-col mb-2">
-                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-4">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Yearbooks.jpg') }}" 
                             alt=""
@@ -76,7 +76,7 @@
                             class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-4">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Virtual Tours.jpg') }}" 
                             alt=""
@@ -84,7 +84,7 @@
                             class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-4">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Printing.jpg') }}" 
                             alt=""
@@ -92,7 +92,7 @@
                             class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-4">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Marketing.jpg') }}" 
                             alt=""
