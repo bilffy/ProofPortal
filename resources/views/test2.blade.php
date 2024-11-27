@@ -17,6 +17,41 @@
                 </div>
                 <div class="p-4 border-b">
                     <div class="flex flex-row justify-between mb-2">
+                        <span class="font-semibold">Upload Finalized Photos</span>
+                        <span class="font-semibold text-alert">Due date: 00/00/0000</span>
+                    </div>
+                    <div>Upload final images after proofing is complete</div>
+                </div>
+                <div class="p-4 border-b">
+                    <div class="flex flex-row justify-between mb-2">
+                        <span class="font-semibold">Upload Finalized Photos</span>
+                        <span class="font-semibold text-alert">Due date: 00/00/0000</span>
+                    </div>
+                    <div>Upload final images after proofing is complete</div>
+                </div>
+                <div class="p-4 border-b">
+                    <div class="flex flex-row justify-between mb-2">
+                        <span class="font-semibold">Upload Finalized Photos</span>
+                        <span class="font-semibold text-alert">Due date: 00/00/0000</span>
+                    </div>
+                    <div>Upload final images after proofing is complete</div>
+                </div>
+                <div class="p-4 border-b">
+                    <div class="flex flex-row justify-between mb-2">
+                        <span class="font-semibold">Review Photo Proofs for Class 5A</span>
+                        <span class="font-semibold text-warning">Due date: 00/00/0000</span>
+                    </div>
+                    <div>Proof student photos and flag any issues.</div>
+                </div>
+                <div class="p-4 border-b">
+                    <div class="flex flex-row justify-between mb-2">
+                        <span class="font-semibold">Review Photo Proofs for Class 5A</span>
+                        <span class="font-semibold text-warning">Due date: 00/00/0000</span>
+                    </div>
+                    <div>Proof student photos and flag any issues.</div>
+                </div>
+                <div class="p-4 border-b">
+                    <div class="flex flex-row justify-between mb-2">
                         <span class="font-semibold">Review Photo Proofs for Class 5A</span>
                         <span class="font-semibold text-warning">Due date: 00/00/0000</span>
                     </div>
@@ -32,8 +67,8 @@
             </div>
             <div class="flex flex-col w-1/3 min-w-[400px] max-w-[400px] gap-4">
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
-                    <div class="flex flex-col mb-2">
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
+                    <div class="flex flex-col mb-2 justify-evenly">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Yearbooks.jpg') }}" 
                             alt=""
@@ -41,7 +76,7 @@
                             class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Virtual Tours.jpg') }}" 
                             alt=""
@@ -49,7 +84,7 @@
                             class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Printing.jpg') }}" 
                             alt=""
@@ -57,7 +92,7 @@
                             class="w-full"
                             />
                         </div>
-                        <div class=" flex rounded overflow-hidden mb-2 h-[140px] w-[400px]">
+                        <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Marketing.jpg') }}" 
                             alt=""
