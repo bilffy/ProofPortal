@@ -61,6 +61,40 @@ class RoleHelper
         return $allowedRoles;
     }
 
+    public static function getRoleNamesForFilter(string $role): array
+    {
+        $allowedRoles = [];
+        switch ($role) {
+            case self::ROLE_FRANCHISE:
+                $allowedRoles = [
+                    self::ROLE_FRANCHISE,
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            case self::ROLE_SCHOOL_ADMIN:
+            case self::ROLE_PHOTO_COORDINATOR:
+                $allowedRoles = [
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+                break;
+            default:
+                $allowedRoles = [
+                    self::ROLE_SUPER_ADMIN,
+                    self::ROLE_ADMIN,
+                    self::ROLE_FRANCHISE,
+                    self::ROLE_SCHOOL_ADMIN,
+                    self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
+                ];
+        }
+
+        return $allowedRoles;
+    }
+
     /**
      * Get allowed roles based on the given role.
      *
@@ -69,11 +103,17 @@ class RoleHelper
      */
     public static function getAllowedRoles(string $role): array
     {
-        return Role::whereIn('name', self::getAllowedRoleNames($role))->orderBy('id')->get()->all();
+        $roleNames = self::getAllowedRoleNames($role);
+        return self::getRolesByNames($roleNames);
     }
 
     public static function getAllRoles(): array
     {
         return Role::orderBy('id')->get()->all();
+    }
+
+    public static function getRolesByNames(array $roleNames): array
+    {
+        return Role::whereIn('name', $roleNames)->orderBy('id')->get()->all();
     }
 }

@@ -19,7 +19,7 @@
         </div>
         @if (!empty($filterModel) && !empty($filterOptions))
         <div>
-            <x-form.multiSelectDropdown id="filterDropdown-{{ $filterModel }}" wire:model="{{$filterModel}}" :options="$filterOptions" />
+            <x-form.multiSelectDropdown id="filterDropdown-{{ $filterModel }}" model="{{$filterModel}}" :options="$filterOptions" dataType="{{$attributes->get('id')}}" />
         </div>
         @endif
     </div>

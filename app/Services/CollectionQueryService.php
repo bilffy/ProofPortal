@@ -61,9 +61,7 @@ class CollectionQueryService
         foreach ($filters as $column => $values) {
             if (!empty($values)) {
                 $this->query->where(function ($query) use ($column, $values) {
-                    foreach ($values as $term) {
-                        $query->orWhere($column, 'like', "%{$term}%");
-                    }
+                    $query->whereIn($column, $values);
                 });
             }
         }

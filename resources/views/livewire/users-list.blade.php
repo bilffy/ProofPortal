@@ -2,20 +2,19 @@
     <div class="py-4 flex items-center justify-between">
         <h3 class="text-2xl">Manage Users</h3>
         <div class="flex justify-center">
-            <form class="max-w-md mx-auto" role="search">
-                <div class="relative">
-                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <x-icon icon="search"/>
-                    </div>
-                    <input
-                        id="user-search"
-                        wire:model.live.debounce.300ms="search"
-                        type="search"
-                        class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0" 
-                        placeholder="Search..." 
-                    />
+            <div class="relative">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <x-icon icon="search"/>
                 </div>
-            </form>
+                <input
+                    id="user-search"
+                    wire:model.live.debounce.300ms="search"
+                    wire:keydown.enter="performSearch"
+                    type="search"
+                    class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
+                    placeholder="Search..." 
+                />
+            </div>
             @can($PermissionHelper->toPermission($PermissionHelper::ACT_CREATE, $PermissionHelper::SUB_USER))
                 <div class="ml-4 mr-4 border-r-2 border-[#D9DDE2] my-3"></div>
                 <x-button.primary onclick="window.location='{{ route('users.create') }}'">Add New User</x-button.primary>
@@ -26,29 +25,13 @@
     <div class="relative">
         <table class="w-full text-sm text-left rtl:text-right">
             <thead>
-                @php
-                    use App\Helpers\RoleHelper;
-                    use App\Models\User;
-                    
-                    $orgOptions = [];
-                    $statusOptions = [
-                        User::STATUS_NEW => 'New',
-                        User::STATUS_INVITED => 'Invited',
-                        User::STATUS_ACTIVE => 'Active',
-                        User::STATUS_DISABLED => 'Disabled',
-                    ];
-                    $roleOptions = [];
-                    foreach (RoleHelper::getAllRoles() as $role) {
-                        $roleOptions[$role->id] = $role->name;
-                    }
-                @endphp
                 <tr>
                     <x-table.headerCell id="email" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('email')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Email</x-table.headerCell>
-                    <x-table.headerCell id="firstname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('firstname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">First Name</x-table.headerCell>
-                    <x-table.headerCell id="lastname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('lastname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Last Name</x-table.headerCell>
-                    <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" filterModel="selectedFilters['roles']" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
-                    <x-table.headerCell id="organization" isLivewire="{{true}}" wireEvent="sortColumn('organization')" filterModel="selectedFilters['organizations']" :filterOptions="$orgOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Franchise/School</x-table.headerCell>
-                    <x-table.headerCell id="status" isLivewire="{{true}}" wireEvent="sortColumn('status')" filterModel="selectedFilters['status']" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">User Status</x-table.headerCell>
+                    <x-table.headerCell class="whitespace-nowrap" id="firstname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('firstname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">First Name</x-table.headerCell>
+                    <x-table.headerCell class="whitespace-nowrap" id="lastname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('lastname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Last Name</x-table.headerCell>
+                    <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" filterModel="filterBy.role" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
+                    <x-table.headerCell id="organization" isLivewire="{{true}}" wireEvent="sortColumn('organization')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Franchise/School</x-table.headerCell>
+                    <x-table.headerCell id="status" isLivewire="{{true}}" wireEvent="sortColumn('status')" filterModel="filterBy.status" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Status</x-table.headerCell>
                     <x-table.headerCell class="w-[40px]" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
                 </tr>
             </thead>
@@ -171,7 +154,10 @@
 
         window.addEventListener("load", initialScripts, false);
         window.addEventListener('livewire:init', () => {
-            const debouncedInitFlow = debounce(() => { initFlowbite() }, 300);
+            const debouncedInitFlow = debounce(() => {
+                initFlowbite();
+                initialScripts();
+            }, 300);
             Livewire.hook('morph.updated', ({ el, component }) => {
                 debouncedInitFlow();
             });
