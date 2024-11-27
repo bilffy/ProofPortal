@@ -116,10 +116,16 @@ class PermissionHelper
         }
 
         if ($currentUser->isFranchiseLevel()) {
+            if ($user->isFranchiseLevel()) {
+                return false;
+            }
             return true;
         }
 
         if ($currentUser->isSchoolAdmin()) {
+            if ($user->isSchoolAdmin()) {
+                return false;
+            }
             return true;
         }
 
