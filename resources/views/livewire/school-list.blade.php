@@ -8,7 +8,7 @@
                 </div>
                 <input 
                         type="text" 
-                        wire:model="search" 
+                        wire:model.live.debounce.300ms="search"
                         wire:keydown.enter="performSearch" 
                         placeholder="Search schools..."
                         class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
@@ -24,9 +24,9 @@
     <table class="w-full text-sm text-left rtl:text-right">
         <thead>
             <tr>
-                <x-table.headerCell class="cursor-pointer" id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" filterable="{{false}}">School Key</x-table.headerCell>
-                <x-table.headerCell class="cursor-pointer" id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" filterable="{{false}}">School Name</x-table.headerCell>
-                <x-table.headerCell class="cursor-pointer {{ $hideFranchise ? 'hidden' : '' }}" id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
+                <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" filterable="{{false}}">School Key</x-table.headerCell>
+                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" filterable="{{false}}">School Name</x-table.headerCell>
+                <x-table.headerCell class="{{ $hideFranchise ? 'hidden' : '' }}" id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
             </tr>
         </thead>
         <tbody>

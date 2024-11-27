@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Helpers\RoleHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Models\User;
 use App\Services\CollectionQueryService;
@@ -13,16 +14,24 @@ class UsersList extends Component
 {
     use WithPagination;
 
+    public $statusOptions = [
+        User::STATUS_NEW => 'New',
+        User::STATUS_INVITED => 'Invited',
+        User::STATUS_ACTIVE => 'Active',
+        User::STATUS_DISABLED => 'Disabled',
+    ];
+    public $roleOptions = [];
+    // public $orgOptions = [];
+
     public $page = 1;
     public $search = '';
     public $sortBy = 'lastname';
     public $sortDirection = 'asc';
     public $role = null;
     public $status = null;
-    public $selectedRoles = [];
-    public $selectedFilters = [
-        'roles' => [],
-        'organizations' => [],
+    public $filterBy = [
+        'role' => [],
+        // 'organization' => [],
         'status' => []
     ];
     protected $queryString = [
@@ -31,9 +40,35 @@ class UsersList extends Component
         'sortDirection' => ['except' => 'asc'],
         'role' => ['except' => [null, 'all']],
         'status' => ['except' => [null, 'all']],
-        'page' => ['except' => 1],
+        'page' => ['except' => [1, '1']],
+        'filterBy',
     ];
-    protected $listeners = ['filterAdded', 'filterRemoved'];
+    protected $listeners = ['performFilter'];
+
+    private function getRoleOptions(string $role)
+    {
+        $roleOptions = [];
+        $allowedRoles = RoleHelper::getRoleNamesForFilter($role);
+        foreach (RoleHelper::getRolesByNames($allowedRoles) as $role) {
+            $key = base64_encode($role->id);
+            $roleOptions[$key] = $role->name;
+        }
+        return $roleOptions;
+    }
+
+    // private function getOrgOptions($franchises, $schools)
+    // {
+    //     $options = [];
+    //     foreach ($franchises as $franchise) {
+    //         $key = base64_encode("F_$franchise->id");
+    //         $options["franchises"][$key] = $franchise->name;
+    //     }
+    //     foreach ($schools as $school) {
+    //         $key = base64_encode("S_$school->id");
+    //         $options["schools"][$key] = $school->name;
+    //     }
+    //     return $options;
+    // }
 
     public function sortColumn($column)
     {
@@ -41,53 +76,21 @@ class UsersList extends Component
         $this->sortBy = $column;
     }
 
-    public function filter()
+    public function performFilter($value, $type)
     {
-        if (!empty($this->selectedFilters['roles'])) {
-            $this->filterByRoles();
-        }
-
-        if (!empty($this->selectedFilters['status'])) {
-            $this->filterByStatus();
-        }
-
-        if (!empty($this->selectedFilters['organizations'])) {
-            $this->filterByOrganizations();
-        }
+        $this->filterBy[$type] = $value;
+        $this->resetPage();
     }
 
-    public function filterAdded($role, $type)
+    public function performSearch()
     {
-        if (!in_array($role, $this->selectedFilters[$type])) {
-            $this->selectedFilters[$type] = $role;
-        }
-        $this->filter();
+        $this->resetPage();
     }
 
-    public function filterRemoved($role, $type)
+    public function clearSearch()
     {
-        $this->selectedFilters = array_filter($this->selectedFilters[$type], fn($r) => $r !== $role);
-        $this->filter();
-    }
-
-    public function filterByRoles()
-    {
-        $this->users = User::whereIn('role', $this->selectedFilters['roles'])->get();
-    }
-
-    public function filterByStatus()
-    {
-        $this->users = User::whereIn('status', $this->selectedFilters['status'])->get();
-    }
-
-    public function filterByOrganizations()
-    {
-        $this->users = User::whereIn('role', $this->selectedFilters['organizations'])->get();
-    }
-
-    public function search($term)
-    {
-        $this->search = $term;
+        $this->search = '';
+        $this->resetPage();
     }
 
     /**
@@ -95,14 +98,9 @@ class UsersList extends Component
      */
     public function updating($name, $value)
     {
-        if (in_array($name, ['search', 'status', 'role'])) {
+        if (in_array($name, ['search'])) {
             $this->resetPage(); // Reset to page 1 when search changes
         }
-    }
-
-    public function updatedPage()
-    {
-        // $this->emit('paginationUpdated', 'data');  // Emit the event when pagination updates
     }
 
     private function getSortColumns($sortColumn)
@@ -122,12 +120,25 @@ class UsersList extends Component
         $parsedFilters = [];
         foreach ($filters as $key => $values) {
             switch($key) {
-                case 'organizations':
-                    $parsedFilters['franchises.name'] = $values;
-                    $parsedFilters['schools.name'] = $values;
-                    break;
-                case 'roles':
-                    $parsedFilters['roles.name'] = $values;
+                // case 'organization':
+                //     foreach ($values as $value) {
+                //         $decodedVal = explode("_", base64_decode($value));
+                //         $val = intval($decodedVal[1]);
+                //         switch($decodedVal[0]) {
+                //             case "F":
+                //                 $parsedFilters['franchises.id'][] = $val;
+                //                 break;
+                //             case "S":
+                //                 $parsedFilters['schools.id'][] = $val;
+                //                 break;
+                //         }
+                //     }
+                //     break;
+                case 'role':
+                    $parsedFilters['roles.id'] = array_map(function ($value) {
+                        $x = base64_decode($value);
+                        return intval($x);
+                    }, $values);
                     break;
                 case 'status':
                     $parsedFilters['users.status'] = $values;
@@ -136,40 +147,39 @@ class UsersList extends Component
                     break;
             }
         }
-
         return $parsedFilters;
+    }
+
+    public function mount()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        // Disable school/franchise filter feature
+        // $franchises = [];
+        // $schools = [];
+        // if ($user->isFranchiseLevel()) {
+        //     if (SchoolContextHelper::isSchoolContext()) {
+        //         $schools = [SchoolContextHelper::getCurrentSchoolContext()];
+        //     } else {
+        //         $franchise = $user->getFranchise();
+        //         $franchises = [$franchise];
+        //         $schools = $franchise->schools;
+        //     }
+        // } elseif($user->isSchoolLevel()) {
+        //     $schools = [$user->getSchool()];
+        // } else {
+        //     $franchises = Franchise::all();
+        //     $schools = School::all();
+        // }
+        $this->roleOptions = $this->getRoleOptions($user->getRole());
+        // $this->orgOptions = $this->getOrgOptions($franchises, $schools);
     }
     
     public function render()
     {
         /** @var User $user */
         $user = Auth::user();
-
-        if ($user->isFranchiseLevel()) {
-            // Check if it has school context
-            // This override the franchise level context from the selected school
-            if (SchoolContextHelper::isSchoolContext()) {
-                $schoolContextId = SchoolContextHelper::getCurrentSchoolContext()->id;
-                $usersQuery = User::whereHas('schools', function ($sQuery) use ($schoolContextId) {
-                    $sQuery->where('schools.id', $schoolContextId);
-                });
-            } else {
-                $franchise = $user->getFranchise();
-                $franchiseId = $franchise->id;
-                $usersQuery = User::whereHas('schools', callback: function ($sQuery) use ($franchise) {
-                    $sQuery->whereIn('schools.id', $franchise->schools()->get()->pluck('id'));
-                })->orWhereHas('franchises', function ($fQuery) use ($franchiseId) {
-                    $fQuery->where('franchises.id', $franchiseId);
-                });
-            }
-        } elseif($user->isSchoolLevel()) {
-            $usersQuery = User::whereHas('schools', function ($query) use ($user) {
-                $query->where('schools.id', $user->getSchool()->id);
-            });
-        } else {
-            $usersQuery = User::query();
-        }
-        $usersQuery = $usersQuery
+        $usersQuery = User::query()
             ->leftJoin('model_has_roles', function ($join) {
                 $join->on('users.id', '=', 'model_has_roles.model_id')
                     ->where('model_has_roles.model_type', '=', 'App\Models\User');
@@ -180,9 +190,21 @@ class UsersList extends Component
             ->leftJoin('franchise_users', 'users.id', '=', 'franchise_users.user_id')
             ->leftJoin('franchises', 'franchise_users.franchise_id', '=', 'franchises.id')
             ->select('users.id', 'users.email', 'users.firstname', 'users.lastname', 'users.status');
+        if ($user->isSchoolLevel() || SchoolContextHelper::isSchoolContext()) {
+            $school = SchoolContextHelper::isSchoolContext() ? SchoolContextHelper::getCurrentSchoolContext() : $user->getSchool();
+            $usersQuery->where('schools.id', $school->id);
+        } elseif ($user->isFranchiseLevel()) {
+            $franchise = $user->getFranchise();
+            $schools = $franchise->schools->pluck('id');
+            $usersQuery->where(function ($query) use ($schools, $franchise) {
+                $query
+                    ->whereIn('schools.id', $schools)
+                    ->orWhere('franchises.id', $franchise->id);
+            });
+        }
         $queryService = new CollectionQueryService($usersQuery);
         $users = $queryService
-            ->filter($this->getFilterColumns($this->selectedFilters))
+            ->filter($this->getFilterColumns($this->filterBy))
             ->search(['users.email', 'users.firstname', 'users.lastname', 'schools.name', 'franchises.name'], $this->search)
             ->sort($this->getSortColumns($this->sortBy), $this->sortDirection)
             ->paginate();
