@@ -67,7 +67,7 @@
             </div>
             <div class="flex flex-col w-1/3 min-w-[400px] max-w-[400px] gap-4">
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
-                    <div class="flex flex-col mb-2 justify-evenly">
+                    <div class="flex flex-col mb-2">
                         <div class=" flex rounded overflow-hidden h-[140px] w-[400px] mb-2">
                             <img 
                             src="{{ Vite::asset('resources/assets/images/ads/1964138_Yearbooks.jpg') }}" 
