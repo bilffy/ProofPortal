@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Folder extends Model
+{
+    use HasFactory;
+
+    protected $table = 'folders';
+    
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'ts_folder_id',
+        'ts_folderkey',
+        'ts_foldername',
+        'ts_job_id',
+        'folder_tag',
+        'status_id',
+        'teacher',
+        'principal',
+        'deputy',
+        'is_edit_portraits',
+        'is_edit_groups',
+        'is_edit_job_title',
+        'is_edit_salutation',
+        'is_locked',
+        'is_visible_for_proofing',
+        'is_visible_for_portrait',
+        'is_visible_for_group',
+        'is_subject_list_allowed',
+        'is_edit_principal',
+        'is_edit_deputy',
+        'is_edit_teacher',
+    ];
+
+    public function folderTag()
+    {
+        return $this->belongsTo(FolderTag::class, 'folder_tag');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class, 'status_id');
+    }
+}
