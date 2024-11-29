@@ -136,8 +136,6 @@ class UserController extends Controller
                     break;
             }
             DB::commit();
-            // send invite immediately after user is saved successfully
-            $this->userService->sendInvite($user);
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->withErrors($e->getMessage());
