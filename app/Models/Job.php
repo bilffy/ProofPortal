@@ -50,4 +50,34 @@ class Job extends Model
     {
         return $this->belongsTo(Status::class, 'job_status_id');
     }
+
+        
+    //Folder Table
+    public function folders(){
+        return $this->hasMany('App\Models\Folder', 'ts_job_id', 'ts_job_id')->orderby('ts_foldername', 'asc');
+    }
+    //Subject Table
+    public function subjects(){
+        return $this->hasMany('App\Models\Subject', 'ts_job_id', 'ts_job_id'); 
+    }
+    //Image Table
+    public function images(){
+        return $this->hasMany('App\Models\Image', 'ts_job_id', 'ts_job_id');
+    }
+    //Status Table
+    public function reviewStatuses(){
+        return $this->belongsTo('App\Models\Status', 'job_status_id', 'id');
+    }
+    //Season Table
+    public function seasons(){
+        return $this->belongsTo('App\Models\Season', 'ts_season_id','ts_season_id');
+    }
+    //School Table
+    public function schools(){
+        return $this->belongsTo('App\Models\School', 'ts_schoolkey','schoolkey');
+    }
+    //Franchise Table
+    public function franchises(){
+        return $this->belongsTo('App\Models\Franchise', 'ts_account_id','ts_account_id');
+    }
 }

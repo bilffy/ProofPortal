@@ -47,6 +47,7 @@
 
     @if ($SchoolContextHelper->isSchoolContext())
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabSchoolConfig" navIcon="gear" href="{{ route('config-school') }}">Config School</x-layout.navItem>
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
     @endif
     
