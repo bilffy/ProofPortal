@@ -180,7 +180,7 @@
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <p class="mt-1 mb-1">Group</p>
+                                    <p class="mt-1 mb-1">Group Photo</p>
                                     <select name="digital_download_permission[download_group][]" id="download_group" class="download_group" multiple data-model="digital_download_permission" data-field="download_group">
                                         @foreach($selectOptionsEmailTo as $key => $value)
                                             <option value="{{ $key }}" @if(isset($notificationsMatrix['digital_download_permission']['download_group'][$key]) && $notificationsMatrix['digital_download_permission']['download_group'][$key] == true) selected @endif>{{ $value }}</option>
