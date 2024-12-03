@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProofingController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
@@ -38,8 +39,12 @@ Route::middleware('auth')->group(function () {
     
     //Photography
     $permissionCanAccessPhotos = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PHOTOGRAPHY;
-    Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}"]], function () {
+    Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}", CheckUserRestriction::class]], function () {
         Route::get('/photography', [PhotographyController::class, 'index'])->name('photography');
+        Route::get('/photography/configure', [PhotographyController::class, 'configure'])->middleware(['role:Franchise'])->name('photography.configure');
+        Route::get('/photography/portraits', [PhotographyController::class, 'showPortraits'])->name('photography.portraits');
+        Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
+        Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
     });
     // Proofing
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
