@@ -1,5 +1,4 @@
 <div>
-    <h1>Others</h1>
     <div class="flex flex-row gap-4">
         <div class="w-[200px]">
             <div class="mb-4">
