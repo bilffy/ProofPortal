@@ -11,6 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Add index ts_folder_id to folders
+        if (!Schema::hasIndex('folders', 'folders_ts_folder_id_index')) {
+            Schema::table('folders', function (Blueprint $table) {
+                $table->index('ts_folder_id'); 
+            });
+        }
+        // Add index ts_subject_id to subjects
+        if (!Schema::hasIndex('subjects', 'subjects_ts_subject_id_index')) {
+            Schema::table('subjects', function (Blueprint $table) {
+                $table->index('ts_subject_id');
+            });
+        }
+
         Schema::create('folder_subjects', function (Blueprint $table) {
             $table->id();
             $table->integer('ts_folder_id')->nullable();  
@@ -27,5 +40,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('folder_subjects');
+        // Drop the indexes
+        Schema::table('subjects', function (Blueprint $table) {
+            $table->dropIndex('subjects_ts_subject_id_index');
+        });
+        Schema::table('folders', function (Blueprint $table) {
+            $table->dropIndex('folders_ts_folder_id_index');
+        });
     }
 };
