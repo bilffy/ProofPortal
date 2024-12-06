@@ -49,4 +49,24 @@ class Folder extends Model
     {
         return $this->belongsTo(Status::class, 'status_id');
     }
+
+    public function subjects(){
+        return $this->hasMany('App\Models\Subject', 'ts_folder_id', 'ts_folder_id');
+    }
+
+    public function attachedsubjects(){
+        return $this->hasMany('App\Models\FolderSubject', 'ts_folder_id', 'ts_folder_id');
+    }
+
+    public function job(){
+        return $this->belongsTo('App\Models\Job', 'ts_job_id', 'ts_job_id');
+    }
+
+    public function images(){
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_folder_id');
+    }
+
+    public function folderTags(){
+        return $this->belongsTo('App\Models\FolderTag', 'folder_tag', 'tag');
+    }
 }

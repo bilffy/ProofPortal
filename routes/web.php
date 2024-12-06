@@ -15,6 +15,8 @@ use App\Http\Livewire\SchoolView;
 use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\ImpersonateController;
 
+use App\Http\Controllers\Proofing\ConfigureController;
+
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -62,6 +64,28 @@ Route::middleware('auth')->group(function () {
     
     // Navbar routes
     Route::post('/navbar/toggle-collapse', [NavBarController::class, 'toggleCollapse'])->name('navbar.toggleCollapse');
+
+
+    //Configure School - fetch jobs by season
+        Route::get('/config-school/fetch-jobs', [ConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
+    //Configure School - get-job-details of job
+        Route::get('/config-school/folder-config', [ConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
+    //Configure School - Submit
+        Route::post('/config-school/digital-download/submit', [ConfigureController::class, 'configSchoolDigitalDownload'])->name('config-school-digital-download');
+    //Configure School - Job Change Submit
+        Route::post('/job-change/submit', [ConfigureController::class, 'configSchoolJobChangeUpdate'])->name('config-school-job-change-update');
+    //Configure School - Folder Change Submit
+        Route::post('/folder-change/submit', [ConfigureController::class, 'configSchoolFolderChangeUpdate'])->name('config-school-folder-change-update');
+    //Configure School - School Submit
+        Route::post('/school-change/submit', [ConfigureController::class, 'configSchoolChangeUpdate'])->name('config-school-change-update');
+    //Configure School - School Logo Upload
+        Route::post('/config-school/upload-school-logo', [ConfigureController::class, 'uploadSchoolLogo'])->name('upload.school.logo');
+    //Configure School - show encrypted image path
+        Route::get('/config-school/school-logo/{encryptedPath}', [ConfigureController::class, 'showSchoolLogo'])->name('school.logo');
+    //Configure School - School Logo Delete
+        Route::post('/config-school/delete-school-logo', [ConfigureController::class, 'deleteSchoolLogo'])->name('delete.school.logo');
+    //Configure School - view
+        Route::get('/config-school', [ConfigureController::class, 'configSchool'])->name('config-school');
 });
 
 

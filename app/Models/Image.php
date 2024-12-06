@@ -25,4 +25,17 @@ class Image extends Model
         'image_type_id',
         'protected',
     ];
+    
+    //Subjects Table
+    public function subjects(){
+        return $this->belongsTo('App\Models\Subject', 'keyvalue', 'ts_subject_id');
+    }
+    //Folders Table
+    public function folders(){
+        return $this->belongsTo('App\Models\Folder', 'keyvalue', 'ts_folder_id');
+    }
+    //Jobs Table
+    public function jobs(){
+        return $this->belongsTo('App\Models\Job', 'ts_job_id', 'ts_job_id');
+    }
 }

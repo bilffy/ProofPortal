@@ -27,5 +27,21 @@ class Subject extends Model
         'ts_subject_id',
         'is_locked',
     ];
+
+    public function folder(){
+        return $this->belongsTo('App\Models\Folder', 'ts_folder_id', 'ts_folder_id');
+    }
+
+    public function job(){
+        return $this->belongsTo('App\Models\Job', 'ts_job_id', 'ts_job_id');
+    }
+
+    public function images(){
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subject_id');
+    }
+
+    public function attachedsubjects(){
+        return $this->hasMany('App\Models\FolderSubject', 'ts_subject_id', 'ts_subject_id');
+    }
     
 }
