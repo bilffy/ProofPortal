@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jobs', function (Blueprint $table) {
+        Schema::table('jobs', function (Blueprint $table) {
             $table->dateTime('proof_catchup')->nullable()->after('proof_due');
             $table->dateTime('portrait_download_date')->nullable()->after('download_available_date');
             $table->dateTime('group_download_date')->nullable()->after('portrait_download_date');
