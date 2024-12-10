@@ -7,7 +7,7 @@
     <!-- Dropdown menu -->
     <x-form.dropdownPanel id={{$dropDownId}}>
         @can ($PermissionHelper->toPermission($PermissionHelper::ACT_INVITE, $role))
-            @if ($userId != auth()->id())
+            @if ($userId != auth()->id() && $status != $User::STATUS_ACTIVE)
                 <li>
                     <x-button.dropdownLink
                         href="#" 
