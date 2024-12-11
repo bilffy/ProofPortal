@@ -23,6 +23,8 @@ class ConfigureController extends Controller
     protected $encryptDecryptService;
     protected $jobService;
     protected $folderService;
+    protected $seasonService;
+    protected $schoolService;
 
     public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, SeasonService $seasonService, SchoolService $schoolService)
     {
@@ -53,8 +55,8 @@ class ConfigureController extends Controller
         $defaultSeasonCode = $seasons->where('is_default', 1)->select('code', 'ts_season_id')->first();
         $syncJobsbySchoolkey =  $this->jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
         $selectedFolders = [];
-        $user = Auth::user();
-        return view('proofing.franchise.school.configure-school',[
+
+        return view('photography', [
             'selectedSchool' => $selectedSchool, 
             'encryptedPath' => $encryptedPath, 
             'hash' => $hash, 
@@ -62,7 +64,8 @@ class ConfigureController extends Controller
             'syncJobsbySchoolkey' => $syncJobsbySchoolkey, 
             'defaultSeasonCode' => $defaultSeasonCode, 
             'selectedFolders' => $selectedFolders,
-            'user' => new UserResource($user)
+            'user' => new UserResource(Auth::user()),
+            'currentTab' => 'configure'
         ]);
     }
 

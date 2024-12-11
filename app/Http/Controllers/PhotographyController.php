@@ -15,6 +15,7 @@ use App\Models\Season;
 use App\Models\Status;
 use App\Models\User;
 use App\Services\ImageService;
+use App\Services\SchoolService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -22,17 +23,20 @@ use function PHPUnit\Framework\isEmpty;
 
 class PhotographyController extends Controller
 {
+    protected $schoolService;
     
     /**
      * @var ImageService $imageService
+     * @var SchoolService $schoolService
      */
     private ImageService $imageService;
     
-    public function __construct(ImageService $imageService)
+    public function __construct(ImageService $imageService, SchoolService $schoolService)
     {
         $this->imageService = $imageService;
+        $this->schoolService = $schoolService;
     }
-    
+
     public function index()
     {
         $user = Auth::user();

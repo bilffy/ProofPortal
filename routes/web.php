@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
     $permissionCanAccessPhotos = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PHOTOGRAPHY;
     Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}", CheckUserRestriction::class]], function () {
         Route::get('/photography', [PhotographyController::class, 'index'])->name('photography');
-        Route::get('/photography/configure', [PhotographyController::class, 'configure'])->middleware(['role:Franchise'])->name('photography.configure');
+        Route::get('/photography/configure', [ConfigureController::class, 'configSchool'])->middleware(['role:Franchise'])->name('photography.configure');
         Route::get('/photography/portraits', [PhotographyController::class, 'showPortraits'])->name('photography.portraits');
         Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
         Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
