@@ -7,27 +7,79 @@ use App\Models\Image;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 class ImageService
-{
+{   
     /**
-     * Query the Folder model.
+     * Get all the years.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAllYears()
+    {
+        return DB::table('seasons')
+            ->select('code as Year')
+            ->orderBy('code', 'desc')
+            ->get();
+    }
+    
+    /**
+     * Get all the folder for views based on the selected season and school of selected folder tag.
      *
      * @param array $conditions
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function queryFolder(array $options)
+    public function getFolderForView(int $seasonId, string $schoolKey, string $operator, string $folderTag)
     {
-        return Folder::where($options)->get();
+        return DB::table('schools')
+            ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
+            ->where('jobs.ts_season_id', $seasonId)
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where('folders.folder_tag', $operator, $folderTag)
+            ->select('folders.ts_foldername', 'folders.ts_folderkey')
+            ->get();
+    }
+    
+    /**
+     * Get all the folders based on the selected tag of selected column visibility. 
+     *
+     * @param int $seasonId
+     * @param string $schoolKey
+     * @param string $selectedTag
+     * @return \Illuminate\Support\Collection
+     */
+    public function getFoldersByTag(int $seasonId, string $schoolKey, string $selectedTag, string $visibilityColumn)
+    {
+        return DB::table('schools')
+            ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->where('jobs.ts_season_id', $seasonId)
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where("folders.$visibilityColumn", 1)
+            ->where('folders.folder_tag', $selectedTag)
+            ->select('folders.ts_foldername', 'folders.ts_folderkey')
+            ->get();
     }
 
     /**
-     * Query the Image model.
+     * Get all the images and subjects of the selected folder.
      *
-     * @param array $conditions
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param int $seasonId
+     * @param string $schoolKey
+     * @param string $folderKey
+     * @return \Illuminate\Support\Collection
      */
-    public function queryImage(array $options)
+    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey)
     {
-        return Image::where($options)->get();
+        return DB::table('jobs')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+            ->join('images', 'images.keyvalue', '=', 'subjects.ts_subject_id')
+            ->where('jobs.ts_season_id', $seasonId)
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where('folders.ts_folderkey', $folderKey)
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*')
+            ->get();
     }
 
     /**
@@ -39,7 +91,7 @@ class ImageService
      */
     public function getImagesAsBase64(array $options, int $perPage = 15)
     {
-        $images = $this->queryImage($options, $perPage);
+        $images = $this->getImagesAndSubjectsByFolder($options, $perPage);
         $base64Images = $images->getCollection()->map(function ($image) {
             $path = $image->path; // Assuming the Image model has a 'path' attribute
             if (Storage::exists($path)) {
@@ -56,44 +108,5 @@ class ImageService
             $images->currentPage(),
             ['path' => request()->url(), 'query' => request()->query()]
         );
-    }
-
-    /**
-     * Get all the folders based on the selected tag.
-     *
-     * @param int $seasonId
-     * @param string $schoolKey
-     * @param string $selectedTag
-     * @return array
-     */
-    public function getFoldersByTag(int $seasonId, string $schoolKey, string $selectedTag)
-    {
-        return DB::select("
-            SELECT folders.ts_foldername, folders.ts_folderkey
-            FROM schools
-            JOIN jobs ON jobs.ts_schoolkey = schools.schoolkey
-            JOIN folders ON folders.ts_job_id = jobs.ts_job_id
-            WHERE jobs.ts_season_id = ? AND jobs.ts_schoolkey = ? AND folders.is_visible_for_portrait = 1 AND folders.folder_tag = ?
-        ", [$seasonId, $schoolKey, $selectedTag]);
-    }
-
-    /**
-     * Get all the images and subjects of the selected folder.
-     *
-     * @param int $seasonId
-     * @param string $schoolKey
-     * @param string $folderKey
-     * @return array
-     */
-    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey)
-    {
-        return DB::select("
-            SELECT subjects.firstname, subjects.lastname, subjects.ts_subjectkey, images.*
-            FROM jobs
-            JOIN folders ON folders.ts_job_id = jobs.ts_job_id
-            JOIN subjects ON subjects.ts_folder_id = folders.ts_folder_id
-            JOIN images ON images.keyvalue = subjects.ts_subject_id
-            WHERE jobs.ts_season_id = ? AND jobs.ts_schoolkey = ? AND folders.ts_folderkey = ?
-        ", [$seasonId, $schoolKey, $folderKey]);
     }
 }
