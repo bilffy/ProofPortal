@@ -67,9 +67,9 @@ class ImageService
      * @param int $seasonId
      * @param string $schoolKey
      * @param string $folderKey
-     * @return \Illuminate\Support\Collection
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey)
+    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey, int $perPage = 15)
     {
         return DB::table('jobs')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
@@ -79,7 +79,7 @@ class ImageService
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->where('folders.ts_folderkey', $folderKey)
             ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*')
-            ->get();
+            ->paginate($perPage);
     }
 
     /**
@@ -91,7 +91,11 @@ class ImageService
      */
     public function getImagesAsBase64(array $options, int $perPage = 15)
     {
-        $images = $this->getImagesAndSubjectsByFolder($options, $perPage);
+        $seasonId = $options['seasonId'];
+        $schoolKey = $options['schoolKey'];
+        $folderKey = $options['folderKey'];
+        
+        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, $perPage);
         $base64Images = $images->getCollection()->map(function ($image) {
             $path = $image->path; // Assuming the Image model has a 'path' attribute
             if (Storage::exists($path)) {
