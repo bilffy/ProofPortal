@@ -17,12 +17,12 @@ class Image extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'name',
         'ts_image_id',
         'ts_imagekey',
         'ts_job_id',
         'keyvalue',
         'keyorigin',
-        'image_type_id',
         'protected',
     ];
     

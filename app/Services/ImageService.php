@@ -32,11 +32,15 @@ class ImageService
         return DB::table('schools')
             ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
+            ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
             ->where('jobs.ts_schoolkey', $schoolKey)
-            ->where('folders.folder_tag', $operator, $folderTag)
-            ->select('folders.ts_foldername', 'folders.ts_folderkey')
+            ->where(function ($query) use ($operator, $folderTag) {
+                $query->where('folders.folder_tag', $operator, $folderTag)
+                    ->orWhereNull('folders.folder_tag');
+            })
+            ->select(DB::raw('COALESCE(folder_tags.external_name, "Student") as external_name'))
+            ->distinct()
             ->get();
     }
     
@@ -94,10 +98,10 @@ class ImageService
         $seasonId = $options['seasonId'];
         $schoolKey = $options['schoolKey'];
         $folderKey = $options['folderKey'];
-        
+
         $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, $perPage);
         $base64Images = $images->getCollection()->map(function ($image) {
-            $path = $image->path; // Assuming the Image model has a 'path' attribute
+            $path = $this->getPath($image->ts_subjectkey.".jpg"); 
             if (Storage::exists($path)) {
                 $fileContent = Storage::get($path);
                 return base64_encode($fileContent);
@@ -112,5 +116,15 @@ class ImageService
             $images->currentPage(),
             ['path' => request()->url(), 'query' => request()->query()]
         );
+    }
+
+    /**
+     * This method is used to get the path of the image.
+     * The directory is defined in the .env file.
+     * @return string
+     */
+    public function getPath(string $filename)
+    {
+        return env('IMAGE_PATH') . '/' . $filename;
     }
 }
