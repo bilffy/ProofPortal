@@ -40,6 +40,23 @@ class PhotographyController extends Controller
         $tsSeasonId = 25; // temporary value this should be dynamic from the job table like jobs.ts_season_id
         $tsSchollKey = 111; // temporary value this should be dynamic from the job table like jobs.ts_schoolkey
         $selectedTag = 'student'; // temporary value this should be dynamic based on the selected views e.g. student, staff, etc.
+
+        $options = [
+            'tsSeasonId' => $tsSeasonId, // temporary value this should be dynamic based on the request the job table like jobs.ts_season_id
+            'schoolKey' => $tsSchollKey, // temporary value this should be dynamic based on the request the job table like jobs.ts_schoolkey
+            'folderKey' => 'FZT6C5AC', // temporary value this should be dynamic based on the request the folders table like folders.ts_folderkey      
+        ];
+
+        //dd($this->imageService->getImagesAsBase64($options));
+        
+        foreach ($this->imageService->getImagesAsBase64($options) as $image) {
+            if (isset($image['meta-data']['base64'])) {
+                echo "<img src='data:image/jpeg;base64," . $image['meta-data']['base64'] . "' /><br/>";
+            } else {
+                echo "<img src='data:image/jpeg;base64," . $image . "' /><br/>";
+            }
+        }
+        exit;
         
         return view('photography', 
             [
@@ -105,6 +122,8 @@ class PhotographyController extends Controller
             'schoolKey' => 111, // temporary value this should be dynamic based on the request the job table like jobs.ts_schoolkey
             'folderKey' => 'FZT6C5AC', // temporary value this should be dynamic based on the request the folders table like folders.ts_folderkey      
         ];
+        
+        
         
         return view('photography', 
             [

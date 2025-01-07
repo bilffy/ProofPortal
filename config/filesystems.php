@@ -34,7 +34,7 @@ return [
             'driver' => 'local',
             //'root' => storage_path('app'),
             //'root' => public_path('images'),
-            'root' => storage_path(env('IMAGE_REPOSITORY')),
+            'root' => base_path(env('IMAGE_REPOSITORY')),
             'throw' => true,
             'visibility' => 'private',
         ],
