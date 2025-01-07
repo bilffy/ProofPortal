@@ -133,4 +133,6 @@ return [
     ],
 
     'password_min_length' => 13,
+    
+    'image_repository' => env('IMAGE_REPOSITORY', 'images'),
 ];
