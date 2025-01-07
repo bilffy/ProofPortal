@@ -95,16 +95,27 @@ class ImageService
      */
     public function getImagesAsBase64(array $options, int $perPage = 15)
     {
-        $seasonId = $options['seasonId'];
+        $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
         $folderKey = $options['folderKey'];
         
         $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, $perPage);
+        
         $base64Images = $images->getCollection()->map(function ($image) {
             $path = $this->getPath($image->ts_subjectkey.".jpg"); 
             if (Storage::disk('local')->exists($path)) {
                 $fileContent = Storage::disk('local')->get($path);
-                return base64_encode($fileContent);
+                $dimensions = getimagesizefromstring($fileContent);
+                
+                return [
+                    'meta-data' => [
+                        'id' => $image->ts_subjectkey,
+                        'base64' => base64_encode($fileContent),
+                        'firstname' => $image->firstname,
+                        'lastname' => $image->lastname,
+                        'isPortrait' => $dimensions[0] < $dimensions[1],
+                    ]
+                ];
             }
 
             return base64_encode(Storage::disk('local')->get("/not_found.jpg"));
