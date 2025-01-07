@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Folder;
 use App\Models\Image;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 class ImageService
@@ -71,19 +74,31 @@ class ImageService
      * @param int $seasonId
      * @param string $schoolKey
      * @param string $folderKey
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @param string $search
+     * @return \Illuminate\Database\Query\Builder
      */
-    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey, int $perPage = 15)
+    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey, int $perPage = 15, string $search)
     {
-        return DB::table('jobs')
-            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-            ->join('images', 'images.keyvalue', '=', 'subjects.ts_subject_id')
-            ->where('jobs.ts_season_id', $seasonId)
-            ->where('jobs.ts_schoolkey', $schoolKey)
-            ->where('folders.ts_folderkey', $folderKey)
-            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*')
-            ->paginate($perPage);
+        $query = DB::table('jobs')
+        ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+        ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->join('images', 'images.keyvalue', '=', 'subjects.ts_subject_id')
+        ->where('jobs.ts_season_id', operator: $seasonId)
+        ->where('jobs.ts_schoolkey', $schoolKey);
+
+        if($search) {
+            $query->where(function ($query) use ($search) {
+                $query->where('subjects.firstname', 'like', "%$search%")
+                    ->orWhere('subjects.lastname', 'like', "%$search%")
+                    ->orWhere('folders.ts_foldername', 'like', "%$search%");
+            });
+        }
+
+        if ($folderKey && $search == '') {
+            $query->where('folders.ts_folderkey', $folderKey);
+        }
+        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*', 'folders.ts_foldername');
+            // ->paginate($perPage);
     }
 
     /**
@@ -91,9 +106,9 @@ class ImageService
      *
      * @param array $conditions
      * @param int $perPage
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @return LengthAwarePaginator
      */
-    public function getImagesAsBase64(array $options, int $perPage = 15)
+    public function getImagesAsBase64WithPagination(array $options, int $perPage = 15)
     {
         $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
@@ -101,33 +116,79 @@ class ImageService
         
         $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, $perPage);
         
-        $base64Images = $images->getCollection()->map(function ($image) {
+        $base64Images = $images->get()->map(function ($image) {
             $path = $this->getPath($image->ts_subjectkey.".jpg"); 
             if (Storage::disk('local')->exists($path)) {
                 $fileContent = Storage::disk('local')->get($path);
                 $dimensions = getimagesizefromstring($fileContent);
                 
                 return [
-                    'meta-data' => [
-                        'id' => $image->ts_subjectkey,
-                        'base64' => base64_encode($fileContent),
-                        'firstname' => $image->firstname,
-                        'lastname' => $image->lastname,
-                        'isPortrait' => $dimensions[0] < $dimensions[1],
-                    ]
+                    'id' => $image->ts_subjectkey,
+                    'base64' => base64_encode($fileContent),
+                    'firstname' => $image->firstname,
+                    'lastname' => $image->lastname,
+                    'isPortrait' => $dimensions[0] < $dimensions[1],
                 ];
             }
 
-            return base64_encode(Storage::disk('local')->get("/not_found.jpg"));
-        })->filter();
+            return [
+                'id' => $image->ts_subjectkey,
+                'base64' => base64_encode(Storage::disk('local')->get("/not_found.jpg")),
+                'firstname' => $image->firstname,
+                'lastname' => $image->lastname,
+            ];
+        });
 
-        return new \Illuminate\Pagination\LengthAwarePaginator(
+        return new LengthAwarePaginator(
             $base64Images,
             $images->total(),
             $images->perPage(),
             $images->currentPage(),
             ['path' => request()->url(), 'query' => request()->query()]
         );
+    }
+
+    /**
+     * Get images from the local drive and return them as base64 strings.
+     *
+     * @param array $conditions
+     * @return Collection
+     */
+    public function getImagesAsBase64(array $options)
+    {
+        $seasonId = $options['tsSeasonId'];
+        $schoolKey = $options['schoolKey'];
+        $folderKey = $options['folderKey']; //== 'ALL' ? '' : $options['folderKey'];
+        $search = $options['search'] ?? '';
+        
+        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, 0, $search);
+        
+        $base64Images = $images->get()->map(function ($image) {
+            $path = $this->getPath($image->ts_subjectkey.".jpg"); 
+            if (Storage::disk('local')->exists($path)) {
+                $fileContent = Storage::disk(name: 'local')->get($path);
+                $dimensions = getimagesizefromstring($fileContent);
+                
+                return [
+                    'id' => $image->ts_subjectkey,
+                    'base64' => base64_encode($fileContent),
+                    'firstname' => $image->firstname,
+                    'lastname' => $image->lastname,
+                    'isPortrait' => $dimensions[0] < $dimensions[1],
+                    'classGroup' => $image->ts_foldername,
+                ];
+            }
+
+            return [
+                'id' => $image->ts_subjectkey,
+                'base64' => base64_encode(Storage::disk('local')->get("/not_found.jpg")),
+                'firstname' => $image->firstname,
+                'lastname' => $image->lastname,
+                'classGroup' => $image->ts_foldername,
+            ];
+        });
+
+        return $base64Images;
     }
 
     /**
@@ -138,5 +199,27 @@ class ImageService
     public function getPath(string $filename)
     {
         return '/' . $filename;
+    }
+
+    /**
+     * Paginate a given collection.
+     *
+     * @param \Illuminate\Support\Collection $items
+     * @param int $perPage
+     * @param int|null $page
+     * @param array $options
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    protected function paginate(Collection $items, int $perPage, $page = null, array $options = [])
+    {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        return new LengthAwarePaginator(
+            $items->forPage($page, $perPage),
+            $items->count(),
+            $perPage,
+            $page,
+            $options
+        );
     }
 }

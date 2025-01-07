@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Helpers\PermissionHelper;
+use App\Helpers\PhotographyHelper;
 use App\Helpers\RoleHelper;
 use App\Helpers\SchoolContextHelper;
 use Illuminate\Support\Facades\URL;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         view()->share('AvatarHelper', new AvatarHelper());
         view()->share('UiSettingHelper', new UiSettingHelper());
         view()->share('SchoolContextHelper', new SchoolContextHelper());
+        view()->share('PhotographyHelper', new PhotographyHelper());
         JsonResource::withoutWrapping();
     }
 }

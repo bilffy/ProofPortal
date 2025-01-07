@@ -1,18 +1,15 @@
 @extends('layouts.authenticated')
 
 @section('content')
-    <div class="container3 p-4">
+    <div x-data class="container3 p-4">
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
+                <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Configure</x-tabs.tab>
             @endrole
-            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
-            <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
-            <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
-            <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
-                <x-button.primary hollow class="border-none">Clear Selection</x-button.primary>
-                <x-button.primary>Download Selected</x-button.primary>
-            </div>
+            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Portraits</x-tabs.tab>
+            <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Groups</x-tabs.tab>
+            <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Others</x-tabs.tab>
+            @livewire('photography.download-selection', ['id' => 'downloads'])
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
@@ -35,11 +32,26 @@
 
 @push('scripts')
 <script type="module">
+    
+    function updateDownloadSection() {
+        const images =  JSON.parse(localStorage.getItem('selectedImages'));
+
+        
+    }
+
+    function resetImages() {
+        window.localStorage.setItem('selectedImages', JSON.stringify([]));
+        updateDownloadSection();
+    }
+
+    resetImages();
     document.addEventListener('DOMContentLoaded', () => {
         const tabs = document.querySelectorAll('.tab-button');
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
+                // reset images selected
+                resetImages();
                 const url = tab.getAttribute('href');
                 history.pushState({ path: url }, '', url);
             });
