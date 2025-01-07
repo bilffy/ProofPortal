@@ -98,15 +98,16 @@ class ImageService
         $seasonId = $options['seasonId'];
         $schoolKey = $options['schoolKey'];
         $folderKey = $options['folderKey'];
-
+        
         $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, $perPage);
         $base64Images = $images->getCollection()->map(function ($image) {
             $path = $this->getPath($image->ts_subjectkey.".jpg"); 
-            if (Storage::exists($path)) {
-                $fileContent = Storage::get($path);
+            if (Storage::disk('local')->exists($path)) {
+                $fileContent = Storage::disk('local')->get($path);
                 return base64_encode($fileContent);
             }
-            return null;
+
+            return base64_encode(Storage::disk('local')->get("/not_found.jpg"));
         })->filter();
 
         return new \Illuminate\Pagination\LengthAwarePaginator(
@@ -125,6 +126,6 @@ class ImageService
      */
     public function getPath(string $filename)
     {
-        return env('IMAGE_PATH') . '/' . $filename;
+        return '/' . $filename;
     }
 }
