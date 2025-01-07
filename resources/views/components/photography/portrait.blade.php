@@ -4,7 +4,8 @@
     'active' => false,
     'landscape' => false,
     'event' => null,
-    'payload' => null
+    'payload' => null,
+    'img' => null,
 ])
 
 <div class="rounded-md w-[186] px-2 pt-2 flex flex-col align-middle justify-center {{ $landscape ? 'col-span-2 ':'' }}" @click="$dispatch({{$event}}, {{$payload}})">
@@ -18,10 +19,8 @@
             </div>
         </div>
         <img 
-            src="{{ $landscape ? Vite::asset('resources/assets/images/landscape.jpg') : Vite::asset('resources/assets/images/Portrait.png')}}" 
+            src="data:image/jpeg;base64,{{$img}}"
             alt=""
-            {{-- width="125px" --}}
-            {{-- height="230px" --}}
             class="w-full max-w-none rounded h-[229px]"
         />
     </div>
