@@ -1,7 +1,7 @@
 @extends('layouts.authenticated')
 
 @section('content')
-    <div x-data class="container3 p-4">
+    <div x-data id="photography-root" class="container3 p-4">
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
                 <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Configure</x-tabs.tab>

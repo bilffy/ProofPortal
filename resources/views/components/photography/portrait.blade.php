@@ -8,7 +8,7 @@
     'img' => null,
 ])
 
-<div class="rounded-md w-[186] px-2 pt-2 flex flex-col align-middle justify-center {{ $landscape ? 'col-span-2 ':'' }}" @click="$dispatch({{$event}}, {{$payload}})">
+<div class="rounded-md w-[186] min-w-[195px] max-w-[195px] px-2 pt-2 flex flex-col align-middle justify-center {{ $landscape ? 'col-span-2 ':'' }}" @click="$dispatch({{$event}}, {{$payload}})">
     <div class="relative">
         <div class="absolute flex w-full justify-end pr-2 pt-2">
             <div class="group hover:cursor-pointer transition-all 
