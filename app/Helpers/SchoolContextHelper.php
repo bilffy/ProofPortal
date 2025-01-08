@@ -50,7 +50,7 @@ class SchoolContextHelper
     public static function getSchoolJob($schoolId = null)
     {   
         // $school = is_null($schoolId) ? self::getCurrentSchoolContext() : School::find($schoolId);
-        $job = Job::where(['job_id' => 24])->first();
+        $job = Job::all()->first();
 
         return $job;
     }
