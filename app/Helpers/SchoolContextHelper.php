@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\Job;
 use Illuminate\Support\Facades\Session;
 use App\Models\Franchise;
 use App\Models\School;
@@ -39,5 +40,18 @@ class SchoolContextHelper
     {
         Session::forget('school_context-sid');
     }
-    
+
+    /**
+     * Retrieves a specific job associated with a school.
+     *
+     * @param int|null $schoolId The ID of the school. If null, the current school context will be used.
+     * @return Job The job associated with the school.
+     */
+    public static function getSchoolJob($schoolId = null)
+    {   
+        // $school = is_null($schoolId) ? self::getCurrentSchoolContext() : School::find($schoolId);
+        $job = Job::all()->first();
+
+        return $job;
+    }
 }
