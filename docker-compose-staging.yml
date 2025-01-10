@@ -73,6 +73,7 @@ services:
       PMA_PASSWORD: ${DB_PASSWORD}
     volumes:
       - /etc/nginx/.htpasswd:/var/www/html/passwd
+      - ./docker/php/phpmyadmin.ini:/usr/local/etc/php/conf.d/phpmyadmin.ini
     ports:
       - "8090:80"
     depends_on:
