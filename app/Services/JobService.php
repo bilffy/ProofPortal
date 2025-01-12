@@ -46,6 +46,8 @@ class JobService
     {
         return $this->queryJobs(null,$schoolkey)
         ->where('jobs.ts_season_id', $seasonId)
+        ->where('jobs.jobsync_status_id', $this->statusService->sync)
+        ->where('jobs.foldersync_status_id', $this->statusService->completed)
         ->orderBy('id', 'asc')
         ->get();
     }

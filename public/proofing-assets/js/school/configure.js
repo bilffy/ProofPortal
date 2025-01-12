@@ -557,16 +557,19 @@ jQuery(document).ready(function($) {
 
         const selectedValue = $('#job_access_image').val();
 
-        if (selectedValue === 'all') {
-            // Show all <tr> elements with class 'folder-row' inside #folder_config
-            $('#folder_config tr.folder-row').show();
-            $('#folder_config tbody .no-row').remove();
-        } else if (selectedValue === '0'){
-            $('#folder_config').removeClass('d-none');
+        if (selectedValue === '0'){
+            $('#folder_config').addClass('d-none');
         } else {
             // Hide all <tr> elements with class 'folder-row', then show only those with matching data-tagid
-            $('#folder_config tr.folder-row').hide();
+            if (selectedValue === 'all') {
+                // Show all <tr> elements with class 'folder-row' inside #folder_config
+                $('#folder_config tr.folder-row').show();
+            }else{
+                $('#folder_config tr.folder-row').hide();
+            }
+            
             $('#folder_config tr.folder-row[data-tagid="' + selectedValue + '"]').show();
+            $('#folder_config tbody .no-row').remove();
         
             // Check if any rows are visible after filtering
             const visibleRows = $('#folder_config tr.folder-row:visible').length;
