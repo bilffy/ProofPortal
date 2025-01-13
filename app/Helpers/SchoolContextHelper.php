@@ -54,4 +54,16 @@ class SchoolContextHelper
 
         return $job;
     }
+
+    public static function getSchool()
+    {
+        $school = self::getCurrentSchoolContext();
+        // If no school context is set, get user's school.
+        // Otherwise, return null.
+        if (null === $school) {
+            $user = auth()->user();
+            $school = $user->getSchool();
+        }
+        return $school;
+    }
 }

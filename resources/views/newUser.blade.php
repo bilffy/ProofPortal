@@ -75,11 +75,11 @@
 
             <div class="flex flex-row gap-4 max-w-screen-md mb-8">
                 <div class="w-full">
-                    <x-form.select context="role" :options="$roleOptions" required>User Role</x-form.select>
+                    <x-form.select class="w-full" context="role" :options="$roleOptions" required>User Role</x-form.select>
                 </div>
                 <div id="level" class="w-full invisible">
-                    <x-form.select context="school" :options="$schoolOptions" required>School</x-form.select>
-                    <x-form.select context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
+                    <x-form.select class="w-full" context="school" :options="$schoolOptions" required>School</x-form.select>
+                    <x-form.select class="w-full" context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
                 </div>
             </div>
             
