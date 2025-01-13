@@ -177,6 +177,24 @@ class StatusSeeder extends Seeder
                 'colour_code' => '#d11a2a',
                 'created_at' => Carbon::now(),
             ],
+            [
+                'status_internal_name' => 'Download Started',
+                'status_external_name' => 'Download Started',
+                'colour_code' => null,
+                'created_at' => Carbon::now(),
+            ],
+            [
+                'status_internal_name' => 'Download Failed',
+                'status_external_name' => 'Download Failed',
+                'colour_code' => null,
+                'created_at' => Carbon::now(),
+            ],
+            [
+                'status_internal_name' => 'Download Email Failed',
+                'status_external_name' => 'Download Email Failed',
+                'colour_code' => null,
+                'created_at' => Carbon::now(),
+            ],
         ]);
     }
 }

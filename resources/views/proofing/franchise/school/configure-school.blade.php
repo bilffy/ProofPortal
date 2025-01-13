@@ -40,7 +40,7 @@
 
     $notificationsMatrix = $selectedSchool->digital_download_permission_notification;
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
-    $imageUrl = route('school.logo', ['encryptedPath' => $encryptedPath]);
+    $imageUrl = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
 @endphp
         <div class="row">
             <div class="col-lg-12">

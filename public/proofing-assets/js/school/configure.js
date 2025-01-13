@@ -437,11 +437,14 @@ jQuery(document).ready(function($) {
                 $('#jobType, #digital_download, #folder_config').addClass('d-none');
                 $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please contact your local MSP Expert.</p>');
             }
-    
+            var csrfToken = $('meta[name="csrf-token"]').attr('content');
             $.ajax({
                 url: base_url + '/config-school/folder-config',
-                method: 'GET',
+                method: 'POST',
                 data: { folders: selectedJob.Folders },
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
+                },
                 success: function (response) {
                     if (response.html) {
                         $('#folder_config').html(response.html); // Correctly insert the HTML from the response
@@ -744,13 +747,15 @@ jQuery(document).ready(function($) {
                         preview.style.display = 'block';
                         deleteLink.classList.remove('d-none');
                     };
-                    reader.readAsDataURL(file); // Convert the file to a data URL
+                    const file = fileInput.files[0];
+                    if (file) {
+                        reader.readAsDataURL(file); // Convert the file to a data URL
+                    }
                 },
                 error: function () {
                     console.error('Failed to upload the school logo.');
                 }
             });
-
         // Clear the input, hide preview and delete link
         fileInput.value = ''; // Clear the file input
         preview.src = ''; // Clear the preview image
