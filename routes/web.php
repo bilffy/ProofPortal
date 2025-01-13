@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function () {
     //Configure School - fetch jobs by season
         Route::get('/config-school/fetch-jobs', [ConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
     //Configure School - get-job-details of job
-        Route::get('/config-school/folder-config', [ConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
+        Route::post('/config-school/folder-config', [ConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
     //Configure School - Submit
         Route::post('/config-school/digital-download/submit', [ConfigureController::class, 'configSchoolDigitalDownload'])->name('config-school-digital-download');
     //Configure School - Job Change Submit

@@ -48,7 +48,7 @@ class ConfigureController extends Controller
             $filePath = 'school_logos/' . $selectedSchool->school_logo;
         }
         $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
-        $encryptedPath = Crypt::encryptString($filePath);
+        $encryptedPath = $selectedSchool->school_logo ? Crypt::encryptString($filePath) : '';
         $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
         $defaultSeasonCode = $seasons->where('is_default', 1)->select('code', 'ts_season_id')->first();
         $syncJobsbySchoolkey =  $this->jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
@@ -203,9 +203,9 @@ class ConfigureController extends Controller
     {
         $selectedSchool = $this->schoolService->getSchoolBySchoolKey($schoolKey)->first();
         if ($selectedSchool && $selectedSchool->school_logo) {
-            $filePath = 'public/school_logos/' . $selectedSchool->school_logo;
-            if (Storage::exists($filePath)) {
-                Storage::delete($filePath);
+            if (Storage::disk('public')->exists('school_logos/' . $selectedSchool->school_logo)) {
+                // Delete the file from the storage
+                Storage::disk('public')->delete('school_logos/' . $selectedSchool->school_logo);
                 // Update the database to remove the logo reference
                 $this->schoolService->saveSchoolData($schoolKey, 'school_logo', null);
                 return true;
