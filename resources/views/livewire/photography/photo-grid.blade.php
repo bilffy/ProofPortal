@@ -1,5 +1,5 @@
 <div class="w-full">
-    <div x-data="{ selectedImages: @entangle('selectedImages') }" class="grid grid-cols-5 gap-4">
+    <div x-data="{ selectedImages: @entangle('selectedImages') }" class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto">
         @foreach ($paginatedImages as $image)
             @if (!is_null($image) && array_key_exists('isPortrait', $image))
                 <x-photography.portrait event="'{{$PhotographyHelper::EV_SELECT_IMAGE}}'" payload="{imageKey: '{{$image['id']}}'}" active="{{in_array($image['id'], $selectedImages)}}" img="{{$image['base64']}}" name="{{$image['firstname']}} {{$image['lastname']}} - {{$image['classGroup']}}" landscape="{{!$image['isPortrait']}}"/>

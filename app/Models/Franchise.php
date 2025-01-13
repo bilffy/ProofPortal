@@ -20,6 +20,8 @@ class Franchise extends Model
         'ts_account_id',
         'alphacode',
         'name',
+        'email',
+        'phone',
         'address',
         'postcode',
         'suburb',

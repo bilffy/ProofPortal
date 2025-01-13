@@ -15,4 +15,5 @@ class PhotographyHelper
     public const EV_CLEAR_SELECTED_IMAGES = 'EV_CLEAR_SELECTED_IMAGES';
     public const EV_UPDATE_FILTER = 'EV_UPDATE_FILTER';
     public const EV_UPDATE_SEARCH = 'EV_UPDATE_SEARCH';
+    public const EV_UPDATE_FILTER_DATA = 'EV_UPDATE_FILTER_DATA';
 }

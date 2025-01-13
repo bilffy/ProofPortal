@@ -19,7 +19,7 @@ class ImageService
     public function getAllYears()
     {
         return DB::table('seasons')
-            ->select('code as Year')
+            ->select('id', 'code as Year')
             ->orderBy('code', 'desc')
             ->get();
     }
@@ -51,21 +51,39 @@ class ImageService
      * Get all the folders based on the selected tag of selected column visibility. 
      *
      * @param int $seasonId
-     * @param string $schoolKey
+     * @param string|null $schoolKey
      * @param string $selectedTag
      * @return \Illuminate\Support\Collection
      */
-    public function getFoldersByTag(int $seasonId, string $schoolKey, string $selectedTag, string $visibilityColumn)
+    public function getFoldersByTag(int $seasonId, string|null $schoolKey, string $selectedTag, string $visibilityColumn)
     {
-        return DB::table('schools')
+        $folderTags = DB::table('folder_tags')
+            ->where('external_name', $selectedTag)
+            ->select('tag')
+            ->get()
+            ->pluck('tag')
+            ->toArray();
+
+        $query = DB::table('schools')
             ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->where('jobs.ts_season_id', $seasonId)
-            ->where('jobs.ts_schoolkey', $schoolKey)
-            ->where("folders.$visibilityColumn", 1)
-            ->where('folders.folder_tag', $selectedTag)
-            ->select('folders.ts_foldername', 'folders.ts_folderkey')
-            ->get();
+            ->where('jobs.ts_season_id', operator: $seasonId)
+            ->where("folders.$visibilityColumn", 1);
+
+            if ($schoolKey) {
+                $query->where('jobs.ts_schoolkey', $schoolKey);
+            }
+            
+            if ('ALL' !== $selectedTag) {
+                $query->where(function ($query) use ($folderTags, $selectedTag) {
+                    $query->whereIn('folders.folder_tag', $folderTags);
+                    if ("Student" === $selectedTag) {
+                        $query->orWhereNull('folders.folder_tag');
+                    }
+                });
+            }
+
+        return $query->select('folders.ts_foldername', 'folders.ts_folderkey')->get();
     }
 
     /**
@@ -73,79 +91,31 @@ class ImageService
      *
      * @param int $seasonId
      * @param string $schoolKey
-     * @param string $folderKey
-     * @param string $search
+     * @param array $folderKeys
+     * @param string $searchTerm
      * @return \Illuminate\Database\Query\Builder
      */
-    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, string $folderKey, int $perPage = 15, string $search)
+    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
     {
-        $query = DB::table('jobs')
+        $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-        ->join('images', 'images.keyvalue', '=', 'subjects.ts_subject_id')
+        ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
         ->where('jobs.ts_season_id', operator: $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
 
-        if($search) {
-            $query->where(function ($query) use ($search) {
-                $query->where('subjects.firstname', 'like', "%$search%")
-                    ->orWhere('subjects.lastname', 'like', "%$search%")
-                    ->orWhere('folders.ts_foldername', 'like', "%$search%");
+        if($searchTerm) {
+            $query->where(function ($query) use ($searchTerm) {
+                $query->where('subjects.firstname', 'like', "%$searchTerm%")
+                    ->orWhere('subjects.lastname', 'like', "%$searchTerm%")
+                    ->orWhere('folders.ts_foldername', 'like', "%$searchTerm%");
             });
         }
 
-        if ($folderKey && $search == '') {
-            $query->where('folders.ts_folderkey', $folderKey);
+        if (!empty($folderKeys)) {
+            $query->whereIn('folders.ts_folderkey', $folderKeys);
         }
         return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*', 'folders.ts_foldername');
-            // ->paginate($perPage);
-    }
-
-    /**
-     * Get images from the local drive and return them as base64 strings.
-     *
-     * @param array $conditions
-     * @param int $perPage
-     * @return LengthAwarePaginator
-     */
-    public function getImagesAsBase64WithPagination(array $options, int $perPage = 15)
-    {
-        $seasonId = $options['tsSeasonId'];
-        $schoolKey = $options['schoolKey'];
-        $folderKey = $options['folderKey'];
-        
-        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, $perPage);
-        
-        $base64Images = $images->get()->map(function ($image) {
-            $path = $this->getPath($image->ts_subjectkey.".jpg"); 
-            if (Storage::disk('local')->exists($path)) {
-                $fileContent = Storage::disk('local')->get($path);
-                $dimensions = getimagesizefromstring($fileContent);
-                
-                return [
-                    'id' => $image->ts_subjectkey,
-                    'base64' => base64_encode($fileContent),
-                    'firstname' => $image->firstname,
-                    'lastname' => $image->lastname,
-                    'isPortrait' => $dimensions[0] < $dimensions[1],
-                ];
-            }
-
-            return [
-                'id' => $image->ts_subjectkey,
-                'base64' => base64_encode(Storage::disk('local')->get("/not_found.jpg")),
-                'firstname' => $image->firstname,
-                'lastname' => $image->lastname,
-            ];
-        });
-
-        return new LengthAwarePaginator(
-            $base64Images,
-            $images->total(),
-            $images->perPage(),
-            $images->currentPage(),
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
     }
 
     /**
@@ -158,15 +128,15 @@ class ImageService
     {
         $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
-        $folderKey = $options['folderKey']; //== 'ALL' ? '' : $options['folderKey'];
-        $search = $options['search'] ?? '';
+        $folderKeys = $options['folderKeys'];
+        $search = $options['searchTerm'] ?? '';
         
-        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKey, 0, $search);
+        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKeys, $search);
         
         $base64Images = $images->get()->map(function ($image) {
             $path = $this->getPath($image->ts_subjectkey.".jpg"); 
             if (Storage::disk('local')->exists($path)) {
-                $fileContent = Storage::disk(name: 'local')->get($path);
+                $fileContent = Storage::disk('local')->get($path);
                 $dimensions = getimagesizefromstring($fileContent);
                 
                 return [

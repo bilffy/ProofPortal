@@ -101,8 +101,6 @@
                                 </td>
                             </tr>
                         @endforeach
-                    @else
-                        <tr><td colspan="4">No folders available</td></tr>
                     @endif
                 </tbody>
             </table>            

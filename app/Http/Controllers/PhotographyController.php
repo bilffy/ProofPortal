@@ -146,7 +146,7 @@ class PhotographyController extends Controller
         return view('photography', 
             [
                 'user' => new UserResource(Auth::user()), 
-                'photos' => $this->imageService->getImagesAsBase64WithPagination($options),
+                'photos' => $this->imageService->getImagesAsBase64($options),
             ]
         );
     }
