@@ -21,6 +21,6 @@ class FolderSubject extends Model
     }
 
     public function images(){
-        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subject_id')->select('ts_imagekey');
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subjectkey')->select('ts_imagekey');
     }
 }

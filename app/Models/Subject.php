@@ -37,7 +37,7 @@ class Subject extends Model
     }
 
     public function images(){
-        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subject_id');
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subjectkey');
     }
 
     public function attachedsubjects(){

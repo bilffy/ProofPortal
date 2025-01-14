@@ -63,7 +63,7 @@ class Folder extends Model
     }
 
     public function images(){
-        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_folder_id');
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_folderkey');
     }
 
     public function folderTags(){
