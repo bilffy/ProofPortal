@@ -146,6 +146,7 @@ class ImageService
                     'lastname' => $image->lastname,
                     'isPortrait' => $dimensions[0] < $dimensions[1],
                     'classGroup' => $image->ts_foldername,
+                    'filename' => $image->ts_subjectkey.".jpg", // For testing only, remove once image issue is resolved
                 ];
             }
 
@@ -155,6 +156,7 @@ class ImageService
                 'firstname' => $image->firstname,
                 'lastname' => $image->lastname,
                 'classGroup' => $image->ts_foldername,
+                'filename' => "not_found.jpg", // For testing only, remove once image issue is resolved
             ];
         });
 

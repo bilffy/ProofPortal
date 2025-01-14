@@ -6,9 +6,10 @@
     'event' => null,
     'payload' => null,
     'img' => null,
+    'filename' => 'NOT_FOUND' // For testing only, remove this line once the image issue is fixed 
 ])
 
-<div class="rounded-md w-[186] px-2 pt-2 flex flex-col align-middle justify-center {{ $landscape ? 'col-span-2 ':'' }}" @click="$dispatch({{$event}}, {{$payload}})">
+<div class="rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center {{ $landscape ? 'col-span-2 ':'' }}" @click="$dispatch({{$event}}, {{$payload}})">
     <div class="relative h-[229px] overflow-hidden">
         <div class="absolute flex w-full justify-end pr-2 pt-2">
             <div class="group hover:cursor-pointer transition-all 
@@ -24,7 +25,9 @@
             class="w-full max-w-none rounded h-max"
         />
     </div>
-    
+    <div class="flex justify-between py-2 text-l absolute w-full">
+        <span class="truncate">{{$filename}}</span>
+    </div>
     <div class="flex justify-between py-2 text-sm">
         <span class="truncate">{{$name}}</span>
     </div>

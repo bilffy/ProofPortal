@@ -18,4 +18,15 @@
         width: 200px !important;
         margin-bottom: 1rem;
     }
+    .select2-selection.select2-selection--multiple {
+        height: auto !important;
+        li.select2-selection__choice {
+            margin-left: 0px !important;
+            background-color: #e6e7e8 !important;
+            border-color: #cbcbcb !important;
+            button {
+                border-right-color: #cbcbcb !important;
+            }
+        }
+    }
 }
