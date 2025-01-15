@@ -30,3 +30,11 @@
         }
     }
 }
+
+.select2-results ul.select2-results__options li.select2-results__option--selected {
+    background-color: #e6e7e8;
+}
+
+.select2-results ul.select2-results__options li.select2-results__option--selected.select2-results__option--highlighted {
+    background-color: #005890 !important;
+}

@@ -7,9 +7,9 @@
     $schoolKey = $school->schoolkey ?? '';
 
     $portraitYearOptions = $imageService->getAllYears()->toArray();
-    $defaultSeasonId = $portraitYearOptions[0]->id;
+    $defaultSeasonId = $portraitYearOptions[0]->ts_season_id;
     foreach ($portraitYearOptions as $option) {
-        $yearOptions[$option->id] = $option->Year;
+        $yearOptions[$option->ts_season_id] = $option->Year;
     }
 @endphp
 <div class="relative">
