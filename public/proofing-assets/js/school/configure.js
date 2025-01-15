@@ -584,110 +584,73 @@ jQuery(document).ready(function($) {
             }
         }
 
-                // Select all elements and checkboxes
-        const selectAllPortrait = document.getElementById('set-is-visible-for-portrait-all');
-        const selectNonePortrait = document.getElementById('set-is-visible-for-portrait-none');
-        const portraitCheckboxes = document.querySelectorAll('.folder-details-is-visible-for-portrait');
+    // Function to handle "Select All" and "Select None" actions
+    function handleSelectAction(selectAllButton, selectNoneButton, checkboxClass, isSelectAll) {
+        if (selectAllButton) {
+            selectAllButton.addEventListener('click', function() {
+                const selectedJobType = document.getElementById('job_access_image').value;
+                const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+                const folderIdsToUpdate = [];
 
-        const selectAllGroup = document.getElementById('set-is-visible-for-group-all');
-        const selectNoneGroup  = document.getElementById('set-is-visible-for-group-none');
-        const GroupCheckboxes = document.querySelectorAll('.folder-details-is-visible-for-group');
-
-        // Select "All" and "None" checkbox functionality
-        // Event listener for Select All functionality
-        if (selectAllPortrait) {
-            selectAllPortrait.addEventListener('click', function() {
-                const folderIdsToUpdate = []; // Initialize this once, outside the loop
-
-                // Loop through all checkboxes and check them
-                portraitCheckboxes.forEach(function(checkbox) {
-                    if (!checkbox.checked) {
-                        checkbox.checked = true;  // Check the checkbox
-                        // Optional: Trigger the change event if you need to handle backend updates
-                        checkbox.dispatchEvent(new Event('change'));
-
-                        // Add the folderId to the list of IDs to update
-                        const folderId = $(checkbox).data('folder-id');
-                        folderIdsToUpdate.push(folderId);
-                    }
+                targetRows.forEach(function(row) {
+                    const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+                    checkboxes.forEach(function(checkbox) {
+                        if (checkbox.checked !== isSelectAll) {
+                            checkbox.checked = isSelectAll;
+                            checkbox.dispatchEvent(new Event('change'));
+                            const folderId = checkbox.getAttribute('data-folder-id');
+                            folderIdsToUpdate.push(folderId);
+                        }
+                    });
                 });
 
-                // Send all folder IDs together in a single request
                 if (folderIdsToUpdate.length > 0) {
-                    sendFolderChanges(folderIdsToUpdate, "is_visible_for_portrait", 1); // 1 for checked
+                    sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", isSelectAll ? 1 : 0);
                 }
             });
         }
 
-        if (selectNonePortrait) {
-            selectNonePortrait.addEventListener('click', function() {
-                const folderIdsToUpdate = []; // Initialize this once, outside the loop
+        if (selectNoneButton) {
+            selectNoneButton.addEventListener('click', function() {
+                const selectedJobType = document.getElementById('job_access_image').value;
+                const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+                const folderIdsToUpdate = [];
 
-                portraitCheckboxes.forEach(function(checkbox) {
-                    if (checkbox.checked) {
-                        checkbox.checked = false;  // Uncheck the checkbox
-                        // Optional: You can trigger a change event if you need to handle the change in the backend
-                        checkbox.dispatchEvent(new Event('change'));
-
-                        // Add the folderId to the list of IDs to update
-                        const folderId = $(checkbox).data('folder-id');
-                        folderIdsToUpdate.push(folderId);
-                    }
+                targetRows.forEach(function(row) {
+                    const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+                    checkboxes.forEach(function(checkbox) {
+                        if (checkbox.checked !== !isSelectAll) {
+                            checkbox.checked = !isSelectAll;
+                            checkbox.dispatchEvent(new Event('change'));
+                            const folderId = checkbox.getAttribute('data-folder-id');
+                            folderIdsToUpdate.push(folderId);
+                        }
+                    });
                 });
 
-                // Send all folder IDs together in a single request
                 if (folderIdsToUpdate.length > 0) {
-                    sendFolderChanges(folderIdsToUpdate, "is_visible_for_portrait", 0); // 0 for unchecked
+                    sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", !isSelectAll ? 1 : 0);
                 }
             });
         }
+    }
 
-        // Select "All" and "None" checkbox functionality
-        if (selectAllGroup) {
-            selectAllGroup.addEventListener('click', function() {
-                const folderIdsToUpdate = []; // Initialize this once, outside the loop
+    // Initialize the "Select All" and "Select None" buttons for portrait checkboxes
+    handleSelectAction(
+        document.getElementById('set-is-visible-for-portrait-all'),
+        document.getElementById('set-is-visible-for-portrait-none'),
+        'folder-details-is-visible-for-portrait',
+        true // true for "Select All"
+    );
 
-                GroupCheckboxes.forEach(function(checkbox) {
-                    if (!checkbox.checked) {
-                        checkbox.checked = true;  // Check the checkbox
-                        // Optional: You can trigger a change event if you need to handle the change in the backend
-                        checkbox.dispatchEvent(new Event('change'));
+    // Initialize the "Select All" and "Select None" buttons for group checkboxes
+    handleSelectAction(
+        document.getElementById('set-is-visible-for-group-all'),
+        document.getElementById('set-is-visible-for-group-none'),
+        'folder-details-is-visible-for-group',
+        true // true for "Select All"
+    );
 
-                        // Add the folderId to the list of IDs to update
-                        const folderId = $(checkbox).data('folder-id');
-                        folderIdsToUpdate.push(folderId);
-                    }
-                });
-
-                // Send all folder IDs together in a single request
-                if (folderIdsToUpdate.length > 0) {
-                    sendFolderChanges(folderIdsToUpdate, "is_visible_for_group", 1); // 1 for checked
-                }
-            });
-        }
-
-        if (selectNoneGroup) {
-            selectNoneGroup.addEventListener('click', function() {
-                const folderIdsToUpdate = []; // Initialize this once, outside the loop
-
-                GroupCheckboxes.forEach(function(checkbox) {
-                    if (checkbox.checked) {
-                        checkbox.checked = false;  // Uncheck the checkbox
-                        // Optional: You can trigger a change event if you need to handle the change in the backend
-                        checkbox.dispatchEvent(new Event('change'));
-
-                        // Add the folderId to the list of IDs to update
-                        const folderId = $(checkbox).data('folder-id');
-                        folderIdsToUpdate.push(folderId);
-                    }
-                });
-
-                // Send all folder IDs together in a single request
-                if (folderIdsToUpdate.length > 0) {
-                    sendFolderChanges(folderIdsToUpdate, "is_visible_for_group", 0); // 1 for checked
-                }
-            });
-        }
     });
 
 
