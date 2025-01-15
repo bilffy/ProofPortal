@@ -155,6 +155,8 @@ class PhotoGrid extends Component
 
     public function render()
     {
+        // $state = request()->getContent();
+        // dd(strlen($state));
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $perPage = 30;
         $items = $this->images->slice(($currentPage - 1) * $perPage, $perPage)->all();
