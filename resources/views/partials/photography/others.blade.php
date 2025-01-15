@@ -7,9 +7,9 @@
     $schoolKey = $school->schoolkey ?? '';
 
     $otherYearOptions = $imageService->getAllYears()->toArray();
-    $defaultSeasonId = $otherYearOptions[0]->id;
+    $defaultSeasonId = $otherYearOptions[0]->ts_season_id;
     foreach ($otherYearOptions as $option) {
-        $yearOptions[$option->id] = $option->Year;
+        $yearOptions[$option->ts_season_id] = $option->Year;
     }
 @endphp
 
@@ -37,11 +37,11 @@
             <x-form.select context="others_class" :options="[]" class="mb-4" multiple>Classes</x-form.select>
         </div>
 
-        @livewire('photography.photo-grid', [
+        {{--@livewire('photography.photo-grid', [
             'category' => $PhotographyHelper::TAB_OTHERS,
             'season' => $defaultSeasonId,
             'schoolKey' => $schoolKey,
-        ])
+        ])--}}
     </div>
 </div>
 

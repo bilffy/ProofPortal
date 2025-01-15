@@ -57,7 +57,8 @@ class PhotoGrid extends Component
     public function performSearch($term)
     {
         $this->search = $term;
-        $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
+        // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
+        $this->clearSelectedImages();
         $this->getImages();
     }
 
@@ -123,7 +124,8 @@ class PhotoGrid extends Component
     {
         $this->setupFilters($year, $view, $class);
         $this->getImages();
-        $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
+        // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
+        $this->clearSelectedImages();
     }
 
     private function getImages()
