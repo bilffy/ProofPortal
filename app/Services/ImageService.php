@@ -141,7 +141,7 @@ class ImageService
                 
                 return [
                     'id' => $image->ts_subjectkey,
-                    'base64' => base64_encode($fileContent),
+                    'base64' => null,//base64_encode($fileContent),
                     'firstname' => $image->firstname,
                     'lastname' => $image->lastname,
                     'isPortrait' => $dimensions[0] < $dimensions[1],
@@ -152,7 +152,7 @@ class ImageService
 
             return [
                 'id' => $image->ts_subjectkey,
-                'base64' => base64_encode(Storage::disk('local')->get("/not_found.jpg")),
+                'base64' => null,//base64_encode(Storage::disk('local')->get("/not_found.jpg")),
                 'firstname' => $image->firstname,
                 'lastname' => $image->lastname,
                 'classGroup' => $image->ts_foldername,
