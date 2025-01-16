@@ -119,48 +119,49 @@ class ImageService
     }
 
     /**
-     * Get images from the local drive and return them as base64 strings.
+     * Get images from database using options given
      *
-     * @param array $conditions
+     * @param array $options
      * @return Collection
      */
-    public function getImagesAsBase64(array $options)
+    public function getFilteredPhotographyImages(array $options)
     {
         $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
         $folderKeys = $options['folderKeys'];
         $search = $options['searchTerm'] ?? '';
-        
-        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKeys, $search);
-        
-        $base64Images = $images->get()->map(function ($image) {
-            $path = $this->getPath($image->ts_subjectkey.".jpg"); 
-            if (Storage::disk('local')->exists($path)) {
-                $fileContent = Storage::disk('local')->get($path);
-                $dimensions = getimagesizefromstring($fileContent);
-                
-                return [
-                    'id' => $image->ts_subjectkey,
-                    'base64' => null,//base64_encode($fileContent),
-                    'firstname' => $image->firstname,
-                    'lastname' => $image->lastname,
-                    'isPortrait' => $dimensions[0] < $dimensions[1],
-                    'classGroup' => $image->ts_foldername,
-                    'filename' => $image->ts_subjectkey.".jpg", // For testing only, remove once image issue is resolved
-                ];
-            }
 
+        $images = $this->getImagesAndSubjectsByFolder($seasonId, $schoolKey, $folderKeys, $search);
+
+        return $images->get();
+    }
+
+    /**
+     * Get images from the local drive and return them as base64 strings.
+     *
+     * @param Collection
+     * @return Collection
+     */
+    public function getImagesAsBase64($images): Collection
+    {
+        $toData = function ($image) {
+            $path = $this->getPath($image->ts_subjectkey.".jpg");
+            $isFound = Storage::disk('local')->exists($path);
+            $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
+            $dimensions = getimagesizefromstring($fileContent);
+                
             return [
                 'id' => $image->ts_subjectkey,
-                'base64' => null,//base64_encode(Storage::disk('local')->get("/not_found.jpg")),
+                'base64' => base64_encode($fileContent),
                 'firstname' => $image->firstname,
                 'lastname' => $image->lastname,
+                'isPortrait' => $isFound ? $dimensions[0] < $dimensions[1] : true,
                 'classGroup' => $image->ts_foldername,
-                'filename' => "not_found.jpg", // For testing only, remove once image issue is resolved
+                'filename' => $image->ts_subjectkey.".jpg", // For testing only, remove once image issue is resolved
             ];
-        });
+        };
 
-        return $base64Images;
+        return $images->map($toData);
     }
 
     /**
@@ -182,7 +183,7 @@ class ImageService
      * @param array $options
      * @return \Illuminate\Pagination\LengthAwarePaginator
      */
-    protected function paginate(Collection $items, int $perPage, $page = null, array $options = [])
+    public function paginate(Collection $items, int $perPage, $page = null, array $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
