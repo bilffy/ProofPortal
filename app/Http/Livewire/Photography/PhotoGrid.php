@@ -36,7 +36,7 @@ class PhotoGrid extends Component
         $this->schoolKey = $schoolKey;
 
         $this->setupFilters($season);
-        $this->getImages();
+        // $this->getImages();
     }
 
     public function updateSelectedList($imageKey)
@@ -59,7 +59,7 @@ class PhotoGrid extends Component
         $this->search = $term;
         // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
         $this->clearSelectedImages();
-        $this->getImages();
+        // $this->getImages();
     }
 
     /**
@@ -123,7 +123,7 @@ class PhotoGrid extends Component
     public function updateFilters($year, $view, $class)
     {
         $this->setupFilters($year, $view, $class);
-        $this->getImages();
+        // $this->getImages();
         // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
         $this->clearSelectedImages();
     }
@@ -138,7 +138,20 @@ class PhotoGrid extends Component
             'folderKeys' => $keys,
             'searchTerm' => $this->search,
         ];
-        $this->images = $imageService->getImagesAsBase64($options);
+        $filteredImages = $imageService->getFilteredPhotographyImages($options);
+        
+        $paginated = $imageService->paginate(
+            $filteredImages,
+            30,
+            null,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
+        
+        // Modify the paginated items
+        $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection());
+        $paginated->setCollection($modifiedItems);
+        
+        return $paginated;
     }
 
     private function getVisibility()
@@ -155,18 +168,7 @@ class PhotoGrid extends Component
 
     public function render()
     {
-        // $state = request()->getContent();
-        // dd(strlen($state));
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $perPage = 30;
-        $items = $this->images->slice(($currentPage - 1) * $perPage, $perPage)->all();
-        $paginator = new LengthAwarePaginator(
-            $items,
-            $this->images->count(),
-            $perPage,
-            $currentPage,
-            ['path' => LengthAwarePaginator::resolveCurrentPath()]
-        );
-        return view('livewire.photography.photo-grid', ['paginatedImages' => $paginator]);
+        $paginatedImages = $this->getImages();
+        return view('livewire.photography.photo-grid', ['paginatedImages' => $paginatedImages]);
     }
 }
