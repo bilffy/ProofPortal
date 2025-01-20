@@ -9,7 +9,14 @@
             <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Portraits</x-tabs.tab>
             <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Groups</x-tabs.tab>
             <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Others</x-tabs.tab>
-            @livewire('photography.download-selection', ['id' => 'downloads'])
+            {{--@livewire('photography.download-selection', ['id' => 'downloads'])--}}
+            <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
+                {{--@if (count($selectedImages) > 0)
+                    <x-button.primary hollow class="border-none" @click="$dispatch('{{$PhotographyHelper::EV_CLEAR_SELECTED_IMAGES}}')">Clear Selection</x-button.primary>
+                @endif--}}
+                <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
+                <x-button.primary id="btn-download">Download All</x-button.primary>
+            </div>
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
@@ -32,19 +39,71 @@
 
 @push('scripts')
 <script type="module">
-    
-    function updateDownloadSection() {
-        const images =  JSON.parse(localStorage.getItem('selectedImages'));
+    function updateImageState(imgCheckbox, isSelected) {
+        let checkIcon = imgCheckbox.querySelector('i');
+        if (isSelected) {
+            imgCheckbox.classList.add('bg-white');
+            checkIcon.classList.remove('hidden');
+        } else {
+            imgCheckbox.classList.remove('bg-white');
+            checkIcon.classList.add('hidden');
+        }
+    }
 
-        
+    function updateDownloadSection(selectedCount) {
+        const downloadBtn = document.querySelector('#btn-download');
+        const clearDownloadBtn = document.querySelector('#btn-download-clear');
+
+        if (selectedCount > 0) {
+            clearDownloadBtn.classList.remove('hidden');
+            downloadBtn.innerHTML = 'Download Selected';
+        } else {
+            clearDownloadBtn.classList.add('hidden');
+            downloadBtn.innerHTML = 'Download All';
+        }
+    }
+    
+    function updateDownloadSelection() {
+        const images = JSON.parse(localStorage.getItem('selectedImages'));
+        const portaits = document.querySelectorAll('.portrait-img');
+
+        portaits.forEach(img => {
+            let checkbox = img.querySelector('.portrait-img-checkbox');
+            updateImageState(checkbox, images.includes(img.id));
+        });
+
+        updateDownloadSection(images.length);
     }
 
     function resetImages() {
         window.localStorage.setItem('selectedImages', JSON.stringify([]));
-        updateDownloadSection();
+        updateDownloadSelection();
     }
 
+    function handleImageClick(imageId) {
+        let selectedItems = window.localStorage.getItem('selectedImages');
+        selectedItems = selectedItems ? JSON.parse(selectedItems) : [];
+
+        const isAlreadySelected = selectedItems.includes(imageId);
+        const img = document.querySelector(`#${imageId}`);
+
+        if (isAlreadySelected) {
+            selectedItems = selectedItems.filter(item => item !== imageId);
+        } else {
+            selectedItems.push(imageId);
+        }
+        
+        window.localStorage.setItem('selectedImages', JSON.stringify(selectedItems));
+
+        updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected);
+        updateDownloadSection(selectedItems.length);
+    }
+    
+    window.resetImages = resetImages;
+    window.handleImageClick = handleImageClick;
+    window.updateDownloadSelection = updateDownloadSelection;
     resetImages();
+    
     document.addEventListener('DOMContentLoaded', () => {
         const tabs = document.querySelectorAll('.tab-button');
         tabs.forEach(tab => {
@@ -56,6 +115,10 @@
                 history.pushState({ path: url }, '', url);
             });
         });
+    });
+
+    window.addEventListener('photo-grid-updated', event => {
+        setTimeout(updateDownloadSelection, 100);
     });
 </script>
 @endpush

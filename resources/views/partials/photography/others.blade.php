@@ -14,10 +14,6 @@
 @endphp
 
 <div class="relative">
-    {{--<div class="absolute top-[-77px] right-2">
-        <x-button.primary>Download All</x-button.primary>
-    </div>--}}
-
     <div class="flex flex-row gap-4">
         <div class="w-[200px]">
             <div class="mb-4 relative">
@@ -25,11 +21,12 @@
                     <x-icon icon="search"/>
                 </div>
                 <input
-                    id="image-search"
+                    id="image-search-others"
                     type="search"
                     class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
                     placeholder="Search..."
                     onkeypress="if(event.key === 'Enter') { window.performOtherSearch(event); }"
+                    oninput="window.performOtherSearch(event);"
                 />
             </div>
             <x-form.select context="others_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
@@ -37,11 +34,11 @@
             <x-form.select context="others_class" :options="[]" class="mb-4" multiple>Classes</x-form.select>
         </div>
 
-        {{--@livewire('photography.photo-grid', [
+        @livewire('photography.photo-grid', [
             'category' => $PhotographyHelper::TAB_OTHERS,
             'season' => $defaultSeasonId,
             'schoolKey' => $schoolKey,
-        ])--}}
+        ], key('photo-grid-others-' . $schoolKey))
     </div>
 </div>
 
@@ -49,9 +46,9 @@
 <script type="module">
     function performOtherSearch(event) {
         if (event.key === 'Enter') {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'OTHERS' });
         } else if (!event.currentTarget.value) {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '' });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: 'OTHERS' });
         }
     }
     function updateGridView(event) {
@@ -59,7 +56,7 @@
         const selectedView = $('#select_others_view').val();
         const selectedClass = $('#select_others_class').val();
         
-        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass});
+        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'OTHERS'});
     };
     function updateSelect2Options(selector, options) {
         const select = $(selector);
@@ -80,7 +77,9 @@
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
-        updateSelect2Options(`#select_others_${data[0]}`, data[1]);
+        if (data[0] == 'OTHERS') {
+            updateSelect2Options(`#select_others_${data[1]}`, data[2]);
+        }
     });
 </script>
 @endpush
