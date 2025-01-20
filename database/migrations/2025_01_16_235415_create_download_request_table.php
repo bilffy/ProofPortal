@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('download_requested', function (Blueprint $table) {
             $table->id();
-            $table->string('requested_by', 255)->nullable();
+            $table->unsignedBigInteger('user_id');
             $table->dateTime('requested_date');
             $table->dateTime('completed_date');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -28,6 +29,18 @@ return new class extends Migration
             $table->foreign('download_id')->references('id')->on('download_requested')->onDelete('cascade');
             $table->timestamps();
         });
+
+        Schema::create('download_category', function (Blueprint $table) {
+            $table->id();
+            $table->string('category_name', 50)->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('download_type', function (Blueprint $table) {
+            $table->id();
+            $table->string('download_type', 50)->nullable();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -37,5 +50,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('download_details');
         Schema::dropIfExists('download_requested');
+        Schema::dropIfExists('download_category');
+        Schema::dropIfExists('download_type');
     }
 };

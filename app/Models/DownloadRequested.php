@@ -17,7 +17,7 @@ class DownloadRequested extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'requested_by',
+        'user_id',
         'requested_date',
         'completed_date',
     ];
