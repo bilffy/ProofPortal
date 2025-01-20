@@ -13,10 +13,6 @@
     }
 @endphp
 <div class="relative">
-    {{--<div class="absolute top-[-77px] right-2">
-        <x-button.primary>Download All</x-button.primary>
-    </div>--}}
-
     <div class="flex flex-row gap-4">
         <div class="w-[200px]">
             <div class="mb-4 relative">
@@ -24,7 +20,7 @@
                     <x-icon icon="search"/>
                 </div>
                 <input
-                    id="image-search"
+                    id="image-search-portraits"
                     type="search"
                     class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
                     placeholder="Search..."
@@ -41,7 +37,7 @@
             'category' => $PhotographyHelper::TAB_PORTRAITS,
             'season' => $defaultSeasonId,
             'schoolKey' => $schoolKey,
-        ])
+        ], key('photo-grid-portraits-' . $schoolKey))
     </div>
 </div>
 
@@ -49,9 +45,9 @@
 <script type="module">
     function performPortaitSearch(event) {
         if (event.key === 'Enter') {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'PORTRAITS' });
         } else if (!event.currentTarget.value) {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '' });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: 'PORTRAITS' });
         }
     }
     function updateGridView(event) {
@@ -59,7 +55,7 @@
         const selectedView = $('#select_portaits_view').val();
         const selectedClass = $('#select_portaits_class').val();
         
-        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass});
+        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
     };
     function updateSelect2Options(selector, options) {
         const select = $(selector);
@@ -81,7 +77,9 @@
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
-        updateSelect2Options(`#select_portaits_${data[0]}`, data[1]);
+        if (data[0] == 'PORTRAITS') {
+            updateSelect2Options(`#select_portaits_${data[1]}`, data[2]);
+        }
     });
 </script>
 @endpush

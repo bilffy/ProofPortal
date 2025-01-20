@@ -151,7 +151,7 @@ class ImageService
             $dimensions = getimagesizefromstring($fileContent);
                 
             return [
-                'id' => $image->ts_subjectkey,
+                'id' => base64_encode(base64_encode($image->ts_subjectkey)),
                 'base64' => base64_encode($fileContent),
                 'firstname' => $image->firstname,
                 'lastname' => $image->lastname,

@@ -17,14 +17,14 @@ class PhotoGrid extends Component
     public $page = 1;
     
     public $images = [];
-    public $selectedImages = [];
+    // public $selectedImages = [];
     public $search = '';
     public $filters = [];
 
     protected $listeners = [
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
-        PhotographyHelper::EV_SELECT_IMAGE => 'updateSelectedList',
+        // PhotographyHelper::EV_SELECT_IMAGE => 'updateSelectedList',
         PhotographyHelper::EV_CLEAR_SELECTED_IMAGES => 'clearSelectedImages',
         PhotographyHelper::EV_CHANGE_TAB => 'clearSelectedImages',
     ];
@@ -39,23 +39,31 @@ class PhotoGrid extends Component
         // $this->getImages();
     }
 
-    public function updateSelectedList($imageKey)
+    public function rendered($view, $html)
     {
-        if (in_array($imageKey, $this->selectedImages)) {
-            $this->selectedImages = array_filter($this->selectedImages, fn ($value) => $value != $imageKey);
-        } else {
-            $this->selectedImages[] = $imageKey;
-        }
+        $this->dispatch('photo-grid-updated', ['category' => $this->category]);
     }
+
+    // public function updateSelectedList($imageKey)
+    // {
+    //     if (in_array($imageKey, $this->selectedImages)) {
+    //         $this->selectedImages = array_filter($this->selectedImages, fn ($value) => $value != $imageKey);
+    //     } else {
+    //         $this->selectedImages[] = $imageKey;
+    //     }
+    // }
 
     public function clearSelectedImages()
     {
-        $this->selectedImages = [];
+        // $this->selectedImages = [];
         $this->resetPage();
     }
 
-    public function performSearch($term)
+    public function performSearch($term, $category)
     {
+        if ($category != $this->category) {
+            return;
+        }
         $this->search = $term;
         // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
         $this->clearSelectedImages();
@@ -93,7 +101,7 @@ class PhotoGrid extends Component
             foreach ($options as $option) {
                 $viewOptions[$option->external_name] = $option->external_name;
             }
-            $this->dispatch(PhotographyHelper::EV_UPDATE_FILTER_DATA, 'view', $viewOptions);
+            $this->dispatch(PhotographyHelper::EV_UPDATE_FILTER_DATA, $this->category, 'view', $viewOptions);
         }
         
         // If view changed, update classes options
@@ -113,15 +121,18 @@ class PhotoGrid extends Component
                 $allClasses[] = $option->ts_folderkey;
             }
             $this->filters['allClasses'] = $allClasses;
-            $this->dispatch(PhotographyHelper::EV_UPDATE_FILTER_DATA, 'class', $classOptions);
+            $this->dispatch(PhotographyHelper::EV_UPDATE_FILTER_DATA, $this->category, 'class', $classOptions);
         }
 
         $this->filters['view'] = $resetViewAndClass ? 'ALL' : $view;
         $this->filters['class'] = $resetClass || $resetViewAndClass ? [] : $class;
     }
 
-    public function updateFilters($year, $view, $class)
+    public function updateFilters($year, $view, $class, $category)
     {
+        if ($category != $this->category) {
+            return;
+        }
         $this->setupFilters($year, $view, $class);
         // $this->getImages();
         // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
