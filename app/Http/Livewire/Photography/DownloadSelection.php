@@ -3,6 +3,8 @@
 namespace App\Http\Livewire\Photography;
 
 use App\Helpers\PhotographyHelper;
+use App\Models\DownloadDetail;
+use App\Models\DownloadRequested;
 use Livewire\Component;
 
 class DownloadSelection extends Component
@@ -34,6 +36,32 @@ class DownloadSelection extends Component
     {
         // Attach download logic here
         dd("Feature coming soon.");
+    }
+
+    /**
+     * Request download details
+     * This method will create a new download request and store the details
+     * 
+     * @param array $details
+     * @return DownloadRequested
+     */
+    public function requestDownloadDetails(array $details)
+    {
+        $downloadRequest = DownloadRequested::create([
+            'requested_by' => auth()->id(),
+            'requested_date' => now(),
+        ]);
+
+        foreach ($details as $detail) {
+            DownloadDetail::create([
+                'download_id' => $downloadRequest->id,
+                'ts_jobkey' => $detail['ts_jobkey'],
+                'keyorigin' => $detail['keyorigin'],
+                'keyvalue' => $detail['keyvalue'],
+            ]);
+        }
+
+        return $downloadRequest;
     }
     
     public function render()

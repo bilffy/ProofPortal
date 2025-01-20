@@ -54,6 +54,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(UiSetting::class, 'user_id');
     }
+
+    public function downloadRequested()
+    {
+        return $this->belongsToMany(DownloadRequested::class, 'download_requested');
+    }
     
     /**
      * The attributes that are mass assignable.
