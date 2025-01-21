@@ -9,11 +9,7 @@
             <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Portraits</x-tabs.tab>
             <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Groups</x-tabs.tab>
             <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Others</x-tabs.tab>
-            {{--@livewire('photography.download-selection', ['id' => 'downloads'])--}}
             <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
-                {{--@if (count($selectedImages) > 0)
-                    <x-button.primary hollow class="border-none" @click="$dispatch('{{$PhotographyHelper::EV_CLEAR_SELECTED_IMAGES}}')">Clear Selection</x-button.primary>
-                @endif--}}
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
                 <x-button.primary id="btn-download">Download All</x-button.primary>
             </div>
@@ -30,7 +26,7 @@
             <x-tabs.tabContent id="groups">
                 @include('partials.photography.groups')
             </x-tabs.tabContent>
-            <x-tabs.tabContent id="others" isActive="{{true}}">
+            <x-tabs.tabContent id="others">
                 @include('partials.photography.others')
             </x-tabs.tabContent>
         </x-tabs.tabContentContainer>
