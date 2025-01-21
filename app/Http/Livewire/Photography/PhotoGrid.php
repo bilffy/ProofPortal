@@ -6,27 +6,24 @@ use App\Helpers\PhotographyHelper;
 use App\Services\ImageService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
+use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 
 class PhotoGrid extends Component
 {
-    use WithPagination;
+    use WithPagination, WithoutUrlPagination;
     public $category;
     public $season;
     public $schoolKey;
     public $page = 1;
     
     public $images = [];
-    // public $selectedImages = [];
     public $search = '';
     public $filters = [];
 
     protected $listeners = [
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
-        // PhotographyHelper::EV_SELECT_IMAGE => 'updateSelectedList',
-        PhotographyHelper::EV_CLEAR_SELECTED_IMAGES => 'clearSelectedImages',
-        PhotographyHelper::EV_CHANGE_TAB => 'clearSelectedImages',
     ];
 
     public function mount($category = 'portaits', $season = 1, $schoolKey = '')
@@ -36,27 +33,11 @@ class PhotoGrid extends Component
         $this->schoolKey = $schoolKey;
 
         $this->setupFilters($season);
-        // $this->getImages();
     }
 
     public function rendered($view, $html)
     {
         $this->dispatch('photo-grid-updated', ['category' => $this->category]);
-    }
-
-    // public function updateSelectedList($imageKey)
-    // {
-    //     if (in_array($imageKey, $this->selectedImages)) {
-    //         $this->selectedImages = array_filter($this->selectedImages, fn ($value) => $value != $imageKey);
-    //     } else {
-    //         $this->selectedImages[] = $imageKey;
-    //     }
-    // }
-
-    public function clearSelectedImages()
-    {
-        // $this->selectedImages = [];
-        $this->resetPage();
     }
 
     public function performSearch($term, $category)
@@ -65,9 +46,7 @@ class PhotoGrid extends Component
             return;
         }
         $this->search = $term;
-        // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
-        $this->clearSelectedImages();
-        // $this->getImages();
+        $this->resetPage();
     }
 
     /**
@@ -134,9 +113,8 @@ class PhotoGrid extends Component
             return;
         }
         $this->setupFilters($year, $view, $class);
-        // $this->getImages();
-        // $this->dispatch(PhotographyHelper::EV_CLEAR_SELECTED_IMAGES);
-        $this->clearSelectedImages();
+        $this->resetPage();
+        
     }
 
     private function getImages()
