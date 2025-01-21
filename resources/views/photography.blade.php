@@ -56,7 +56,7 @@
 
         if (selectedCount > 0) {
             clearDownloadBtn.classList.remove('hidden');
-            downloadBtn.innerHTML = 'Download Selected';
+            downloadBtn.innerHTML = `Download Selected (${selectedCount})`;
         } else {
             clearDownloadBtn.classList.add('hidden');
             downloadBtn.innerHTML = 'Download All';
