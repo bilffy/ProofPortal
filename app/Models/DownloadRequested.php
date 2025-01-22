@@ -18,6 +18,8 @@ class DownloadRequested extends Model
      */
     protected $fillable = [
         'user_id',
+        'download_type_id',
+        'download_category_id',
         'requested_date',
         'completed_date',
     ];
@@ -25,5 +27,13 @@ class DownloadRequested extends Model
     public function downloadDetails()
     {
         return $this->belongsToMany(DownloadDetail::class, 'download_details');
+    }
+
+    public function downloadType(){
+        return $this->belongsTo(DownloadType::class, 'download_type_id');
+    }
+
+    public function downloadCategory(){
+        return $this->belongsTo(DownloadCategory::class, 'download_category_id');
     }
 }
