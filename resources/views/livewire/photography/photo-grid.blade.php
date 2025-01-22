@@ -9,7 +9,6 @@
                     id="{{$image['id']}}"
                     img="{{$image['base64']}}"
                     name="{{$image['firstname']}} {{$image['lastname']}} - {{$image['classGroup']}}"
-                    filename="{{$image['filename']}}"
                     landscape="{{array_key_exists('isPortrait', $image) && !$image['isPortrait']}}"
                 />
             @endforeach

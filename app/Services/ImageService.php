@@ -157,7 +157,6 @@ class ImageService
                 'lastname' => $image->lastname,
                 'isPortrait' => $isFound ? $dimensions[0] < $dimensions[1] : true,
                 'classGroup' => $image->ts_foldername,
-                'filename' => $image->ts_subjectkey.".jpg", // For testing only, remove once image issue is resolved
             ];
         };
 
