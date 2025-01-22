@@ -18,11 +18,15 @@
                 <x-icon icon="check text-primary group-hover:text-white hidden"/>
             </div>
         </div>
-        <img 
-            src="data:image/jpeg;base64,{{$img}}"
-            alt=""
-            class="w-full max-w-none h-max"
-        />
+        @if ('' == $img)
+            <x-spinner.image />
+        @else
+            <img 
+                src="data:image/jpeg;base64,{{$img}}"
+                alt=""
+                class="w-full max-w-none h-max"
+            />
+        @endif
     </div>
     <div class="flex justify-between py-2 text-sm">
         <span class="truncate">{{html_entity_decode($name, ENT_QUOTES)}}</span>
