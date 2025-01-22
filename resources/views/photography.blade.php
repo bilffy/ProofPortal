@@ -113,8 +113,14 @@
         });
     });
 
-    window.addEventListener('photo-grid-updated', event => {
-        setTimeout(updateDownloadSelection, 100);
+    window.addEventListener('image-frame-updated', event => {
+        setTimeout(() => {
+            const images = JSON.parse(localStorage.getItem('selectedImages'));
+            const imageId = `img_${event.detail[0]['imageId']}`;
+            const img = document.querySelector(`#${imageId}`);
+            let checkbox = img.querySelector('.portrait-img-checkbox');
+            updateImageState(checkbox, images.includes(imageId));
+        }, 50);
     });
 </script>
 @endpush

@@ -35,10 +35,10 @@ class PhotoGrid extends Component
         $this->setupFilters($season);
     }
 
-    public function rendered($view, $html)
-    {
-        $this->dispatch('photo-grid-updated', ['category' => $this->category]);
-    }
+    // public function rendered($view, $html)
+    // {
+    //     $this->dispatch('photo-grid-updated', ['category' => $this->category]);
+    // }
 
     public function performSearch($term, $category)
     {

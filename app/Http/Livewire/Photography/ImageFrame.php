@@ -23,6 +23,11 @@ class ImageFrame extends Component
         return view('livewire.photography.image-frame', ['image' => '']);
     }
 
+    public function rendered($view, $html)
+    {
+        $this->dispatch('image-frame-updated', ['imageId' => $this->imageId]);
+    }
+
     public function render()
     {
         $imageService = new ImageService();
