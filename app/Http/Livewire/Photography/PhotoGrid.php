@@ -21,6 +21,8 @@ class PhotoGrid extends Component
     public $search = '';
     public $filters = [];
 
+    public $viewOptions = ['ALL' => 'All'];
+
     protected $listeners = [
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
@@ -60,7 +62,6 @@ class PhotoGrid extends Component
     {
         $initialState = empty($this->filters);
         $this->season = $year;
-        $viewOptions['ALL'] = 'All';
         $classOptions = [];
         $imageService = new ImageService();
         $resetViewAndClass = $resetClass = false;
@@ -71,24 +72,27 @@ class PhotoGrid extends Component
             $options = $imageService->getFolderForView(
                 $year, 
                 $this->schoolKey,
-                '!=',
+                $this->getOperator(),
                 'SP'
             )->values()->toArray();
 
             // reset view and class when year value changes
             $resetViewAndClass = true;
+            $viewOptions['ALL'] = 'All';
             foreach ($options as $option) {
                 $viewOptions[$option->external_name] = $option->external_name;
             }
+            $this->viewOptions = $viewOptions;
             $this->dispatch(PhotographyHelper::EV_UPDATE_FILTER_DATA, $this->category, 'view', $viewOptions);
         }
         
         // If view changed, update classes options
         if ($initialState || $resetViewAndClass || $view != $this->filters['view']) {
+            $views = 'ALL' == $view ? array_keys($this->viewOptions) : [$view];
             $options = $imageService->getFoldersByTag(
                 $year, 
                 $this->schoolKey,
-                $view,
+                $views,
                 $this->getVisibility()
             )->toArray();
 
@@ -152,6 +156,18 @@ class PhotoGrid extends Component
                 return 'is_visible_for_group';
             case PhotographyHelper::TAB_OTHERS:
                 return 'is_visible_for_portrait';
+        }
+    }
+
+    private function getOperator()
+    {
+        switch($this->category) {
+            case PhotographyHelper::TAB_PORTRAITS:
+                return '!=';
+            case PhotographyHelper::TAB_GROUPS:
+                return '=';
+            case PhotographyHelper::TAB_OTHERS:
+                return '!=';
         }
     }
 
