@@ -96,7 +96,7 @@ class ImageService
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-        ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
+        // ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
 
@@ -109,7 +109,7 @@ class ImageService
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
-        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*', 'folders.ts_foldername');
+        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername');
     }
 
     /**
