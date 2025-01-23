@@ -12,6 +12,7 @@ use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
+use App\Http\Livewire\Photography\DownloadSelection;
 use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\ImpersonateController;
 
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/photography/portraits', [PhotographyController::class, 'showPortraits'])->name('photography.portraits');
         Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
         Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
+        Route::post('/photography/request-download', [PhotographyController::class, 'requestDownloadDetails'])->name('photography.request-download');
     });
     // Proofing
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;

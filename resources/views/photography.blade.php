@@ -11,7 +11,7 @@
             <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Others</x-tabs.tab>
             <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
-                <x-button.primary id="btn-download">Download All</x-button.primary>
+                <x-button.primary id="btn-download" onclick="submitDownloadRequest()">Download All</x-button.primary>
             </div>
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
@@ -93,6 +93,9 @@
 
         updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected);
         updateDownloadSection(selectedItems.length);
+
+        console.log('Selected Images:', selectedItems);
+        
     }
     
     window.resetImages = resetImages;
@@ -122,5 +125,44 @@
             updateImageState(checkbox, images.includes(imageId));
         }, 50);
     });
+
+    async function submitDownloadRequest() {
+        const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
+        if (selectedImages.length === 0) {
+            alert('Please select images to download');
+            return;
+        }
+
+        try {
+            const response = await fetch('{{ route('photography.request-download') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(
+                    { 
+                        images: selectedImages,
+                        category: selectedImages.length > 1 ? 'Bulk' : 'Individual'
+                    }
+                )
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+            console.log('Download request successful:', result);
+            // reload the page and show a success message
+            alert('Download request submitted successfully');
+            window.location.reload();
+        } catch (error) {
+            console.error('Error submitting download request:', error);
+        }
+    }
+
+    window.submitDownloadRequest = submitDownloadRequest;
+    
 </script>
 @endpush
