@@ -1,5 +1,6 @@
 @php
     use App\Helpers\SchoolContextHelper;
+    use App\Helpers\PhotographyHelper;
     use App\Services\ImageService;
 
     $imageService = new ImageService();
@@ -11,6 +12,10 @@
     foreach ($portraitYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
     }
+
+    $season = $defaultSeasonId;
+    $category = PhotographyHelper::TAB_PORTRAITS;
+    $key = "photo-grid-portraits-$schoolKey";
 @endphp
 <div class="relative">
     <div class="flex flex-row gap-4">
@@ -32,12 +37,12 @@
             <x-form.select context="portaits_view" :options="[]" class="mb-4">View</x-form.select>
             <x-form.select context="portaits_class" :options="[]" class="mb-4" multiple>Classes</x-form.select>
         </div>
-
-        @livewire('photography.photo-grid', [
+        <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+        {{-- @livewire('photography.photo-grid', [
             'category' => $PhotographyHelper::TAB_PORTRAITS,
             'season' => $defaultSeasonId,
             'schoolKey' => $schoolKey,
-        ], key('photo-grid-portraits-' . $schoolKey))
+        ], key('photo-grid-portraits-' . $schoolKey)) --}}
     </div>
 </div>
 
@@ -55,6 +60,7 @@
         const selectedView = $('#select_portaits_view').val();
         const selectedClass = $('#select_portaits_class').val();
         
+        resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
     };
     function updateSelect2Options(selector, options) {

@@ -6,7 +6,6 @@
     'event' => null,
     'payload' => null,
     'img' => null,
-    'filename' => 'NOT_FOUND' // For testing only, remove this line once the image issue is fixed 
 ])
 
 <div id="img_{{$id}}" class="portrait-img rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center {{ $landscape ? 'col-span-2 ':'' }}">
@@ -19,14 +18,15 @@
                 <x-icon icon="check text-primary group-hover:text-white hidden"/>
             </div>
         </div>
-        <img 
-            src="data:image/jpeg;base64,{{$img}}"
-            alt=""
-            class="w-full max-w-none h-max"
-        />
-    </div>
-    <div class="flex justify-between py-2 text-l absolute w-full">
-        <span class="truncate">{{$filename}}</span>
+        @if ('' == $img)
+            <x-spinner.image />
+        @else
+            <img 
+                src="data:image/jpeg;base64,{{$img}}"
+                alt=""
+                class="w-full max-w-none h-max"
+            />
+        @endif
     </div>
     <div class="flex justify-between py-2 text-sm">
         <span class="truncate">{{html_entity_decode($name, ENT_QUOTES)}}</span>

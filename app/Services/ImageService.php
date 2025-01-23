@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Folder;
-use App\Models\Image;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -101,7 +99,7 @@ class ImageService
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
         ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
-        ->where('jobs.ts_season_id', operator: $seasonId)
+        ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
 
         if($searchTerm) {
@@ -145,23 +143,37 @@ class ImageService
     public function getImagesAsBase64($images): Collection
     {
         $toData = function ($image) {
-            $path = $this->getPath($image->ts_subjectkey.".jpg");
-            $isFound = Storage::disk('local')->exists($path);
-            $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
+            // $path = $this->getPath($image->ts_subjectkey.".jpg");
+            // $isFound = Storage::disk('local')->exists($path);
+            // $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
+            $fileContent = $this->getImageContent($image->ts_subjectkey);
             $dimensions = getimagesizefromstring($fileContent);
                 
             return [
                 'id' => base64_encode(base64_encode($image->ts_subjectkey)),
-                'base64' => base64_encode($fileContent),
+                // 'base64' => base64_encode($fileContent),
                 'firstname' => $image->firstname,
                 'lastname' => $image->lastname,
-                'isPortrait' => $isFound ? $dimensions[0] < $dimensions[1] : true,
+                'isPortrait' => $dimensions[0] <= $dimensions[1],
                 'classGroup' => $image->ts_foldername,
-                'filename' => $image->ts_subjectkey.".jpg", // For testing only, remove once image issue is resolved
             ];
         };
 
         return $images->map($toData);
+    }
+
+    /**
+     * Get File Content based on $key value
+     * @param string $key
+     * @return string|null
+     */
+    public function getImageContent($key)
+    {
+        $path = $this->getPath($key.".jpg");
+        $isFound = Storage::disk('local')->exists($path);
+        $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
+
+        return $fileContent;
     }
 
     /**
