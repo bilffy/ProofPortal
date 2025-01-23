@@ -90,7 +90,7 @@ class PhotographyController extends Controller
                 'classes' => $this->imageService->getFoldersByTag(
                     $tsSeasonId,
                     $tsSchollKey,
-                    $selectedTag,
+                    [$selectedTag],
                     'is_visible_for_portrait'
                 ),
             ]
@@ -117,7 +117,7 @@ class PhotographyController extends Controller
                 'classes' => $this->imageService->getFoldersByTag(
                     $tsSeasonId,
                     $tsSchollKey,
-                    $selectedTag,
+                    [$selectedTag],
                     'is_visible_for_group'
                 ),
             ]

@@ -50,13 +50,13 @@ class ImageService
      *
      * @param int $seasonId
      * @param string|null $schoolKey
-     * @param string $selectedTag
+     * @param array $selectedTags
      * @return \Illuminate\Support\Collection
      */
-    public function getFoldersByTag(int $seasonId, string|null $schoolKey, string $selectedTag, string $visibilityColumn)
+    public function getFoldersByTag(int $seasonId, string|null $schoolKey, array $selectedTags, string $visibilityColumn)
     {
         $folderTags = DB::table('folder_tags')
-            ->where('external_name', $selectedTag)
+            ->whereIn('external_name', $selectedTags)
             ->select('tag')
             ->get()
             ->pluck('tag')
@@ -72,14 +72,12 @@ class ImageService
                 $query->where('jobs.ts_schoolkey', $schoolKey);
             }
             
-            if ('ALL' !== $selectedTag) {
-                $query->where(function ($query) use ($folderTags, $selectedTag) {
-                    $query->whereIn('folders.folder_tag', $folderTags);
-                    if ("Student" === $selectedTag) {
-                        $query->orWhereNull('folders.folder_tag');
-                    }
-                });
-            }
+            $query->where(function ($query) use ($folderTags, $selectedTags) {
+                $query->whereIn('folders.folder_tag', $folderTags);
+                if (in_array("Student", $selectedTags)) {
+                    $query->orWhereNull('folders.folder_tag');
+                }
+            });
 
         return $query->select('folders.ts_foldername', 'folders.ts_folderkey')->get();
     }
@@ -98,7 +96,7 @@ class ImageService
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-        ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
+        // ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
 
@@ -109,11 +107,9 @@ class ImageService
                     ->orWhere('folders.ts_foldername', 'like', "%$searchTerm%");
             });
         }
-
-        if (!empty($folderKeys)) {
-            $query->whereIn('folders.ts_folderkey', $folderKeys);
-        }
-        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'images.*', 'folders.ts_foldername');
+        $query->whereIn('folders.ts_folderkey', $folderKeys);
+        
+        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername');
     }
 
     /**
@@ -143,15 +139,11 @@ class ImageService
     public function getImagesAsBase64($images): Collection
     {
         $toData = function ($image) {
-            // $path = $this->getPath($image->ts_subjectkey.".jpg");
-            // $isFound = Storage::disk('local')->exists($path);
-            // $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
             $fileContent = $this->getImageContent($image->ts_subjectkey);
             $dimensions = getimagesizefromstring($fileContent);
                 
             return [
                 'id' => base64_encode(base64_encode($image->ts_subjectkey)),
-                // 'base64' => base64_encode($fileContent),
                 'firstname' => $image->firstname,
                 'lastname' => $image->lastname,
                 'isPortrait' => $dimensions[0] <= $dimensions[1],
