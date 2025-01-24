@@ -11,7 +11,12 @@
             <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Others</x-tabs.tab>
             <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
-                <x-button.primary id="btn-download" onclick="submitDownloadRequest()">Download All</x-button.primary>
+                <x-button.primary 
+                        data-modal-target="confirmDownloadModal" 
+                        data-modal-toggle="confirmDownloadModal" 
+                        id="btn-download" 
+                        >Download All
+                </x-button.primary>
             </div>
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
@@ -30,11 +35,39 @@
                 @include('partials.photography.others')
             </x-tabs.tabContent>
         </x-tabs.tabContentContainer>
+
+        
+        <x-modal.base id="confirmDownloadModal" title="Download Request" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="confirm-download-body"></p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary data-modal-hide="confirmDownloadModal">Cancel</x-button.secondary>
+                    <x-button.primary onclick="submitDownloadRequest()"  id="confirm-download-btn">Download</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <x-modal.base id="successDownloadModal" title="Download Request" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="success-download-body">Download request successful</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.primary data-modal-hide="successDownloadModal">Ok</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
     </div>
 @endsection
 
 @push('scripts')
 <script type="module">
+    
     function updateImageState(imgCheckbox, isSelected) {
         let checkIcon = imgCheckbox.querySelector('i');
         if (isSelected) {
@@ -116,6 +149,16 @@
         });
     });
 
+    function initialScripts() {
+        $('[data-modal-toggle="confirmDownloadModal"]').on('click', function () {
+            const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
+            const selectedImagesLength = selectedImages.length === 0 ? "all" : selectedImages.length;
+            $('#confirm-download-body').html("Are you sure you want to download <b>" + selectedImagesLength + "</b> images?");
+        });
+    }
+
+    window.addEventListener("load", initialScripts, false);
+    
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
             const images = JSON.parse(localStorage.getItem('selectedImages'));
@@ -126,14 +169,13 @@
         }, 50);
     });
 
+    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
+    
     async function submitDownloadRequest() {
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-        if (selectedImages.length === 0) {
-            alert('Please select images to download');
-            return;
-        }
-
         try {
+            const downloadBtn = document.querySelector('#confirm-download-btn');
+            $(downloadBtn).html(`<x-spinner.button />`);
             const response = await fetch('{{ route('photography.request-download') }}', {
                 method: 'POST',
                 headers: {
@@ -154,9 +196,10 @@
 
             const result = await response.json();
             console.log('Download request successful:', result);
-            // reload the page and show a success message
-            alert('Download request submitted successfully');
-            window.location.reload();
+            $(downloadBtn).html("Download");
+            resetImages();
+            document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
+            successDownloadModal.show();
         } catch (error) {
             console.error('Error submitting download request:', error);
         }
