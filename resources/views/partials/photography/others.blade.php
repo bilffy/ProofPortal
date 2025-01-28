@@ -39,11 +39,6 @@
             <x-form.select context="others_class" :options="[]" class="mb-4" multiple>Classes</x-form.select>
         </div>
         <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
-        {{--@livewire('photography.photo-grid', [
-            'category' => $PhotographyHelper::TAB_OTHERS,
-            'season' => $defaultSeasonId,
-            'schoolKey' => $schoolKey,
-        ], key('photo-grid-others-' . $schoolKey))--}}
     </div>
 </div>
 

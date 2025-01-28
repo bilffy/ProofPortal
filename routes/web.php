@@ -12,7 +12,6 @@ use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
-use App\Http\Livewire\Photography\DownloadSelection;
 use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\ImpersonateController;
 

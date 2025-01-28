@@ -5,12 +5,6 @@
     <div wire:loading.remove>
         <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto">
             @foreach ($paginatedImages as $image)
-                {{-- <x-photography.portrait
-                    id="{{$image['id']}}"
-                    img="{{$image['base64']}}"
-                    name="{{$image['firstname']}} {{$image['lastname']}} - {{$image['classGroup']}}"
-                    landscape="{{array_key_exists('isPortrait', $image) && !$image['isPortrait']}}"
-                /> --}}
                 @php
                     $imageId = $image['id'];
                     $name = $image['firstname'] . ' ' . $image['lastname'] . ' - ' . $image['classGroup'];
