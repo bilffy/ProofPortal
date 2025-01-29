@@ -3,7 +3,7 @@
         <x-spinner.icon :size="10"/>
     </div>
     <div wire:loading.remove>
-        <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto">
+        <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $paginatedImages->total() }}">
             @foreach ($paginatedImages as $image)
                 {{-- <x-photography.portrait
                     id="{{$image['id']}}"
