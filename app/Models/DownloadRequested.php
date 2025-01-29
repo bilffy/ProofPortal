@@ -20,6 +20,7 @@ class DownloadRequested extends Model
         'user_id',
         'download_type_id',
         'download_category_id',
+        'filters',
         'requested_date',
         'completed_date',
     ];

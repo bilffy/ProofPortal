@@ -159,7 +159,7 @@ class PhotographyController extends Controller
     }
 
     public function requestDownloadDetails(Request $request)
-    {
+    {   
         $images = $request->input('images');
         $category = $request->input('category');
         $downloadCategory = DownloadCategory::where('category_name', $category)->first();
@@ -170,6 +170,7 @@ class PhotographyController extends Controller
             'requested_date' => now(),
             'download_category_id' => $downloadCategory->id,
             'download_type_id' => $downloadType->id,
+            'filters' => json_encode($request->input('filters')),
         ]);
 
         foreach ($images as $image) {

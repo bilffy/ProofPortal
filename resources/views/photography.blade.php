@@ -12,9 +12,8 @@
             <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
                 <x-button.primary 
-                        data-modal-target="confirmDownloadModal" 
-                        data-modal-toggle="confirmDownloadModal" 
                         id="btn-download" 
+                        onclick="confirmDownloadRequest()"
                         >Download All
                 </x-button.primary>
             </div>
@@ -149,15 +148,19 @@
         });
     });
 
-    function initialScripts() {
-        $('[data-modal-toggle="confirmDownloadModal"]').on('click', function () {
-            const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-            const selectedImagesLength = selectedImages.length === 0 ? "all" : selectedImages.length;
+    function confirmDownloadRequest() {
+        const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
+        if ($(".grid").attr('total-image-count') != 0) {
+            confirmDownloadModal.show();
+            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
             $('#confirm-download-body').html("Are you sure you want to download <b>" + selectedImagesLength + "</b> images?");
-        });
+        } else {
+            alert('No images found');
+        }
     }
-
-    window.addEventListener("load", initialScripts, false);
+    
+    const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
+    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
@@ -169,12 +172,18 @@
         }, 50);
     });
 
-    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
-    
     async function submitDownloadRequest() {
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
         try {
             const downloadBtn = document.querySelector('#confirm-download-btn');
+            const selectedYear = $('#select_portaits_year').val();
+            const selectedView = $('#select_portaits_view').val();
+            const selectedClass = $('#select_portaits_class').val();
+
+            console.log('Selected Year:', selectedYear);
+            console.log('Selected View:', selectedView);
+            console.log('Selected Class:', JSON.stringify(selectedClass));
+            
             $(downloadBtn).html(`<x-spinner.button />`);
             const response = await fetch('{{ route('photography.request-download') }}', {
                 method: 'POST',
@@ -185,7 +194,12 @@
                 body: JSON.stringify(
                     { 
                         images: selectedImages,
-                        category: selectedImages.length > 1 ? 'Bulk' : 'Individual'
+                        category: selectedImages.length > 1 ? 'Bulk' : 'Individual',
+                        filters: {
+                            year: selectedYear,
+                            view: selectedView,
+                            class: JSON.stringify(selectedClass)
+                        }
                     }
                 )
             });
@@ -206,6 +220,6 @@
     }
 
     window.submitDownloadRequest = submitDownloadRequest;
-    
+    window.confirmDownloadRequest = confirmDownloadRequest;
 </script>
 @endpush
