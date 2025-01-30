@@ -62,7 +62,7 @@
             <x-slot name="footer">
                 <x-modal.footer>
                     <x-button.secondary data-modal-hide="showOptionsDownloadModal">Cancel</x-button.secondary>
-                    <x-button.primary onclick="showConfirmDownloadRequest()" id="confirm-download-btn">Download</x-button.primary>
+                    <x-button.primary onclick="showConfirmDownloadRequest()" id="show-confirm-download-btn">Download</x-button.primary>
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
