@@ -4,17 +4,18 @@
     <div x-data id="photography-root" class="container3 p-4">
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Configure</x-tabs.tab>
+                <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
             @endrole
-            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Portraits</x-tabs.tab>
-            <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Groups</x-tabs.tab>
-            <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}" click="$dispatch('{{$PhotographyHelper::EV_CHANGE_TAB}}')">Others</x-tabs.tab>
-            <div class="absolute right-2 h-full flex align-middle justify-center items-center gap-4">
+            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
+            <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
+            <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
+            <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
                 <x-button.primary 
-                        id="btn-download" 
+                        id="btn-download"
                         onclick="showOptionsDownloadRequest()"
-                        >Download All
+                >
+                    Download All
                 </x-button.primary>
             </div>
         </x-tabs.tabContainer>
@@ -171,6 +172,13 @@
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
+                // Hide download section when in configuration tab
+                const downloadSection = document.querySelector('#download-section');
+                if ('configure-tab' == e.target.id) {
+                    downloadSection.classList.add('hidden');
+                } else {
+                    downloadSection.classList.remove('hidden');
+                }
                 // reset images selected
                 resetImages();
                 const url = tab.getAttribute('href');

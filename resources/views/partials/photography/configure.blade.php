@@ -23,10 +23,18 @@
 <div>
 @php
     use Carbon\Carbon;
-@endphp
+    use App\Helpers\SchoolContextHelper;
+    use App\Services\SchoolService;
+    use App\Services\JobService;
+    use App\Services\SeasonService;
+    use App\Services\StatusService;
+    use Illuminate\Support\Facades\Crypt;
 
-@php
     $defaultDate = Carbon::now();
+    $schoolService = new SchoolService();
+    $statusService = new StatusService();
+    $jobService = new JobService($statusService);
+    $seasonService = new SeasonService();
     
     $selectOptionsEmailTo = [
         'photocoordinator' => 'Photo Coordinator',
@@ -34,9 +42,22 @@
         'teacher' => 'Teacher',
     ];
 
+    $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()->schoolkey;
+    $selectedSchool = $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->first();
+    $filePath = '';
+    if ($selectedSchool && $selectedSchool->school_logo) {
+        $filePath = 'school_logos/' . $selectedSchool->school_logo;
+    }
+    $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
+    $encryptedPath = $selectedSchool->school_logo ? Crypt::encryptString($filePath) : '';
+    $seasons = $seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
+    $defaultSeasonCode = $seasons->where('is_default', 1)->select('code', 'ts_season_id')->first();
+    $syncJobsbySchoolkey =  $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
+    $selectedFolders = [];
+
     $notificationsMatrix = $selectedSchool->digital_download_permission_notification;
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
-    $imageUrl = route('school.logo', ['encryptedPath' => $encryptedPath]);
+    $imageUrl = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
 @endphp
     <div class="row">
         <div class="col-lg-12">

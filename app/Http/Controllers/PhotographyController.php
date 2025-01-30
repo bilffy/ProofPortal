@@ -47,7 +47,7 @@ class PhotographyController extends Controller
         }
     }
 
-    public function configure()
+    public function showConfiguration()
     {
         return view('photography', ['user' => new UserResource(Auth::user()), 'currentTab' => 'configure']);
     }

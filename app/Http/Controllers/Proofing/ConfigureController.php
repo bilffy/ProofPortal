@@ -56,7 +56,7 @@ class ConfigureController extends Controller
         $syncJobsbySchoolkey =  $this->jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
         $selectedFolders = [];
 
-        return view('photography', [
+        return view('proofing.franchise.school.configure-school', [
             'selectedSchool' => $selectedSchool, 
             'encryptedPath' => $encryptedPath, 
             'hash' => $hash, 
@@ -65,7 +65,6 @@ class ConfigureController extends Controller
             'defaultSeasonCode' => $defaultSeasonCode, 
             'selectedFolders' => $selectedFolders,
             'user' => new UserResource(Auth::user()),
-            'currentTab' => 'configure'
         ]);
     }
 

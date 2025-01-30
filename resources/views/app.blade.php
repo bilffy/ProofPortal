@@ -7,34 +7,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', config('app.name', 'Laravel'))</title>
-    {{--
+    <!-- MSP LOGO -->
+    <link rel="shortcut icon" href="{{ asset('proofing-assets/img/msp_logo.svg') }}">
     <!-- Fonts -->
     <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <!-- Scripts -->
+    <!-- Scripts and Styles -->
     @livewireStyles
-    @vite(['resources/css/app.scss', 'resources/js/app.ts'])
+    @vite(entrypoints: ['resources/css/app.scss', 'resources/js/app.ts'])
     <script type="module" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <!-- <script src="//unpkg.com/alpinejs" defer></script> -->
-     --}}
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="shortcut icon" href="{{ asset('proofing-assets/img/msp_logo.svg') }}">
-    @vite(['resources/css/app.scss', 'resources/js/app.ts'])
-    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <!-- Icons -->
-    {{-- <link href="{{ asset('proofing-assets/vendors/css/font-awesome.min.css') }}" rel="stylesheet"> --}}
-    <link href="{{ asset('proofing-assets/css/montserrat_font_css.css') }}" rel="stylesheet">
-    <link href="{{ asset('proofing-assets/vendors/css/simple-line-icons.min.css') }}" rel="stylesheet">
-    <!-- <link href="{{ asset('proofing-assets/css/style.css') }}" rel="stylesheet"> -->
-    <link href="{{ asset('proofing-assets/custom/custom.css') }}" rel="stylesheet">
-    <link href="{{ asset('proofing-assets/custom/table-columns.css') }}" rel="stylesheet"> 
-
-    <!-- <title>@yield('title')</title> -->
-    
     @yield('css')
     <script>
         var base_url = "{{URL::to('/')}}";
@@ -49,16 +31,14 @@
     @yield('main')
     @livewireScripts
 
-    <!-- Bootstrap and necessary plugins -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Proofing Assets: Bootstrap and necessary plugins -->
     <script src="{{ asset('proofing-assets/vendors/js/jquery.min.js') }}"></script>
-    {{-- <script src="{{ asset('proofing-assets/vendors/js/popper.min.js') }}"></script> --}}
     <script src="{{ asset('proofing-assets/vendors/js/popper2.11.8.min.js') }}"></script>
-
     <script src="{{ asset('proofing-assets/vendors/js/jquery-ui.min.js') }}"></script>
     <script src="{{ asset('proofing-assets/vendors/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('proofing-assets/vendors/js/pace.min.js') }}"></script>
     <script src="{{ asset('proofing-assets/js/app.js') }}"></script>
+    <!-- END OF Proofing Assets: Bootstrap and necessary plugins -->
 
     <!-- CoreUI main scripts -->
     @yield('js')
