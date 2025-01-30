@@ -48,10 +48,10 @@
                             </select>
                         </div>
                     </div>
-                    <p>Image Format</p>
+                    <p>Select folder format</p>
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col gap-2">
-                            <select id="image_format" class="input">
+                            <select id="folder_format" class="input">
                                 <option value="all">All images in one folder</option>
                                 <option value="organize">Organise images in folders</option>
                             </select>
@@ -248,7 +248,7 @@
                             view: selectedView,
                             class: JSON.stringify(selectedClass),
                             resolution: $('#image_res').val(),
-                            format: $('#image_format').val()
+                            folder_format: $('#folder_format').val()
                         }
                     }
                 )
