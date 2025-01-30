@@ -81,7 +81,15 @@ class PhotographyController extends Controller
         $schoolKey = $school->schoolkey ?? '';
         $view = $selectedFilters['view'];
         $class = json_decode($selectedFilters['class']);
-
+        $images = $request->input('images');
+        
+        if (count($images) === 1) {
+            // Directly download the single image
+            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
+            $imageContent = base64_encode($this->imageService->getImageContent($key));
+            return response()->json(['success' => true, 'data' => $imageContent]);
+        }
+        
         // Extract the records from the folder_tags table and return an array of tag values
         // based on the selected year, school key, operator, and view
         $tags = $this->imageService->getFolderForView(
@@ -100,7 +108,6 @@ class PhotographyController extends Controller
         
         $selectedFilters['jobkey'] = [];
         $selectedFilters['class'] = [];
-        $images = $request->input('images');
         $selectedFilters['details'] = empty($images) ? false : true;
         
         foreach ($folders as $folder) {
