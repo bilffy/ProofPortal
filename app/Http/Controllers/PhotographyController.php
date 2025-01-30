@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\PhotographyHelper;
 use App\Helpers\SchoolContextHelper;
+use App\Helpers\UserStatusHelper;
 use App\Models\DownloadCategory;
 use App\Models\DownloadDetail;
 use App\Models\DownloadRequested;
 use App\Models\DownloadType;
 use App\Models\Image;
 use App\Models\Job;
+use App\Models\Season;
+use App\Models\Status;
+use App\Models\User;
 use App\Services\ImageService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
+use function PHPUnit\Framework\isEmpty;
 
 class PhotographyController extends Controller
 {
@@ -68,18 +74,62 @@ class PhotographyController extends Controller
     }
 
     public function requestDownloadDetails(Request $request)
-    {   
-        $images = $request->input('images');
+    {
         $category = $request->input('category');
+        $selectedFilters = $request->input('filters');
+        $school = SchoolContextHelper::getSchool();
+        $schoolKey = $school->schoolkey ?? '';
+        $view = $selectedFilters['view'];
+        $class = json_decode($selectedFilters['class']);
+
+        // Extract the records from the folder_tags table and return an array of tag values
+        // based on the selected year, school key, operator, and view
+        $tags = $this->imageService->getFolderForView(
+            $selectedFilters['year'],
+            $schoolKey,
+            $view == "ALL" ? '!=' : '=',
+            $view != 'ALL' ? $view : 'ALL'
+        )->pluck('external_name')->toArray();
+        
+        $folders = $this->imageService->getFoldersByTag(
+            $selectedFilters['year'],
+            $schoolKey,
+            $tags,
+            'is_visible_for_portrait' // TODO: get visibility based on selected tab
+        )->toArray();
+        
+        $selectedFilters['jobkey'] = [];
+        $selectedFilters['class'] = [];
+        $images = $request->input('images');
+        $selectedFilters['details'] = empty($images) ? false : true;
+        
+        foreach ($folders as $folder) {
+            $selectedFilters['class']['folderkey'][] = $folder->ts_folderkey;
+            // query the jobs table to get the jobkey based on the ts_job_id
+            $job = Job::where('ts_job_id', $folder->ts_job_id)->first();
+            
+            if ($job) {
+                // add the jobkey to the selectedFilters array if does not exist
+                if (!in_array($job->ts_jobkey, $selectedFilters['jobkey'])) {
+                    $selectedFilters['jobkey'][] = $job->ts_jobkey;
+                }
+            }
+        }
+        
         $downloadCategory = DownloadCategory::where('category_name', $category)->first();
         $downloadType = DownloadType::where('download_type', 'Portrait')->first();
+        
+        $season = Season::where('ts_season_id', $selectedFilters['year'])->first();
+        // get the season code as the year
+        $selectedFilters['year'] = $season->code;
         
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
             'requested_date' => now(),
             'download_category_id' => $downloadCategory->id,
             'download_type_id' => $downloadType->id,
-            'filters' => json_encode($request->input('filters')),
+            'filters' => json_encode($selectedFilters),
+            'status_id' => Status::where('status_internal_name', 'PENDING')->first()->id,
         ]);
 
         foreach ($images as $image) {

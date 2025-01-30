@@ -194,7 +194,7 @@
                 body: JSON.stringify(
                     { 
                         images: selectedImages,
-                        category: selectedImages.length > 1 ? 'Bulk' : 'Individual',
+                        category: selectedImages.length > 1 ? 'Individual' : 'Bulk',
                         filters: {
                             year: selectedYear,
                             view: selectedView,

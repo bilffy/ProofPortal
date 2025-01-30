@@ -79,7 +79,7 @@ class ImageService
                 }
             });
 
-        return $query->select('folders.ts_foldername', 'folders.ts_folderkey')->get();
+        return $query->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id')->get();
     }
 
     /**
