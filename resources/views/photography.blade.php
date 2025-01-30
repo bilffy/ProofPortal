@@ -259,7 +259,16 @@
             }
 
             const result = await response.json();
-            console.log('Download request successful:', result);
+            //console.log('Download request successful:', result);
+            
+            // only if selected image is one
+            if (selectedImages.length === 1) {
+                const imgElement = document.createElement('a');
+                imgElement.href = `data:image/jpeg;base64,${result['data']}`;
+                imgElement.download = `${Math.random().toString(36).substring(2, 15)}.jpg`;
+                imgElement.click();
+            }
+            
             $(downloadBtn).html("Download");
             resetImages();
             document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
