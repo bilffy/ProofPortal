@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
     $permissionCanAccessPhotos = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PHOTOGRAPHY;
     Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}", CheckUserRestriction::class]], function () {
         Route::get('/photography', [PhotographyController::class, 'index'])->name('photography');
-        Route::get('/photography/configure', [PhotographyController::class, 'configure'])->middleware(['role:Franchise'])->name('photography.configure');
+        Route::get('/photography/configure', [PhotographyController::class, 'showConfiguration'])->middleware(['role:Franchise'])->name('photography.configure');
         Route::get('/photography/portraits', [PhotographyController::class, 'showPortraits'])->name('photography.portraits');
         Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
         Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
     //Configure School - School Logo Delete
         Route::post('/config-school/delete-school-logo', [ConfigureController::class, 'deleteSchoolLogo'])->name('delete.school.logo');
     //Configure School - view
-        Route::get('/config-school', [ConfigureController::class, 'configSchool'])->name('config-school');
+        // Route::get('/config-school', [ConfigureController::class, 'configSchool'])->name('config-school');
 });
 
 
