@@ -156,6 +156,12 @@ class User extends Authenticatable
     
     public function getFranchise()
     {
+        // Redundancy: Added get Franchise from School process to avoid null from School level users
+        if ($this->isSchoolLevel()) {
+            /** @var School $school */
+            $school = $this->getSchool();
+            return $school->franchises()->first();
+        }
         return $this->franchises()->first();
     }
 

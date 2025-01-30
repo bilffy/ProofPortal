@@ -6,7 +6,7 @@
         <div class="flex flex-col w-full h-screen">
             <header class="w-full flex justify-between pl-4 pr-4 mr-2 py-2 min-h-[68px] ">
                 <div class="flex items-center">
-                    @php if ($SchoolContextHelper->isSchoolContext()) { @endphp
+                    @if (!$user->isSchoolLevel() && $SchoolContextHelper->isSchoolContext())
                         <span class="px-1">
                             <a href="{{ route('dashboard') }}" class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800">
                                 <x-icon class="mr-2" icon="arrow-left" />
@@ -47,44 +47,16 @@
                                                 </a>
                                             </label>
 
-                                            @php if ($SchoolContextHelper->getCurrentSchoolContext()->id == $school['id']) { @endphp
+                                            @if ($SchoolContextHelper->getCurrentSchoolContext()->id == $school['id'])
                                                 <i class="fas fa-check"></i>
-                                            @php } @endphp
+                                            @endif
                                         </div>
                                     </li>
                                 @endforeach
                             </ul>
                         </div>
-
-                    @php } @endphp
-                    {{--<x-form.dropdownPanel id="BreadcrumbSelectSchool">
-                        --}}{{--<li>
-                            insert Search field here
-                        </li>
-                        <li>
-                            <x-button.dropdownLink href="" class="hover:bg-primary hover:text-white">
-                                School
-                            </x-button.dropdownLink>
-                        </li>--}}{{--
-                        
-                        
-                        
-                    </x-form.dropdownPanel>--}}
+                    @endif
                 </div>
-                {{--<div class="flex flex-1 items-center justify-center">
-                    <div class="flex flex-row bg-[#F5F7FA] gap-4 p-1 border fancy-border rounded border-primary">
-                        <div class="flex flex-row items-center gap-2 text-primary text-sm">
-                            <img src="{{ Vite::asset('resources/assets/images/Info.svg') }}" alt="" width="20px" height="20px">
-                            You're impersonating <span class="font-semibold">[User]</span> with <span class="font-semibold">[privilege]</span> privilege
-                        </div>
-                        <div>
-                            <x-button.base class="bg-alert p-1">
-                                Exit
-                                <img src="{{ Vite::asset('resources/assets/images/close-round-alert.svg') }}" alt="" width="20px" height="20px">
-                            </x-button.base>
-                        </div>
-                    </div>
-                </div>--}}
 
                 @impersonating($guard = null)
                     <div class="flex flex-1 items-center justify-center">

@@ -96,7 +96,6 @@ class ImageService
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-        // ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
 
