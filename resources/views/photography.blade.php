@@ -13,7 +13,7 @@
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
                 <x-button.primary 
                         id="btn-download" 
-                        onclick="confirmDownloadRequest()"
+                        onclick="showOptionsDownloadRequest()"
                         >Download All
                 </x-button.primary>
             </div>
@@ -35,6 +35,37 @@
             </x-tabs.tabContent>
         </x-tabs.tabContentContainer>
 
+        <x-modal.base id="showOptionsDownloadModal" title="Download Options" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <div><b>Selections required</b></div>
+                    <p>Please select the resolution and folder structure for your images</p>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-2">
+                            <select id="image_res" class="input">
+                                <option value="low">Small/Low Res (72 DPI - suitable for viewing on screen)</option>
+                                <option value="high">High Res (300 DPI - suitable for printing)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p>Image Format</p>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-2">
+                            <select id="image_format" class="input">
+                                <option value="all">All images in one folder</option>
+                                <option value="organize">Organise images in folders</option>
+                            </select>
+                        </div>
+                    </div>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary data-modal-hide="showOptionsDownloadModal">Cancel</x-button.secondary>
+                    <x-button.primary onclick="showConfirmDownloadRequest()" id="confirm-download-btn">Download</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
         
         <x-modal.base id="confirmDownloadModal" title="Download Request" body="components.modal.body" footer="components.modal.footer">
             <x-slot name="body">
@@ -147,7 +178,20 @@
             });
         });
     });
-
+    
+    function showOptionsDownloadRequest() {
+        if ($(".grid").attr('total-image-count') != 0) {
+            showOptionsDownloadModal.show();
+        } else {
+            alert('No images found');
+        }
+    }
+    
+    function showConfirmDownloadRequest() {
+        showOptionsDownloadModal.hide()
+        confirmDownloadRequest();
+    }
+    
     function confirmDownloadRequest() {
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
         if ($(".grid").attr('total-image-count') != 0) {
@@ -161,6 +205,8 @@
     
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
+    const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
+    
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
@@ -171,7 +217,9 @@
             updateImageState(checkbox, images.includes(imageId));
         }, 50);
     });
-
+    
+    
+    
     async function submitDownloadRequest() {
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
         try {
@@ -198,7 +246,9 @@
                         filters: {
                             year: selectedYear,
                             view: selectedView,
-                            class: JSON.stringify(selectedClass)
+                            class: JSON.stringify(selectedClass),
+                            resolution: $('#image_res').val(),
+                            format: $('#image_format').val()
                         }
                     }
                 )
@@ -218,8 +268,11 @@
             console.error('Error submitting download request:', error);
         }
     }
-
+    
+    window.showOptionsDownloadRequest = showOptionsDownloadRequest;
+    window.showConfirmDownloadRequest = showConfirmDownloadRequest;
     window.submitDownloadRequest = submitDownloadRequest;
     window.confirmDownloadRequest = confirmDownloadRequest;
+    
 </script>
 @endpush
