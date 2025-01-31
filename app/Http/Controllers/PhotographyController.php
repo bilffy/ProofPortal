@@ -9,6 +9,7 @@ use App\Models\DownloadCategory;
 use App\Models\DownloadDetail;
 use App\Models\DownloadRequested;
 use App\Models\DownloadType;
+use App\Models\Folder;
 use App\Models\Image;
 use App\Models\Job;
 use App\Models\Season;
@@ -86,33 +87,36 @@ class PhotographyController extends Controller
         $view = $selectedFilters['view'];
         $class = json_decode($selectedFilters['class']);
         $images = $request->input('images');
-        
+        $selectedFilters['jobkey'] = [];
+        $selectedFilters['class'] = [];
+        $selectedFilters['details'] = empty($images) ? false : true;
+
+        // If there is only one image, return the image content
         if (count($images) === 1) {
-            // Directly download the single image
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
             $imageContent = base64_encode($this->imageService->getImageContent($key));
             return response()->json(['success' => true, 'data' => $imageContent]);
         }
         
-        // Extract the records from the folder_tags table and return an array of tag values
-        // based on the selected year, school key, operator, and view
-        $tags = $this->imageService->getFolderForView(
-            $selectedFilters['year'],
-            $schoolKey,
-            $view == "ALL" ? '!=' : '=',
-            $view != 'ALL' ? $view : 'ALL'
-        )->pluck('external_name')->toArray();
-        
-        $folders = $this->imageService->getFoldersByTag(
-            $selectedFilters['year'],
-            $schoolKey,
-            $tags,
-            'is_visible_for_portrait' // TODO: get visibility based on selected tab
-        )->toArray();
-        
-        $selectedFilters['jobkey'] = [];
-        $selectedFilters['class'] = [];
-        $selectedFilters['details'] = empty($images) ? false : true;
+        if (empty($class)) {
+            // Extract the records from the folder_tags table and return an array of tag values
+            // based on the selected year, school key, operator, and view
+            $tags = $this->imageService->getFolderForView(
+                $selectedFilters['year'],
+                $schoolKey,
+                $view == "ALL" ? '!=' : '=',
+                $view != 'ALL' ? $view : 'ALL'
+            )->pluck('external_name')->toArray();
+
+            $folders = $this->imageService->getFoldersByTag(
+                $selectedFilters['year'],
+                $schoolKey,
+                $tags,
+                'is_visible_for_portrait' // TODO: get visibility based on selected tab
+            )->toArray();
+        } else {
+            $folders = Folder::whereIn('ts_folderkey', $class)->get();
+        }
         
         foreach ($folders as $folder) {
             $selectedFilters['class']['folderkey'][] = $folder->ts_folderkey;
