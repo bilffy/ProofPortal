@@ -94,7 +94,7 @@
                                         <div class="col-12">
                                             <div class="form-group text-center">
                                                 @if($folder['students'] != 0) {{$folder['students']}} Portraits <br> @endif
-                                                1 Group
+                                                {{$folder['groupCount']}} Group
                                             </div>
                                         </div>
                                     </div>

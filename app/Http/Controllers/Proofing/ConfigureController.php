@@ -103,10 +103,12 @@ class ConfigureController extends Controller
             $selectedFolders = [];
 
             // Transform folders for each job
-            $jobWithRelations = $this->jobService->geJobsByTSJobID($job->ts_job_id); 
+            $jobWithRelations = $this->jobService->getJobsByTSJobID($job->ts_job_id); 
 
             if ($jobWithRelations->folders->isNotEmpty()) {
                 $selectedFolders = $jobWithRelations->folders->map(function ($folder) {
+                    $folderWithImage = $folder->images ?? collect();
+
                     $subjectsWithImages = $folder->subjects->filter(function ($subject) {
                         return $subject->images !== null; // Check if the subject has an image
                     });
@@ -121,6 +123,7 @@ class ConfigureController extends Controller
                         'tag' => $folder->folderTags->external_name ?? null, // Handle null if folderTags is empty
                         'is_visible_for_portrait' => $folder->is_visible_for_portrait,
                         'is_visible_for_group' => $folder->is_visible_for_group,
+                        'groupCount' => is_countable($folderWithImage) ? $folderWithImage->count() : 0,
                         'students' => $subjectsWithImages->count() // Count of attached subjects with images
                     ];
                 })->toArray();

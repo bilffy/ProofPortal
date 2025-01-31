@@ -37,9 +37,9 @@ class JobService
             ->get();
     }
     
-    public function geJobsByTSJobID($TSJobID)
+    public function getJobsByTSJobID($TSJobID)
     {
-        return Job::with(['folders.subjects.images','folders.folderTags'])->where('ts_job_id', $TSJobID)->first();
+        return Job::with(['folders.subjects.images','folders.folderTags','folders.images'])->where('ts_job_id', $TSJobID)->first();
     }
 
     public function getJobsBySeason($schoolkey, $seasonId)
@@ -50,7 +50,7 @@ class JobService
         ->where('jobs.foldersync_status_id', $this->statusService->completed)
         ->orderBy('id', 'asc')
         ->get();
-    }
+    } 
 
     public function updateJobData($jobkey, $column, $value){
         return Job::where('ts_jobkey',$jobkey)->update([$column => $value]);
