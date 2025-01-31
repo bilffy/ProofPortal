@@ -227,7 +227,9 @@
             const selectedYear = $('#select_portaits_year').val();
             const selectedView = $('#select_portaits_view').val();
             const selectedClass = $('#select_portaits_class').val();
-
+            const INDIVIDUAL_CATEGORY = 1;
+            const BULK_CATEGORY = 2;
+            
             console.log('Selected Year:', selectedYear);
             console.log('Selected View:', selectedView);
             console.log('Selected Class:', JSON.stringify(selectedClass));
@@ -242,7 +244,7 @@
                 body: JSON.stringify(
                     { 
                         images: selectedImages,
-                        category: selectedImages.length > 1 ? 'Individual' : 'Bulk',
+                        category: selectedImages.length === 1 ? INDIVIDUAL_CATEGORY : BULK_CATEGORY,
                         filters: {
                             year: selectedYear,
                             view: selectedView,
