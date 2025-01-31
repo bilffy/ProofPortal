@@ -91,13 +91,6 @@ class PhotographyController extends Controller
         $selectedFilters['class'] = [];
         $selectedFilters['details'] = empty($images) ? false : true;
 
-        // If there is only one image, return the image content
-        if (count($images) === 1) {
-            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
-            $imageContent = base64_encode($this->imageService->getImageContent($key));
-            return response()->json(['success' => true, 'data' => $imageContent]);
-        }
-        
         if (empty($class)) {
             // Extract the records from the folder_tags table and return an array of tag values
             // based on the selected year, school key, operator, and view
@@ -131,7 +124,6 @@ class PhotographyController extends Controller
             }
         }
         
-        $downloadCategory = DownloadCategory::where('category_name', $category)->first();
         $downloadType = DownloadType::where('download_type', 'Portrait')->first();
         
         $season = Season::where('ts_season_id', $selectedFilters['year'])->first();
@@ -141,7 +133,7 @@ class PhotographyController extends Controller
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
             'requested_date' => now(),
-            'download_category_id' => $downloadCategory->id,
+            'download_category_id' => $category,
             'download_type_id' => $downloadType->id,
             'filters' => json_encode($selectedFilters),
             'status_id' => Status::where('status_internal_name', 'PENDING')->first()->id,
@@ -167,6 +159,14 @@ class PhotographyController extends Controller
                 }
             }
         }
+
+        // If there is only one image, return the image content
+        if (count($images) === 1) {
+            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
+            $imageContent = base64_encode($this->imageService->getImageContent($key));
+            return response()->json(['success' => true, 'data' => $imageContent]);
+        }
+        
         return response()->json(['success' => true, 'data' => [$images]]);
     }
 }
