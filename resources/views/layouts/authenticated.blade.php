@@ -96,11 +96,11 @@
                 <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
             </button>
             <x-form.dropdownPanel id="userSettingsAction">
-                <li>
+                {{--<li>
                     <x-button.dropdownLink href="{{ route('reset.my.password') }}" class="hover:bg-primary hover:text-white">
                         Profile
                     </x-button.dropdownLink>
-                </li>
+                </li>--}}
                 <li>
                     <x-button.dropdownLink href="{{ route('logout') }}" method="post" as="button" class="hover:bg-primary hover:text-white">
                         Log Out
