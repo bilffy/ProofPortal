@@ -28,7 +28,7 @@ class SchoolList extends Component
         $user = Auth::user();
 
         // Check if the user is neither an admin nor a franchise
-        if (!$user->isRcUser() && !$user->isFranchiseLevel()) {
+        if (!$user->isSuperAdmin() && !$user->isRcUser() && !$user->isFranchiseLevel()) {
             return redirect()->route('dashboard');
         }
     }

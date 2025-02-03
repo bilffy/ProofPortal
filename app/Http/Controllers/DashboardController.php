@@ -18,7 +18,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         
         // Redirect to the school list page if the user is an RC or franchise
-        if ($user->hasAnyRole( [RoleHelper::ROLE_ADMIN, RoleHelper::ROLE_FRANCHISE] )) {
+        if ($user->hasAnyRole( [RoleHelper::ROLE_SUPER_ADMIN, RoleHelper::ROLE_ADMIN, RoleHelper::ROLE_FRANCHISE] )) {
             
             if (SchoolContextHelper::isSchoolContext()) {
                 SchoolContextHelper::removeSchoolContext();
