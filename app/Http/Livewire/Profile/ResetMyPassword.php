@@ -20,8 +20,11 @@ class ResetMyPassword extends Component
     ];
     
     public function mount()
-    {
+    {   
         $this->password = '';
+        
+        // redirect to the dashboard for now.
+        return redirect()->route('dashboard');
     }
 
     public function submit()
