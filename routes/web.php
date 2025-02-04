@@ -27,8 +27,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Test pages
-    Route::get('/schoolhome', [TestController::class, 'test2'])->name('test2'); // FOR TESTING
-    Route::get('/test-photography', [TestController::class, 'index'])->name('test.photography'); // FOR TESTING
+    // Route::get('/schoolhome', [TestController::class, 'test2'])->name('test2'); // FOR TESTING
+    // Route::get('/test-photography', [TestController::class, 'index'])->name('test.photography'); // FOR TESTING
 
     $permissions = PermissionHelper::ACT_CREATE . " " . PermissionHelper::SUB_USER;
     Route::group(['middleware' => ["permission:{$permissions}"]], function () {
