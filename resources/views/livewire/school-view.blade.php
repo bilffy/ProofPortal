@@ -31,36 +31,44 @@
                 <div class="flex flex-col w-full min-h-[300px] slideShow rounded-lg overflow-hidden relative">
                     <div class="flex flex-col mb-2">
                         <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
-                            <img
-                                    src="{{ Vite::asset('resources/assets/images/ads/1964138_p23.png') }}"
-                                    alt=""
-                                    height="100px"
-                                    class="w-full h-fit"
-                            />
+                            <a href="https://www.msp.com.au/schools/yearbooks" alt="All-in-one Yearbook solution" target="_blank">
+                                <img
+                                        src="{{ Vite::asset('resources/assets/images/ads/1964138_Yearbooks.jpg') }}"
+                                        alt="All-in-one Yearbook solution"
+                                        height="100px"
+                                        class="w-full h-fit"
+                                />
+                            </a>
                         </div>
                         <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
-                            <img
-                                    src="{{ Vite::asset('resources/assets/images/ads/1964138_p22.png') }}"
-                                    alt=""
-                                    height="100px"
-                                    class="w-full h-fit"
-                            />
+                            <a href="https://www.msp.com.au/schools/marketing/virtualtours" alt="360 virtual tours" target="_blank">
+                                <img
+                                        src="{{ Vite::asset('resources/assets/images/ads/1964138_Virtual_Tours.jpg') }}"
+                                        alt="360 virtual tours"
+                                        height="100px"
+                                        class="w-full h-fit"
+                                />
+                            </a>
                         </div>
                         <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
-                            <img
-                                    src="{{ Vite::asset('resources/assets/images/ads/1964138_p21.png') }}"
-                                    alt=""
-                                    height="100px"
-                                    class="w-full h-fit"
-                            />
+                            <a href="https://www.msp.com.au/schools/marketing/design/" alt="Effective school marketing and promotions" target="_blank">
+                                <img
+                                        src="{{ Vite::asset('resources/assets/images/ads/1964138_Marketing.jpg') }}"
+                                        alt="Effective school marketing and promotions"
+                                        height="100px"
+                                        class="w-full h-fit"
+                                />
+                            </a>
                         </div>
                         <div class=" flex rounded overflow-hidden mb-2 h-[140px]">
-                            <img
-                                    src="{{ Vite::asset('resources/assets/images/ads/1964138_p2.png') }}"
-                                    alt=""
-                                    height="100px"
-                                    class="w-full h-fit"
-                            />
+                            <a href="https://www.msp.com.au/schools/marketing/printing" alt="Branded stationery, promotional material, banners and more" target="_blank">
+                                <img
+                                        src="{{ Vite::asset('resources/assets/images/ads/1964138_Printing.jpg') }}"
+                                        alt="Branded stationery, promotional material, banners and more"
+                                        height="100px"
+                                        class="w-full h-fit"
+                                />
+                            </a>
                         </div>
                     </div>
                     {{-- <div class="flex text-center absolute bottom-8 gap-1 w-full justify-center">
