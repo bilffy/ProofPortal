@@ -12,6 +12,7 @@ use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
+use App\Http\Livewire\Order\Order;
 use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\ImpersonateController;
 
@@ -58,6 +59,9 @@ Route::middleware('auth')->group(function () {
     // Schools routes
     Route::get('/school', SchoolList::class)->name('school.list');
     Route::get('/school/{id}', SchoolView::class)->name('school.view');
+    
+    // Order routes
+    Route::get('/order', Order::class)->name('order');
     
     // Impersonation routes
     Route::get('/impersonate/as/{id}', [ImpersonateController::class, 'store'])->name('impersonate.store');

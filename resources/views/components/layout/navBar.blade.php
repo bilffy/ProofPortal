@@ -44,7 +44,7 @@
     @endcan
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="credit-card" href="{{ route('dashboard') }}">Ordering</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="credit-card" href="{{ route('order') }}">Ordering</x-layout.navItem>
     @endcan
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
