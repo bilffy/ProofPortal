@@ -7,5 +7,6 @@ export const NAV_TABS = {
     PROMO_PHOTOS: 'Promo Photos',
     PROOFING: 'Proofing',
     MANAGE_USERS: 'Manage Users',
-    REPORTS: 'Reports'
+    REPORTS: 'Reports',
+    ORDER: 'Ordering',
 }
