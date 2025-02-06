@@ -10,6 +10,7 @@ use App\Helpers\RoleHelper;
 use App\Models\School;
 use App\Models\SchoolUser;
 use App\Models\User;
+use App\Rules\MspEmailValidation;
 use App\Services\UserService;
 use Auth;
 use DB;
@@ -45,6 +46,7 @@ class UserController extends Controller
                     'lowercase',
                     'max:255',
                     'email:rfc', // Basic check for email format
+                    'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', // Ensures a dot + valid TLD
                     'unique:'.User::class,
                     // new MspEmailValidation(), //Disable for now
                 ],
