@@ -15,7 +15,7 @@
                 wire:model="email"
                 required
                 autofocus
-                autocomplete="username"
+                autocomplete="off"
                 placeholder="Email"
                 class="mt-1 block w-full"
             />
