@@ -22,8 +22,13 @@ class Login extends Component
         'password' => 'required',
     ];
 
-    public function submit(UserService $userService)
+    public function mount()
     {
+        $this->email = '';
+    }
+    
+    public function submit(UserService $userService)
+    {   
         $this->validate();
 
         // Validate the user credentials, if valid, send OTP to the user
