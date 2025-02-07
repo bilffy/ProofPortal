@@ -71,6 +71,7 @@ services:
       PMA_PORT: ${DB_PORT}
       PMA_USER: ${DB_USERNAME}
       PMA_PASSWORD: ${DB_PASSWORD}
+      TZ: ${APP_TIMEZONE}
     volumes:
       - /etc/nginx/.htpasswd:/var/www/html/passwd
       - ./docker/php/phpmyadmin.ini:/usr/local/etc/php/conf.d/phpmyadmin.ini

@@ -62,9 +62,7 @@ class OtpVerification extends Component
             ]);
         }
 
-        $date = Carbon::parse($recentOtp->expire_on, 'UTC')
-                ->setTimezone(config('app.timezone'));
-        if ($date->isPast()) {
+        if (Carbon::parse($recentOtp->expire_on)->isPast()) {
             $this->message = 'OTP has expired!';
             throw ValidationException::withMessages([
                 'otp' => [$this->message],
