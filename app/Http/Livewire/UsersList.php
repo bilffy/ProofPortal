@@ -209,6 +209,14 @@ class UsersList extends Component
             ->search(['users.email', 'users.firstname', 'users.lastname', 'schools.name', 'franchises.name'], trim($this->search))
             ->sort($this->getSortColumns($this->sortBy), $this->sortDirection)
             ->paginate();
-        return view('livewire.users-list', compact('users'));
+        
+        $configMessages = [
+            'invite_user' => config('app.dialog_config.invite'),
+            'impersonate' => config('app.dialog_config.impersonate'),
+        ];
+        
+        return view('livewire.users-list', compact('users', 'configMessages'), [
+            
+        ]);
     }
 }

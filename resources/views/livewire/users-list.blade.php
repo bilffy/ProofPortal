@@ -79,7 +79,7 @@
     </div>
 
     <!-- Main modal -->
-    <x-modal.base id="inviteModal" title="Invite new User" body="components.modal.body" footer="components.modal.footer">
+    <x-modal.base id="inviteModal" title="{{ $configMessages['invite_user']['title'] }}" body="components.modal.body" footer="components.modal.footer">
         <x-slot name="body">
             <x-modal.body>
                 <p id="modal-email"></p>
@@ -93,7 +93,7 @@
         </x-slot>
     </x-modal.base>
 
-    <x-modal.base id="impersonateModal" title="Impersonate User" body="components.modal.body" footer="components.modal.footer">
+    <x-modal.base id="impersonateModal" title="{{ $configMessages['impersonate']['title'] }}" body="components.modal.body" footer="components.modal.footer">
         <x-slot name="body">
             <x-modal.body>
                 <p id="impersonate-modal-email"></p>
@@ -118,7 +118,7 @@
                 const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
                 const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
                 $('#accept-invite').attr('data-invite-route', $(this).attr('data-invite-route'));
-                $('#modal-email').html("Are you sure you want to invite <b>" + fname + " " + lname + " (" + email + ")?</b>");
+                $('#modal-email').html("{{ $configMessages['invite_user']['message'] }} <b>" + fname + " " + lname + " (" + email + ")?</b>");
             });
         
             $('#accept-invite').on('click', function() {
@@ -132,7 +132,7 @@
                 const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
                 const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
                 $('#accept-impersonate').attr('data-impersonate-route', $(this).attr('data-impersonate-route'));
-                $('#impersonate-modal-email').html("Are you sure you want to log out and log back in as  <b>" + fname + " " + lname + " (" + email + ")?</b>");
+                $('#impersonate-modal-email').html("{{ $configMessages['impersonate']['message'] }}  <b>" + fname + " " + lname + " (" + email + ")?</b>");
             });
 
             $('#accept-impersonate').on('click', function() {
