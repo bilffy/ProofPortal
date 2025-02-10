@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\UserResource;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Models\User;
 use Auth;
-use Illuminate\Http\Request;
-use Route;
 use App\Helpers\SchoolContextHelper;
 
 class ImpersonateController extends Controller
@@ -20,9 +19,11 @@ class ImpersonateController extends Controller
         if (!session()->has('root_user_id')) {
             session()->put('root_user_id', Auth::id());
         }
-        
+        $rootUserId = Auth::id();
         Auth::user()->impersonate($user);
-        
+        // Log IMPERSONATE_USER activity
+        ActivityLogHelper::log(LogConstants::IMPERSONATE_USER, ['user' => $user->id], $rootUserId);
+
         return redirect()->route('dashboard')->with('success', 'You are logged in as ' . $user->email);
     }
 
@@ -33,12 +34,14 @@ class ImpersonateController extends Controller
         }
         
         $rootUserId = session()->pull('root_user_id');
-        
+        $impersonatedId = Auth::user()->getAuthIdentifier();
         Auth::user()->leaveImpersonation();
-
+        
         if ($rootUserId) {
             Auth::loginUsingId($rootUserId);
         }
+        // Log EXIT_IMPERSONATE_USER activity
+        ActivityLogHelper::log(LogConstants::EXIT_IMPERSONATE_USER, ['user' => $impersonatedId]);
 
         return redirect()->route('dashboard');
     }
