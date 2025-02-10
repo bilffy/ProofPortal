@@ -39,7 +39,7 @@ class ForgotPassword extends Component
         }
 
         throw ValidationException::withMessages([
-            'email' => [trans($status)],
+            'email' => [trans(config('app.dialog_config.invalid_email_forgot_password.message'))],
         ]);
     }
     

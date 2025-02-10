@@ -43,9 +43,11 @@ class Login extends Component
                 ['token' => Str::random(60)])
                 ->with('msp-user', $this->email);
         }
-
+        
+        
+        
         throw ValidationException::withMessages([
-            'email' => ['Invalid username/password.'],
+            'email' => config('app.dialog_config.invalid_login.message'),
         ]);
     }
     

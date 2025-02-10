@@ -33,8 +33,8 @@ class OtpVerification extends Component
         
         $this->email = session('msp-user', request()->email);
         $this->message = session()->has('resend-otp')
-            ? 'OTP has been resent to your email.'
-            : 'A Verification Code has been sent to your email address.';
+            ? config('app.dialog_config.otp.resend.message1')
+            : config('app.dialog_config.otp.resend.message2');
         $this->token = request()->route('token');
     }
 
@@ -47,7 +47,7 @@ class OtpVerification extends Component
         $recentOtp = $userService->getRecentOtp($user);
 
         if ($recentOtp === null) {
-            $this->message = 'OTP is Invalid!';
+            $this->message = config('app.dialog_config.otp.invalid.message');
             throw ValidationException::withMessages([
                 'otp' => [$this->message],
             ]);
@@ -56,14 +56,14 @@ class OtpVerification extends Component
         $decryptOtp = OTPHelper::decryptOtp($recentOtp->otp);
 
         if ($decryptOtp !== (int)$this->otp) {
-            $this->message = 'OTP is Invalid!';
+            $this->message = config('app.dialog_config.otp.invalid.message');
             throw ValidationException::withMessages([
                 'otp' => [$this->message],
             ]);
         }
 
         if (Carbon::parse($recentOtp->expire_on)->isPast()) {
-            $this->message = 'OTP has expired!';
+            $this->message = config('app.dialog_config.otp.expired.message');
             throw ValidationException::withMessages([
                 'otp' => [$this->message],
             ]);
@@ -77,7 +77,7 @@ class OtpVerification extends Component
         session()->forget('msp-user');
 
         Auth::loginUsingId($recentOtp->user->id);
-        session()->flash('message', 'OTP verified successfully.');
+        session()->flash('message', config('app.dialog_config.otp.verified.message'));
         return redirect()->route('dashboard');
     }
     public function resendOtp(UserService $userService, $email)
@@ -99,7 +99,7 @@ class OtpVerification extends Component
             $userService->sendOtp($user);
 
             // Update the message
-            $this->message = 'OTP has been resent to your email.';
+            $this->message = config('app.dialog_config.otp.resend.message1');
             $this->resetErrorBag();
         }
     }

@@ -135,4 +135,42 @@ return [
     'password_min_length' => 13,
     
     'image_repository' => env('IMAGE_REPOSITORY', 'images'),
+    
+    // Dialog Config, used for displaying dialog messages
+    'dialog_config' => [
+        'invalid_login' => [
+            'title' => 'Invalid Login',
+            'message' => 'Invalid username/password.',
+        ],
+        'invalid_email_forgot_password' => [
+            'title' => 'Forgot Password',
+            'message' => "We can't find a user with that email address.",
+        ],
+        'otp' => [
+            'title' => 'Verification Code',
+            'invalid' => [
+                'message' => 'OTP is Invalid.',
+            ],
+            'resend' => [
+                'message1' => 'OTP has been resent to your email.',
+                'message2' => 'A Verification Code has been sent to your email address.',
+            ],
+            
+            'expired' => [
+                'message' => 'OTP has expired.',
+            ],
+            'verified' => [
+                'message' => 'OTP verified successfully.',
+            ],
+        ],
+        'invite' => [
+            'title' => 'Invite new User',
+            'message' => 'Are you sure you want to invite',
+        ],
+        'impersonate' => [
+            'title' => 'Impersonate User',
+            'message' => 'Are you sure you want to log out and log back in as',
+        ]
+            
+    ]
 ];
