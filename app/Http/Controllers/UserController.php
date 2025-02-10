@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
@@ -137,6 +139,8 @@ class UserController extends Controller
                     ]);
                     break;
             }
+            // Log CREATE_USER activity
+            ActivityLogHelper::log(LogConstants::CREATE_USER, ['user' => $user->id]);
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();

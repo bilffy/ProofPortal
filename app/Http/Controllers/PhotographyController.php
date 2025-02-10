@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\PhotographyHelper;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Helpers\SchoolContextHelper;
-use App\Helpers\UserStatusHelper;
-use App\Models\DownloadCategory;
 use App\Models\DownloadDetail;
 use App\Models\DownloadRequested;
 use App\Models\DownloadType;
@@ -14,13 +13,11 @@ use App\Models\Image;
 use App\Models\Job;
 use App\Models\Season;
 use App\Models\Status;
-use App\Models\User;
 use App\Services\ImageService;
 use App\Services\SchoolService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
-use function PHPUnit\Framework\isEmpty;
 
 class PhotographyController extends Controller
 {
@@ -90,6 +87,7 @@ class PhotographyController extends Controller
         $selectedFilters['jobkey'] = [];
         $selectedFilters['class'] = [];
         $selectedFilters['details'] = empty($images) ? false : true;
+        $logImgKeys = [];
 
         if (empty($class)) {
             // Extract the records from the folder_tags table and return an array of tag values
@@ -143,7 +141,8 @@ class PhotographyController extends Controller
 
             // remove the img_ prefix, then decode the base64 encoded image
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
-            
+            // Add to logged image keys
+            $logImgKeys[] = $key;
             // Query the Image model to get the image data
             $image = Image::where('keyvalue', $key)->first();
 
@@ -159,14 +158,23 @@ class PhotographyController extends Controller
                 }
             }
         }
-
+        // If there are multiple images, return images list
+        $data = [$images];
         // If there is only one image, return the image content
         if (count($images) === 1) {
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
             $imageContent = base64_encode($this->imageService->getImageContent($key));
-            return response()->json(['success' => true, 'data' => $imageContent]);
+            // return response()->json(['success' => true, 'data' => $imageContent]);
+            $data = $imageContent;
         }
+
+        // Log DOWNLOAD_PHOTOS activity
+        ActivityLogHelper::log(LogConstants::DOWNLOAD_PHOTOS, [
+            'school' => $school->id,
+            'school_key' => $schoolKey,
+            'image_keys' => $logImgKeys,
+        ]);
         
-        return response()->json(['success' => true, 'data' => [$images]]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 }

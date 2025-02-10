@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Auth;
 
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Helpers\OTPHelper;
 use App\Models\User;
 use App\Services\UserService;
@@ -78,6 +80,8 @@ class OtpVerification extends Component
 
         Auth::loginUsingId($recentOtp->user->id);
         session()->flash('message', config('app.dialog_config.otp.verified.message'));
+        // Log LOGIN activity
+        ActivityLogHelper::log(LogConstants::LOGIN, []);
         return redirect()->route('dashboard');
     }
     public function resendOtp(UserService $userService, $email)
