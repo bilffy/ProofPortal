@@ -22,7 +22,7 @@ class ImpersonateController extends Controller
         $rootUserId = Auth::id();
         Auth::user()->impersonate($user);
         // Log IMPERSONATE_USER activity
-        ActivityLogHelper::log(LogConstants::IMPERSONATE_USER, ['user' => $user->id], $rootUserId);
+        ActivityLogHelper::log(LogConstants::IMPERSONATE_USER, ['impersonated_user' => $user->id], $rootUserId);
 
         return redirect()->route('dashboard')->with('success', 'You are logged in as ' . $user->email);
     }
@@ -41,7 +41,7 @@ class ImpersonateController extends Controller
             Auth::loginUsingId($rootUserId);
         }
         // Log EXIT_IMPERSONATE_USER activity
-        ActivityLogHelper::log(LogConstants::EXIT_IMPERSONATE_USER, ['user' => $impersonatedId]);
+        ActivityLogHelper::log(LogConstants::EXIT_IMPERSONATE_USER, ['impersonated_user' => $impersonatedId]);
 
         return redirect()->route('dashboard');
     }

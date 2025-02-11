@@ -140,7 +140,7 @@ class UserController extends Controller
                     break;
             }
             // Log CREATE_USER activity
-            ActivityLogHelper::log(LogConstants::CREATE_USER, ['user' => $user->id]);
+            ActivityLogHelper::log(LogConstants::CREATE_USER, ['created_user' => $user->id]);
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
