@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers\Proofing;
 
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Http\Controllers\Controller;
+use App\Models\Folder;
+use App\Models\Job;
+use App\Models\School;
 use App\Services\EncryptDecryptService;
 use App\Services\JobService;
 use App\Services\FolderService;
@@ -185,6 +190,13 @@ class ConfigureController extends Controller
             
             // Save the new logo filename in the database
             $this->schoolService->saveSchoolData($decryptedSchoolKey, 'school_logo', $filename);
+
+            // Log UPLOAD_SCHOOL_LOGO activity
+            ActivityLogHelper::log(LogConstants::UPLOAD_SCHOOL_LOGO, [
+                'file_name' => $filename,
+                'file_size' => $request->file('schoolLogo')->getSize(),
+                'file_type' => $request->file('schoolLogo')->getClientMimeType(),
+            ]);
     
             // Return a successful response with the new path
             return response()->json(['success' => true, 'message' => 'School logo uploaded successfully.', 'path' => 'storage/school_logos/' . $filename]);
@@ -242,6 +254,13 @@ class ConfigureController extends Controller
        
         $decryptedSchoolKey = $this->getDecryptData($request->input('schoolKey'));
         $this->schoolService->saveSchoolData($decryptedSchoolKey, 'digital_download_permission_notification', json_encode($notificationsMatrix));
+        $school = School::where('schoolkey',$decryptedSchoolKey)->first();
+        // Log UPDATE_SCHOOL_DOWNLOAD_PERMISSIONS activity
+        ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_DOWNLOAD_PERMISSIONS, [
+            'school' => $school->id,
+            'school_key' => $decryptedSchoolKey,
+            'digital_download_permission_notification' => $notificationsMatrix,
+        ]);
     }
 
     protected function processDigitalDownload($input)
@@ -263,11 +282,23 @@ class ConfigureController extends Controller
         $cleanedDate = preg_replace('/\s?(AM|PM)$/i', '', $request->newData);
         $parsedDate = Carbon::createFromFormat('d/m/Y H:i', $cleanedDate);
         $job = $this->jobService->updateJobData($decryptedJobKey, $request->field, $parsedDate->format('Y-m-d H:i:s'));
+
+        $thisJob = Job::where('ts_jobkey', $decryptedJobKey)->first();
+        $school = School::where('schoolkey', $thisJob->ts_schoolkey)->first();
+        // Log UPDATE_SCHOOL_DOWNLOAD_TIMELINE_CONFIG activity
+        ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_DOWNLOAD_TIMELINE_CONFIG, [
+            'school' => $school->id,
+            'school_key' => $thisJob->ts_schoolkey,
+            'job_id' => $thisJob->ts_job_id,
+            $request->field => $parsedDate->format('Y-m-d H:i:s'),
+        ]);
+        
         return response()->json(['success' => true, 'message' => 'Job updated successfully.']);
     }
 
     public function configSchoolFolderChangeUpdate(Request $request)
     {
+        $school = SchoolContextHelper::getCurrentSchoolContext();
         $folderIds = explode(',', $request->folderId);
         if (is_array($folderIds)) {
             foreach ($folderIds as $folderId) {
@@ -275,6 +306,15 @@ class ConfigureController extends Controller
             }
             $decryptedFolderIds = is_array($decryptedFolderId) ? $decryptedFolderId : [$decryptedFolderId];
             $this->folderService->updateFolderData($decryptedFolderIds, $request->field, $request->newValue);
+
+            $folder = Folder::where('ts_folder_id', $decryptedFolderIds[0])->first();
+            // Log UPDATE_SCHOOL_FOLDER_CONFIG activity
+            ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_FOLDER_CONFIG, [
+                'school' => $school->id,
+                'school_key' => $school->schoolkey,
+                'job_id' => $folder->ts_job_id,
+                $request->field => $request->newValue,
+            ]);
         }
 
         return response()->json(['success' => true, 'message' => 'Folder updated successfully.']);
