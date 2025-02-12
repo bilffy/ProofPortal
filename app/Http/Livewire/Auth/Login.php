@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Auth;
 
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +38,15 @@ class Login extends Component
         if (Auth::validate(['email' => $this->email, 'password' => $this->password])) {
             /** @var User $user */
             $user = User::where('email', $this->email)->firstOrFail();
+            
+            //check if OTP is disabled
+            if (config('app.otp.disable')) {
+                // Log LOGIN activity
+                Auth::loginUsingId($user->id);
+                ActivityLogHelper::log(LogConstants::LOGIN, []);
+                return redirect()->route('dashboard');    
+            }
+            
             // Send OTP to the user
             $userService->sendOtp($user);
             return redirect()->route(
@@ -43,8 +54,6 @@ class Login extends Component
                 ['token' => Str::random(60)])
                 ->with('msp-user', $this->email);
         }
-        
-        
         
         throw ValidationException::withMessages([
             'email' => config('app.dialog_config.invalid_login.message'),

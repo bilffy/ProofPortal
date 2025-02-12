@@ -130,6 +130,7 @@ return [
     'otp' => [
         'expiration_minutes' => env('OTP_EXPIRATION_MINUTES', 60),
         'secret_pin' => env('OTP_SECRET_PIN'),
+        'disable' => env('DISABLE_OTP', false),
     ],
 
     'password_min_length' => 13,
