@@ -172,7 +172,7 @@ class PhotographyController extends Controller
         ActivityLogHelper::log(LogConstants::DOWNLOAD_PHOTOS, [
             'school' => $school->id,
             'school_key' => $schoolKey,
-            'image_keys' => $logImgKeys,
+            'download_requested' => $downloadRequest->id,
         ]);
         
         return response()->json(['success' => true, 'data' => $data]);
