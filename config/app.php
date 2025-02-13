@@ -136,42 +136,42 @@ return [
     'password_min_length' => 13,
     
     'image_repository' => env('IMAGE_REPOSITORY', 'images'),
-    
+
     // Dialog Config, used for displaying dialog messages
     'dialog_config' => [
         'invalid_login' => [
-            'title' => 'Invalid Login',
-            'message' => 'Invalid username/password.',
+            'title' => 'Invalid Login(test20250213)',
+            'message' => 'Invalid username/password.(test20250213)',
         ],
         'invalid_email_forgot_password' => [
-            'title' => 'Forgot Password',
-            'message' => "We can't find a user with that email address.",
+            'title' => 'Forgot Password(test20250213)',
+            'message' => "We can't find a user with that email address.(test20250213)",
         ],
         'otp' => [
-            'title' => 'Verification Code',
+            'title' => 'Verification Code(test20250213)',
             'invalid' => [
-                'message' => 'OTP is Invalid.',
+                'message' => 'OTP is Invalid.(test20250213)',
             ],
             'resend' => [
-                'message1' => 'OTP has been resent to your email.',
-                'message2' => 'A Verification Code has been sent to your email address.',
+                'message1' => 'OTP has been resent to your email (test20250213).',
+                'message2' => 'A Verification Code has been sent to your email address.(test20250213)',
             ],
-            
+
             'expired' => [
-                'message' => 'OTP has expired.',
+                'message' => 'OTP has expired. (test20250213)',
             ],
             'verified' => [
-                'message' => 'OTP verified successfully.',
+                'message' => 'OTP verified successfully. (test20250213)',
             ],
         ],
         'invite' => [
-            'title' => 'Invite new User',
-            'message' => 'Are you sure you want to invite',
+            'title' => 'Invite new User (test20250213)',
+            'message' => 'Are you sure you want to invite (test20250213)',
         ],
         'impersonate' => [
-            'title' => 'Impersonate User',
-            'message' => 'Are you sure you want to log out and log back in as',
+            'title' => 'Impersonate User(test20250213)',
+            'message' => 'Are you sure you want to log out and log back in as(test20250213)',
         ]
-            
+
     ]
 ];
