@@ -44,6 +44,7 @@
                             $userId = $user->id;
                             $inviteRoute = route("invite.single", ["id" => $userId ]);
                             $impersonateRoute = route("impersonate.store", ["id" => $userId ]);
+                            $checkStatusRoute = route('invite.check-user-status', ['id' => $userId]);
                             $role = is_null($user->getRole()) ? '' : $user->getRole();
                             $dropDownId = "optionsDropdown" . $userId;
                         @endphp
@@ -65,6 +66,7 @@
                                 status="{{$status}}"
                                 inviteRoute="{{$inviteRoute}}"
                                 impersonateRoute="{{ $impersonateRoute }}"
+                                checkStatusRoute="{{ $checkStatusRoute }}"
                                 user="{{ $user }}"
                             />
                         </x-table.cell>
@@ -112,21 +114,51 @@
     </div>
 
     <script type="module">
+
+        async function checkUserStatus(route) {
+            const response = await fetch(route, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+            
+            return response.json();
+        }
+        
         function initialScripts() {
-            $('[data-modal-toggle="inviteModal"]').on('click', function() {
-                const email = $(this).closest('tr').find('td:first-child').text().trim();
-                const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
-                const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
-                $('#accept-invite').attr('data-invite-route', $(this).attr('data-invite-route'));
-                $('#modal-email').html("{{ $configMessages['invite_user']['message'] }} <b>" + fname + " " + lname + " (" + email + ")?</b>");
+            $('[data-modal-toggle="inviteModal"]').on('click', async function () {
+
+                $('#modal-email').html(`<x-spinner.button />`);
+                const userId = $(this).attr('data-user-id')
+                const inviteCheckUserStatusRoute = $(this).attr('data-invite-check-user-status-route');
+                const checkStatus = await checkUserStatus(inviteCheckUserStatusRoute);
+
+                if (checkStatus.status === 'active') {
+                    $('#accept-invite').html("Ok");
+                    $('#modal-email').html("{{ $configMessages['check_status']['message'] }}")
+                    $('#accept-invite').on('click', function() {
+                        $(this).@disabled(true);
+                        $(this).html(`<x-spinner.button />`);
+                        // reload the current page
+                        window.location.reload();
+                    });
+                } else {
+                    const email = $(this).closest('tr').find('td:first-child').text().trim();
+                    const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+                    const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
+                    $('#accept-invite').attr('data-invite-route', $(this).attr('data-invite-route'));
+                    $('#modal-email').html("{{ $configMessages['invite_user']['message'] }} <b>" + fname + " " + lname + " (" + email + ")?</b>");
+
+                    $('#accept-invite').on('click', function() {
+                        $(this).@disabled(true);
+                        $(this).html(`<x-spinner.button />`);
+                        window.location.href = $(this).attr('data-invite-route');
+                    });
+                }
             });
         
-            $('#accept-invite').on('click', function() {
-                $(this).@disabled(true);
-                $(this).html(`<x-spinner.button />`);
-                window.location.href = $(this).attr('data-invite-route');
-            });
-
             $('[data-modal-toggle="impersonateModal"]').on('click', function() {
                 const email = $(this).closest('tr').find('td:first-child').text().trim();
                 const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
@@ -162,5 +194,7 @@
                 debouncedInitFlow();
             });
         });
+
+        window.checkUserStatus = checkUserStatus;
     </script>
 </div>

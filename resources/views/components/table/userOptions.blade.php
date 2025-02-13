@@ -1,4 +1,4 @@
-@props(['dropDownId', 'role', 'userId', 'userEmail', 'status', 'inviteRoute', 'impersonateRoute' => '', 'user' => null])
+@props(['dropDownId', 'role', 'userId', 'userEmail', 'status', 'inviteRoute', 'impersonateRoute' => '', 'checkStatusRoute' => '', 'user' => null])
 
 <div id="options_{{$userId}}">
     <x-button.link id="btn_{{$dropDownId}}" data-dropdown-toggle={{$dropDownId}} data-initialized="false">
@@ -12,6 +12,7 @@
                     <x-button.dropdownLink
                         href="#" 
                         data-invite-route="{{ $inviteRoute }}"
+                        data-invite-check-user-status-route="{{ $checkStatusRoute }}"
                         data-modal-target="inviteModal" 
                         data-modal-toggle="inviteModal" 
                         data-user-id="{{ $userId }}" 

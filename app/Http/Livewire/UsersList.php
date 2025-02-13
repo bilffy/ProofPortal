@@ -213,6 +213,7 @@ class UsersList extends Component
         $configMessages = [
             'invite_user' => config('app.dialog_config.invite.user'),
             'impersonate' => config('app.dialog_config.impersonate'),
+            'check_status' => config('app.dialog_config.invite.check_status'),
         ];
         
         return view('livewire.users-list', compact('users', 'configMessages'), [

@@ -38,6 +38,27 @@ class InviteController extends Controller
         return redirect()->route('users')->with('success', config('app.dialog_config.invite.sent.message') ." ". $user->email);
     }
 
+    public function checkUserStatus(int $id)
+    {
+        // Retrieve the user by ID
+        /** @var User $user */
+        $user = User::findOrFail($id);
+
+        if ($user->status === User::STATUS_ACTIVE) {
+            return response()->json([
+                'status' => User::STATUS_ACTIVE,
+                'message' => 'This user is already active. Click OK to refresh the page to see the updated status.'
+            ]);
+        }
+
+        return response()->json([
+            'status' => $user->status,
+            'message' => ''
+        ]);
+    }
+    
+
+    
     /**
      * Invite multiple users.
      * 
