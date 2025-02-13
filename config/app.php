@@ -177,6 +177,10 @@ return [
                 'title' => 'Invitation Sent',
                 'message' => 'Invitation sent successfully to',
             ],
+            'check_status' => [
+                'title' => 'Invite new User',
+                'message' => 'This user is already active. Click OK to refresh the page to see the updated status.',
+            ],
         ],
         'impersonate' => [
             'title' => 'Impersonate User',
