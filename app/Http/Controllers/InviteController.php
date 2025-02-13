@@ -35,7 +35,7 @@ class InviteController extends Controller
 
         $this->userService->sendInvite($user);
 
-        return redirect()->route('users')->with('success', 'Invitation sent successfully to ' . $user->email);
+        return redirect()->route('users')->with('success', config('app.dialog_config.invite.sent.message') ." ". $user->email);
     }
 
     /**
@@ -65,7 +65,7 @@ class InviteController extends Controller
 
         // Return a JSON response to indicate success
         return response()->json([
-            'message' => 'Invites sent successfully to ' . count($users) . ' users.'
+            'message' => config('app.dialog_config.invite.sent.message') ." " . count($users) . ' users.'
         ]);
     }
 }

@@ -211,7 +211,7 @@ class UsersList extends Component
             ->paginate();
         
         $configMessages = [
-            'invite_user' => config('app.dialog_config.invite'),
+            'invite_user' => config('app.dialog_config.invite.user'),
             'impersonate' => config('app.dialog_config.impersonate'),
         ];
         
