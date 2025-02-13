@@ -313,6 +313,7 @@ class ConfigureController extends Controller
                 'school' => $school->id,
                 'school_key' => $school->schoolkey,
                 'job_id' => $folder->ts_job_id,
+                'folder_key' => $folder->ts_folderkey,
                 $request->field => $request->newValue,
             ]);
         }
