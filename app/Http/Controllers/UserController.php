@@ -58,7 +58,7 @@ class UserController extends Controller
                 'firstname' => 'First Name is required.',
                 'lastname' => 'Last Name is required.',
                 'email.email' => 'Invalid format.',
-                'email.unique' => 'This email address is already used by another account.'
+                'email.unique' => config('app.dialog_config.account_exist.message')
             ]
         );
     }
