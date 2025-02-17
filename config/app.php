@@ -161,8 +161,8 @@ return [
                 'message' => 'OTP is Invalid.',
             ],
             'resend' => [
-                'message1' => 'OTP has been resent to your email.',
-                'message2' => 'A Verification Code has been sent to your email address.',
+                'message1' => 'Security code has been resent to your email.',
+                'message2' => 'We’ve sent a security code to your email. Please enter it below to continue.',
             ],
             
             'expired' => [

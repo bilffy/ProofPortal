@@ -1,5 +1,5 @@
 <main class="mt-8 bg-white rounded-lg overflow-hidden border-[#969696] border-2 p-8 px-12">
-    <h1 class="text-3xl text-[#02B3DF]">Verification Code</h1>
+    <h2 class="text-3xl text-[#02B3DF]">Enter Security Code</h2>
     @if ($errors->has('otp'))
         <div class="mb-4 text-sm text-red-600">
     @else
@@ -15,19 +15,19 @@
         </div>
         <div>
             <div class="flex flex-col mb-4">
-                <input name="otp" placeholder="Enter OTP" class="border rounded-md p-2 border-neutral" type="password" wire:model="otp" required autocomplete="one-time-code" autofocus />
+                <input name="otp" placeholder="Enter your code" class="border rounded-md p-2 border-neutral" type="password" wire:model="otp" required autocomplete="one-time-code" autofocus />
             </div>
         </div>
 
         <div class="flex w-full items-center justify-between">
             <x-button.primary type="submit" wire:loading.attr="disabled">
-                <span wire:target="submit" wire:loading.remove>Verify</span>
+                <span wire:target="submit" wire:loading.remove>Continue</span>
                 <span wire:loading wire:target="submit"><x-spinner.button label="Verify" /></span>
             </x-button.primary>
             <x-button.link id="resend-button" disabled wire:click="resendOtp('{{ $email }}')" wire:loading.attr="disabled">
-                <span wire:target="resendOtp('{{ $email }}')" wire:loading.remove>Resend Verification Code</span>
+                <span wire:target="resendOtp('{{ $email }}')" wire:loading.remove>Resend Code</span>
                 <span wire:loading wire:target="resendOtp('{{ $email }}')">
-                    <x-spinner.button label="Resend Verification Code" />
+                    <x-spinner.button label="Resend Code" />
                 </span>
             </x-button.link>
         </div>
