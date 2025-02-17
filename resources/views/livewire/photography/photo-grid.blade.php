@@ -7,7 +7,7 @@
             @foreach ($paginatedImages as $image)
                 @php
                     $imageId = $image['id'];
-                    $name = $image['firstname'] . ' ' . $image['lastname'] . ' - ' . $image['classGroup'];
+                    $name = $image['category'] == 'FOLDER'? $image['classGroup'] : $image['firstname'] . ' ' . $image['lastname'] . ' - ' . $image['classGroup'];
                     $landscape = !$image['isPortrait'];
                     $key = "img_{{$imageId}}";
                 @endphp

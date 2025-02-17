@@ -69,11 +69,10 @@ class PhotoGrid extends Component
         // If year changed, update view options
         if ($initialState || $year != $this->filters['year']) {
             $this->filters['year'] = $year;
-            $options = $imageService->getFolderForView(
+            $options = $imageService->getFolderForView2(
                 $year, 
                 $this->schoolKey,
-                $this->getOperator(),
-                'SP'
+                $this->category
             )->values()->toArray();
 
             // reset view and class when year value changes
@@ -93,7 +92,7 @@ class PhotoGrid extends Component
                 $year, 
                 $this->schoolKey,
                 $views,
-                $this->getVisibility()
+                $this->category
             )->toArray();
 
             // reset class when view value changes
@@ -131,7 +130,7 @@ class PhotoGrid extends Component
             'folderKeys' => $keys,
             'searchTerm' => $this->search,
         ];
-        $filteredImages = $imageService->getFilteredPhotographyImages($options);
+        $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
         
         $paginated = $imageService->paginate(
             $filteredImages,
@@ -141,7 +140,7 @@ class PhotoGrid extends Component
         );
         
         // Modify the paginated items
-        $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection());
+        $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection(), $this->category);
         $paginated->setCollection($modifiedItems);
         
         return $paginated;
