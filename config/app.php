@@ -141,54 +141,54 @@ return [
     'dialog_config' => [
         'account_exist' => [
             'title' => 'Add New User',
-            'message' => 'This email address is already used by another account.(test20250214)',
+            'message' => 'This email address is already used by another account.',
         ],
         'invalid_login' => [
             'title' => 'Invalid Login',
-            'message' => 'Invalid username/password.(test20250214)',
+            'message' => 'Invalid username/password.',
         ],
         'invalid_email_forgot_password' => [
             'title' => 'Forgot Password',
-            'message' => "We can't find a user with that email address.(test20250214)",
+            'message' => "We can't find a user with that email address.",
         ],
         'email_sent_forgot_password' => [
             'title' => 'Email sent',
-            'message' => "A password reset link has been sent to the associated email. Please check your inbox.(test20250214)",
+            'message' => "A password reset link has been sent to the associated email. Please check your inbox.",
         ],
         'otp' => [
             'title' => 'Verification Code',
             'invalid' => [
-                'message' => 'OTP is Invalid.(test20250214)',
+                'message' => 'OTP is Invalid.',
             ],
             'resend' => [
                 'message1' => 'OTP has been resent to your email.',
-                'message2' => 'A Verification Code has been sent to your email address.(test20250214)',
+                'message2' => 'A Verification Code has been sent to your email address.',
             ],
             
             'expired' => [
-                'message' => 'OTP has expired.(test20250214)',
+                'message' => 'OTP has expired.',
             ],
             'verified' => [
-                'message' => 'OTP verified successfully.(test20250214)',
+                'message' => 'OTP verified successfully.',
             ],
         ],
         'invite' => [
             'user' => [
                 'title' => 'Invite new User',
-                'message' => 'Are you sure you want to invite(test20250214)',
+                'message' => 'Are you sure you want to invite',
             ],
             'sent' => [
                 'title' => 'Invitation Sent',
-                'message' => 'Invitation sent successfully to(test20250214)',
+                'message' => 'Invitation sent successfully to',
             ],
             'check_status' => [
                 'title' => 'Invite new User',
-                'message' => 'This user is already active. Click OK to refresh the page to see the updated status.(test20250214)',
+                'message' => 'This user is already active. Click OK to refresh the page to see the updated status.',
             ],
         ],
         'impersonate' => [
             'title' => 'Impersonate User',
-            'message' => 'Are you sure you want to log out and log back in as(test20250214)',
+            'message' => 'Are you sure you want to log out and log back in as',
         ],
     ]
 ];
