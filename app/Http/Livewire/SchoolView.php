@@ -22,7 +22,7 @@ class SchoolView extends Component
         if (Auth::user()->isFranchiseLevel()) {
             // store a new session to set a reference of school context 
             Session::put('school_context-sid', $this->school->id);
-            return redirect()->route('users');
+            return redirect()->route('photography.configure');
         }
             
     }
