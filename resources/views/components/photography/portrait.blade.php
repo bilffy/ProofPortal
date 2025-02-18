@@ -24,7 +24,7 @@
             <img 
                 src="data:image/jpeg;base64,{{$img}}"
                 alt=""
-                class="w-full max-w-none h-max"
+                class="w-full max-w-none"
             />
         @endif
     </div>
