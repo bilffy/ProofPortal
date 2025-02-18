@@ -1,12 +1,12 @@
 @php
     $user = auth()->user();
     $contact = "(02) 6933 7722 | helpdesk@msp.com.au";
-    $address = 'MSP Photography Resource Centre, 2 Ball Place, Wagga Wagga NSW 2650';
+    $address = 'MSP Photography Resource Centre - 2 Ball Place, Wagga Wagga NSW 2650';
     
     if ($user->isSchoolLevel() || $user->isFranchiseLevel()) {
         $franchise = $user->getFranchise();
-        $address = $franchise->address . ' ' . $franchise->state . ' ' . $franchise->postcode;
-        $contact = $franchise->name . ' - ' . $franchise->phone . ' | ' . $franchise->email;
+        $address = $franchise->name . ' - ' . $franchise->address . ' ' . $franchise->state . ' ' . $franchise->postcode;
+        $contact = $franchise->phone . ' | ' . $franchise->email;
     }
 @endphp
 
