@@ -8,14 +8,17 @@ use Livewire\Component;
 use Auth;
 use App\Http\Resources\UserResource;
 use App\Models\School;
+use Vinkla\Hashids\Facades\Hashids;
 
 class SchoolView extends Component
 {
     public $school;
     
-    public function mount($id)
+    public function mount($hashedId)
     {
         $this->checkUserRole();
+
+        $id = Hashids::decodeHex($hashedId)[0];
         $this->school = School::findOrFail($id);
         
         // redirect to the manage users page if the user is a franchise level

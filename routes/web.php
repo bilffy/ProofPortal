@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
     
     // Schools routes
     Route::get('/school', SchoolList::class)->name('school.list');
-    Route::get('/school/{id}', SchoolView::class)->name('school.view');
+    Route::get('/school/{hashedId}', SchoolView::class)->name('school.view');
     
     // Order routes
     Route::get('/order', Order::class)->name('order');

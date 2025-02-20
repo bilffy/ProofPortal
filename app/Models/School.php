@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Vinkla\Hashids\Facades\Hashids;
 
 class School extends Model
 {
@@ -47,4 +48,13 @@ class School extends Model
         return $this->belongsToMany(Franchise::class, 'school_franchises');
         // return $this->hasMany(SchoolFranchise::class, 'school_id');
     }
+    
+    /**
+     * Get the Hashed ID attribute.
+     */
+    public function getHashedIdAttribute()
+    {   
+        return Hashids::encodeHex("$this->id");
+    }
+    
 }

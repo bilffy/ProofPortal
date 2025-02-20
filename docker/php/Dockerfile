@@ -40,6 +40,9 @@ RUN docker-php-ext-install \
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
+# Add the bcmath extension
+RUN docker-php-ext-install bcmath
+
 #install Redis
 RUN pecl install redis \
         && docker-php-ext-enable redis.so
