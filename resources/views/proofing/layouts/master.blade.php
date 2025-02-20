@@ -73,12 +73,12 @@
                                         <li>
                                             <div class="flex items-center ps-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
                                                 <label for="checkbox-item-11" class="w-full py-2 ms-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">
-                                                    <a href="{{ route('school.view', ['id' => $school['id']]) }}">
+                                                    <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
                                                         {{ $school['name'] }} 
                                                     </a>
                                                 </label>
     
-                                                @php if ($SchoolContextHelper->getCurrentSchoolContext()->id == $school['id']) { @endphp
+                                                @php if ($SchoolContextHelper->getCurrentSchoolContext()->id == $school->id) { @endphp
                                                     <i class="fas fa-check"></i>
                                                 @php } @endphp
                                             </div>

@@ -10,7 +10,7 @@ use App\Models\School;
 class SchoolContextHelper
 {
     // Fetch list of schools by a given franchise
-    public static function getSchoolsByFranchise(Franchise $franchise): array
+    public static function getSchoolsByFranchise(Franchise $franchise): mixed
     {
         $schools = School::query()
             ->leftJoin('school_franchises', 'schools.id', '=', 'school_franchises.school_id')
@@ -19,7 +19,7 @@ class SchoolContextHelper
             ->where('franchises.id', $franchise->id)
             ->orderBy('schools.name', 'ASC');
         
-        return $schools->get()->toArray();
+        return $schools->get();
     }
     
     public static function isSchoolContext(): bool

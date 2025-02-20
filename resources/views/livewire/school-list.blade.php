@@ -33,12 +33,12 @@
             @foreach ($schools as $school)
                 <tr>
                     <x-table.cell class="w-1/4">
-                        <a href="{{ route('school.view', ['id' => $school->id]) }}">
+                        <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
                             {{ $school->schoolkey }}
                         </a>
                     </x-table.cell>
                     <x-table.cell>
-                        <a href="{{ route('school.view', ['id' => $school->id]) }}">
+                        <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
                             {{ $school->name }}
                         </a>
                     </x-table.cell>
