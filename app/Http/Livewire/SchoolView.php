@@ -17,8 +17,7 @@ class SchoolView extends Component
     public function mount($hashedId)
     {
         $this->checkUserRole();
-
-        $id = Hashids::decodeHex($hashedId)[0];
+        $id = Hashids::decodeHex($hashedId);
         $this->school = School::findOrFail($id);
         
         // redirect to the manage users page if the user is a franchise level
