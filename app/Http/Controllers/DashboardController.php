@@ -28,7 +28,7 @@ class DashboardController extends Controller
         }
         
         if ($user->isSchoolLevel()) {
-            return redirect()->route('school.view', ['id' => $user->getSchool()->id]);
+            return redirect()->route('school.view', ['hashedId' => $user->getSchool()->getHashedIdAttribute()]);
         } 
         
         return view('dashboard', [
