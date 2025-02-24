@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\UserInviteMail;
 use Illuminate\View\View;
 use Inertia\Inertia;
+use Vinkla\Hashids\Facades\Hashids;
 
 class InviteController extends Controller
 {
@@ -27,8 +28,10 @@ class InviteController extends Controller
     /**
      * Invite a single user.
      */
-    public function inviteSingleUser(int $id)
+    public function inviteSingleUser(string $id)
     {
+        $id = Hashids::decodeHex($id);
+        
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::findOrFail($id);
@@ -38,8 +41,11 @@ class InviteController extends Controller
         return redirect()->route('users')->with('success', config('app.dialog_config.invite.sent.message') ." ". $user->email);
     }
 
-    public function checkUserStatus(int $id)
+    public function checkUserStatus(string $id)
     {
+
+        $id = Hashids::decodeHex($id);
+        
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::findOrFail($id);

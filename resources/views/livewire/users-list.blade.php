@@ -41,7 +41,8 @@
                         @php
                             $status = $user->status;
                             $badge = $UserStatusHelper->getBadge($status);
-                            $userId = $user->id;
+                            //$userId = $user->id;
+                            $userId = $user->getHashedIdAttribute();
                             $inviteRoute = route("invite.single", ["id" => $userId ]);
                             $impersonateRoute = route("impersonate.store", ["id" => $userId ]);
                             $checkStatusRoute = route('invite.check-user-status', ['id' => $userId]);

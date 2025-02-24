@@ -7,11 +7,14 @@ use App\Helpers\Constants\LogConstants;
 use App\Models\User;
 use Auth;
 use App\Helpers\SchoolContextHelper;
+use Vinkla\Hashids\Facades\Hashids;
 
 class ImpersonateController extends Controller
 {
-    public function store(int $id)
+    public function store(string $id)
     {
+        $id = Hashids::decodeHex($id);
+        
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::findOrFail($id);
