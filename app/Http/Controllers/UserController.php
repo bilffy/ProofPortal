@@ -38,8 +38,8 @@ class UserController extends Controller
 
     protected function validator(array $data)
     {
-        return Validator::make($data,
-        [
+        $schema1 = 
+            [
                 'firstname' => 'required|string|max:255',
                 'lastname' => 'required|string|max:255',
                 'email' => [
@@ -53,14 +53,29 @@ class UserController extends Controller
                     // new MspEmailValidation(), //Disable for now
                 ],
                 'role' => 'required|integer',
-            ],
+            ];
+        $schema2 = 
             [
                 'firstname' => 'First Name is required.',
                 'lastname' => 'Last Name is required.',
                 'email.email' => 'Invalid format.',
                 'email.unique' => config('app.dialog_config.account_exist.message')
-            ]
-        );
+            ];
+        
+
+        if ($data['role'] == 3 && $data['franchise'] == 0) {
+            $schema1 = array_merge($schema1, ['franchise' => 'required|integer']);
+            $schema2 = array_merge($schema2, ['franchise.required' => 'Franchise is required.']);
+        }
+    
+        if ($data['role'] > 3 && $data['school'] == 0) {
+            $schema1 = array_merge($schema1, ['school' => 'required|integer']);
+            $schema2 = array_merge($schema2, ['school.required' => 'School is required.']);
+        }
+        
+        $validate = Validator::make($data, $schema1, $schema2);
+        
+        return $validate;
     }
 
     public function index(Request $request)
@@ -103,6 +118,7 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validator = $this->validator($request->all());
+        
         if ($validator->fails()) {
             return redirect()->back()->withInput()->withErrors($validator);
         }

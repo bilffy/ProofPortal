@@ -1,6 +1,9 @@
 @php
     $franchiseOptions = [];
+    $franchiseOptions[''] = null;
     $schoolOptions = [];
+    $schoolOptions[''] = null;
+    $roleOptions[''] = null;
     foreach ($roles as $role) {
         $roleOptions[$role->id] = $role->name;
     }
@@ -13,6 +16,9 @@
     $emailError = !empty($errors->get('email')) ? $errors->get('email')[0] : '';
     $fNameError = !empty($errors->get('firstname')) ? $errors->get('firstname')[0] : '';
     $lNameError = !empty($errors->get('lastname')) ? $errors->get('lastname')[0] : '';
+    $roleError = !empty($errors->get('role')) ? $errors->get('role')[0] : '';
+    $franchiseError = !empty($errors->get('franchise')) ? $errors->get('franchise')[0] : '';
+    $schoolError = !empty($errors->get('school')) ? $errors->get('school')[0] : '';
 @endphp
 
 @extends('layouts.authenticated')
@@ -75,11 +81,14 @@
 
             <div class="flex flex-row gap-4 max-w-screen-md mb-8">
                 <div class="w-full">
-                    <x-form.select class="w-full" context="role" :options="$roleOptions" required>User Role</x-form.select>
+                    <x-form.select class="w-full" value="{{ old('role') }}" context="role" :options="$roleOptions" required>User Role</x-form.select>
+                    <x-form.input.error errorMessage="{{$roleError}}" />
                 </div>
                 <div id="level" class="w-full invisible">
-                    <x-form.select class="w-full" context="school" :options="$schoolOptions" required>School</x-form.select>
-                    <x-form.select class="w-full" context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
+                    <x-form.select class="w-full" value="{{ old('school') }}" context="school" :options="$schoolOptions" required>School</x-form.select>
+                    <x-form.input.error errorMessage="{{$schoolError}}" />
+                    <x-form.select class="w-full" value="{{ old('franchise') }}" context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
+                    <x-form.input.error errorMessage="{{$franchiseError}}" />
                 </div>
             </div>
             
@@ -98,7 +107,8 @@
 <script type="module">
     let user = {{ Js::from($user) }}
     let roles = {{ Js::from($roleOptions) }}
-
+    var selectedRole = "{{ old('role') }}";
+        
     function hideOrShowSelect(query, event) {
         switch (event) {
             case 'HIDE':
@@ -148,7 +158,12 @@
         $('#select_role').change(toggleLevelOptions);
         $('#select_school').select2();
         $('#select_franchise').select2();
-        updateSelectByRole(roles[Object.keys(roles)[0]]);
+        
+        if (selectedRole) {
+            updateSelectByRole(roles[selectedRole]);
+        } else {
+            updateSelectByRole(roles[Object.keys(roles)[0]]);
+        }
     });
 </script>
 @endpush

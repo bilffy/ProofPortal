@@ -1,4 +1,4 @@
-@props(['context' => '', 'options' => [], 'required' => false])
+@props(['context' => '', 'options' => [], 'required' => false, 'value' => null])
 
 <label id="select_{{$context}}_label" for="{{ $context }}" class="block mb-2">
     {{ $slot }}
@@ -14,6 +14,6 @@
     ]) }}
 >
     @foreach ($options as $id => $name)
-        <option value="{{$id}}">{{$name}}</option>
+        <option @if($value == $id): selected @endif value="{{$id}}">{{$name}}</option>
     @endforeach
 </select>
