@@ -183,8 +183,7 @@ class ImageService
 
         // make sure the download is available before showing the images
         $query->where(function ($query) {
-            $query->where('jobs.download_available_date', '<=', now())
-                ->orWhere('jobs.portrait_download_date', '<=', now());
+            $query->where('jobs.portrait_download_date', '<=', now());
         });
         
         if($searchTerm) {
@@ -221,8 +220,7 @@ class ImageService
         
         // make sure the download is available before showing the images
         $query->where(function ($query) {
-            $query->where('jobs.download_available_date', '<=', now())
-                ->orWhere('jobs.group_download_date', '<=', now());
+            $query->where('jobs.group_download_date', '<=', now());
         });
         
         if($searchTerm) {
