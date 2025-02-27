@@ -677,9 +677,12 @@ jQuery(document).ready(function($) {
     };
 
     //multi-selects for the notifications
-    $('#download_portrait').multiselect(multiSelectOptionsDefault);
-    $('#download_group').multiselect(multiSelectOptionsDefault);
-    $('#download_schoolPhoto').multiselect(multiSelectOptionsDefault);
+    
+    // Commented out as per the requirement (MSP-175), will implement the granular permissions for photo downloads later
+    //$('#download_portrait').multiselect(multiSelectOptionsDefault);
+    //$('#download_group').multiselect(multiSelectOptionsDefault);
+    //$('#download_schoolPhoto').multiselect(multiSelectOptionsDefault);
+    
     // $('#notification_portrait').multiselect(multiSelectOptionsDefault);
     // $('#notification_group').multiselect(multiSelectOptionsDefault);
     // $('#notification_schoolPhoto').multiselect(multiSelectOptionsDefault); 

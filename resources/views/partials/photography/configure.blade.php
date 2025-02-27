@@ -177,7 +177,9 @@
 
                     {{-- Email Notification for Download --}}
                     <form id='digital_download_form'>
-                        <div class="row mt-4">
+                        
+                        {{--Commented out as per the requirement (MSP-175), will implement the granular permissions for photo downloads later.--}}
+                        {{--<div class="row mt-4">
                             <div class="col-12 m-auto">
                                 <p class="h5 lead mb-1"><strong>Digital Download Permission</strong></p>
                                 <p>Manage school download permission on bases of roles.</p>
@@ -185,7 +187,7 @@
                         </div>
 
                         <div class="row text mt-3">
-                            {{-- <label class="col-md-12 form-control-label mt-1" for="proofing-timeline">Download Permission</label> --}}
+                            --}}{{-- <label class="col-md-12 form-control-label mt-1" for="proofing-timeline">Download Permission</label> --}}{{--
             
                             <div class="col-md-4">
                                 <p class="mt-1 mb-1">Portrait</p>
@@ -213,7 +215,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                        </div>
+                        </div>--}}
 
                         <div class="row d-none">
                             <div class="col-12 m-auto">
