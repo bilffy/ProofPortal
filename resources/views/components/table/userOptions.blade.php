@@ -22,9 +22,8 @@
                 </li>
             @endif
         @endcan
-        <li>
-            <x-button.dropdownLink href="#" class="hover:bg-primary hover:text-white">Edit</x-button.dropdownLink>
-        </li>
+        
+        
 {{--            @canImpersonate($guard = null)--}}
                 @if ($PermissionHelper::canImpersonate($userId))
                     <li>
