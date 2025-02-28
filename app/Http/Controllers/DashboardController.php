@@ -28,7 +28,10 @@ class DashboardController extends Controller
         }
         
         if ($user->isSchoolLevel()) {
-            return redirect()->route('school.view', ['hashedId' => $user->getSchool()->getHashedIdAttribute()]);
+            // redirect school users to Photography section for now
+            return redirect()->route('photography');
+            // commented out as per ticket MSP-161
+            //return redirect()->route('school.view', ['hashedId' => $user->getSchool()->getHashedIdAttribute()]);
         } 
         
         return view('dashboard', [
