@@ -163,14 +163,14 @@
                 <p>Select when Portrait and Group Digital Images will be available on the portal for the school to view. The default date displayed is the date set in K2 for Parent Digital Downloads, which is also the earliest possible date. You can update the dates below if you wish to push the release of photos in the portal to a later date.</p>
 
                 <div class="flex gap-4">
-                    <div class="w-[213px] ">
+                    <div class="w-[213px] flex items-center">
                         <strong>Portraits</strong>
                     </div>
                     <div class="w-[502px]"> 
                         <div class="relative" id="portrait_download_start_container">
                             <input datepicker id="portrait_download_start_picker" type="text" 
                                 class="bg-gray-50 border border-neutral text-gray-900 
-                                        text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 
+                                        text-sm rounded-lg focus:ring-blue-500 focus:border-primary 
                                         block w-full pr-10 p-2.5" placeholder="Select date">
                             <div class="absolute right-[16px] flex items-center top-[14px] pointer-events-none">
                                 <span class="fa fa-calendar"></span>
@@ -179,7 +179,7 @@
                     </div>
                 </div>
                 <div class="flex gap-4">
-                    <div class="w-[213px] ">
+                    <div class="w-[213px] flex items-center">
                         <strong>Groups</strong>
                     </div>
                     <div class="w-[502px]"> 
