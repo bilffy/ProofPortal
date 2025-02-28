@@ -181,6 +181,11 @@ class ImageService
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
 
+        // make sure the download is available before showing the images
+        $query->where(function ($query) {
+            $query->where('jobs.portrait_download_date', '<=', now());
+        });
+        
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
                 $query->where('subjects.firstname', 'like', "%$searchTerm%")
@@ -212,7 +217,12 @@ class ImageService
         ->where('jobs.ts_schoolkey', $schoolKey)
         // ->where('images.keyorigin', 'Folder')
         ;
-
+        
+        // make sure the download is available before showing the images
+        $query->where(function ($query) {
+            $query->where('jobs.group_download_date', '<=', now());
+        });
+        
         if($searchTerm) {
             $query->where('folders.ts_foldername', 'like', "%$searchTerm%");
         }

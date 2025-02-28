@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Auth;
+use Vinkla\Hashids\Facades\Hashids;
 
 class PermissionHelper
 {
@@ -80,11 +81,13 @@ class PermissionHelper
     /**
      * @return bool
      */
-    public static function canImpersonate(int $userId): bool
+    public static function canImpersonate(string $userId): bool
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
 
+        $userId = Hashids::decodeHex($userId);
+        
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::find($userId);

@@ -39,7 +39,8 @@
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
-            <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+            {{--Proofing are not yet implemented, hide for now until the blueprint implemented into the system--}}
+            {{--<x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>--}}
         @endunlessrole
     @endcan
 
@@ -50,7 +51,8 @@
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
         @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
-            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+            {{-- Reports are not yet implemented, hide for now until the blueprint implemented into the system--}}
+            {{--<x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>--}}
         @endcan
     @endcan
     {{-- <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">For Testing</x-layout.navItem> --}}

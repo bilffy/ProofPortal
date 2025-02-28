@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
 use Auth;
+use Vinkla\Hashids\Facades\Hashids;
 
 class User extends Authenticatable
 {
@@ -210,6 +211,14 @@ class User extends Authenticatable
         return false;
     }
 
+    /**
+     * Get the Hashed ID attribute.
+     */
+    public function getHashedIdAttribute()
+    {
+        return Hashids::encodeHex("$this->id");
+    }
+    
     /**
      * @return bool
      */
