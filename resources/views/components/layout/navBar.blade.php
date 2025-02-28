@@ -9,6 +9,7 @@
         RoleHelper::ROLE_ADMIN,
         RoleHelper::ROLE_FRANCHISE
     ];
+    $user = Auth::user();
 @endphp
 @hasanyrole(implode("|", $nonSchoolLevelRoles))
     @php
@@ -21,7 +22,11 @@
     <div class="py-4 px-2 flex justify-center ">
         <div id="logo" class="{{ $visibility ? "logoSM" : "logoRegular" }}"></div>
     </div>
-    <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
+    
+    {{--Hide for now as per ticket MSP-161, this only apply for school user--}}
+    @if (!$user->isSchoolLevel())
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
+    @endif
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PHOTOGRAPHY))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
