@@ -122,11 +122,11 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
-    
+
     'invite' => [
-        'expiration_days' => env('INVITE_EXPIRATION_DAYS', 14), 
+        'expiration_days' => env('INVITE_EXPIRATION_DAYS', 14),
     ],
-    
+
     'otp' => [
         'expiration_minutes' => env('OTP_EXPIRATION_MINUTES', 60),
         'secret_pin' => env('OTP_SECRET_PIN'),
@@ -134,9 +134,9 @@ return [
     ],
 
     'password_min_length' => 13,
-    
+
     'image_repository' => env('IMAGE_REPOSITORY', 'images'),
-    
+
     // Dialog Config, used for displaying dialog messages
     'dialog_config' => [
         'account_exist' => [
@@ -164,7 +164,7 @@ return [
                 'message1' => 'Security code has been resent to your email.',
                 'message2' => 'We’ve sent a security code to your email. Please enter it below to continue.',
             ],
-            
+
             'expired' => [
                 'message' => 'OTP has expired.',
             ],
@@ -194,14 +194,14 @@ return [
             'options' => [
                 'title' => 'Download Options',
                 'sub_title' => 'Selections required',
-                'resolution_selection' => 'Please Select the resolution and folder structure of your images',
-                'folder_format_selection' => 'Select folder format'
+                'resolution_selection' => 'Select an image resolution option',
+                'folder_format_selection' => 'Select a folder structure option'
             ],
             'request' => [
-                'title' => 'Download Request',
+                'title' => 'Confirm Download',
                 'confirm' => 'Are you sure you want to download',
                 'number_of' => 'images',
-                'success' => 'Download request successful'
+                'success' => 'Success! If downloading multiple images, you will receive an email with a secure link to download your photos. This may take several minutes to process.'
             ]
         ],
     ]
