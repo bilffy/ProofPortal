@@ -49,21 +49,23 @@
                             </select>
                         </div>
                     </div>
-                    <p>{{ $configMessages['options']['folder_format_selection']  }}</p>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex flex-col gap-2">
-                            <select id="folder_format" class="input">
-                                <option value="all">All images in one folder</option>
-                                <option value="organize">Organise images in folders</option>
-                            </select>
+                    <div id="folder_format_selection">
+                        <p>{{ $configMessages['options']['folder_format_selection']  }}</p>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-col gap-2">
+                                <select id="folder_format" class="input">
+                                    <option value="all">All images in one folder</option>
+                                    <option value="organize">Organise images in folders</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                    </div>    
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
                 <x-modal.footer>
                     <x-button.secondary data-modal-hide="showOptionsDownloadModal">Cancel</x-button.secondary>
-                    <x-button.primary onclick="showConfirmDownloadRequest()" id="show-confirm-download-btn">Download</x-button.primary>
+                    <x-button.primary onclick="showConfirmDownloadRequest()" id="show-confirm-download-btn">Next</x-button.primary>
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
@@ -189,6 +191,17 @@
     
     function showOptionsDownloadRequest() {
         if ($(".grid").attr('total-image-count') != 0) {
+
+            const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
+
+            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
+            
+            if (selectedImagesLength == 1) {
+                $("#folder_format_selection").hide();
+            } else {
+                $("#folder_format_selection").show();
+            }
+            
             showOptionsDownloadModal.show();
         } else {
             alert('No images found');
