@@ -190,5 +190,19 @@ return [
             'title' => 'Impersonate User',
             'message' => 'Are you sure you want to log out and log back in as',
         ],
+        'download' => [
+            'options' => [
+                'title' => 'Download Options',
+                'sub_title' => 'Selections required',
+                'resolution_selection' => 'Please Select the resolution and folder structure of your images',
+                'folder_format_selection' => 'Select folder format'
+            ],
+            'request' => [
+                'title' => 'Download Request',
+                'confirm' => 'Are you sure you want to download',
+                'number_of' => 'images',
+                'success' => 'Download request successful'
+            ]
+        ],
     ]
 ];

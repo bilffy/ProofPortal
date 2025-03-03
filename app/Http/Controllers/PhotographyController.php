@@ -56,6 +56,7 @@ class PhotographyController extends Controller
             [
                 'user' => new UserResource(Auth::user()), 
                 'currentTab' => 'portraits',
+                'configMessages' => config('app.dialog_config.download')
             ]
         );
     }
