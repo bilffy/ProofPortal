@@ -36,11 +36,11 @@
             </x-tabs.tabContent>
         </x-tabs.tabContentContainer>
 
-        <x-modal.base id="showOptionsDownloadModal" title="Download Options" body="components.modal.body" footer="components.modal.footer">
+        <x-modal.base id="showOptionsDownloadModal" title="{{ $configMessages['options']['title']  }}" body="components.modal.body" footer="components.modal.footer">
             <x-slot name="body">
                 <x-modal.body>
-                    <div><b>Selections required</b></div>
-                    <p>Please select the resolution and folder structure for your images</p>
+                    <div><b>{{ $configMessages['options']['sub_title']  }}</b></div>
+                    <p>{{ $configMessages['options']['resolution_selection']  }}</p>
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col gap-2">
                             <select id="image_res" class="input">
@@ -49,7 +49,7 @@
                             </select>
                         </div>
                     </div>
-                    <p>Select folder format</p>
+                    <p>{{ $configMessages['options']['folder_format_selection']  }}</p>
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col gap-2">
                             <select id="folder_format" class="input">
@@ -68,7 +68,7 @@
             </x-slot>
         </x-modal.base>
         
-        <x-modal.base id="confirmDownloadModal" title="Download Request" body="components.modal.body" footer="components.modal.footer">
+        <x-modal.base id="confirmDownloadModal" title="{{ $configMessages['request']['title']  }}" body="components.modal.body" footer="components.modal.footer">
             <x-slot name="body">
                 <x-modal.body>
                     <p id="confirm-download-body"></p>
@@ -81,15 +81,15 @@
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
-        <x-modal.base id="successDownloadModal" title="Download Request" body="components.modal.body" footer="components.modal.footer">
+        <x-modal.base id="successDownloadModal" title="{{ $configMessages['request']['title']  }}" body="components.modal.body" footer="components.modal.footer">
             <x-slot name="body">
                 <x-modal.body>
-                    <p id="success-download-body">Download request successful</p>
+                    <p id="success-download-body">{{ $configMessages['request']['success']  }}</p>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
                 <x-modal.footer>
-                    <x-button.primary data-modal-hide="successDownloadModal">Ok</x-button.primary>
+                    <x-button.primary data-modal-hide="successDownloadModal">Dismiss</x-button.primary>
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
@@ -205,7 +205,7 @@
         if ($(".grid").attr('total-image-count') != 0) {
             confirmDownloadModal.show();
             const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
-            $('#confirm-download-body').html("Are you sure you want to download <b>" + selectedImagesLength + "</b> images?");
+            $('#confirm-download-body').html("{{ $configMessages['request']['confirm']  }} <b>" + selectedImagesLength + "</b> {{ $configMessages['request']['number_of']  }}?");
         } else {
             alert('No images found');
         }
