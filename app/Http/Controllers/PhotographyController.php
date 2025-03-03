@@ -47,7 +47,12 @@ class PhotographyController extends Controller
 
     public function showConfiguration()
     {
-        return view('photography', ['user' => new UserResource(Auth::user()), 'currentTab' => 'configure']);
+        return view('photography', 
+            [
+                'user' => new UserResource(Auth::user()), 
+                'currentTab' => 'configure',
+                'configMessages' => config('app.dialog_config.download')
+            ]);
     }
 
     public function showPortraits()
@@ -67,13 +72,20 @@ class PhotographyController extends Controller
             [
                 'user' => new UserResource(Auth::user()), 
                 'currentTab' => 'groups',
+                'configMessages' => config('app.dialog_config.download')
             ]
         );
     }
 
     public function showOthers()
     {
-        return view('photography', ['user' => new UserResource(Auth::user()), 'currentTab' => 'others']);
+        return view('photography', 
+            [
+                'user' => new UserResource(Auth::user()), 
+                'currentTab' => 'others',
+                'configMessages' => config('app.dialog_config.download')
+            ]
+        );
     }
 
     public function requestDownloadDetails(Request $request)
