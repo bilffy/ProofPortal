@@ -295,7 +295,10 @@
             $(downloadBtn).html("Download");
             resetImages();
             document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
-            successDownloadModal.show();
+
+            if (selectedImages.length !== 1) {
+                successDownloadModal.show();
+            }
         } catch (error) {
             console.error('Error submitting download request:', error);
         }
