@@ -6,7 +6,6 @@ use App\Http\Controllers\InviteController;
 use App\Http\Controllers\PhotographyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProofingController;
-use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
@@ -93,6 +92,11 @@ Route::middleware('auth')->group(function () {
     //Configure School - view
         // Route::get('/config-school', [ConfigureController::class, 'configSchool'])->name('config-school');
 });
+
+// Livewire::setUpdateRoute(function ($handle) {
+//     return Route::post('/livewire/update', $handle)
+//         ->middleware(ThrottleRequests::class);
+// });
 
 
 require __DIR__.'/auth.php';
