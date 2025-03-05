@@ -36,7 +36,7 @@
             </div>
             <x-form.select context="groups_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
             <x-form.select context="groups_view" :options="[]" class="mb-4">View</x-form.select>
-            <x-form.select context="groups_class" :options="[]" class="mb-4" multiple>Classes</x-form.select>
+            <x-form.select context="groups_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
         <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
     </div>
@@ -74,7 +74,7 @@
         $('#select_groups_year').change(updateGridView);
         $('#select_groups_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
         $('#select_groups_view').change(updateGridView);
-        $('#select_groups_class').select2({placeholder: "Select a Class"});
+        $('#select_groups_class').select2({placeholder: "Select a Class/Group"});
         $('#select_groups_class').change(updateGridView);
     });
     
