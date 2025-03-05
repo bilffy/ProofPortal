@@ -5,6 +5,7 @@
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
                 <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
+                <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
             @endrole
             <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
             <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
@@ -23,6 +24,9 @@
             @role($RoleHelper::ROLE_FRANCHISE)
                 <x-tabs.tabContent id="configure">
                     @include('partials.photography.configure')
+                </x-tabs.tabContent>
+                <x-tabs.tabContent id="configure-new">
+                    @include('partials.photography.configure-new')
                 </x-tabs.tabContent>
             @endrole
             <x-tabs.tabContent id="portraits">
