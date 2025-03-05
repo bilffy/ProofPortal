@@ -1,6 +1,6 @@
 @section('css')
     {{-- Flatpickr --}}
-    <link href="{{ Vite::asset('public/proofing-assets/vendors/css/flatpickr.min.css')}}" rel="stylesheet" />
+    <link href="{{ Vite::asset('public/proofing-assets/vendors/css/flatpickr.min.css') }}" rel="stylesheet" />
     {{-- Bootstrap Multiselect --}}
     <link href="{{ Vite::asset('public/proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/css/bootstrap-multiselect.css')}}" rel="stylesheet" />
     {{-- Select2 --}}

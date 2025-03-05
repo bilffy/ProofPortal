@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}", CheckUserRestriction::class]], function () {
         Route::get('/photography', [PhotographyController::class, 'index'])->name('photography');
         Route::get('/photography/configure', [PhotographyController::class, 'showConfiguration'])->middleware(['role:Franchise'])->name('photography.configure');
+        Route::get('/photography/configure-new', [PhotographyController::class, 'showConfiguration'])->middleware(['role:Franchise'])->name('photography.configure-new');
         Route::get('/photography/portraits', [PhotographyController::class, 'showPortraits'])->name('photography.portraits');
         Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
         Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
