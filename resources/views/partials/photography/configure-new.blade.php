@@ -1,11 +1,11 @@
 @section('css')
     {{-- Flatpickr --}}
     
-    <link href="{{ Vite::asset('public/proofing-assets/vendors/css/flatpickr.min.css') }}" rel="stylesheet" />
+    <link href="{{ URL::asset('proofing-assets/vendors/css/flatpickr.min.css') }}" rel="stylesheet" />
     {{-- Bootstrap Multiselect --}}
-    <link href="{{ Vite::asset('public/proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/css/bootstrap-multiselect.css')}}" rel="stylesheet" />
+    <link href="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/css/bootstrap-multiselect.css')}}" rel="stylesheet" />
     {{-- Select2 --}}
-    <link href="{{ Vite::asset('public/proofing-assets/plugins/select2/css/select2.min.css')}}" rel="stylesheet" />
+    <link href="{{ URL::asset('proofing-assets/plugins/select2/css/select2.min.css')}}" rel="stylesheet" />
 
     <style>
         .custom-file-label:hover {
@@ -72,7 +72,7 @@
     <div class="flex w-full mb-16 flex-col">
         <div class="bg-neutral-200 w-full p-4 rounded flex gap-4">
             <div class="relative bg-white w-[341px] h-[246px] mb-4 p-4 items-center flex justify-center">
-                <img src={{ Vite::asset('public/proofing-assets/img/schoolLogo/1.png') }} alt="" class="object-contain w-full h-full">
+                <img src={{ URL::asset('proofing-assets/img/schoolLogo/1.png') }} alt="" class="object-contain w-full h-full">
                 <button 
                     class="
                         p-2 rounded-s
@@ -241,9 +241,9 @@
         jQuery.noConflict();
     </script>
 
-    <script src="{{ Vite::asset('public/proofing-assets/vendors/moment/moment.js') }}"></script>
-    <script src="{{ Vite::asset('public/proofing-assets/vendors/js/flatpickr.js') }}"></script>
-    <script src="{{ Vite::asset('public/proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/js/bootstrap-multiselect.js') }}"></script>
-    <script src="{{ Vite::asset('public/proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
-    <script src="{{ Vite::asset('public/proofing-assets/js/school/configure.js') }}"></script>
+    <script src="{{ URL::asset('proofing-assets/vendors/moment/moment.js') }}"></script>
+    <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>
+    <script src="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/js/bootstrap-multiselect.js') }}"></script>
+    <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
+    <script src="{{ URL::asset('proofing-assets/js/school/configure.js') }}"></script>
 @stop
