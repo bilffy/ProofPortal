@@ -8,6 +8,7 @@
     @endif
     
     <form wire:submit.prevent="submit">
+        @csrf
         <div class="flex flex-col mb-4">
             <input
                 class="border rounded-md p-2 border-neutral"
@@ -49,3 +50,21 @@
     </form>
 </main>
 
+@push('scripts')
+<script type="module">
+    import { encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+    
+    window.addEventListener('livewire:init', () => {
+        Livewire.hook('commit.prepare', ({ component }) => {
+            const { ephemeral, reactive } = component;
+            const { email, password } = Alpine.raw(reactive);
+            
+            component.ephemeral = {
+                ...component.ephemeral,
+                email: encryptData(email),
+                password: encryptData(password),
+            };
+        });
+    });
+</script>
+@endpush

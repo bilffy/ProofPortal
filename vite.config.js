@@ -32,7 +32,8 @@ export default defineConfig({
                     'resources/js/helpers/pagination.helper.ts',
                     'resources/js/helpers/roles.helper.ts',
                     'resources/js/helpers/types.helper.ts',
-                    'resources/js/helpers/utils.helper.ts'
+                    'resources/js/helpers/utils.helper.ts',
+                    'resources/js/helpers/encryption.helper.ts',
                 ], 
             refresh: true,
         }),

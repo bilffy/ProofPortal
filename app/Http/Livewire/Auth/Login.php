@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Auth;
 
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
+use App\Helpers\EncryptionHelper;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
@@ -31,13 +32,23 @@ class Login extends Component
     
     public function submit(UserService $userService)
     {   
+        // Decrypt the user credentials
+        $this->email = EncryptionHelper::simpleDecrypt($this->email);
+        $this->password = EncryptionHelper::simpleDecrypt($this->password);
+        // Validate
         $this->validate();
+        // Transfer data to local variables
+        $email = $this->email;
+        $password = $this->password;
+        // Encrypt the user credentials back
+        $this->email = EncryptionHelper::simpleEncrypt($this->email);
+        $this->password = EncryptionHelper::simpleEncrypt($this->password);
 
         // Validate the user credentials, if valid, send OTP to the user
         // without authenticating the user
-        if (Auth::validate(['email' => $this->email, 'password' => $this->password])) {
+        if (Auth::validate(['email' => $email, 'password' => $password])) {
             /** @var User $user */
-            $user = User::where('email', $this->email)->firstOrFail();
+            $user = User::where('email', $email)->firstOrFail();
             
             //check if OTP is disabled
             if (config('app.otp.disable')) {
@@ -52,7 +63,7 @@ class Login extends Component
             return redirect()->route(
                 'otp.show.form',
                 ['token' => Str::random(60)])
-                ->with('msp-user', $this->email);
+                ->with('msp-user', $email);
         }
         
         throw ValidationException::withMessages([

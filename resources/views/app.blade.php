@@ -8,7 +8,7 @@
 
     <title>@yield('title', config('app.name', 'Laravel'))</title>
     <!-- MSP LOGO -->
-    <link rel="shortcut icon" href="{{ asset('proofing-assets/img/msp_logo.svg') }}">
+    <link rel="shortcut icon" href="{{ Vite::asset('public/proofing-assets/img/msp_logo.svg') }}">
     <!-- Fonts -->
     <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
     <!-- Scripts and Styles -->
