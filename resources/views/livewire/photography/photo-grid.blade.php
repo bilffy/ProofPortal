@@ -6,12 +6,14 @@
         <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $paginatedImages->total() }}">
             @foreach ($paginatedImages as $image)
                 @php
+                    $isFolder = $image['category'] == 'FOLDER';
                     $imageId = $image['id'];
-                    $name = $image['category'] == 'FOLDER'? $image['classGroup'] : $image['firstname'] . ' ' . $image['lastname'] . ' - ' . $image['classGroup'];
+                    $name = $isFolder ? $image['classGroup'] : $image['firstname'] . ' ' . $image['lastname'];
+                    $folderName = $isFolder ? '' : $image['classGroup'];
                     $landscape = !$image['isPortrait'];
                     $key = "img_{{$imageId}}";
                 @endphp
-                <livewire:photography.image-frame :$imageId :$name :$landscape :key="$key" lazy="on-load"/>
+                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :key="$key" lazy="on-load"/>
             @endforeach
         </div>
         <div class="mt-4 mb-4 flex justify-center">
