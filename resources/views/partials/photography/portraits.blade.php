@@ -73,7 +73,7 @@
         $('#select_portaits_year').change(updateGridView);
         $('#select_portaits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
         $('#select_portaits_view').change(updateGridView);
-        $('#select_portaits_class').select2({placeholder: "Select a Class/Group"});
+        $('#select_portaits_class').select2({placeholder: "All"});
         $('#select_portaits_class').change(updateGridView);
     });
 
