@@ -3,18 +3,19 @@
     use App\Helpers\PhotographyHelper;
     use App\Services\ImageService;
 
+    $category = PhotographyHelper::TAB_PORTRAITS;
     $imageService = new ImageService();
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
 
-    $portraitYearOptions = $imageService->getAllYears()->toArray();
-    $defaultSeasonId = $portraitYearOptions[0]->ts_season_id;
+    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
+    $defaultSeasonId = empty($portraitYearOptions) ? 0 : $portraitYearOptions[0]->ts_season_id;
+    $yearOptions = [];
     foreach ($portraitYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
     }
 
     $season = $defaultSeasonId;
-    $category = PhotographyHelper::TAB_PORTRAITS;
     $key = "photo-grid-portraits-$schoolKey";
 @endphp
 <div class="relative">
@@ -37,7 +38,16 @@
             <x-form.select context="portaits_view" :options="[]" class="mb-4">View</x-form.select>
             <x-form.select context="portaits_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
-        <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+        @if ($season)
+            <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+        @else
+            @php
+                $isFranchiseLevel = Auth::user()->isFranchiseLevel();
+                $level = $isFranchiseLevel ? 'franchise_level' : 'school_level';
+                $color = $isFranchiseLevel ? 'alert' : 'neutral-300';
+            @endphp
+            <div class="w-full text-center text-{{ $color  }}">{{ config('app.dialog_config.photography.no_jobs.' . $level) }}</div>
+        @endif
     </div>
 </div>
 
@@ -66,6 +76,13 @@
             select.append(new Option(text, value));
         });
     }
+    function disableForms() {
+        $('#select_portaits_year').prop('disabled', true);
+        $('#select_portaits_view').prop('disabled', true);
+        $('#select_portaits_class').prop('disabled', true);
+        $('#image-search-portraits').prop('disabled', true);
+        $('#btn-download').prop('disabled', true);
+    }
 
     window.performPortaitSearch = performPortaitSearch;
     window.addEventListener('load', () => {
@@ -75,6 +92,10 @@
         $('#select_portaits_view').change(updateGridView);
         $('#select_portaits_class').select2({placeholder: "All"});
         $('#select_portaits_class').change(updateGridView);
+
+        @if ($season == 0)
+            disableForms();
+        @endif
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {

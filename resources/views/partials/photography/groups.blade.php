@@ -3,18 +3,19 @@
     use App\Helpers\PhotographyHelper;
     use App\Services\ImageService;
 
+    $category = PhotographyHelper::TAB_GROUPS;
     $imageService = new ImageService();
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
 
-    $groupYearOptions = $imageService->getAllYears()->toArray();
-    $defaultSeasonId = $groupYearOptions[0]->ts_season_id;
+    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
+    $defaultSeasonId = empty($portraitYearOptions) ? 0 : $portraitYearOptions[0]->ts_season_id;
+    $yearOptions = [];
     foreach ($groupYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
     }
     
     $season = $defaultSeasonId;
-    $category = PhotographyHelper::TAB_GROUPS;
     $key = "photo-grid-groups-$schoolKey";
 @endphp
 
@@ -38,7 +39,16 @@
             <x-form.select context="groups_view" :options="[]" class="mb-4">View</x-form.select>
             <x-form.select context="groups_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
-        <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+        @if ($season)
+            <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+        @else
+            @php
+                $isFranchiseLevel = Auth::user()->isFranchiseLevel();
+                $level = $isFranchiseLevel ? 'franchise_level' : 'school_level';
+                $color = $isFranchiseLevel ? 'alert' : 'neutral-300';
+            @endphp
+            <div class="w-full text-center text-{{ $color  }}">{{ config('app.dialog_config.photography.no_jobs.' . $level) }}</div>
+        @endif
     </div>
 </div>
 
@@ -67,6 +77,13 @@
             select.append(new Option(text, value));
         });
     }
+    function disableForms() {
+        $('#select_groups_year').prop('disabled', true);
+        $('#select_groups_view').prop('disabled', true);
+        $('#select_groups_class').prop('disabled', true);
+        $('#image-search-groups').prop('disabled', true);
+        $('#btn-download').prop('disabled', true);
+    }
 
     window.performGroupSearch = performGroupSearch;
     window.addEventListener('load', () => {
@@ -76,6 +93,10 @@
         $('#select_groups_view').change(updateGridView);
         $('#select_groups_class').select2({placeholder: "All"});
         $('#select_groups_class').change(updateGridView);
+        
+        @if ($season == 0)
+            disableForms();
+        @endif
     });
     
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {

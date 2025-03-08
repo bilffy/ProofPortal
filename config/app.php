@@ -204,5 +204,11 @@ return [
                 'success' => 'Success! If downloading multiple images, you will receive an email with a secure link to download your photos. This may take several minutes to process.'
             ]
         ],
+        'photography' => [
+            'no_jobs' => [
+                'franchise_level' => 'Please go to the Configure tab to enable Jobs & Folders for viewing in the portal',
+                'school_level' => 'Your MSP Photography representative will notify you when your Digital Photos become available on the portal.',
+            ]
+        ]
     ]
 ];
