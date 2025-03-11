@@ -81,8 +81,17 @@
         $('#select_portaits_view').prop('disabled', true);
         $('#select_portaits_class').prop('disabled', true);
         $('#image-search-portraits').prop('disabled', true);
-        $('#btn-download').prop('disabled', true);
+        updateDownloadsForPortraits();
     }
+    function updateDownloadsForPortraits() {
+        @if ($season == 0)
+            $('#btn-download').prop('disabled', true);
+        @else
+            $('#btn-download').prop('disabled', false);
+        @endif
+    }
+
+    window.updateDownloadsForPortraits = updateDownloadsForPortraits;
 
     window.performPortaitSearch = performPortaitSearch;
     window.addEventListener('load', () => {

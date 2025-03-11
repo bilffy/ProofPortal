@@ -8,8 +8,8 @@
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
 
-    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
-    $defaultSeasonId = empty($portraitYearOptions) ? 0 : $portraitYearOptions[0]->ts_season_id;
+    $groupYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
+    $defaultSeasonId = empty($groupYearOptions) ? 0 : $groupYearOptions[0]->ts_season_id;
     $yearOptions = [];
     foreach ($groupYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
@@ -82,8 +82,17 @@
         $('#select_groups_view').prop('disabled', true);
         $('#select_groups_class').prop('disabled', true);
         $('#image-search-groups').prop('disabled', true);
-        $('#btn-download').prop('disabled', true);
+        updateDownloadsForGroups();
     }
+    function updateDownloadsForGroups() {
+        @if ($season == 0)
+            $('#btn-download').prop('disabled', true);
+        @else
+            $('#btn-download').prop('disabled', false);
+        @endif
+    }
+
+    window.updateDownloadsForGroups = updateDownloadsForGroups;
 
     window.performGroupSearch = performGroupSearch;
     window.addEventListener('load', () => {

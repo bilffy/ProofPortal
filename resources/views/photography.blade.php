@@ -99,6 +99,18 @@
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
+        <x-modal.base id="confirmReloadPageModal" title="{{ config('app.dialog_config.configuration.reload.title') }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="success-download-body">{{ config('app.dialog_config.configuration.reload.message') }}</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.primary onclick="reloadPage()" data-modal-hide="confirmReloadPageModal">Continue</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
     </div>
 @endsection
 
@@ -174,21 +186,45 @@
     resetImages();
     
     document.addEventListener('DOMContentLoaded', () => {
+        window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Hide download section when in configuration tab
-                const downloadSection = document.querySelector('#download-section');
-                if ('configure-tab' == e.target.id) {
-                    downloadSection.classList.add('hidden');
-                } else {
-                    downloadSection.classList.remove('hidden');
-                }
-                // reset images selected
-                resetImages();
                 const url = tab.getAttribute('href');
                 history.pushState({ path: url }, '', url);
+                if (window.localStorage.getItem('reloadPhotography')) {
+                    confirmReloadPageModal.show();
+                    const reloadModal = document.getElementById('confirmReloadPageModal');
+                    const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
+                    // Reload when clicking close button
+                    reloadModalCloseBtn.addEventListener('click', () => {
+                        reloadPage();
+                    });
+                    // Reload when clicking outside of the modal
+                    document.addEventListener('click', (e) => {
+                        if (e.target === reloadModal) {
+                            reloadPage();
+                        }
+                    }, false);
+                } else {
+                    // Hide download section when in configuration tab
+                    const downloadSection = document.querySelector('#download-section');
+                    if ('configure-tab' == e.target.id || 'configure-new-tab' == e.target.id) {
+                        downloadSection.classList.add('hidden');
+                    } else {
+                        downloadSection.classList.remove('hidden');
+                        if ('portraits-tab' == e.target.id) {
+                            window.updateDownloadsForPortraits();
+                        } else if ('groups-tab' == e.target.id) {
+                            window.updateDownloadsForGroups();
+                        } else if ('others-tab' == e.target.id) {
+                            window.updateDownloadsForOthers();
+                        }
+                    }
+                    // reset images selected
+                    resetImages();
+                }
             });
         });
     });
@@ -227,11 +263,21 @@
             alert('No images found');
         }
     }
+
+    function updateSchoolConfig() {
+        $('#configure-tab').text('Configure*');
+        $('#configure-new-tab').text('Configure-new*');
+        window.localStorage.setItem('reloadPhotography', true);
+    }
+
+    function reloadPage() {
+        window.location.reload();
+    }
     
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
-    
+    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
@@ -242,8 +288,6 @@
             updateImageState(checkbox, images.includes(imageId));
         }, 50);
     });
-    
-    
     
     async function submitDownloadRequest() {
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
@@ -312,6 +356,8 @@
     window.showConfirmDownloadRequest = showConfirmDownloadRequest;
     window.submitDownloadRequest = submitDownloadRequest;
     window.confirmDownloadRequest = confirmDownloadRequest;
+    window.reloadPage = reloadPage;
+    window.updateSchoolConfig = updateSchoolConfig;
     
 </script>
 @endpush

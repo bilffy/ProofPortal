@@ -209,6 +209,12 @@ return [
                 'franchise_level' => 'Please go to the Configure tab to enable Jobs & Folders for viewing in the portal',
                 'school_level' => 'Your MSP Photography representative will notify you when your Digital Photos become available on the portal.',
             ]
-        ]
+        ],
+        'configuration' => [
+            'reload' => [
+                'title' => 'Configuration Updated',
+                'message' => 'To reflect recent configuration changes, the page will be refreshed.',
+            ]
+        ],
     ]
 ];

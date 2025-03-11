@@ -8,8 +8,8 @@
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
 
-    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
-    $defaultSeasonId = empty($portraitYearOptions) ? 0 : $portraitYearOptions[0]->ts_season_id;
+    $otherYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
+    $defaultSeasonId = empty($otherYearOptions) ? 0 : $otherYearOptions[0]->ts_season_id;
     $yearOptions = [];
     foreach ($otherYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
@@ -82,8 +82,17 @@
         $('#select_others_view').prop('disabled', true);
         $('#select_others_class').prop('disabled', true);
         $('#image-search-groups').prop('disabled', true);
-        $('#btn-download').prop('disabled', true);
+        updateDownloadsForOthers();
     }
+    function updateDownloadsForOthers() {
+        @if ($season == 0)
+            $('#btn-download').prop('disabled', true);
+        @else
+            $('#btn-download').prop('disabled', false);
+        @endif
+    }
+
+    window.updateDownloadsForOthers = updateDownloadsForOthers;
 
     window.addEventListener('load', () => {
         $('#select_others_year').select2({placeholder: "Select a Year"});

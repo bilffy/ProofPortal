@@ -189,6 +189,7 @@ jQuery(document).ready(function($) {
                 processData: false,
                 timeout: 60000,
                 success: function (response) {
+                    window.updateSchoolConfig();
                     resolve(response);
                 },
                 error: function (error) {
@@ -218,6 +219,7 @@ jQuery(document).ready(function($) {
                 processData: false,
                 timeout: 60000,
                 success: function (response) {
+                    window.updateSchoolConfig();
                     resolve(response);
                 },
                 error: function (error) {

@@ -4,8 +4,6 @@ export const getCurrentNav = (): string => {
     const { HOME, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER} = NAV_TABS;
     const path = window.location.pathname.split('/')[1];
     
-    console.log(path);
-    
     switch(path) {
         case '':
         case 'dashboard':
