@@ -19,7 +19,7 @@
         <i class="fa fa-filter fa-sm" :class="selected.length > 0 ? 'text-primary' : 'text-[#CFD1DE]'"></i>
     </x-button.link>
 
-    <div x-show="open" @click.away="open = false" class="absolute z-10 top-8 bg-white divide-y divide-gray-100 rounded-lg shadow">
+    <div x-show="open" @click.away="open = false" class="absolute z-10 top-8 bg-white divide-y divide-gray-100 rounded-lg shadow" x-cloak>
         <ul class="py-2 text-sm text-gray-700 max-h-96 overflow-y-auto" aria-labelledby="dropdownDefaultButton-0">
             @foreach ($options as $key => $option)
                 @if (is_array($option))

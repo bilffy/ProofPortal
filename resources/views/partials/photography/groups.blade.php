@@ -74,7 +74,7 @@
         $('#select_groups_year').change(updateGridView);
         $('#select_groups_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
         $('#select_groups_view').change(updateGridView);
-        $('#select_groups_class').select2({placeholder: "Select a Class/Group"});
+        $('#select_groups_class').select2({placeholder: "All"});
         $('#select_groups_class').change(updateGridView);
     });
     
