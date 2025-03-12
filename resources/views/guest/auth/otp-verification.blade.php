@@ -41,7 +41,7 @@
             const resendButton = $('#resend-button');
             let endTime; // Variable to store the exact end time
             let timeLeft;
-            let enabledResendTime = 50; // Enable the resend button when there are 180 seconds left (3 minutes) 
+            let enabledResendTime = 180; // Enable the resend button when there are 180 seconds left (3 minutes) 
             
             function startCountdown() {
                 resendButton.prop('disabled', true); // Disable the button initially

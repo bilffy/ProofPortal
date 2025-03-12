@@ -20,7 +20,7 @@ class OtpVerification extends Component
     public $email;
     public $message;
     public $token;
-    public $countdownTime = 60; // 5 minutes in seconds (5 * 60)
+    public $countdownTime = 300; // 5 minutes in seconds (5 * 60)
     
     protected $rules = [
         'otp' => 'required',
