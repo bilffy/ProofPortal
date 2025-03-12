@@ -15,6 +15,9 @@ class UserOtp extends Model
         'user_id',
         'otp',
         'expire_on',
+        'otp_attempts',
+        'resend_attempts',
+        'last_resend_at',
     ];
     
     // Define the relationship with users

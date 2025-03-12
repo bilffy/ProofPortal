@@ -6,6 +6,13 @@
             {{ session('status') }}
         </div>
     @endif
+
+    @if (session('otp-reached-max-attempts'))
+        <div class="mb-4 font-bold text-3xl text-red-600">
+            Too many incorrect attempts!<br/>
+        </div>
+        For security reasons, please log in again to request a new code.
+    @endif
     
     <form wire:submit.prevent="submit">
         @csrf

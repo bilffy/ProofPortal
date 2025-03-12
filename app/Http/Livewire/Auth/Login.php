@@ -72,7 +72,12 @@ class Login extends Component
     }
     
     public function render()
-    {
+    {   
+        // check with error from the OTP verification page
+        /*if (session()->has('error')) {
+            $this->addError('email', session('error'));
+        }*/
+        
         return view('guest.auth.login');
     }
 }
