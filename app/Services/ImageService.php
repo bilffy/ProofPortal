@@ -22,6 +22,50 @@ class ImageService
             ->orderBy('code', 'desc')
             ->get();
     }
+
+    /**
+     * Get all the years.
+     * 
+     * @param string $schoolKey
+     * @param string $tab
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAvailableYearsForSchool($schoolKey, $tab = '')
+    {
+        switch ($tab) {
+            case PhotographyHelper::TAB_GROUPS:
+                $visibilityColumn = 'is_visible_for_group';
+                break;
+            case PhotographyHelper::TAB_PORTRAITS:
+            case PhotographyHelper::TAB_OTHERS:
+                $visibilityColumn = 'is_visible_for_portrait';
+                break;
+            default:
+                $visibilityColumn = '';
+                break;
+        }
+        
+        $query = DB::table('seasons')
+            ->join('jobs', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where(function ($q) use ($visibilityColumn) {
+                if (empty($visibilityColumn)) {
+                    $q->where('folders.is_visible_for_group', 1)
+                        ->orWhere('folders.is_visible_for_portrait', 1);
+                } else {
+                    $q->where("folders.$visibilityColumn", 1);
+                }
+            })
+        ;
+        
+        return $query
+            ->select('seasons.id', 'seasons.ts_season_id', 'seasons.code as Year')
+            ->orderBy('code', 'desc')
+            ->distinct()
+            ->get();
+    }
     
     /**
      * Get all the folder for views based on the selected season and school of selected folder tag.
