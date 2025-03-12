@@ -25,16 +25,23 @@ class UserService
         ActivityLogHelper::log(LogConstants::SEND_INVITE, ['invited_user' => $user->id]);
     }
     
-    public function sendOtp(User $user): void
+    /**
+     * Send an OTP to the user.
+     *
+     * @param User $user
+     * @param UserOtp|null $userOtp
+     * @return void
+     */
+    public function sendOtp(User $user, UserOtp $userOtp = null): void
     {
         // Dispatch the email sending an otp job to the queue
-        SendOTPJob::dispatch($user);
+        SendOTPJob::dispatch($user, $userOtp);
     }
     
     public function getRecentOtp(User $user)
     {
         return UserOtp::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+            ->latest('created_at')
             ->first();
     }
 }
