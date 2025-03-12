@@ -92,59 +92,61 @@
                 <p>Select which User Roles are permitted to View & Download the Digital Images via the Portal </p>
             </div>
             <div>
-                <table class="w-full">
-                    <thead>
-                        <x-table.headerCell sortable="false"> </x-table.headerCell>
-                        <x-table.headerCell sortable="false">Photo Coordinator</x-table.headerCell>
-                        <x-table.headerCell sortable="false">School Admin</x-table.headerCell>
-                        <x-table.headerCell sortable="false">Teacher</x-table.headerCell>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <x-table.cell>Portrait</x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[photocoordinator]" value="1" >
-                            </x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[schooladmin]" value="1" >
-                            </x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[teacher]" value="1" >
-                            </x-table.cell>
-                        </tr>
-                        <tr>
-                            <x-table.cell>Group Photo</x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[photocoordinator]" value="1" >
-                            </x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[schooladmin]" value="1" >
-                            </x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[teacher]" value="1" >
-                            </x-table.cell>
-                        </tr>
-                        <tr>
-                            <x-table.cell>Other</x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[photocoordinator]" value="1" >
-                            </x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[schooladmin]" value="1" >
-                            </x-table.cell>
-                            <x-table.cell>
-                                <input type="checkbox" name="permissions[teacher]" value="1" >
-                            </x-table.cell>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="w-1/2 border rounded">
+                    <table class=" w-full">
+                        <thead>
+                            <x-table.headerCell sortable="false"> </x-table.headerCell>
+                            <x-table.headerCell sortable="false">Photo Coordinator</x-table.headerCell>
+                            <x-table.headerCell sortable="false">School Admin</x-table.headerCell>
+                            <x-table.headerCell sortable="false">Teacher</x-table.headerCell>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <x-table.cell>Portrait</x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[photocoordinator]" value="1" >
+                                </x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[schooladmin]" value="1" >
+                                </x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[teacher]" value="1" >
+                                </x-table.cell>
+                            </tr>
+                            <tr>
+                                <x-table.cell>Group Photo</x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[photocoordinator]" value="1" >
+                                </x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[schooladmin]" value="1" >
+                                </x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[teacher]" value="1" >
+                                </x-table.cell>
+                            </tr>
+                            <tr>
+                                <x-table.cell>Other</x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[photocoordinator]" value="1" >
+                                </x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[schooladmin]" value="1" >
+                                </x-table.cell>
+                                <x-table.cell>
+                                    <input type="checkbox" name="permissions[teacher]" value="1" >
+                                </x-table.cell>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <h3 class="mb-4 text-black">Digital Image Configuration</h3>
     <p>Control which Digital Images are shared with the school via the portal, using the settings for each Job (TNJ). Settings on this page are saved automatically.</p>
-    <div class="flex w-full mb-16 gap-4 flex-col">
+    <div class="flex w-full mb-16 gap-4 flex-col ml-4">
         <div class="flex gap-4">
             <div class="w-[213px] ">
                 <x-form.select class="w-full">Choose a Season</x-form.select>
@@ -169,7 +171,7 @@
                     <div class="w-[502px]"> 
                         <div class="relative" id="portrait_download_start_container">
                             <input datepicker id="portrait_download_start_picker" type="text" 
-                                class="bg-gray-50 border border-neutral text-gray-900 
+                                class="bg-gray-50 border border-neutral text-gray-900 mb-2 
                                         text-sm rounded-lg focus:ring-blue-500 focus:border-primary 
                                         block w-full pr-10 p-2.5" placeholder="Select date">
                             <div class="absolute right-[16px] flex items-center top-[14px] pointer-events-none">
@@ -183,7 +185,15 @@
                         <strong>Groups</strong>
                     </div>
                     <div class="w-[502px]"> 
-                        <x-form.select class="w-full"></x-form.select>
+                        <div class="relative" id="portrait_download_start_container">
+                            <input datepicker id="portrait_download_start_picker" type="text" 
+                                class="bg-gray-50 border border-neutral text-gray-900 mb-2 
+                                        text-sm rounded-lg focus:ring-blue-500 focus:border-primary 
+                                        block w-full pr-10 p-2.5" placeholder="Select date">
+                            <div class="absolute right-[16px] flex items-center top-[14px] pointer-events-none">
+                                <span class="fa fa-calendar"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -191,42 +201,44 @@
             <div>
                 <h4 class="mb-4 text-black">Select Folders to Display</h4>
                 <p>Tick the folders below to make their images available on the portal once the release dates have passed. Unticked folders will remain hidden.</p>
-                <div class="w-[502px]"> 
+                <div class="w-[502px] mb-4"> 
                     <x-form.select class="w-full">Optional: Filter folders by type </x-form.select>
                 </div>
                 <div>
-                    <table class="w-full">
-                        <thead>
-                            <x-table.headerCell sortable="false">Folder</x-table.headerCell>
-                            <x-table.headerCell sortable="false">Portraits Tab</x-table.headerCell>
-                            <x-table.headerCell sortable="false">Groups Tab</x-table.headerCell>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <x-table.cell>Portrait</x-table.cell>
-                                <x-table.cell>
-                                    <input type="checkbox" name="permissions[photocoordinator]" value="1" >
-                                    <label for="">22 portraits</label>
-                                </x-table.cell>
-                                <x-table.cell>
-                                    <input type="checkbox" name="permissions[schooladmin]" value="1" >
-                                    <label for="">1 group photo</label>
-                                </x-table.cell>
-                           
-                            </tr>
-                            <tr>
-                                <x-table.cell>Group Photo</x-table.cell>
-                                <x-table.cell>
-                                    <input type="checkbox" name="permissions[photocoordinator]" value="1" >
-                                    <label for="">22 portraits</label>
-                                </x-table.cell>
-                                <x-table.cell>
-                                    <input type="checkbox" name="permissions[schooladmin]" value="1" >
-                                    <label for="">1 group photo</label>
-                                </x-table.cell>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="w-1/2 border rounded">
+                        <table class=" w-full">
+                            <thead>
+                                <x-table.headerCell sortable="false">Folder</x-table.headerCell>
+                                <x-table.headerCell sortable="false">Portraits Tab</x-table.headerCell>
+                                <x-table.headerCell sortable="false">Groups Tab</x-table.headerCell>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <x-table.cell>Portrait</x-table.cell>
+                                    <x-table.cell class="flex items-center">
+                                        <input type="checkbox" class=" mr-1" name="permissions[photocoordinator]" value="1" >
+                                        <label class="ml-1 mb-0" for="">22 portraits</label>
+                                    </x-table.cell>
+                                    <x-table.cell class=" items-center">
+                                        <input type="checkbox" class=" mr-1" name="permissions[schooladmin]" value="1" >
+                                        <label class="ml-1 mb-0" for="">1 group photo</label>
+                                    </x-table.cell>
+                            
+                                </tr>
+                                <tr>
+                                    <x-table.cell>Group Photo</x-table.cell>
+                                    <x-table.cell class="flex items-center">
+                                        <input type="checkbox" class=" mr-1" name="permissions[photocoordinator]" value="1" >
+                                        <label class="ml-1 mb-0" for="">22 portraits</label>
+                                    </x-table.cell>
+                                    <x-table.cell class=" items-center">
+                                        <input type="checkbox" class=" mr-1" name="permissions[schooladmin]" value="1" >
+                                        <label class="ml-1 mb-0" for="">1 group photo</label>
+                                    </x-table.cell>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
