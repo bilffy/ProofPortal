@@ -224,12 +224,23 @@ class ImageService
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
-
-        // make sure the download is available before showing the images
-        $query->where(function ($query) {
-            $query->where('jobs.portrait_download_date', '<=', now());
-        });
         
+        $query->where(function ($query) {
+            $query->where(function ($subQuery) {
+                // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
+                $subQuery->whereNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->where('jobs.download_available_date', '<=', now());
+            });
+            // in case portrait_download_date and download_available_date are both non-NULL
+            // and the most recent date of the two dates is less than or equal to now
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereNotNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->whereRaw('GREATEST(jobs.portrait_download_date, jobs.download_available_date) <= ?', [now()]);
+            });
+        });
+
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
                 $query->where('subjects.firstname', 'like', "%$searchTerm%")
@@ -262,9 +273,20 @@ class ImageService
         // ->where('images.keyorigin', 'Folder')
         ;
         
-        // make sure the download is available before showing the images
         $query->where(function ($query) {
-            $query->where('jobs.group_download_date', '<=', now());
+            $query->where(function ($subQuery) {
+                // Case where 'group_download_date' is NULL, but 'download_available_date' is valid
+                $subQuery->whereNull('jobs.group_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->where('jobs.download_available_date', '<=', now());
+            });
+            // in case group_download_date and download_available_date are both non-NULL
+            // and the most recent date of the two dates is less than or equal to now
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereNotNull('jobs.group_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->whereRaw('GREATEST(jobs.group_download_date, jobs.download_available_date) <= ?', [now()]);
+            });
         });
         
         if($searchTerm) {
