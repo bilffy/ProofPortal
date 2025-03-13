@@ -54,7 +54,7 @@
                     const minutes = Math.floor(timeLeft / 60);
                     const seconds = timeLeft % 60;
                     countdownElement.text(
-                        `Time remaining ${minutes}:${seconds < 50 ? '0' : ''}${seconds}`
+                        `Time remaining ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
                     );
                     
                     if (timeLeft <= enabledResendTime && timeLeft > 0) {
