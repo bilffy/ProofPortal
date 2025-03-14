@@ -10,12 +10,14 @@ class ImageFrame extends Component
     public $imageId;
     public $name;
     public $landscape;
+    public $folderName;
 
-    public function mount($imageId, $name, $landscape)
+    public function mount($imageId, $name, $landscape, $folderName)
     {
         $this->imageId = $imageId;
         $this->name = $name;
         $this->landscape = $landscape;
+        $this->folderName = $folderName;
     }
 
     public function placeholder()

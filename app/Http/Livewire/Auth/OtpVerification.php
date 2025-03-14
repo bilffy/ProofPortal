@@ -59,6 +59,18 @@ class OtpVerification extends Component
 
         if ($decryptOtp !== (int)$this->otp) {
             $this->message = config('app.dialog_config.otp.invalid.message');
+        
+            $recentOtp->increment('otp_attempts');
+        
+            if ($recentOtp->otp_attempts >= 4) {
+                $recentOtp->update(['expire_on' => now()]);
+                $this->message = 'You have reached the maximum attempts for OTP verification.';
+                return redirect()->route('login')->with([
+                    'otp-reached-max-attempts' => $this->message,
+                ]);
+            }
+        
+            // redirect to login page with error message
             throw ValidationException::withMessages([
                 'otp' => [$this->message],
             ]);
@@ -98,14 +110,19 @@ class OtpVerification extends Component
             return redirect()->route('login');
         }
 
-        if (Carbon::parse($recentOtp->expire_on)->isPast()) {
-            // Send the new OTP to the user
-            $userService->sendOtp($user);
-
-            // Update the message
-            $this->message = config('app.dialog_config.otp.resend.message1');
-            $this->resetErrorBag();
+        $recentOtp->increment('resend_attempts');
+        
+        // Check if the user has reached the maximum resend attempts
+        if ($recentOtp->resend_attempts >= 5) {
+            $recentOtp->update(['expire_on' => now()]);
+            return redirect()->route('login');
         }
+        // Send the new OTP to the user
+        $userService->sendOtp($user, $recentOtp);
+
+        // Update the message
+        $this->message = config('app.dialog_config.otp.resend.message1');
+        $this->resetErrorBag();
     }
     
     public function render()

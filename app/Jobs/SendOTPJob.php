@@ -18,15 +18,17 @@ class SendOTPJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected User $user;
+    protected UserOtp|null $userOtp = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(User $user)
+    public function __construct(User $user, UserOtp $userOtp = null)
     {
         $this->user = $user;
+        $this->userOtp = $userOtp;
     }
 
     /**
@@ -44,12 +46,22 @@ class SendOTPJob implements ShouldQueue
 
         // Get OTP expiration time from .env
         $expirationMinutes = (int) config('app.otp.expiration_minutes', 60);
-    
-        // Save the otp to the database
-        UserOtp::create([
-            'user_id' => $this->user->id,
-            'otp' => OTPHelper::encryptOtp($otp),
-            'expire_on' => now()->addMinutes($expirationMinutes),
-        ]);
+        
+        if ($this->userOtp instanceof UserOtp) {
+            // Update the existing otp
+            $this->userOtp->update([
+                'otp' => OTPHelper::encryptOtp($otp),
+                'last_resend_at' => now(),
+                'expire_on' => now()->addMinutes($expirationMinutes),
+                'otp_attempts' => 0, // Reset the otp attempts count to 0
+            ]);
+        } else {
+            // Save the otp to the database
+            UserOtp::create([
+                'user_id' => $this->user->id,
+                'otp' => OTPHelper::encryptOtp($otp),
+                'expire_on' => now()->addMinutes($expirationMinutes),
+            ]);
+        }
     }
 }
