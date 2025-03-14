@@ -61,14 +61,7 @@
     $imageUrl = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
     $schoollogo = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
 @endphp
-    {{-- <div class="row">
-        <div class="col-lg-12">
-            <h1 class="page-header">
-                {{ __(':name Configuration', ['name' => $selectedSchool->name]) }}
-            </h1>33  
-        </div>
-    </div> --}}
-    <h3 class="mb-4 text-black">School Settings</h3>
+<h3 class="mb-4 text-black">School Settings</h3>
     <div class="flex w-full mb-16 flex-col">
         <div class="bg-neutral-200 w-full p-4 rounded flex gap-4">
             <div class="relative bg-white w-[341px] h-[246px] mb-4 p-4 items-center flex justify-center">
@@ -92,7 +85,7 @@
                 <p>Select which User Roles are permitted to View & Download the Digital Images via the Portal </p>
             </div>
             <div>
-                <div class="w-1/2 border rounded">
+                <div class="w-full border rounded lg:w-full xl:w-1/2">
                     <table class=" w-full">
                         <thead>
                             <x-table.headerCell sortable="false"> </x-table.headerCell>
@@ -161,7 +154,7 @@
 
         <div>
             <div class="mb-16">
-                <h4 class="mb-4 text-black">Set Digital Image Release Dates</h4>
+                <h5 class="mb-4 text-black">Set Digital Image Release Dates</h5>
                 <p>Select when Portrait and Group Digital Images will be available on the portal for the school to view. The default date displayed is the date set in K2 for Parent Digital Downloads, which is also the earliest possible date. You can update the dates below if you wish to push the release of photos in the portal to a later date.</p>
 
                 <div class="flex gap-4">
@@ -199,13 +192,13 @@
             </div>
 
             <div>
-                <h4 class="mb-4 text-black">Select Folders to Display</h4>
+                <h5 class="mb-4 text-black">Select Folders to Display</h5>
                 <p>Tick the folders below to make their images available on the portal once the release dates have passed. Unticked folders will remain hidden.</p>
                 <div class="w-[502px] mb-4"> 
                     <x-form.select class="w-full">Optional: Filter folders by type </x-form.select>
                 </div>
                 <div>
-                    <div class="w-1/2 border rounded">
+                    <div class="w-full border rounded lg:w-full xl:w-1/2">
                         <table class=" w-full">
                             <thead>
                                 <x-table.headerCell sortable="false">Folder</x-table.headerCell>
