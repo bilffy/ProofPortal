@@ -11,6 +11,7 @@
         </div>
     @endif
     <form wire:submit.prevent="submit">
+        <input type="hidden" wire:model="nonce">
         @error('email')
             <div class="mb-4 font-medium text-sm text-red-600 text-[#FF0000]">        
                 {{ $message }}

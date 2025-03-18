@@ -9,16 +9,26 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Str;
 
 #[Layout('layouts.guest')]
 class ForgotPassword extends Component
 {   
     public bool $resetLinkStatus = false;
     public $email;
-
+    public $nonce;
+    
     protected $rules = [
         'email' => 'required|email',
     ];
+
+    public function mount()
+    {
+        // Generate a unique nonce for this session
+        $this->nonce = Str::random(40);
+    }
     
     public function submit()
     {
@@ -29,18 +39,38 @@ class ForgotPassword extends Component
         $user = User::where('email', $this->email)->first();
 
         if ($user) {
+
+            // Prevent replay attacks by checking if the nonce was already used
+            if (session()->has("forgot-password-nonce-{$this->nonce}")) {
+                throw ValidationException::withMessages([
+                    'email' => ['This request has already been processed. Reload the page and try again.'],
+                ]);
+            }
+            
             $token = Password::createToken($user);
             $user->notify(new ResetPassword($token, $user));
             $status = Password::RESET_LINK_SENT;
         } else {
             $status = Password::INVALID_USER;
+
+            $key = 'forgot-password:' . Request::ip(); 
+
+            if (RateLimiter::tooManyAttempts($key, 5)) { // 5 attempts per minute per IP
+                throw ValidationException::withMessages([
+                    'email' => ['Too many attempts. Please try again later.'],
+                ]);
+            }
+
+            RateLimiter::hit($key, 60); // Store attempt with 60 seconds expiration
         }
 
         if ($status == Password::RESET_LINK_SENT) {
             $this->resetLinkStatus = true;
-            //return back()->with('status', __($status));
         }
 
+        // Store the nonce to prevent re-use
+        session(["forgot-password-nonce-{$this->nonce}" => true]);
+        
         throw ValidationException::withMessages([
             'email' => [trans(config('app.dialog_config.invalid_email_forgot_password.message'))],
         ]);
