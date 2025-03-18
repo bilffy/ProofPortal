@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Auth;
 
+use App\Helpers\EncryptionHelper;
 use App\Models\User;
 use App\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Password;
@@ -11,16 +12,18 @@ use Livewire\Component;
 
 #[Layout('layouts.guest')]
 class ForgotPassword extends Component
-{
+{   
     public bool $resetLinkStatus = false;
     public $email;
 
     protected $rules = [
         'email' => 'required|email',
     ];
-
+    
     public function submit()
     {
+        $this->email = EncryptionHelper::simpleDecrypt($this->email);
+        
         $this->validate();
 
         $user = User::where('email', $this->email)->first();

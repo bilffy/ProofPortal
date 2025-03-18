@@ -10,7 +10,6 @@
             {{ session('status') }}
         </div>
     @endif
-
     <form wire:submit.prevent="submit">
         @error('email')
             <div class="mb-4 font-medium text-sm text-red-600 text-[#FF0000]">        
@@ -21,6 +20,7 @@
             <div class="flex flex-col mb-4">
                 <input
                         class="border rounded-md p-2 border-neutral"
+                        id="msp-email"
                         type="email"
                         wire:model="email"
                         required
@@ -41,5 +41,20 @@
                 Back to login
             </a>
         </div>
+        <script type="module">
+            import { encryptObjectValues, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+            document.addEventListener('DOMContentLoaded', async () => {
+                //$('#msp-email').focus().val('{{ $email }}');
+                Livewire.hook('commit', ({ commit, component }) => {
+                    if (commit.updates.hasOwnProperty('email')) {
+                        commit.updates = encryptObjectValues(commit.updates);
+                    } else {
+                        var snapshot = JSON.parse(commit.snapshot);
+                        commit.updates = {"email" : encryptData(snapshot.data.email)};
+                    }
+                    return commit;
+                });
+            });
+        </script>
     </form>
 </main>
