@@ -42,9 +42,10 @@ class ForgotPassword extends Component
 
             // Prevent replay attacks by checking if the nonce was already used
             if (session()->has("forgot-password-nonce-{$this->nonce}")) {
-                throw ValidationException::withMessages([
+                return redirect()->route('login');
+                /*throw ValidationException::withMessages([
                     'email' => ['This request has already been processed. Reload the page and try again.'],
-                ]);
+                ]);*/
             }
             
             $token = Password::createToken($user);
