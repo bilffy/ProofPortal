@@ -57,9 +57,10 @@ class ForgotPassword extends Component
             $key = 'forgot-password:' . Request::ip(); 
 
             if (RateLimiter::tooManyAttempts($key, 5)) { // 5 attempts per minute per IP
-                throw ValidationException::withMessages([
+                return redirect()->route('login');
+                /*throw ValidationException::withMessages([
                     'email' => ['Too many attempts. Please try again later.'],
-                ]);
+                ]);*/
             }
 
             RateLimiter::hit($key, 60); // Store attempt with 60 seconds expiration
