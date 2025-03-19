@@ -34,6 +34,7 @@ export default defineConfig({
                     'resources/js/helpers/types.helper.ts',
                     'resources/js/helpers/utils.helper.ts',
                     'resources/js/helpers/encryption.helper.ts',
+                    'resources/js/helpers/session.helper.ts',
                 ], 
             refresh: true,
         }),

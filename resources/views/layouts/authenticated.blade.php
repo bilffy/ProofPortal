@@ -123,7 +123,16 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
+        import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
+            if (localStorage.getItem('api_token') === null || id != {{ $user->id }}) {
+                createApiToken();
+            }
+            startSessionPolling();
+        });
         document.getElementById('input-group-search').addEventListener('input', function() {
             const query = this.value.toLowerCase();
             const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li');

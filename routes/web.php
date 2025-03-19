@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\EncryptionHelper;
 use App\Helpers\PermissionHelper;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InviteController;
@@ -20,6 +21,11 @@ use App\Http\Controllers\Proofing\ConfigureController;
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/tokens/create', function (Request $request) {
+        $user = Auth::user();
+        $token = $user->createToken('api_token');
+        return response()->json(['token' => $token->plainTextToken, 'id' => EncryptionHelper::simpleEncrypt($user->id)]);
+    });
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
