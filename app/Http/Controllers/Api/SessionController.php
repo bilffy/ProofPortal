@@ -19,7 +19,11 @@ class SessionController extends Controller
             ->get()->first();
         $maxIdleTime = config('session.lifetime') * 60;
         
-        $isAlive = time() - $sessionActivity->last_activity < $maxIdleTime;
+        try {
+            $isAlive = time() - $sessionActivity->last_activity < $maxIdleTime;
+        } catch (\Exception $e) {
+            $isAlive = false;
+        }
 
         $data = [
             'is_alive' => $isAlive
