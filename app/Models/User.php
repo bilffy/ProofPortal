@@ -7,6 +7,7 @@ use App\Helpers\RoleHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
 use Auth;
@@ -14,7 +15,7 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, Impersonate;
+    use HasFactory, Notifiable, HasRoles, Impersonate, HasApiTokens;
 
     public const STATUS_NEW = 'new';
     public const STATUS_INVITED = 'invited';
