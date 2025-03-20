@@ -31,6 +31,7 @@
     <div class="relative mb-8 gap-4">
         <form id="add-user-form" method="POST" action="{{ route('user.register') }}">
             @csrf
+            <input type="hidden" id="nonce" name="nonce" value="{{ $nonce }}">
             <div class="flex flex-row gap-4 max-w-screen-md">
                 <div class="w-full">
                     <div class="mt-1 w-full flex flex-col mb-2">
@@ -52,7 +53,7 @@
                 <div class="w-full">
                     <div class="mt-1 w-full flex flex-col mb-2">
                         <x-form.input.text
-                            id="fname"
+                            id="firstname"
                             name="firstname"
                             value="{{ old('firstname') }}"
                             type="text"
@@ -66,7 +67,7 @@
                 <div class="w-full">
                     <div class="mt-1hz w-full flex flex-col mb-2">
                         <x-form.input.text
-                            id="lname"
+                            id="lastname"
                             name="lastname"
                             value="{{ old('lastname') }}"
                             type="text"
@@ -85,7 +86,7 @@
                     <x-form.input.error errorMessage="{{$roleError}}" />
                 </div>
                 <div id="level" class="w-full invisible">
-                    <x-form.select class="w-full" value="{{ old('school') }}" context="school" :options="$schoolOptions" required>School</x-form.select>
+                    <x-form.select class="w-full"  value="{{ old('school') }}" context="school" :options="$schoolOptions" required>School</x-form.select>
                     <x-form.input.error errorMessage="{{$schoolError}}" />
                     <x-form.select class="w-full" value="{{ old('franchise') }}" context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
                     <x-form.input.error errorMessage="{{$franchiseError}}" />
@@ -97,7 +98,7 @@
 
             <div class="py-4 max-w-screen-md flex flex-row gap-4 justify-end border-t-[1px] border-t-neutral-400">
                 <x-button.secondary onclick="window.location='{{ url($previous_url) }}'">Cancel</x-button.secondary>
-                <x-button.primary type="submit">Save</x-button.primary>
+                <x-button.primary id="save-user" type="submit">Save</x-button.primary>
             </div>
         </form>
     </div>
@@ -105,6 +106,7 @@
 
 @push('scripts')
 <script type="module">
+    import { encryptObjectValues, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     let user = {{ Js::from($user) }}
     let roles = {{ Js::from($roleOptions) }}
     var selectedRole = "{{ old('role') }}";
@@ -152,7 +154,7 @@
     function toggleLevelOptions(event) {
         updateSelectByRole(roles[event.target.value]);
     };
-
+    
     window.addEventListener('load', () => {
         $('#select_role').select2({minimumResultsForSearch: Infinity});
         $('#select_role').change(toggleLevelOptions);
@@ -164,6 +166,78 @@
         } else {
             updateSelectByRole(roles[Object.keys(roles)[0]]);
         }
+    });
+    
+    function removeErrorMessages() {
+        $('#email-error').remove();
+        $('#firstname-error').remove();
+        $('#lastname-error').remove();
+        $('#select_role-error').remove();
+        $('#select_franchise-error').remove();
+        $('#select_school-error').remove();
+    }
+    
+    document.addEventListener('DOMContentLoaded', async () => {
+        $('#add-user-form').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            let formData = $(this).serializeArray();
+            let encryptedData = {};
+
+            formData.forEach(function(item) {
+                // encrypt the franchise, school and email before submitting the form
+                if (item.name === 'franchise' || item.name === 'school' || item.name === 'email') {
+                    encryptedData[item.name] = encryptData(item.value);
+                    return;
+                }
+                encryptedData[item.name] = item.value;
+            });
+            
+            // remove any errors from the previous submission
+            removeErrorMessages();
+            
+            $.ajax({
+                url: $(this).attr('action'),
+                method: $(this).attr('method'),
+                data: encryptedData,
+                success: function(response) {
+                    if (response.redirect_url !== undefined) {
+                        window.location.href = response.redirect_url;
+                    }
+                },
+                error: function(response) {
+                    let errors = response.responseJSON.errors;
+                    // iterate the errors object and display the error messages
+                    for (let key in errors) {
+                        if (errors.hasOwnProperty(key)) {
+                            let error = errors[key];
+                            let errorDiv = document.createElement('div');
+                            let errorP = document.createElement('p');
+                            if (key === 'role') {
+                                key = 'select_role';
+                            }
+                            if (key === 'franchise') {
+                                key = 'select_franchise';
+                            }
+                            if (key === 'school') {
+                                key = 'select_school';
+                            }
+                            errorDiv.classList.add('mt-1');
+                            errorDiv.setAttribute('id', `${key}-error`);
+                            errorP.classList.add('text-sm', 'text-alert', 'mb-0');
+                            errorP.innerText = error;
+                            errorDiv.appendChild(errorP);
+                            // check if element not exist
+                            if ($(`#${key}`).parent().find(`#${key}-error`).length === 0) {
+                                $(`#${key}`).parent().append(errorDiv);
+                            } 
+                        }
+                    }
+                },
+                complete: function() {
+                
+                }
+            });
+        });    
     });
 </script>
 @endpush

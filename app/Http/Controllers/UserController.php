@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
+use App\Helpers\EncryptionHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
@@ -17,9 +18,12 @@ use App\Services\UserService;
 use Auth;
 use DB;
 use Hash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -67,7 +71,7 @@ class UserController extends Controller
             $schema1 = array_merge($schema1, ['franchise' => 'required|integer']);
             $schema2 = array_merge($schema2, ['franchise.required' => 'Franchise is required.']);
         }
-    
+        
         if ($data['role'] > 3 && $data['school'] == 0) {
             $schema1 = array_merge($schema1, ['school' => 'required|integer']);
             $schema2 = array_merge($schema2, ['school.required' => 'School is required.']);
@@ -102,11 +106,15 @@ class UserController extends Controller
             $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
         }
         
+        $nonce = Str::random(40);
+        session(['register_token' => $nonce]);
+        
         return view('newUser', [
             'user' => new UserResource($user),
             'roles' => RoleResource::collection(RoleHelper::getAllowedRoles($user->getRole())),
             'franchises' => $franchiseList,
             'schools' => $schoolList,
+            'nonce' => $nonce
         ]);
     }
 
@@ -115,12 +123,24 @@ class UserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
+        if ($request->nonce !== session('register_token')) {
+            return response()->json('Invalid Request', 422);
+        }
+
+        $request->merge(
+            [
+                'email' => EncryptionHelper::simpleDecrypt($request->email),
+                'franchise' => EncryptionHelper::simpleDecrypt($request->franchise),
+                'school' => EncryptionHelper::simpleDecrypt($request->school)
+            ]
+        );
+        
         $validator = $this->validator($request->all());
         
         if ($validator->fails()) {
-            return redirect()->back()->withInput()->withErrors($validator);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
         DB::beginTransaction();
@@ -165,8 +185,8 @@ class UserController extends Controller
         
         // Send invitation email
         $this->userService->sendInvite($user);
-        
-        return redirect(route('users', absolute: false));
+        session()->forget('register_token'); // Remove token after use
+        return response()->json(['redirect_url' => route('users')], 200);
     }
 
     /**
