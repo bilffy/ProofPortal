@@ -12,8 +12,12 @@ class EncryptionHelper
         // return Crypt::encrypt($data);
     }
 
-    public static function simpleDecrypt(string $data): string
-    {
+    public static function simpleDecrypt(string $data = null): string|null
+    {   
+        if ($data === null) {
+            return null;
+        }
+        
         return base64_decode(base64_decode($data));
         // return Crypt::decryptString($data);
     }
