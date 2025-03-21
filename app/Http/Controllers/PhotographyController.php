@@ -97,10 +97,15 @@ class PhotographyController extends Controller
     }
     
     public function requestDownloadDetails(Request $request)
-    {
-        if ($request->input('nonce') !== session('download-request-nonce')) {
+    {   
+        // get the nonce from the request header
+        if ($request->header('MSP-Nonce') !== session('download-request-nonce')) {
             return response()->json('Invalid Request', 422);
         }
+        
+        /*if ($request->input('nonce') !== session('download-request-nonce')) {
+            return response()->json('Invalid Request', 422);
+        }*/
         
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
