@@ -43,7 +43,7 @@
         <x-modal.base id="showOptionsDownloadModal" title="{{ $configMessages['options']['title']  }}" body="components.modal.body" footer="components.modal.footer">
             <x-slot name="body">
                 <x-modal.body>
-                    <input type="text" id="nonce" name="nonce" value="">
+                    <input type="hidden" id="nonce" name="nonce" value="">
                     <div><b>{{ $configMessages['options']['sub_title']  }}</b></div>
                     <p>{{ $configMessages['options']['resolution_selection']  }}</p>
                     <div class="flex flex-col gap-4">
@@ -350,10 +350,6 @@
                 throw new Error('Network response was not ok');
             }
             
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-
             const result = await response.json();
             //console.log('Download request successful:', result);
             

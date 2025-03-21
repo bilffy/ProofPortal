@@ -92,14 +92,13 @@ class PhotographyController extends Controller
     public function execNonce()
     {
         $nonce = Str::random(40);
-        session(['download-request-nonce-' . $nonce => true]);
-
+        session(['download-request-nonce' => $nonce]);
         return response()->json(['success' => true, 'data' => ['nonce' => $nonce]]);
     }
     
     public function requestDownloadDetails(Request $request)
     {
-        if ($request->input('nonce') !== session('download-request-nonce-' . $request->input('nonce'))) {
+        if ($request->input('nonce') !== session('download-request-nonce')) {
             return response()->json('Invalid Request', 422);
         }
         
@@ -202,7 +201,7 @@ class PhotographyController extends Controller
         ]);
         
         // remove the nonce from the session
-        session()->forget('download-request-nonce-' . $request->input('nonce'));
+        session()->forget('download-request-nonce');
         
         return response()->json(['success' => true, 'data' => $data]);
     }
