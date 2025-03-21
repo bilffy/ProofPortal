@@ -18,6 +18,7 @@ use App\Services\SchoolService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PhotographyController extends Controller
 {
@@ -87,9 +88,21 @@ class PhotographyController extends Controller
             ]
         );
     }
+    
+    public function execNonce()
+    {
+        $nonce = Str::random(40);
+        session(['download-request-nonce-' . $nonce => true]);
 
+        return response()->json(['success' => true, 'data' => ['nonce' => $nonce]]);
+    }
+    
     public function requestDownloadDetails(Request $request)
     {
+        if ($request->input('nonce') !== session('download-request-nonce-' . $request->input('nonce'))) {
+            return response()->json('Invalid Request', 422);
+        }
+        
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
         $school = SchoolContextHelper::getSchool();
@@ -187,6 +200,9 @@ class PhotographyController extends Controller
             'school_key' => $schoolKey,
             'download_requested' => $downloadRequest->id,
         ]);
+        
+        // remove the nonce from the session
+        session()->forget('download-request-nonce-' . $request->input('nonce'));
         
         return response()->json(['success' => true, 'data' => $data]);
     }

@@ -43,6 +43,7 @@
         <x-modal.base id="showOptionsDownloadModal" title="{{ $configMessages['options']['title']  }}" body="components.modal.body" footer="components.modal.footer">
             <x-slot name="body">
                 <x-modal.body>
+                    <input type="text" id="nonce" name="nonce" value="">
                     <div><b>{{ $configMessages['options']['sub_title']  }}</b></div>
                     <p>{{ $configMessages['options']['resolution_selection']  }}</p>
                     <div class="flex flex-col gap-4">
@@ -229,7 +230,7 @@
         });
     });
     
-    function showOptionsDownloadRequest() {
+    async function showOptionsDownloadRequest() {
         if ($(".grid").attr('total-image-count') != 0) {
 
             const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
@@ -241,7 +242,18 @@
             } else {
                 $("#folder_format_selection").show();
             }
+
+            let response = await fetch('{{ route('photography.request-download-nonce') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: {}
+            });
             
+            let result = await response.json();
+            $(`#nonce`).val(result.data.nonce);
             showOptionsDownloadModal.show();
         } else {
             alert('No images found');
@@ -304,6 +316,17 @@
             console.log('Selected Class:', JSON.stringify(selectedClass));
             
             $(downloadBtn).html(`<x-spinner.button />`);
+            
+            let filters = {
+                year: selectedYear,
+                view: selectedView,
+                class: JSON.stringify(selectedClass),
+                resolution: $('#image_res').val(),
+                folder_format: $('#folder_format').val()
+            };
+            
+            console.log('Download Filters:', filters);
+            
             const response = await fetch('{{ route('photography.request-download') }}', {
                 method: 'POST',
                 headers: {
@@ -314,23 +337,27 @@
                     { 
                         images: selectedImages,
                         category: selectedImages.length === 1 ? INDIVIDUAL_CATEGORY : BULK_CATEGORY,
-                        filters: {
-                            year: selectedYear,
-                            view: selectedView,
-                            class: JSON.stringify(selectedClass),
-                            resolution: $('#image_res').val(),
-                            folder_format: $('#folder_format').val()
-                        }
+                        filters: filters,
+                        nonce: $(`#nonce`).val()
                     }
                 )
             });
-
+            
+            console.log(response);
+            
+            // check if response has error and throw error, get the error status
+            if (await !response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
 
             const result = await response.json();
             //console.log('Download request successful:', result);
+            
+            console.log(result);
             
             // only if selected image is one
             if (selectedImages.length === 1) {
