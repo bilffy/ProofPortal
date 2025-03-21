@@ -19,6 +19,7 @@ use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class PhotographyController extends Controller
 {
@@ -103,9 +104,20 @@ class PhotographyController extends Controller
             return response()->json('Invalid Request', 422);
         }
         
-        /*if ($request->input('nonce') !== session('download-request-nonce')) {
-            return response()->json('Invalid Request', 422);
-        }*/
+        $validator = Validator::make($request->all(), [
+            'images' => 'array',
+            'category' => 'required|integer|in:1,2',
+            'filters' => 'required|array',
+            'filters.year' => 'required|string',
+            'filters.view' => 'required|string',
+            'filters.class' => 'required|string',
+            'filters.resolution' => 'required|string|in:high,low',
+            'filters.folder_format' => 'required|string|in:all,organize',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
         
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
