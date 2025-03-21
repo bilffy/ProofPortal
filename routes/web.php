@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
         Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
         Route::post('/photography/request-download', [PhotographyController::class, 'requestDownloadDetails'])->name('photography.request-download');
+        Route::post('/photography/request-download-nonce', [PhotographyController::class, 'execNonce'])->name('photography.request-download-nonce');
     });
     // Proofing
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
