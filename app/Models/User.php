@@ -172,9 +172,19 @@ class User extends Authenticatable
         return $this->schools()->first();
     }
 
-    public function getSchoolOrFranchise()
+    public function getSchoolOrFranchise($withAdmin = false)
     {
-        return $this->isAdmin() ? "" : ( $this->isFranchiseLevel() ? $this->getFranchise()?->name : $this->getSchool()?->name );
+        return $this->isAdmin()
+            ? ( $withAdmin ? Franchise::getMSP()?->name : "" )
+            : ( $this->isFranchiseLevel() ? $this->getFranchise()?->name : $this->getSchool()?->name );
+    }
+
+    public function getOrganization()
+    {
+        if ($this->isAdmin()) {
+            return Franchise::getMSP();
+        }
+        return $this->getFranchise();
     }
 
     public function getInvitableRoles()

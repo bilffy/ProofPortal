@@ -184,7 +184,7 @@ class UserController extends Controller
         }
         
         // Send invitation email
-        $this->userService->sendInvite($user);
+        $this->userService->sendInvite($user, auth()->user()->id);
         session()->forget('register_token'); // Remove token after use
         return response()->json(['redirect_url' => route('users')], 200);
     }

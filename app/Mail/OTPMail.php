@@ -41,6 +41,7 @@ class OTPMail extends Mailable
                 'user' => $this->user,
                 'otp' => $this->otp,
                 'expiration' => $expiration,
+                'franchise' => $this->user->getOrganization(),
             ]);
     }
 }
