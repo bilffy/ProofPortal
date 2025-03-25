@@ -15,12 +15,13 @@ class UserService
      * Send an invitation email to the user.
      *
      * @param User $user
+     * @param int $senderId
      * @return void
      */
-    public function sendInvite(User $user): void
+    public function sendInvite(User $user, int $senderId): void
     {
         // Dispatch the email sending an invitation job to the queue
-        SendUserInviteJob::dispatch($user);
+        SendUserInviteJob::dispatch($user, $senderId);
         // Log SEND_INVITE activity
         ActivityLogHelper::log(LogConstants::SEND_INVITE, ['invited_user' => $user->id]);
     }

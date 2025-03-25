@@ -40,6 +40,7 @@ class ResetPassword extends Notification
                 'firstname' => $this->user->firstname,
                 'resetUrl' => $resetUrl,
                 'expiration' => $expiration,
+                'franchise' => $this->user->getOrganization(),
             ]);
     }
 }

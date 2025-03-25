@@ -36,7 +36,7 @@ class InviteController extends Controller
         /** @var User $user */
         $user = User::findOrFail($id);
 
-        $this->userService->sendInvite($user);
+        $this->userService->sendInvite($user, auth()->user()->id);
 
         return redirect()->route('users')->with('success', config('app.dialog_config.invite.sent.message') ." ". $user->email);
     }
@@ -84,10 +84,10 @@ class InviteController extends Controller
 
         $userIds = $validated['user_ids'];
         $users = User::whereIn('id', $userIds)->get();
-
+        $senderId = auth()->user()->id;
         // Send invitations to each user
         foreach ($users as $user) {
-            $this->userService->sendInvite($user);
+            $this->userService->sendInvite($user, $senderId);
         }
 
         // Return a JSON response to indicate success

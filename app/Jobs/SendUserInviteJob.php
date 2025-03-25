@@ -18,15 +18,17 @@ class SendUserInviteJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected User $user;
+    protected int $senderId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(User $user)
+    public function __construct(User $user, int $senderId)
     {
         $this->user = $user;
+        $this->senderId = $senderId;
     }
 
     /**
@@ -52,6 +54,6 @@ class SendUserInviteJob implements ShouldQueue
         $this->user->save();
         
         // Send the invite email
-        Mail::to($this->user->email)->send(new UserInviteMail($this->user, $setupUrl));
+        Mail::to($this->user->email)->send(new UserInviteMail($this->user, $this->senderId, $setupUrl));
     }
 }

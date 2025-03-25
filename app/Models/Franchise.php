@@ -47,4 +47,14 @@ class Franchise extends Model
         return $this->belongsToMany(School::class, 'school_franchises');
         // return $this->hasMany(SchoolFranchise::class, 'franchise_id');
     }
+
+    public static function getMSP()
+    {
+        return self::where('ts_account_id', 1)->first();
+    }
+
+    public function getBusinessName()
+    {
+        return "MSP Photography " . $this->name;
+    }
 }
