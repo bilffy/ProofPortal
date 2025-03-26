@@ -1,15 +1,44 @@
 @extends('layouts.authenticated')
 
+@php
+    $highResDownloadOption = $AppSettingsHelper::getByPropertyKey('high_res_download_option');
+    $lowResDownloadOption = $AppSettingsHelper::getByPropertyKey('low_res_download_option');
+    $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
+    $otherTab = $AppSettingsHelper::getByPropertyKey('other_tab');
+    $configureTabV1 = $AppSettingsHelper::getByPropertyKey('configure_tab_v1');
+    $configureTabV2 = $AppSettingsHelper::getByPropertyKey('configure_tab_v2');
+    
+    $highResDownloadOptionValue = $highResDownloadOption ? $highResDownloadOption->property_value === 'true' ? true : false : true; 
+    $lowResDownloadOptionValue = $lowResDownloadOption ? $lowResDownloadOption->property_value === 'true' ? true : false : true;
+    $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
+    $otherTabValue = $otherTab ? $otherTab->property_value === 'true' ? true : false : true;
+    $configureTabV1Value = $configureTabV1 ? $configureTabV1->property_value === 'true' ? true : false : true;
+    $configureTabV2Value = $configureTabV2 ? $configureTabV2->property_value === 'true' ? true : false : true;
+    
+    // check if any of $highResDownloadOptionValue or $lowResDownloadOptionValue is false disable the resolution selection
+    $isDisabledResolution = !$highResDownloadOptionValue || !$lowResDownloadOptionValue;
+    
+    
+@endphp
+
 @section('content')
     <div x-data id="photography-root" class="container3 p-4">
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
-                <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
+                @if ($configureTabV1Value)
+                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
+                @endif
+                @if ($configureTabV2Value)
+                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
+                @endif
             @endrole
             <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
-            <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
-            <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
+            @if ($groupsTabValue)    
+                <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
+            @endif
+            @if ($otherTabValue)
+                <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
+            @endif
             <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
                 <x-button.primary 
@@ -45,15 +74,21 @@
                 <x-modal.body>
                     <input type="hidden" id="nonce" name="nonce" value="">
                     <div><b>{{ $configMessages['options']['sub_title']  }}</b></div>
-                    <p>{{ $configMessages['options']['resolution_selection']  }}</p>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex flex-col gap-2">
-                            <select id="image_res" class="input">
-                                <option value="low">Small/Low Res (72 DPI - suitable for viewing on screen)</option>
-                                <option value="high">High Res (300 DPI - suitable for printing)</option>
-                            </select>
+                    <div @if (!$lowResDownloadOptionValue && !$highResDownloadOptionValue) class="hidden" @endif>
+                        <p>{{ $configMessages['options']['resolution_selection']  }}</p>
+                        <div class="flex flex-col gap-4 @if ($isDisabledResolution) opacity-50 @endif">
+                            <div class="flex flex-col gap-2">
+                                <select id="image_res" class="input" @if ($isDisabledResolution) disabled @endif>
+                                    @if ($lowResDownloadOptionValue)
+                                        <option value="low">Small/Low Res (72 DPI - suitable for viewing on screen)</option>
+                                    @endif
+                                    @if ($highResDownloadOptionValue)
+                                        <option value="high">High Res (300 DPI - suitable for printing)</option>
+                                    @endif    
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                    </div>    
                     <div id="folder_format_selection">
                         <p>{{ $configMessages['options']['folder_format_selection']  }}</p>
                         <div class="flex flex-col gap-4">

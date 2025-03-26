@@ -12,6 +12,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Helpers\UserStatusHelper;
 use App\Helpers\AvatarHelper;
 use App\Helpers\UiSettingHelper;
+use App\Helpers\AppSettingsHelper;
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         view()->share('UiSettingHelper', new UiSettingHelper());
         view()->share('SchoolContextHelper', new SchoolContextHelper());
         view()->share('PhotographyHelper', new PhotographyHelper());
+        view()->share('AppSettingsHelper', new AppSettingsHelper());
         JsonResource::withoutWrapping();
     }
 }

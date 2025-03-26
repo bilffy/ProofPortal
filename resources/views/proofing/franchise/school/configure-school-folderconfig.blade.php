@@ -1,3 +1,8 @@
+@php
+    $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
+    $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
+@endphp    
+
     <div class="row mt-2">
         <div class="col-12 m-auto">
             <p class="h5 lead mb-1"><strong>{{ __('Folder Configuration') }}</strong></p>
@@ -19,15 +24,17 @@
                                 <span class="font-weight-light" id="set-is-visible-for-portrait-none" style="cursor: pointer;">None</span>
                             </p>
                         </th>
-                        <th class="text-center" width="10%">
-                            Visible for Group Photo
-                            <br>
-                            <p class="mb-0 d-repeating-header-none">
-                                <span class="font-weight-light" id="set-is-visible-for-group-all" style="cursor: pointer;">Select All</span>
-                                <span class="font-weight-normal"> | </span>
-                                <span class="font-weight-light" id="set-is-visible-for-group-none" style="cursor: pointer;">None</span>
-                            </p>
-                        </th>
+                        @if($groupsTabValue)
+                            <th class="text-center" width="10%">
+                                Visible for Group Photo
+                                <br>
+                                <p class="mb-0 d-repeating-header-none">
+                                    <span class="font-weight-light" id="set-is-visible-for-group-all" style="cursor: pointer;">Select All</span>
+                                    <span class="font-weight-normal"> | </span>
+                                    <span class="font-weight-light" id="set-is-visible-for-group-none" style="cursor: pointer;">None</span>
+                                </p>
+                            </th>
+                        @endif
                         <th class="text-center" width="15%">
                             Photo Counts
                             <br>
@@ -68,27 +75,29 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="visible-for-group">
-                                    <div class="row is-visible-for-group">
-                                        <div class="col-12">
-                                            @php
-                                                $allowGroupVisible = false;
-                                                if (isset($folder['is_visible_for_group'])) {
-                                                    $allowGroupVisible = $folder['is_visible_for_group'] == 1;
-                                                }
-                                            @endphp
-                                            <div class="form-group text-center">
-                                                <input type="checkbox"
-                                                    class="form-check-input folder-details-is-visible-for-group text-center mt-2 ml-0 mr-0"
-                                                    id="is-visible-for-group"
-                                                    name="is-visible-for-group-{{ $folderName }}"
-                                                    data-folder-id="{{ $fIdHash }}"
-                                                    data-folder-name="{{ $folderName }}"
-                                                    {{ $allowGroupVisible ? 'checked' : '' }} data-value="{{$folder['is_visible_for_group']}}">
+                                @if($groupsTabValue)
+                                    <td class="visible-for-group">
+                                        <div class="row is-visible-for-group">
+                                            <div class="col-12">
+                                                @php
+                                                    $allowGroupVisible = false;
+                                                    if (isset($folder['is_visible_for_group'])) {
+                                                        $allowGroupVisible = $folder['is_visible_for_group'] == 1;
+                                                    }
+                                                @endphp
+                                                <div class="form-group text-center">
+                                                    <input type="checkbox"
+                                                        class="form-check-input folder-details-is-visible-for-group text-center mt-2 ml-0 mr-0"
+                                                        id="is-visible-for-group"
+                                                        name="is-visible-for-group-{{ $folderName }}"
+                                                        data-folder-id="{{ $fIdHash }}"
+                                                        data-folder-name="{{ $folderName }}"
+                                                        {{ $allowGroupVisible ? 'checked' : '' }} data-value="{{$folder['is_visible_for_group']}}">
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
+                                    </td>
+                                @endif
                                 <td class="folder-students">
                                     <div class="row is-visible-for-school">
                                         <div class="col-12">
