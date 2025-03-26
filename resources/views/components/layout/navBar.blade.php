@@ -10,6 +10,9 @@
         RoleHelper::ROLE_FRANCHISE
     ];
     $user = Auth::user();
+    
+    $proofingMenu = $AppSettingsHelper::getByPropertyKey('proofing_menu');
+    $proofingMenuValue = $proofingMenu ? $proofingMenu->property_value === 'true' ? true : false : true; 
 @endphp
 @hasanyrole(implode("|", $nonSchoolLevelRoles))
     @php
@@ -38,7 +41,10 @@
         @if ($SchoolContextHelper->isSchoolContext())
             <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
             {{-- <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabSchoolConfig" navIcon="gear" href="{{ route('config-school') }}">Config School</x-layout.navItem> --}}
-            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+            
+            @if ($proofingMenuValue)
+                <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+            @endif
         @endif
     @endhasanyrole
     

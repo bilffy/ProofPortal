@@ -58,6 +58,9 @@
     $notificationsMatrix = $selectedSchool->digital_download_permission_notification;
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
     $imageUrl = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
+    
+    $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
+    $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
 @endphp
     <div class="row">
         <div class="col-lg-12">
@@ -289,6 +292,7 @@
 
     {{-- TNJ selection --}}
     <div class="row">
+        <input id="is-group-visible" type="hidden" value="@if($groupsTabValue)1 @else 0 @endif">
         <div class="col-12 m-auto">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -363,35 +367,36 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-12 m-auto">
-                                <!-- New Group Photo row with equal spacing -->
-                                <div class="form-group row text mb-0">
-                                    <label for="group_download_start" class="col-md-4 form-control-label">{{ __('Group Photo Download') }}</label>
-                                    
-                                    <!-- Checkbox with equal spacing -->
-                                    <div class="col-md-4 d-flex align-items-center">
-                                        <div class="form-group">
-                                            <input type="checkbox" disabled="disabled" id="group_download_allowed" class="form-check-input ml-0" name="group_download_allowed" />
-                                            <label for="group_download_allowed" class="form-check-label ml-2">Allowed</label>
+                        @if ($groupsTabValue)
+                            <div class="row">
+                                <div class="col-md-12 m-auto">
+                                    <!-- New Group Photo row with equal spacing -->
+                                    <div class="form-group row text mb-0">
+                                        <label for="group_download_start" class="col-md-4 form-control-label">{{ __('Group Photo Download') }}</label>
+                                        
+                                        <!-- Checkbox with equal spacing -->
+                                        <div class="col-md-4 d-flex align-items-center">
+                                            <div class="form-group">
+                                                <input type="checkbox" disabled="disabled" id="group_download_allowed" class="form-check-input ml-0" name="group_download_allowed" />
+                                                <label for="group_download_allowed" class="form-check-label ml-2">Allowed</label>
+                                            </div>
                                         </div>
-                                    </div>
-                        
-                                    <!-- Date picker with equal spacing -->
-                                    <div class="col-md-4 text" id="group_download_start">
-                                        <div class="form-group">
-                                            <div class="input-group" id="group_download_start_container">
-                                                <input type="text" id="group_download_start_picker" autocomplete="off" class="form-control" name="group_download_start" />
-                                                <span class="input-group-addon">
-                                                    <span class="fa fa-calendar"></span>
-                                                </span>
+                            
+                                        <!-- Date picker with equal spacing -->
+                                        <div class="col-md-4 text" id="group_download_start">
+                                            <div class="form-group">
+                                                <div class="input-group" id="group_download_start_container">
+                                                    <input type="text" id="group_download_start_picker" autocomplete="off" class="form-control" name="group_download_start" />
+                                                    <span class="input-group-addon">
+                                                        <span class="fa fa-calendar"></span>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                     <div class="d-none" id="jobTypeMsg"></div>
                     <div class="d-none" id="jobType">
@@ -405,9 +410,11 @@
                             <div class="col-lg-6">
                                 <select id="job_access_image" name="job_access_image" class="form-control">
                                     <option value="0">--Choose a Job Type to Access Images--</option>
-                                    <option value="all">None</option>
-                                    <option value="portrait">Portrait / Group</option>
-                                    <option value="special_group">Speciality</option>
+                                    <option value="all">None</option>\
+                                    @if ($groupsTabValue)
+                                        <option value="portrait">Portrait / Group</option>
+                                        <option value="special_group">Speciality</option>
+                                    @endif    
                                 </select>
                             </div>
                         </div>

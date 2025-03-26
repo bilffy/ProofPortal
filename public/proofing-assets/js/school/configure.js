@@ -235,6 +235,10 @@ jQuery(document).ready(function($) {
     let jobsData = [];
 
     $('#select_season').on('change', function () {
+        const isGroupVisible = $("#is-group-visible").val();
+        
+        console.log(isGroupVisible);
+        
         const selectedSeasonId = $(this).val();
         const selectedSchoolKey = $('#schoolHash').val();
         const selectedSeasonText = $(this).find('option:selected').text();
@@ -273,8 +277,10 @@ jQuery(document).ready(function($) {
                                 <select id="job_access_image" name="job_access_image" class="form-control">
                                     <option value="0">--Choose a Job Type to Access Images--</option>
                                     <option value="all">None</option>
-                                    <option value="portrait">Portrait / Group</option>
-                                    <option value="special_group">Speciality</option>
+                                    ${isGroupVisible == 1 ? `
+                                        <option value="portrait">Portrait / Group</option>
+                                        <option value="special_group">Speciality</option>
+                                    ` : ''}
                                 </select>
                             </div>
                         </div>
@@ -347,6 +353,7 @@ jQuery(document).ready(function($) {
 
 
     $('#job_select').on('change', function () {
+        const isGroupVisible = $("#is-group-visible").val();
         const selectedJobKey = $(this).val();
         $('#jobType, #digital_download, #folder_config').addClass('d-none');
         $('p.alert-message').remove();
@@ -428,8 +435,10 @@ jQuery(document).ready(function($) {
                             <select id="job_access_image" name="job_access_image" class="form-control">
                                 <option value="0">--Choose a Job Type to Access Images--</option>
                                 <option value="all">None</option>
-                                <option value="portrait">Portrait / Group</option>
-                                <option value="special_group">Speciality</option>
+                                ${isGroupVisible == 1 ? `
+                                    <option value="portrait">Portrait / Group</option>
+                                    <option value="special_group">Speciality</option>
+                                ` : ''}     
                             </select>
                         </div>
                     </div>
