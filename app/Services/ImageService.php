@@ -176,7 +176,10 @@ class ImageService
                 }
             });
 
-        return $query->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id')->get();
+        return $query
+            ->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id')
+            ->orderBy('folders.ts_foldername')
+            ->get();
     }
 
     /**
@@ -250,7 +253,9 @@ class ImageService
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
-        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername');
+        return $query
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername')
+            ->orderBy('subjects.lastname');
     }
 
     /**
@@ -294,7 +299,9 @@ class ImageService
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
-        return $query->select('folders.ts_folderkey', 'folders.ts_foldername');
+        return $query
+            ->select('folders.ts_folderkey', 'folders.ts_foldername')
+            ->orderBy('folders.ts_foldername');
     }
 
     /**
