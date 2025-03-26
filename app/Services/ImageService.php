@@ -255,7 +255,8 @@ class ImageService
         
         return $query
             ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername')
-            ->orderBy('subjects.lastname');
+            ->orderBy('subjects.lastname')
+            ->orderBy('subjects.firstname');
     }
 
     /**
