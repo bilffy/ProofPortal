@@ -22,6 +22,7 @@ class DownloadRequested extends Model
         'download_category_id',
         'filters',
         'status_id',
+        'filename_format',
         'email_sent_date',
         'requested_date',
         'completed_date',

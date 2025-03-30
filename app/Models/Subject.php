@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Helpers\Constants\FilenameFormat;
+use File;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -42,6 +44,16 @@ class Subject extends Model
 
     public function attachedsubjects(){
         return $this->hasMany('App\Models\FolderSubject', 'ts_subject_id', 'ts_subject_id');
+    }
+
+    public function getFilename(FilenameFormat $format): string
+    {
+        return match($format) {
+            FilenameFormat::FIRST_NAME_LAST_NAME => $this->firstname . ' ' . $this->lastname,
+            FilenameFormat::FIRST_NAME_ONLY => $this->firstname,
+            FilenameFormat::LAST_NAME_ONLY => $this->lastname,
+            FilenameFormat::IMAGE_CODE => $this->ts_subjectkey,
+        };
     }
     
 }

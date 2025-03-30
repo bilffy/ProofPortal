@@ -99,7 +99,19 @@
                                 </select>
                             </div>
                         </div>
-                    </div>    
+                    </div>
+                    <div id="filename_format_selection">
+                        <p>{{ $configMessages['options']['filename_format_selection'] }}</p>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-col gap-2">
+                                <select id="filename_format" class="input">
+                                    @foreach ( $FilenameFormat::getSubjectsFormat() as $format )
+                                        <option value="{{ $format->value }}">{{ $format->text() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>  
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
@@ -152,7 +164,7 @@
 
 @push('scripts')
 <script type="module">
-    
+    import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
         let checkIcon = imgCheckbox.querySelector('i');
         if (isSelected) {
@@ -374,6 +386,7 @@
                         images: selectedImages,
                         category: selectedImages.length === 1 ? INDIVIDUAL_CATEGORY : BULK_CATEGORY,
                         filters: filters,
+                        filenameFormat: parseInt($('#filename_format').val()),
                     }
                 )
             });
@@ -394,7 +407,7 @@
             if (selectedImages.length === 1) {
                 const imgElement = document.createElement('a');
                 imgElement.href = `data:image/jpeg;base64,${result['data']}`;
-                imgElement.download = `${Math.random().toString(36).substring(2, 15)}.jpg`;
+                imgElement.download = `${decryptData(result['filename'])}.jpg`;
                 imgElement.click();
             }
             
