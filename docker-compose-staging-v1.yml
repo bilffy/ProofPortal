@@ -45,7 +45,15 @@ services:
       - php
     networks:
       - msp_v1
-
+  
+  redis:
+    image: redis:alpine
+    container_name: msp_v1_redis
+    ports:
+      - "6381:6379"
+    networks:
+      - msp_v1
+  
   mailhog:
     image: mailhog/mailhog
     container_name: msp_v1_mailhog
