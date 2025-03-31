@@ -1,0 +1,62 @@
+name: msp_v1
+# version: '3.8'
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: msp_v1_php
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - msp_v1
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    image: msp_v1_node
+    container_name: msp_v1_node
+    ports:
+      - "3033:3000"
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/node_modules
+    networks:
+      - msp_v1
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: msp_v1_nginx
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf:/etc/nginx/conf.d
+    ports:
+      - "81:80" 
+    depends_on:
+      - php
+    networks:
+      - msp_v1
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: msp_v1_mailhog
+    ports:
+      - "1026:1025"  # SMTP
+      - "8026:8025"  # Web UI
+    networks:
+      - msp_v1
+
+networks:
+  msp_v1:
+
+volumes:
+  mysql_data:
