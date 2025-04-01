@@ -38,9 +38,9 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
-      - ./docker/nginx/conf:/etc/nginx/conf.d
-    ports:
-      - "81:80" 
+      - ./docker/nginx/staging_v1/conf:/etc/nginx/conf.d
+   # ports:
+   #   - "81:80" 
     depends_on:
       - php
     networks:
