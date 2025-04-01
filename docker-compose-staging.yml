@@ -39,8 +39,8 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/nginx/staging/conf:/etc/nginx/conf.d
-    #ports:
-    #  - "80:80" 
+    ports:
+      - "8081:80" 
     depends_on:
       - php
     networks:
@@ -85,9 +85,9 @@ services:
 
 networks:
   msp_staging_network:
-    driver: bridge
-    attachable: true
-    name: msp_staging_network
+#    driver: bridge
+#    attachable: true
+#    name: msp_staging_network
 
 volumes:
   mysql_data:
