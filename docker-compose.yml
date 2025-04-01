@@ -38,7 +38,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
-      - ./docker/nginx/conf:/etc/nginx/conf.d
+      - ./docker/nginx/local/conf:/etc/nginx/conf.d
     ports:
       - "8080:80"
     depends_on:
