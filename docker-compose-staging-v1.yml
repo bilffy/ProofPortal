@@ -12,7 +12,7 @@ services:
       - ./:/var/www
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
-      - msp_staging_network
+      - msp_staging_network_v1
 
   node:
     build:
@@ -28,7 +28,7 @@ services:
       - ./:/var/www
       - /var/www/node_modules
     networks:
-      - msp_staging_network
+      - msp_staging_network_v1
 
   nginx:
     build:
@@ -39,18 +39,36 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/nginx/staging_v1/conf:/etc/nginx/conf.d
-   # ports:
-   #   - "81:80" 
+    ports:
+     - "8082:80"
     depends_on:
       - php
     networks:
-      - msp_staging_network
-  
+      - msp_staging_network_v1
+
+  redis:
+    image: redis:alpine
+    container_name: msp_v1_redis
+    ports:
+      - "6381:6379"
+    networks:
+      - msp_staging_network_v1
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: msp_v1_mailhog
+    ports:
+      - "1026:1025"  # SMTP
+      - "8026:8025"  # Web UI
+    networks:
+      - msp_staging_network_v1
+
+
 networks:
-  msp_staging_network:
-    driver: bridge
-    attachable: true
-    name: msp_staging_network
+  msp_staging_network_v1:
+#    driver: bridge
+#    attachable: true
+#    name: msp_staging_network
 
 volumes:
-  mysql_data:
+  mysql_data_v1:
