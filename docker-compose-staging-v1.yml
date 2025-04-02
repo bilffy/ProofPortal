@@ -54,9 +54,9 @@ services:
     networks:
       - msp_staging_network_v1
 
-  mailhog:
+  mailhog_v1:
     image: mailhog/mailhog
-    container_name: msp_v1_mailhog
+    container_name: msp_v1_mailhog_v1
     ports:
       - "1026:1025"  # SMTP
       - "8026:8025"  # Web UI
