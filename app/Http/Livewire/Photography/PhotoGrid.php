@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Photography;
 
+use App\Helpers\FilenameFormatHelper;
 use App\Helpers\PhotographyHelper;
 use App\Services\ImageService;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -26,6 +27,7 @@ class PhotoGrid extends Component
     protected $listeners = [
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
+        PhotographyHelper::EV_CHANGE_TAB => 'updateActiveCategory',
     ];
 
     public function mount($category = 'portaits', $season = 1, $schoolKey = '')
@@ -49,6 +51,16 @@ class PhotoGrid extends Component
         }
         $this->search = $term;
         $this->resetPage();
+    }
+
+    public function updateActiveCategory($category)
+    {
+        // dd($category);
+        if ($category != $this->category) {
+            return;
+        }
+        $formatOptions = FilenameFormatHelper::getFormatOptions($this->getCategoryValue());
+        $this->dispatch(PhotographyHelper::EV_UPDATE_FILENAME_FORMATS, $formatOptions);
     }
 
     /**
@@ -154,19 +166,19 @@ class PhotoGrid extends Component
             case PhotographyHelper::TAB_GROUPS:
                 return 'is_visible_for_group';
             case PhotographyHelper::TAB_OTHERS:
-                return 'is_visible_for_portrait';
+                return 'is_visible_for_group';
         }
     }
 
-    private function getOperator()
+    private function getCategoryValue()
     {
         switch($this->category) {
             case PhotographyHelper::TAB_PORTRAITS:
-                return '!=';
+                return strtolower(PhotographyHelper::TAB_PORTRAITS);
             case PhotographyHelper::TAB_GROUPS:
-                return '=';
+                return strtolower(PhotographyHelper::TAB_GROUPS);
             case PhotographyHelper::TAB_OTHERS:
-                return '!=';
+                return strtolower(PhotographyHelper::TAB_GROUPS);
         }
     }
 

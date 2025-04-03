@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Helpers\Constants\FilenameFormat;
 use App\Helpers\PermissionHelper;
 use App\Helpers\PhotographyHelper;
 use App\Helpers\RoleHelper;
@@ -44,7 +43,6 @@ class AppServiceProvider extends ServiceProvider
         view()->share('SchoolContextHelper', new SchoolContextHelper());
         view()->share('PhotographyHelper', new PhotographyHelper());
         view()->share('AppSettingsHelper', new AppSettingsHelper());
-        view()->share('FilenameFormat', FilenameFormat::class);
         
         JsonResource::withoutWrapping();
     }

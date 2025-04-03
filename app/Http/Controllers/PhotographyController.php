@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ActivityLogHelper;
-use App\Helpers\Constants\FilenameFormat;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\EncryptionHelper;
+use App\Helpers\PhotographyHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Models\DownloadDetail;
 use App\Models\DownloadRequested;
 use App\Models\DownloadType;
+use App\Models\FilenameFormat;
 use App\Models\Folder;
 use App\Models\Image;
 use App\Models\Job;
@@ -212,8 +213,18 @@ class PhotographyController extends Controller
             $imageContent = base64_encode($this->imageService->getImageContent($key));
             // return response()->json(['success' => true, 'data' => $imageContent]);
             $data = $imageContent;
-            $subject = Subject::where('ts_subjectkey', $key)->first();
-            $filename = $subject->getFilename(FilenameFormat::from($request->input('filenameFormat')));
+
+            switch ($request->input('tab')) {
+                case PhotographyHelper::TAB_GROUPS:
+                case PhotographyHelper::TAB_OTHERS:
+                    $object = Folder::where('ts_folderkey', $key)->first();
+                    break;
+                case PhotographyHelper::TAB_PORTRAITS:
+                    $object = Subject::where('ts_subjectkey', $key)->first();
+                    break;
+            }
+            $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
+            $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
             return response()->json(['success' => true, 'data' => $data, 'filename' => EncryptionHelper::simpleEncrypt($filename)]);
         }
 

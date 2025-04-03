@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Helpers\Constants\FilenameFormat;
+use App\Helpers\FilenameFormatHelper;
 use File;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,14 +46,12 @@ class Subject extends Model
         return $this->hasMany('App\Models\FolderSubject', 'ts_subject_id', 'ts_subject_id');
     }
 
-    public function getFilename(FilenameFormat $format): string
+    public function getFilename(string $format): string
     {
-        return match($format) {
-            FilenameFormat::FIRST_NAME_LAST_NAME => $this->firstname . ' ' . $this->lastname,
-            FilenameFormat::FIRST_NAME_ONLY => $this->firstname,
-            FilenameFormat::LAST_NAME_ONLY => $this->lastname,
-            FilenameFormat::IMAGE_CODE => $this->ts_subjectkey,
-        };
+        $options = [
+            'subjects' => $this->id,
+            'folders' => $this->folder->id,
+        ];
+        return FilenameFormatHelper::applyFormat($format, $options);
     }
-    
 }

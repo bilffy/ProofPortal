@@ -178,5 +178,5 @@
 
     </script>
 
-    @stack('scripts')
+    {{-- @stack('scripts') --}}
 @endsection

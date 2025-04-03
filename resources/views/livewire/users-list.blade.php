@@ -175,16 +175,6 @@
             });
         }
 
-        function debounce(func, delay) {
-            let timer;
-            return function (...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    func.apply(this, args);
-                }, delay);
-            };
-        }
-
         window.addEventListener("load", initialScripts, false);
         window.addEventListener('livewire:init', () => {
             const debouncedInitFlow = debounce(() => {

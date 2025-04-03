@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Helpers\Constants\FilenameFormat;
+use App\Helpers\FilenameFormatHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -71,11 +71,12 @@ class Folder extends Model
         return $this->belongsTo('App\Models\FolderTag', 'folder_tag', 'tag');
     }
 
-    public function getFilename(FilenameFormat $format): string
+    public function getFilename(string $format): string
     {
-        return match($format) {
-            FilenameFormat::IMAGE_CODE => $this->ts_folderkey,
-            FilenameFormat::GROUP_NAME => $this->ts_foldername,
-        };
+        $options = [
+            'folders' => $this->id,
+            'seasons' => $this->job()->first()->seasons()->first()->id,
+        ];
+        return FilenameFormatHelper::applyFormat($format, $options);
     }
 }
