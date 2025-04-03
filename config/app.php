@@ -195,7 +195,8 @@ return [
                 'title' => 'Download Options',
                 'sub_title' => 'Selections required',
                 'resolution_selection' => 'Select an image resolution option',
-                'folder_format_selection' => 'Select a folder structure option'
+                'folder_format_selection' => 'Select a folder structure option',
+                'filename_format_selection' => 'Select a format for the file names',
             ],
             'request' => [
                 'title' => 'Confirm Download',

@@ -99,7 +99,16 @@
                                 </select>
                             </div>
                         </div>
-                    </div>    
+                    </div>
+                    <div id="filename_format_selection">
+                        <p>{{ $configMessages['options']['filename_format_selection'] }}</p>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-col gap-2">
+                                <select id="filename_format" class="input">
+                                </select>
+                            </div>
+                        </div>
+                    </div>  
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
@@ -152,7 +161,7 @@
 
 @push('scripts')
 <script type="module">
-    
+    import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
         let checkIcon = imgCheckbox.querySelector('i');
         if (isSelected) {
@@ -179,9 +188,9 @@
     
     function updateDownloadSelection() {
         const images = JSON.parse(localStorage.getItem('selectedImages'));
-        const portaits = document.querySelectorAll('.portrait-img');
+        const portraits = document.querySelectorAll('.portrait-img');
 
-        portaits.forEach(img => {
+        portraits.forEach(img => {
             let checkbox = img.querySelector('.portrait-img-checkbox');
             updateImageState(checkbox, images.includes(img.id));
         });
@@ -193,6 +202,15 @@
         window.localStorage.setItem('selectedImages', JSON.stringify([]));
         updateDownloadSelection();
     }
+
+    function setCategory(category) {
+        window.localStorage.setItem('photographyCategory', category);
+        Livewire.dispatch('EV_CHANGE_TAB', { category: category });
+    }
+
+    const debouncedSetCategory = debounce((data) => {
+        setCategory(data)
+    }, 300);
 
     function handleImageClick(imageId) {
         let selectedItems = window.localStorage.getItem('selectedImages');
@@ -215,6 +233,11 @@
         console.log('Selected Images:', selectedItems);
         
     }
+
+    function getActiveTabId() {
+        const activeTab = document.querySelector('.tab-button[aria-selected="true"]');
+        return activeTab ? activeTab.id : null;
+    }
     
     window.resetImages = resetImages;
     window.handleImageClick = handleImageClick;
@@ -224,6 +247,18 @@
     document.addEventListener('DOMContentLoaded', () => {
         window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
+        const activeTabId = getActiveTabId();
+        switch (activeTabId) {
+            case 'portraits-tab':
+                debouncedSetCategory('PORTRAITS');
+                break;
+            case 'groups-tab':
+                debouncedSetCategory('GROUPS');
+                break;
+            case 'others-tab':
+                debouncedSetCategory('OTHERS');
+                break;
+        }
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -244,18 +279,22 @@
                         }
                     }, false);
                 } else {
+                    const tab = e.target.id;
                     // Hide download section when in configuration tab
                     const downloadSection = document.querySelector('#download-section');
-                    if ('configure-tab' == e.target.id || 'configure-new-tab' == e.target.id) {
+                    if ('configure-tab' == tab || 'configure-new-tab' == tab) {
                         downloadSection.classList.add('hidden');
                     } else {
                         downloadSection.classList.remove('hidden');
-                        if ('portraits-tab' == e.target.id) {
-                            window.updateDownloadsForPortraits();
-                        } else if ('groups-tab' == e.target.id) {
-                            window.updateDownloadsForGroups();
-                        } else if ('others-tab' == e.target.id) {
-                            window.updateDownloadsForOthers();
+                        if ('portraits-tab' == tab) {
+                            window.updateDownloadsForPortraits(tab);
+                            setCategory('PORTRAITS');
+                        } else if ('groups-tab' == tab) {
+                            window.updateDownloadsForGroups(tab);
+                            setCategory('GROUPS');
+                        } else if ('others-tab' == tab) {
+                            window.updateDownloadsForOthers(tab);
+                            setCategory('OTHERS');
                         }
                     }
                     // reset images selected
@@ -320,6 +359,19 @@
     function reloadPage() {
         window.location.reload();
     }
+
+    function updateFormatOptions(options) {
+        const formatSelect = document.getElementById('filename_format');
+        // Clear existing options
+        formatSelect.innerHTML = '';
+        // Add new options
+        Object.values(options).forEach(({name, format_key}) => {
+            const newOption = document.createElement('option');
+            newOption.value = format_key;
+            newOption.textContent = name;
+            formatSelect.appendChild(newOption);
+        });
+    }
     
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
@@ -337,12 +389,14 @@
     });
     
     async function submitDownloadRequest() {
+        const tab = getActiveTabId();
+        const tabVal = tab.replace("-tab", "");
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
         try {
             const downloadBtn = document.querySelector('#confirm-download-btn');
-            const selectedYear = $('#select_portaits_year').val();
-            const selectedView = $('#select_portaits_view').val();
-            const selectedClass = $('#select_portaits_class').val();
+            const selectedYear = $(`#select_${tabVal}_year`).val();
+            const selectedView = $(`#select_${tabVal}_view`).val();
+            const selectedClass = $(`#select_${tabVal}_class`).val();
             const INDIVIDUAL_CATEGORY = 1;
             const BULK_CATEGORY = 2;
             
@@ -374,6 +428,8 @@
                         images: selectedImages,
                         category: selectedImages.length === 1 ? INDIVIDUAL_CATEGORY : BULK_CATEGORY,
                         filters: filters,
+                        filenameFormat: parseInt($('#filename_format').val()),
+                        tab: localStorage.getItem('photographyCategory'),
                     }
                 )
             });
@@ -394,7 +450,7 @@
             if (selectedImages.length === 1) {
                 const imgElement = document.createElement('a');
                 imgElement.href = `data:image/jpeg;base64,${result['data']}`;
-                imgElement.download = `${Math.random().toString(36).substring(2, 15)}.jpg`;
+                imgElement.download = `${decryptData(result['filename'])}.jpg`;
                 imgElement.click();
             }
             
@@ -416,6 +472,9 @@
     window.confirmDownloadRequest = confirmDownloadRequest;
     window.reloadPage = reloadPage;
     window.updateSchoolConfig = updateSchoolConfig;
-    
+
+    Livewire.on('EV_UPDATE_FILENAME_FORMATS', (data) => {
+        updateFormatOptions(data[0]);
+    });
 </script>
 @endpush

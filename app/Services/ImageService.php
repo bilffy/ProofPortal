@@ -35,10 +35,10 @@ class ImageService
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
+            case PhotographyHelper::TAB_OTHERS:
                 $visibilityColumn = 'is_visible_for_group';
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
-            case PhotographyHelper::TAB_OTHERS:
                 $visibilityColumn = 'is_visible_for_portrait';
                 break;
             default:
@@ -110,10 +110,10 @@ class ImageService
             
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
+            case PhotographyHelper::TAB_OTHERS:
                 $nullName = 'Class';
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
-            case PhotographyHelper::TAB_OTHERS:
             default:
                 $nullName = 'Student';
                 $query->where(function ($q) {
@@ -148,11 +148,11 @@ class ImageService
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
+            case PhotographyHelper::TAB_OTHERS:
                 $visibilityColumn = 'is_visible_for_group';
                 $nullTag = "Class";
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
-            case PhotographyHelper::TAB_OTHERS:
             default:
                 $visibilityColumn = 'is_visible_for_portrait';
                 $nullTag = "Student";
@@ -321,10 +321,10 @@ class ImageService
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
+            case PhotographyHelper::TAB_OTHERS:
                 $images = $this->getFoldersCollection($seasonId, $schoolKey, $folderKeys, $search);
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
-            case PhotographyHelper::TAB_OTHERS:
             default:
                 $images = $this->getSubjectsCollection($seasonId, $schoolKey, $folderKeys, $search);
                 break;
@@ -343,11 +343,11 @@ class ImageService
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
+            case PhotographyHelper::TAB_OTHERS:
                 $key = 'ts_folderkey';
                 $category = 'FOLDER';
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
-            case PhotographyHelper::TAB_OTHERS:
             default:
                 $key = 'ts_subjectkey';
                 $category = 'SUBJECT';

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\FilenameFormatHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -43,5 +44,13 @@ class Subject extends Model
     public function attachedsubjects(){
         return $this->hasMany('App\Models\FolderSubject', 'ts_subject_id', 'ts_subject_id');
     }
-    
+
+    public function getFilename(string $format): string
+    {
+        $options = [
+            'subjects' => $this->id,
+            'folders' => $this->folder->id,
+        ];
+        return FilenameFormatHelper::applyFormat($format, $options);
+    }
 }

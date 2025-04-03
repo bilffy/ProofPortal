@@ -34,9 +34,9 @@
                     oninput="window.performPortaitSearch(event);"
                 />
             </div>
-            <x-form.select context="portaits_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
-            <x-form.select context="portaits_view" :options="[]" class="mb-4">View</x-form.select>
-            <x-form.select context="portaits_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
+            <x-form.select context="portraits_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
+            <x-form.select context="portraits_view" :options="[]" class="mb-4">View</x-form.select>
+            <x-form.select context="portraits_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
         @if ($season)
             <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
@@ -61,9 +61,9 @@
         }
     }
     function updateGridView(event) {
-        const selectedYear = $('#select_portaits_year').val();
-        const selectedView = $('#select_portaits_view').val();
-        const selectedClass = $('#select_portaits_class').val();
+        const selectedYear = $('#select_portraits_year').val();
+        const selectedView = $('#select_portraits_view').val();
+        const selectedClass = $('#select_portraits_class').val();
         
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
@@ -77,30 +77,32 @@
         });
     }
     function disableForms() {
-        $('#select_portaits_year').prop('disabled', true);
-        $('#select_portaits_view').prop('disabled', true);
-        $('#select_portaits_class').prop('disabled', true);
+        $('#select_portraits_year').prop('disabled', true);
+        $('#select_portraits_view').prop('disabled', true);
+        $('#select_portraits_class').prop('disabled', true);
         $('#image-search-portraits').prop('disabled', true);
         updateDownloadsForPortraits();
     }
-    function updateDownloadsForPortraits() {
-        @if ($season == 0)
-            $('#btn-download').prop('disabled', true);
-        @else
-            $('#btn-download').prop('disabled', false);
-        @endif
+    function updateDownloadsForPortraits(activeTab = '') {
+        let tab = activeTab;
+        if (isEmptyString(tab)) {
+            const activeTabEl = document.querySelector('.tab-button[aria-selected="true"]');
+            tab = activeTabEl ? activeTabEl.id : null;
+        }
+        const season = "{{ $season }}";
+        $('#btn-download').prop('disabled', (season == 0 && 'portraits-tab' == tab));
     }
 
     window.updateDownloadsForPortraits = updateDownloadsForPortraits;
 
     window.performPortaitSearch = performPortaitSearch;
     window.addEventListener('load', () => {
-        $('#select_portaits_year').select2({placeholder: "Select a Year"});
-        $('#select_portaits_year').change(updateGridView);
-        $('#select_portaits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
-        $('#select_portaits_view').change(updateGridView);
-        $('#select_portaits_class').select2({placeholder: "All"});
-        $('#select_portaits_class').change(updateGridView);
+        $('#select_portraits_year').select2({placeholder: "Select a Year"});
+        $('#select_portraits_year').change(updateGridView);
+        $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
+        $('#select_portraits_view').change(updateGridView);
+        $('#select_portraits_class').select2({placeholder: "All"});
+        $('#select_portraits_class').change(updateGridView);
 
         @if ($season == 0)
             disableForms();
@@ -109,7 +111,7 @@
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
         if (data[0] == 'PORTRAITS') {
-            updateSelect2Options(`#select_portaits_${data[1]}`, data[2]);
+            updateSelect2Options(`#select_portraits_${data[1]}`, data[2]);
         }
     });
 </script>

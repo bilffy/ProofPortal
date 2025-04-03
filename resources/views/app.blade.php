@@ -20,6 +20,20 @@
     @yield('css')
     <script>
         var base_url = "{{URL::to('/')}}";
+
+        function debounce(func, delay) {
+            let timer;
+            return function (...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        function isEmptyString(obj) {
+            return typeof obj === 'string' && obj.trim() === '';
+        }
     </script>
 </head>
 

@@ -84,12 +84,14 @@
         $('#image-search-groups').prop('disabled', true);
         updateDownloadsForGroups();
     }
-    function updateDownloadsForGroups() {
-        @if ($season == 0)
-            $('#btn-download').prop('disabled', true);
-        @else
-            $('#btn-download').prop('disabled', false);
-        @endif
+    function updateDownloadsForGroups(activeTab = '') {
+        let tab = activeTab;
+        if (isEmptyString(tab)) {
+            const activeTabEl = document.querySelector('.tab-button[aria-selected="true"]');
+            tab = activeTabEl ? activeTabEl.id : null;
+        }
+        const season = "{{ $season }}";
+        $('#btn-download').prop('disabled', (season == 0 && 'groups-tab' == tab));
     }
 
     window.updateDownloadsForGroups = updateDownloadsForGroups;

@@ -43,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         view()->share('SchoolContextHelper', new SchoolContextHelper());
         view()->share('PhotographyHelper', new PhotographyHelper());
         view()->share('AppSettingsHelper', new AppSettingsHelper());
+        
         JsonResource::withoutWrapping();
     }
 }
