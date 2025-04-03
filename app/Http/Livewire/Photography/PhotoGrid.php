@@ -30,7 +30,7 @@ class PhotoGrid extends Component
         PhotographyHelper::EV_CHANGE_TAB => 'updateActiveCategory',
     ];
 
-    public function mount($category = 'portaits', $season = 1, $schoolKey = '')
+    public function mount($category = 'portraits', $season = 1, $schoolKey = '')
     {
         $this->category = $category;
         $this->season = $season;
@@ -55,7 +55,6 @@ class PhotoGrid extends Component
 
     public function updateActiveCategory($category)
     {
-        // dd($category);
         if ($category != $this->category) {
             return;
         }

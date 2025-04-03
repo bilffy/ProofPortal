@@ -188,9 +188,9 @@
     
     function updateDownloadSelection() {
         const images = JSON.parse(localStorage.getItem('selectedImages'));
-        const portaits = document.querySelectorAll('.portrait-img');
+        const portraits = document.querySelectorAll('.portrait-img');
 
-        portaits.forEach(img => {
+        portraits.forEach(img => {
             let checkbox = img.querySelector('.portrait-img-checkbox');
             updateImageState(checkbox, images.includes(img.id));
         });
