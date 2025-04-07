@@ -193,10 +193,10 @@ return [
         'download' => [
             'options' => [
                 'title' => 'Download Options',
-                'sub_title' => 'Selections required',
-                'resolution_selection' => 'Select an image resolution option',
-                'folder_format_selection' => 'Select a folder structure option',
-                'filename_format_selection' => 'Select a format for the file names',
+                'sub_title' => 'Select your preferred download options below, then click Next to continue.',
+                'resolution_selection' => 'Photo resolution',
+                'folder_format_selection' => 'Folder structure',
+                'filename_format_selection' => 'File name options',
             ],
             'request' => [
                 'title' => 'Confirm Download',
