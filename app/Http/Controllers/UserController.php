@@ -126,7 +126,7 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $encryptedData = $request->input('encrypted');
+        $encryptedData = $request->input('request');
         $nonce = session('register_token');
 
         try {
