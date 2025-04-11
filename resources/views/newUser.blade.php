@@ -106,7 +106,8 @@
 
 @push('scripts')
 <script type="module">
-    import { encryptObjectValues, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+    import JsAesPhp from "{{ Vite::asset('resources/js/helpers/js-aes-php.ts') }}"
+    
     let user = {{ Js::from($user) }}
     let roles = {{ Js::from($roleOptions) }}
     var selectedRole = "{{ old('role') }}";
@@ -178,33 +179,36 @@
     }
     
     document.addEventListener('DOMContentLoaded', async () => {
-        $('#add-user-form').on('submit', function(event) {
+        $('#add-user-form').on('submit', async function (event) {
             event.preventDefault(); // Prevent the default form submission
             let formData = $(this).serializeArray();
-            let encryptedData = {};
-
-            formData.forEach(function(item) {
-                // encrypt the franchise, school and email before submitting the form
-                if (item.name === 'franchise' || item.name === 'school' || item.name === 'email') {
-                    encryptedData[item.name] = encryptData(item.value);
-                    return;
-                }
-                encryptedData[item.name] = item.value;
-            });
+            let data = {};
+            let nonce = $('#nonce').val();
+            let token = formData.find(item => item.name === '_token').value;
             
+            formData.forEach(function (item) {
+                if (item.name !== '_token') {
+                    data[item.name] = item.value;
+                }
+            });
+
             // remove any errors from the previous submission
             removeErrorMessages();
+
+            let encryptedData = {};
+            encryptedData['request'] = await JsAesPhp.encrypt(data, nonce);
+            encryptedData['_token'] = token
             
             $.ajax({
                 url: $(this).attr('action'),
                 method: $(this).attr('method'),
                 data: encryptedData,
-                success: function(response) {
+                success: function (response) {
                     if (response.redirect_url !== undefined) {
                         window.location.href = response.redirect_url;
                     }
                 },
-                error: function(response) {
+                error: function (response) {
                     let errors = response.responseJSON.errors;
                     // iterate the errors object and display the error messages
                     for (let key in errors) {
@@ -229,12 +233,12 @@
                             // check if element not exist
                             if ($(`#${key}`).parent().find(`#${key}-error`).length === 0) {
                                 $(`#${key}`).parent().append(errorDiv);
-                            } 
+                            }
                         }
                     }
                 },
-                complete: function() {
-                
+                complete: function () {
+
                 }
             });
         });    

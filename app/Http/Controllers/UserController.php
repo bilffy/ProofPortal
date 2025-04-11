@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
+use Nullix\JsAesPhp\JsAesPhp;
 
 class UserController extends Controller
 {
@@ -67,12 +68,12 @@ class UserController extends Controller
             ];
         
 
-        if ($data['role'] == 3 && $data['franchise'] == 0) {
+        if ($data['role'] == 3 && !$data['franchise']) {
             $schema1 = array_merge($schema1, ['franchise' => 'required|integer']);
             $schema2 = array_merge($schema2, ['franchise.required' => 'Franchise is required.']);
         }
         
-        if ($data['role'] > 3 && $data['school'] == 0) {
+        if ($data['role'] > 3 && !$data['school']) {
             $schema1 = array_merge($schema1, ['school' => 'required|integer']);
             $schema2 = array_merge($schema2, ['school.required' => 'School is required.']);
         }
@@ -105,8 +106,8 @@ class UserController extends Controller
             $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
             $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
         }
-        
-        $nonce = Str::random(40);
+
+        $nonce = Str::random(16);
         session(['register_token' => $nonce]);
         
         return view('newUser', [
@@ -125,19 +126,20 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        if ($request->nonce !== session('register_token')) {
+        $encryptedData = $request->input('request');
+        $nonce = session('register_token');
+
+        try {
+            $decrypted = JsAesPhp::decrypt($encryptedData, $nonce);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Invalid Request'], 400);
+        }
+        
+        if ($decrypted['nonce'] !== $nonce) {
             return response()->json('Invalid Request', 422);
         }
-
-        $request->merge(
-            [
-                'email' => EncryptionHelper::simpleDecrypt($request->email),
-                'franchise' => EncryptionHelper::simpleDecrypt($request->franchise),
-                'school' => EncryptionHelper::simpleDecrypt($request->school)
-            ]
-        );
         
-        $validator = $this->validator($request->all());
+        $validator = $this->validator($decrypted);
         
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -146,16 +148,16 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
             $user = User::create([
-                'name' => $request->firstname . " " . $request->lastname,
-                'email' => $request->email,
-                'username' => $request->email,
-                'firstname' => $request->firstname,
-                'lastname' => $request->lastname,
+                'name' => $decrypted['firstname'] . " " . $decrypted['lastname'],
+                'email' => $decrypted['email'],
+                'username' => $decrypted['email'],
+                'firstname' => $decrypted['firstname'],
+                'lastname' => $decrypted['lastname'],
                 'status' => User::STATUS_NEW, // initialize user with NEW status
                 'password' => Hash::make(str()->random(7)), // random value for user creation
             ]);
     
-            $role = Role::findOrFail($request->role)->name;
+            $role = Role::findOrFail($decrypted['role'])->name;
             $user->assignRole($role);
     
             switch ($role)
@@ -163,7 +165,7 @@ class UserController extends Controller
                 case RoleHelper::ROLE_FRANCHISE:
                     FranchiseUser::create([
                         'user_id' => $user->id,
-                        'franchise_id' => $request->franchise
+                        'franchise_id' => $decrypted['franchise']
                     ]);
                     break;
                 case RoleHelper::ROLE_SCHOOL_ADMIN:
@@ -171,7 +173,7 @@ class UserController extends Controller
                 case RoleHelper::ROLE_TEACHER:
                     SchoolUser::create([
                         'user_id' => $user->id,
-                        'school_id' => $request->school
+                        'school_id' => $decrypted['school']
                     ]);
                     break;
             }
