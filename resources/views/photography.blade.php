@@ -25,11 +25,11 @@
     <div x-data id="photography-root" class="container3 p-4">
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                @if ($configureTabV1Value)
+                {{-- @if ($configureTabV1Value)
                     <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
-                @endif
-                @if ($configureTabV2Value)
-                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
+                @endif --}}
+                @if ($configureTabV1Value)
+                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure</x-tabs.tab>
                 @endif
             @endrole
             <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
@@ -51,9 +51,9 @@
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                <x-tabs.tabContent id="configure">
+                {{-- <x-tabs.tabContent id="configure">
                     @include('partials.photography.configure')
-                </x-tabs.tabContent>
+                </x-tabs.tabContent> --}}
                 <x-tabs.tabContent id="configure-new">
                     @include('partials.photography.configure-new')
                 </x-tabs.tabContent>

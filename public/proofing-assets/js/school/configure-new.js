@@ -1,0 +1,616 @@
+jQuery(document).ready(function($) {
+    $('#schoolName_picker').on('keyup change', function () {
+        var schoolNameNew = $(this).val();
+        const schoolKey = $('#schoolHash').val();
+        if (event.type === 'change') {
+            sendSchoolChanges('name', schoolNameNew, schoolKey);
+            schoolNameCurrent = schoolNameNew; // Update current class name after changes are sent
+        }
+    });
+
+    $('#address_picker').on('keyup change', function () {
+        var addressNew = $(this).val();
+        const schoolKey = $('#schoolHash').val();
+        if (event.type === 'change') {
+            sendSchoolChanges('address', addressNew, schoolKey);
+            addressCurrent = addressNew; // Update current class name after changes are sent
+        }
+    });
+
+    $('#postcode_picker').on('keyup change', function () {
+        var postcodeNew = $(this).val();
+        const schoolKey = $('#schoolHash').val();
+        if (event.type === 'change') {
+            sendSchoolChanges('postcode', postcodeNew, schoolKey);
+            postcodeCurrent = postcodeNew; // Update current class name after changes are sent
+        }
+    });
+
+    $('#suburb_picker').on('keyup change', function () {
+        var suburbNew = $(this).val();
+        const schoolKey = $('#schoolHash').val();
+        if (event.type === 'change') {
+            sendSchoolChanges('suburb', suburbNew, schoolKey);
+            suburbCurrent = suburbNew; // Update current class name after changes are sent
+        }
+    });
+    
+    function sendSchoolChanges(field, newData, schoolKey) { 
+        var returnResponse;
+
+        var formData = new FormData();
+        formData.append("field", field);
+        formData.append("newData", newData);
+        formData.append("schoolKey", schoolKey);
+
+        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+
+        $.ajax({
+            dataType: 'json',
+            type: "POST",
+            url: base_url+"/school-change/submit",
+            async: true,
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            timeout: 60000,
+
+            success: function (response) {
+                returnResponse = response;
+            },
+            error: function (e) {
+                //alert("An error occurred: " + e.responseText.message);
+            //console.log(e);
+                returnResponse = false;
+            },
+            complete: function (xhr) {
+                // if (xhr.status >= 400 && xhr.status <= 499) {
+                //     window.location.replace("<?= $targetUrlStatus4xx ?>");
+                // }
+            }
+        })
+        return returnResponse;
+    }
+
+    //Job Update
+
+    $(document).on('change', '.folder-details-is-visible-for-portrait', function() {
+        // Get the checked state of the checkbox
+        const checkedValue = $(this).is(':checked'); // true if checked, false if unchecked
+        const newValue = checkedValue ? 1 : 0;
+    
+        // Get folder and job-related data
+        const folderId = $(this).data('folder-id');
+        const field = "is_visible_for_portrait";
+        const selectedJobKey = $('#select_job').val();
+    
+        // Find the selected job in jobsData
+        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
+        if (selectedJob) {
+            const selectedFolderName = $(this).data('folder-name');
+    
+            // Find the specific folder within the selected job's Folders array
+            const selectedFolder = selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
+            
+            // Update the folder property if the folder was found
+            if (selectedFolder) {
+                selectedFolder.is_visible_for_portrait = newValue;
+                sendFolderChanges(folderId, field, newValue);
+            }
+        }
+    });
+
+    $(document).on('change', '.folder-details-is-visible-for-group', function() {
+        // Get the checked state of the checkbox
+        const checkedValue = $(this).is(':checked'); // true if checked, false if unchecked
+        const newValue = checkedValue ? 1 : 0;
+    
+        // Get folder and job-related data
+        const folderId = $(this).data('folder-id');
+        const field = "is_visible_for_group";
+        const selectedJobKey = $('#select_job').val();
+    
+        // Find the selected job in jobsData
+        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
+        if (selectedJob) {
+            const selectedFolderName = $(this).data('folder-name');
+    
+            // Find the specific folder within the selected job's Folders array
+            const selectedFolder = selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
+            
+            // Update the folder property if the folder was found
+            if (selectedFolder) {
+                selectedFolder.is_visible_for_group = newValue;
+                sendFolderChanges(folderId, field, newValue);
+            }
+        }
+    });    
+    
+    function sendFolderChanges(folderId, field, newData) {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append("field", field);
+            formData.append("newValue", newData);
+            formData.append("folderId", folderId);
+            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+    
+            $.ajax({
+                dataType: 'json',
+                type: "POST",
+                url: base_url + "/folder-change/submit",
+                async: true,
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                timeout: 60000,
+                success: function (response) {
+                    window.updateSchoolConfig();
+                    resolve(response);
+                },
+                error: function (error) {
+                    console.error("Error updating job:", error);
+                    reject(error);
+                }
+            });
+        });
+    }
+
+    function sendJobChanges(jobKey, field, newData) { 
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append("field", field);
+            formData.append("newData", newData);
+            formData.append("jobKey", jobKey);
+            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+    
+            $.ajax({
+                dataType: 'json',
+                type: "POST",
+                url: base_url + "/job-change/submit",
+                async: true,
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                timeout: 60000,
+                success: function (response) {
+                    window.updateSchoolConfig();
+                    resolve(response);
+                },
+                error: function (error) {
+                    console.error("Error updating job:", error);
+                    reject(error);
+                }
+            });
+        });
+    }
+    
+    let jobsData = [];
+    $('#select_season').on('change', function () {
+        const selectedSeasonId = $(this).val();
+        const selectedSchoolKey = $('#schoolHash').val();
+        const selectedSeasonText = $(this).find('option:selected').text();
+        $('#SeasoncodeDisplay').text(' - ' + selectedSeasonText).removeClass('d-none');
+        // $('#jobType, #digital_download, #folder_config').addClass('d-none');
+        hideOrShowJobDependentSections(false);
+
+        $('#digital_download').addClass('d-none');
+        $('p.alert-message').remove();
+
+        if ('none' === selectedSeasonId) {
+            $('#select_job').parent().hide();
+        } else {
+            $('#select_job').parent().show();
+        }
+
+        if (selectedSeasonId && 'none' !== selectedSeasonId) {
+            $.ajax({
+                url: base_url + '/config-school/fetch-jobs',
+                method: 'GET',
+                data: { ts_season_id: selectedSeasonId, schoolkey: selectedSchoolKey },
+                success: function (jobs) {
+                    jobsData = jobs;
+                    // $('#jobSelect').removeClass('d-none');
+                    const jobSelect = $('#select_job');
+                    if (jobsData.length === 0) {
+                        $('#no-jobs-msg').removeClass('d-none');
+                        $('#select_job').next(".select2-container").addClass('d-none');
+                    } else {
+                        $('#no-jobs-msg').addClass('d-none');
+                        $('#select_job').next(".select2-container").removeClass('d-none');
+                        jobSelect.empty().append('<option value="">Choose a Job</option>');
+    
+                        $.each(jobs, function (index, job) {
+                            jobSelect.append(`<option value="${job.ts_jobkey}">${job.ts_jobname}</option>`);
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    // Listen for changes in the input field value
+    $('#portrait_download_start_picker').on('change', function() {
+        const formattedPortraitDate = $('#portrait_download_start_picker').val();
+        const selectedJob = jobsData.find(job => job.ts_jobkey === $('#select_job').val());
+        sendJobChanges(selectedJob.ts_jobkey, 'portrait_download_date', formattedPortraitDate);
+    });
+
+    $('#group_download_start_picker').on('change', function() {
+        const formattedGroupDate = $('#group_download_start_picker').val();
+        const selectedJob = jobsData.find(job => job.ts_jobkey === $('#select_job').val());
+        sendJobChanges(selectedJob.ts_jobkey, 'group_download_date', formattedGroupDate);
+    });
+
+
+    $('#select_job').on('change', function () {
+        const isGroupVisible = $("#is-group-visible").val();
+        const selectedJobKey = $(this).val();
+        // $('#jobType, #digital_download, #folder_config').addClass('d-none');
+        $('#jobType, #digital_download').addClass('d-none');
+        hideOrShowJobDependentSections(true);
+        $('p.alert-message').remove();
+    
+        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
+        
+        let portraitDateToDisplay;
+        let groupDateToDisplay;
+    
+        if (selectedJob) {
+            $('#jobType, #digital_download').removeClass('d-none');
+        
+            if (selectedJob.download_available_date !== null) {
+                function parseDate(dateString) {
+                    return dateString ? moment(dateString, 'YYYY-MM-DD HH:mm:ss') : null;
+                }
+    
+                const downloadAvailableDate = parseDate(selectedJob.download_available_date);
+                const portraitDownloadDate = parseDate(selectedJob.portrait_download_date);
+                const groupDownloadDate = parseDate(selectedJob.group_download_date);
+                
+
+                let downloadAvailableDateInFormat = new Date(downloadAvailableDate.format('YYYY-MM-DD HH:mm:ss'));
+                let portraitDownloadDateInFormat = portraitDownloadDate ? new Date(portraitDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
+                let groupDownloadDateInFormat = groupDownloadDate ? new Date(groupDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
+
+                // Only destroy datetimepicker if it's already initialized
+                if ($('#portrait_download_start_picker').data("flatpickr")) {
+                    $('#portrait_download_start_picker').flatpickr().destroy();
+                }
+                if ($('#group_download_start_picker').data("flatpickr")) {
+                    $('#group_download_start_picker').flatpickr().destroy();
+                }
+
+                portraitDateToDisplay = downloadAvailableDateInFormat;
+                groupDateToDisplay = downloadAvailableDateInFormat;
+        
+                if (portraitDateToDisplay || groupDateToDisplay) {
+                    // Update display date if conditions are met
+                    if (downloadAvailableDateInFormat < portraitDownloadDateInFormat) {
+                        portraitDateToDisplay = portraitDownloadDateInFormat;
+                    }
+
+                    if (downloadAvailableDateInFormat < groupDownloadDateInFormat) {
+                        groupDateToDisplay = groupDownloadDateInFormat;
+                    }
+
+                    // Event listener for when a date is selected from the portrait download date picker
+                    $('#portrait_download_start_picker').flatpickr({
+                        enableTime: true,
+                        dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
+                        disableMobile: true,
+                        defaultDate: portraitDateToDisplay, // Set default date
+                        minDate: downloadAvailableDateInFormat
+                    });
+
+                    // Event listener for when a date is selected from the group download date picker
+                    $('#group_download_start_picker').flatpickr({
+                        enableTime: true,
+                        dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
+                        disableMobile: true,
+                        defaultDate: groupDateToDisplay, // Set default date
+                        minDate: downloadAvailableDateInFormat
+                    });
+                }
+    
+                $("#portrait_download_allowed").prop("checked", !!$("#portrait_download_start_picker").val());
+                $("#group_download_allowed").prop("checked", !!$("#group_download_start_picker").val());
+    
+            } else {
+                // $('#jobType, #digital_download, #folder_config').addClass('d-none');
+                $('#digital_download').addClass('d-none');
+                $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please contact your local MSP Expert.</p>');
+            }
+            var csrfToken = $('meta[name="csrf-token"]').attr('content');
+            $.ajax({
+                url: base_url + '/config-school/folder-config',
+                method: 'POST',
+                data: { folders: selectedJob.Folders },
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
+                },
+                success: function (response) {
+                    if (response.html) {
+                        $('#folder_config').html(response.html); // Correctly insert the HTML from the response
+                        $("#select_job_access_image").trigger('change');
+                    }
+                },
+                error: function () {
+                    console.error('Failed to load folder configuration.');
+                }
+            });
+        } else {
+            hideOrShowJobDependentSections(false);
+        }
+    });
+
+    $('#jobType').on('change', function () {
+        $('p.alert-message').remove();
+        // $('#folder_config').removeClass('d-none');
+
+        const selectedValue = $('#select_job_access_image').val();
+
+        if (selectedValue === '0'){
+            $('#folder_config').addClass('d-none');
+        } else {
+            // Hide all <tr> elements with class 'folder-row', then show only those with matching data-tagid
+            if (selectedValue === 'all') {
+                // Show all <tr> elements with class 'folder-row' inside #folder_config
+                $('#folder_config tr.folder-row').show();
+            }else{
+                $('#folder_config tr.folder-row').hide();
+            }
+            
+            $('#folder_config tr.folder-row[data-tagid="' + selectedValue + '"]').show();
+            $('#folder_config tbody .no-row').remove();
+        
+            // Check if any rows are visible after filtering
+            const visibleRows = $('#folder_config tr.folder-row:visible').length;
+            if (visibleRows === 0) {
+                // If no rows are visible, add the "No folders available" message
+                $('#folder_config tbody').append('<tr class="no-row"><td></td><td class="flex justify-center">No folders available</td><td></td></tr>');
+            }else{
+                $('#folder_config tbody .no-row').remove();
+            }
+        }
+
+    // Function to handle "Select All" and "Select None" actions
+    function handleSelectAction(selectAllButton, selectNoneButton, checkboxClass, isSelectAll) {
+        if (selectAllButton) {
+            selectAllButton.addEventListener('click', function() {
+                // const selectedJobType = document.getElementById('job_access_image').value;
+                const selectedJobType = document.getElementById('select_job_access_image').value;
+                const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+                const folderIdsToUpdate = [];
+
+                targetRows.forEach(function(row) {
+                    const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+                    checkboxes.forEach(function(checkbox) {
+                        if (checkbox.checked !== isSelectAll) {
+                            checkbox.checked = isSelectAll;
+                            checkbox.dispatchEvent(new Event('change'));
+                            const folderId = checkbox.getAttribute('data-folder-id');
+                            folderIdsToUpdate.push(folderId);
+                        }
+                    });
+                });
+
+                if (folderIdsToUpdate.length > 0) {
+                    sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", isSelectAll ? 1 : 0);
+                }
+            });
+        }
+
+        if (selectNoneButton) {
+            selectNoneButton.addEventListener('click', function() {
+                // const selectedJobType = document.getElementById('job_access_image').value;
+                const selectedJobType = document.getElementById('select_job_access_image').value;
+                const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+                const folderIdsToUpdate = [];
+
+                targetRows.forEach(function(row) {
+                    const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+                    checkboxes.forEach(function(checkbox) {
+                        if (checkbox.checked !== !isSelectAll) {
+                            checkbox.checked = !isSelectAll;
+                            checkbox.dispatchEvent(new Event('change'));
+                            const folderId = checkbox.getAttribute('data-folder-id');
+                            folderIdsToUpdate.push(folderId);
+                        }
+                    });
+                });
+
+                if (folderIdsToUpdate.length > 0) {
+                    sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", !isSelectAll ? 1 : 0);
+                }
+            });
+        }
+    }
+
+    // Initialize the "Select All" and "Select None" buttons for portrait checkboxes
+    handleSelectAction(
+        document.getElementById('set-is-visible-for-portrait-all'),
+        document.getElementById('set-is-visible-for-portrait-none'),
+        'folder-details-is-visible-for-portrait',
+        true // true for "Select All"
+    );
+
+    // Initialize the "Select All" and "Select None" buttons for group checkboxes
+    handleSelectAction(
+        document.getElementById('set-is-visible-for-group-all'),
+        document.getElementById('set-is-visible-for-group-none'),
+        'folder-details-is-visible-for-group',
+        true // true for "Select All"
+    );
+
+    });
+
+    // Delete link functionality
+    $('#deleteSchoolLogo').click(function (event) {
+        event.preventDefault();
+        const fileInput = document.getElementById('schoolLogo');
+        const preview = document.getElementById('schoolLogoPreview');
+        const deleteLink = document.getElementById('deleteSchoolLogo');
+        const schoolKey = $('#schoolHash').val();
+            // Use FormData to handle file uploads
+            const formData = new FormData();
+            formData.append('schoolKey', schoolKey);
+            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+    
+            $.ajax({
+                url: base_url + '/config-school/delete-school-logo',
+                method: 'POST',
+                data: formData,
+                processData: false, // Required for FormData
+                contentType: false, // Required for FormData
+                success: function (response) {
+                    // Display the uploaded image as a preview if the upload is successful
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        deleteLink.classList.remove('d-none');
+                    };
+                    const file = fileInput.files[0];
+                    if (file) {
+                        reader.readAsDataURL(file); // Convert the file to a data URL
+                    }
+                },
+                error: function () {
+                    console.error('Failed to upload the school logo.');
+                }
+            });
+        // Clear the input, hide preview and delete link
+        fileInput.value = ''; // Clear the file input
+        preview.src = ''; // Clear the preview image
+        preview.style.display = 'none'; // Hide the preview
+        deleteLink.classList.add('d-none');
+    });
+});
+
+$('#schoolLogoBtn').click(function (event) {
+    event.preventDefault();
+    $('#schoolLogo').click(); // Trigger the file input click
+});
+
+document.getElementById('schoolLogo').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('schoolLogoPreview');
+    const deleteLink = document.getElementById('deleteSchoolLogo');
+    const schoolKey = $('#schoolHash').val();
+
+    // Check if a file is selected and validate file type
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+        // Use FormData to handle file uploads
+        const formData = new FormData();
+        formData.append('schoolLogo', file);
+        formData.append('schoolKey', schoolKey);
+        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+
+        $.ajax({
+            url: base_url + '/config-school/upload-school-logo',
+            method: 'POST',
+            data: formData,
+            processData: false, // Required for FormData
+            contentType: false, // Required for FormData
+            success: function (response) {
+                // Display the uploaded image as a preview if the upload is successful
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    deleteLink.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file); // Convert the file to a data URL
+            },
+            error: function () {
+                console.error('Failed to upload the school logo.');
+            }
+        });
+    } else {
+        // Display an error message or reset the preview
+        alert('Please upload a valid image file (JPG, JPEG, PNG).');
+        preview.src = ''; // Clear the preview image
+        preview.style.display = 'none'; // Hide the preview
+        deleteLink.style.display = 'none'; // Hide the delete link
+        event.target.value = ''; // Reset the file input
+    }
+});
+
+function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
+    var targetUrl = base_url+"/config-school/digital-download/submit";
+    var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    var schoolKey = $('#schoolHash').val();
+
+    var formData = new FormData($('#digital_download_form')[0]);
+    formData.append("schoolKey", schoolKey); // Append the jobHash to the form data
+    formData.append(modelTag + "[" + fieldTag + "][" + roleTag + "]", isChecked);
+
+    $.ajax({
+        type: "POST",
+        url:targetUrl,
+        dataType: "json",
+        async: false,
+        data: formData, // Use the formData object here
+        processData: false,
+        headers: {
+            'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
+        },
+        contentType: false,
+        success: function (response) {
+            //console.log(response);
+        },
+        error: function (e) {
+            //alert("An error occurred: " + e.responseText.message);
+            //
+        }
+    });
+}
+
+function hideOrShowJobDependentSections(show) {
+    const elements = document.querySelectorAll('.job-dependent-section');
+    elements.forEach(element => {
+        element.style.display = show ? '' : 'none';
+    });
+
+    if (show) {
+        // Select the scrollable container and the section
+        const container = document.getElementById('photography-root');
+        const section = document.getElementById('folders-section');
+
+        console.log({container, section, x: section.offsetTop - container.offsetTop});
+
+        // Scroll to the section inside the container
+        section.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start' // Align to the top of the container
+        });
+        // container.scrollTo({
+        //     top: section.offsetTop - container.offsetTop, // Calculate the position relative to the container
+        //     behavior: 'smooth' // Smooth scrolling
+        // });
+    }
+}
+
+// Checkbox in Notification Email
+document.addEventListener("DOMContentLoaded", function() {
+    $("#select_season").select2();
+    $("#select_job").select2();
+    $("#select_job_access_image").select2();
+    $('#select_job').parent().hide();
+    hideOrShowJobDependentSections(false);
+    // Select all checkbox inputs with the class 'img-permission'
+    const permissionCheckboxes = document.querySelectorAll('input[type="checkbox"].img-permission');
+    // Add an 'onchange' event listener to each checkbox
+    permissionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            const { model, field } = this.parentElement.dataset;
+            const role = this.value;
+            const checked = this.checked;
+
+            insertDigitalDownload(model, field, role, checked);
+        });
+    });
+});

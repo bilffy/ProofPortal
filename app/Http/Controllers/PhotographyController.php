@@ -45,7 +45,7 @@ class PhotographyController extends Controller
     {
         $user = Auth::user();
         if ($user->isFranchiseLevel() && SchoolContextHelper::isSchoolContext()) {
-            return redirect()->route('photography.configure');
+            return redirect()->route('photography.configure-new');
         } else {
             return redirect()->route('photography.portraits');
         }
