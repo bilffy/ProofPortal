@@ -50,6 +50,7 @@ class Subject extends Model
         $options = [
             'subjects' => $this->id,
             'folders' => $this->folder->id,
+            'seasons' => $this->folder->job()->first()->seasons()->first()->id,
         ];
         return FilenameFormatHelper::applyFormat($format, $options);
     }

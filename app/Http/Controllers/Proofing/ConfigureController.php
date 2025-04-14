@@ -158,7 +158,8 @@ class ConfigureController extends Controller
         $selectedFolders = $request->folders;
 
         // Render the folder configuration view with the selected folders
-        $foldersHtml = view('proofing.franchise.school.configure-school-folderconfig', compact('selectedFolders'))->render();
+        // $foldersHtml = view('proofing.franchise.school.configure-school-folderconfig', compact('selectedFolders'))->render();
+        $foldersHtml = view('partials.photography.configure.folders', compact('selectedFolders'))->render();
 
         // Return the rendered HTML in the JSON response
         return response()->json([
@@ -245,14 +246,17 @@ class ConfigureController extends Controller
     {
         $digital_download_permission = $request->input('digital_download_permission', []);
         $digital_download_notification = $request->input('digital_download_notification', []);
-        
+        $decryptedSchoolKey = $this->getDecryptData($request->input('schoolKey'));
+        $school = School::where('schoolkey',$decryptedSchoolKey)->first();
+        $schoolData = json_decode($school->digital_download_permission_notification, true);
         // Prepare the matrix for digital_download_notification and digital_download_permission
         $notificationsMatrix = [
-            'digital_download_permission' => $this->processDigitalDownload($digital_download_permission),
-            'digital_download_notification' => $this->processDigitalDownload($digital_download_notification)
+            'digital_download_permission' => array_replace_recursive($schoolData['digital_download_permission'], $this->convertStringToBoolean($digital_download_permission)),
+            'digital_download_notification' => array_replace_recursive($schoolData['digital_download_notification'], $this->convertStringToBoolean($digital_download_notification))
+            // 'digital_download_permission' => $this->processDigitalDownload($digital_download_permission),
+            // 'digital_download_notification' => $this->processDigitalDownload($digital_download_notification)
         ];
-       
-        $decryptedSchoolKey = $this->getDecryptData($request->input('schoolKey'));
+        
         $this->schoolService->saveSchoolData($decryptedSchoolKey, 'digital_download_permission_notification', json_encode($notificationsMatrix));
         $school = School::where('schoolkey',$decryptedSchoolKey)->first();
         // Log UPDATE_SCHOOL_DOWNLOAD_PERMISSIONS activity
@@ -274,6 +278,22 @@ class ConfigureController extends Controller
             ];
         }
         return $result;
+    }
+
+    protected function convertStringToBoolean(array $array): array {
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                // Recursively process nested arrays
+                $array[$key] = $this->convertStringToBoolean($value);
+            } elseif ($value === 'true') {
+                // Convert "true" string to boolean true
+                $array[$key] = true;
+            } elseif ($value === 'false') {
+                // Convert "false" string to boolean false
+                $array[$key] = false;
+            }
+        }
+        return $array;
     }
 
     public function configSchoolJobChangeUpdate(Request $request)
