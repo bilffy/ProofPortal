@@ -9,7 +9,7 @@
 @import "typography.scss";
 @import 'bootstrap/dist/css/bootstrap.css';
 @import "../../public/proofing-assets/vendors/css/simple-line-icons.min.css";
-@import "../../public/proofing-assets/css/style.css";
+/* @import "../../public/proofing-assets/css/style.css"; */
 /* @import "public/proofing-assets/css/montserrat_font_css.css"; */
 /* @import "../../public/proofing-assets/custom/custom.css"; */
 /* @import "../../public/proofing-assets/custom/table-columns.css"; */
@@ -51,3 +51,9 @@ body {
   font-family: Montserrat !important;
   height: 21px !important;
 }
+
+/* .bg-secondary {
+    color: #005C91 !important;
+    background-color: transparent !important;
+    border: 2px solid #005C91 !important;
+} */

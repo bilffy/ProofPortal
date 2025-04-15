@@ -7,9 +7,23 @@
         <table class=" w-full">
             <thead>
                 <x-table.headerCell sortable="{{ false }}">Folder</x-table.headerCell>
-                <x-table.headerCell sortable="{{ false }}">Portraits Tab</x-table.headerCell>
+                <x-table.headerCell sortable="{{ false }}">
+                    <input type="checkbox"
+                        class="mr-1"
+                        id="set-is-visible-for-portrait"
+                        name="portrait-checkbox"
+                    >
+                    Portraits Tab
+                </x-table.headerCell>
                 @if($groupsTabValue)
-                    <x-table.headerCell sortable="{{ false }}">Groups Tab</x-table.headerCell>
+                    <x-table.headerCell sortable="{{ false }}">
+                        <input type="checkbox"
+                            class="mr-1"
+                            id="set-is-visible-for-group"
+                            name="group-checkbox"
+                        >
+                        Groups Tab
+                    </x-table.headerCell>
                 @endif
             </thead>
             <tbody>

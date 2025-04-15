@@ -377,72 +377,108 @@ jQuery(document).ready(function($) {
         }
 
     // Function to handle "Select All" and "Select None" actions
-    function handleSelectAction(selectAllButton, selectNoneButton, checkboxClass, isSelectAll) {
-        if (selectAllButton) {
-            selectAllButton.addEventListener('click', function() {
-                // const selectedJobType = document.getElementById('job_access_image').value;
-                const selectedJobType = document.getElementById('select_job_access_image').value;
-                const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
-                const folderIdsToUpdate = [];
+    // function handleSelectAction(selectAllButton, selectNoneButton, checkboxClass, isSelectAll) {
+    //     if (selectAllButton) {
+    //         selectAllButton.addEventListener('click', function() {
+    //             // const selectedJobType = document.getElementById('job_access_image').value;
+    //             const selectedJobType = document.getElementById('select_job_access_image').value;
+    //             const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+    //             const folderIdsToUpdate = [];
 
-                targetRows.forEach(function(row) {
-                    const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
-                    checkboxes.forEach(function(checkbox) {
-                        if (checkbox.checked !== isSelectAll) {
-                            checkbox.checked = isSelectAll;
-                            checkbox.dispatchEvent(new Event('change'));
-                            const folderId = checkbox.getAttribute('data-folder-id');
-                            folderIdsToUpdate.push(folderId);
-                        }
-                    });
+    //             targetRows.forEach(function(row) {
+    //                 const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+    //                 checkboxes.forEach(function(checkbox) {
+    //                     if (checkbox.checked !== isSelectAll) {
+    //                         checkbox.checked = isSelectAll;
+    //                         checkbox.dispatchEvent(new Event('change'));
+    //                         const folderId = checkbox.getAttribute('data-folder-id');
+    //                         folderIdsToUpdate.push(folderId);
+    //                     }
+    //                 });
+    //             });
+
+    //             if (folderIdsToUpdate.length > 0) {
+    //                 sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", isSelectAll ? 1 : 0);
+    //             }
+    //         });
+    //     }
+
+    //     if (selectNoneButton) {
+    //         selectNoneButton.addEventListener('click', function() {
+    //             // const selectedJobType = document.getElementById('job_access_image').value;
+    //             const selectedJobType = document.getElementById('select_job_access_image').value;
+    //             const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+    //             const folderIdsToUpdate = [];
+
+    //             targetRows.forEach(function(row) {
+    //                 const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+    //                 checkboxes.forEach(function(checkbox) {
+    //                     if (checkbox.checked !== !isSelectAll) {
+    //                         checkbox.checked = !isSelectAll;
+    //                         checkbox.dispatchEvent(new Event('change'));
+    //                         const folderId = checkbox.getAttribute('data-folder-id');
+    //                         folderIdsToUpdate.push(folderId);
+    //                     }
+    //                 });
+    //             });
+
+    //             if (folderIdsToUpdate.length > 0) {
+    //                 sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", !isSelectAll ? 1 : 0);
+    //             }
+    //         });
+    //     }
+    // }
+
+    function handleSelectColumnAction(checkboxId, checkboxClass) {
+        const inputCheckbox = document.getElementById(checkboxId);
+        inputCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            const selectedJobType = document.getElementById('select_job_access_image').value;
+            const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+            const folderIdsToUpdate = [];
+
+            targetRows.forEach(function(row) {
+                const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+                checkboxes.forEach(function(checkbox) {
+                    if (checkbox.checked !== isChecked) {
+                        checkbox.checked = isChecked;
+                        checkbox.dispatchEvent(new Event('change'));
+                        const folderId = checkbox.getAttribute('data-folder-id');
+                        folderIdsToUpdate.push(folderId);
+                    }
                 });
-
-                if (folderIdsToUpdate.length > 0) {
-                    sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", isSelectAll ? 1 : 0);
-                }
             });
-        }
 
-        if (selectNoneButton) {
-            selectNoneButton.addEventListener('click', function() {
-                // const selectedJobType = document.getElementById('job_access_image').value;
-                const selectedJobType = document.getElementById('select_job_access_image').value;
-                const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
-                const folderIdsToUpdate = [];
-
-                targetRows.forEach(function(row) {
-                    const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
-                    checkboxes.forEach(function(checkbox) {
-                        if (checkbox.checked !== !isSelectAll) {
-                            checkbox.checked = !isSelectAll;
-                            checkbox.dispatchEvent(new Event('change'));
-                            const folderId = checkbox.getAttribute('data-folder-id');
-                            folderIdsToUpdate.push(folderId);
-                        }
-                    });
-                });
-
-                if (folderIdsToUpdate.length > 0) {
-                    sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", !isSelectAll ? 1 : 0);
-                }
-            });
-        }
+            if (folderIdsToUpdate.length > 0) {
+                sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", isChecked ? 1 : 0);
+            }
+        });
     }
 
-    // Initialize the "Select All" and "Select None" buttons for portrait checkboxes
-    handleSelectAction(
-        document.getElementById('set-is-visible-for-portrait-all'),
-        document.getElementById('set-is-visible-for-portrait-none'),
-        'folder-details-is-visible-for-portrait',
-        true // true for "Select All"
+    // // Initialize the "Select All" and "Select None" buttons for portrait checkboxes
+    // handleSelectAction(
+    //     document.getElementById('set-is-visible-for-portrait-all'),
+    //     document.getElementById('set-is-visible-for-portrait-none'),
+    //     'folder-details-is-visible-for-portrait',
+    //     true // true for "Select All"
+    // );
+
+    // // Initialize the "Select All" and "Select None" buttons for group checkboxes
+    // handleSelectAction(
+    //     document.getElementById('set-is-visible-for-group-all'),
+    //     document.getElementById('set-is-visible-for-group-none'),
+    //     'folder-details-is-visible-for-group',
+    //     true // true for "Select All"
+    // );
+
+    handleSelectColumnAction(
+        'set-is-visible-for-portrait',
+        'folder-details-is-visible-for-portrait'
     );
 
-    // Initialize the "Select All" and "Select None" buttons for group checkboxes
-    handleSelectAction(
-        document.getElementById('set-is-visible-for-group-all'),
-        document.getElementById('set-is-visible-for-group-none'),
-        'folder-details-is-visible-for-group',
-        true // true for "Select All"
+    handleSelectColumnAction(
+        'set-is-visible-for-group',
+        'folder-details-is-visible-for-group'
     );
 
     });
@@ -577,20 +613,15 @@ function hideOrShowJobDependentSections(show) {
 
     if (show) {
         // Select the scrollable container and the section
-        const container = document.getElementById('photography-root');
-        const section = document.getElementById('folders-section');
+        const container = document.getElementById('photography-root').parentElement;
+        const section = document.getElementById('release-dates-section');
 
-        console.log({container, section, x: section.offsetTop - container.offsetTop});
-
-        // Scroll to the section inside the container
-        section.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start' // Align to the top of the container
-        });
-        // container.scrollTo({
-        //     top: section.offsetTop - container.offsetTop, // Calculate the position relative to the container
-        //     behavior: 'smooth' // Smooth scrolling
-        // });
+        setTimeout(() => {
+            container.scrollTo({
+                top: section.offsetTop - container.offsetTop, // Calculate the position relative to the container
+                behavior: 'smooth' // Smooth scrolling
+            });
+        }, 300);
     }
 }
 
