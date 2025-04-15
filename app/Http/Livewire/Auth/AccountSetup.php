@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Vinkla\Hashids\Facades\Hashids;
 
 #[Layout('layouts.guest')]
 class AccountSetup extends Component
@@ -23,7 +25,9 @@ class AccountSetup extends Component
     public $password_confirmation;
     public $firstName;
     public $lastName;
-
+    
+    public $oldPassword;
+    
     protected $rules = [
         'password' => ['required', 'confirmed', 'min:13', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
         'firstName' => 'required',
@@ -33,10 +37,10 @@ class AccountSetup extends Component
 
     public function mount($token, $email)
     {
-        $this->email = $email;
+        $id = Hashids::decodeHex($email);
         $this->token = $token;
-        
-        $user = User::where('email', $this->email)->firstOrFail();
+
+        $user = User::findOrFail($id);
         
         // Check if the user has already completed the setup
         if ($user->is_setup_complete) {
@@ -44,6 +48,8 @@ class AccountSetup extends Component
             return;
         }
 
+        $this->email = $user->email;
+        
         $this->firstName = $user->firstname;
         $this->lastName = $user->lastname;
         $this->password = '';
@@ -66,7 +72,14 @@ class AccountSetup extends Component
         
         // Check if the user exists otherwise throw an exception
         User::where('email', $this->email)->firstOrFail();
-
+        
+        // check if the old password of the user is correct
+        if (!Auth::validate(['email' => $this->email, 'password' => $this->oldPassword])) {
+            throw ValidationException::withMessages([
+                'email' => ["Old password is incorrect."],
+            ]);
+        }
+        
         $status = Password::reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password, 'token' => $this->token],
             function ($user) {

@@ -15,6 +15,7 @@ use App\Http\Livewire\SchoolView;
 use App\Http\Livewire\Order\Order;
 use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\ImpersonateController;
+use App\Http\Controllers\DisableUserController;
 
 use App\Http\Controllers\Proofing\ConfigureController;
 
@@ -74,6 +75,9 @@ Route::middleware('auth')->group(function () {
     // Impersonation routes
     Route::get('/impersonate/as/{id}', [ImpersonateController::class, 'store'])->name('impersonate.store');
     Route::get('/impersonate/leave', [ImpersonateController::class, 'leave'])->name('impersonate.leave');
+
+    // Impersonation routes
+    Route::get('/disable/{id}', [DisableUserController::class, 'disable'])->name('disable.user');
     
     // Navbar routes
     Route::post('/navbar/toggle-collapse', [NavBarController::class, 'toggleCollapse'])->name('navbar.toggleCollapse');
