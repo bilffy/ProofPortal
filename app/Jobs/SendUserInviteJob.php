@@ -43,7 +43,7 @@ class SendUserInviteJob implements ShouldQueue
         $setupUrl = url(config('app.url').route('account.setup.create', 
                 [
                     'token' => $token, 
-                    'email' => $this->user->email
+                    'email' => $this->user->getHashedIdAttribute()
                 ], 
                 false
             )

@@ -96,6 +96,11 @@ class PermissionHelper
             return false;
         }
         
+        // Impersonation of disabled accounts is allowed to Super Admin only
+        if ($user->status == User::STATUS_DISABLED && !$currentUser->isSuperAdmin()) {
+            return false;
+        }
+        
         if ($user->status != User::STATUS_ACTIVE) {
             return false;
         }

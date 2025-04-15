@@ -5,7 +5,7 @@
 <main class="mt-8 bg-white rounded-lg overflow-hidden border-[#969696] border-2 p-8 px-12">
     <h1 class="text-3xl text-[#02B3DF] mb-4"> Account Setup</h1>
 
-    @error('email') <span class="error">{{ $message }}</span> @enderror
+    @error('email') <div class="mb-4 font-bold text-3xl text-red-600">{{ $message }}</div> @enderror
 
     <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
         <div class="hidden">
@@ -23,6 +23,11 @@
             <label for="lastName" class="text-neutral-600">Last Name</label>
             <input class="border rounded-md p-2 border-neutral" wire:model="lastName" required placeholder="Last Name" autocomplete="lastName" />
             @error('lastName') <span class="error">{{ $message }}</span> @enderror
+        </div>
+
+        <div class="flex flex-col mb-4">
+            <input @required("Enter your old password") class="border rounded-md p-2 border-neutral" type="password" wire:model="oldPassword" required placeholder="Old Password" autocomplete="old-password" />
+            @error('oldPassword') <span class="error">{{ $message }}</span> @enderror
         </div>
         
         <div class="flex flex-col mb-4">

@@ -1,4 +1,17 @@
-@props(['dropDownId', 'role', 'userId', 'userEmail', 'status', 'inviteRoute', 'impersonateRoute' => '', 'checkStatusRoute' => '', 'user' => null])
+@props(
+    [
+        'dropDownId', 
+        'role', 
+        'userId', 
+        'userEmail', 
+        'status', 
+        'inviteRoute', 
+        'impersonateRoute' => '', 
+        'checkStatusRoute' => '', 
+        'user' => null,
+        'disableRoute' => ''
+    ]
+)
 
 <div id="options_{{$userId}}">
     <x-button.link id="btn_{{$dropDownId}}" data-dropdown-toggle={{$dropDownId}} data-initialized="false">
@@ -39,5 +52,19 @@
                     </li>
                @endif
 {{--            @endCanImpersonate--}}
+
+        @if (auth()->user()->canDisable($userId))
+            <li>
+                <x-button.dropdownLink
+                        href="#"
+                        data-disable-route="{{ $disableRoute }}"
+                        data-modal-target="disableModal"
+                        data-modal-toggle="disableModal"
+                        data-user-id="{{ $userId }}"
+                        class="hover:bg-primary hover:text-white">
+                    Disable
+                </x-button.dropdownLink>
+            </li>
+        @endif
     </x-form.dropdownPanel>
 </div>
