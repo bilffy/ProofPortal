@@ -6,7 +6,8 @@
     'flavor'=>'secondary',
     'class'=>'px-3 py-2 transition-all hover:transition-all',
 ]) }}
-    textColor="#ffffff"
+    textColor="primary"
+    hollow="true"
   >
     {{ $slot }}
 </x-button.base>
