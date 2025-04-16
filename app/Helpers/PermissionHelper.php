@@ -96,6 +96,15 @@ class PermissionHelper
             return false;
         }
         
+        if ($user->id == $currentUser->id) {
+            return false;
+        }
+        
+        // Super Admin can impersonate any user
+        if ($currentUser->isSuperAdmin()) {
+            return true;
+        }
+        
         // Impersonation of disabled accounts is allowed to Super Admin only
         if ($user->status == User::STATUS_DISABLED && !$currentUser->isSuperAdmin()) {
             return false;
@@ -105,17 +114,6 @@ class PermissionHelper
             return false;
         }
         
-        if ($currentUser->id == $user->id) {
-            return false;
-        }
-        
-        if ($currentUser->isSuperAdmin()) {
-            if ($user->isSuperAdmin()) {
-                return false;
-            }
-            return true;
-        }
-    
         if ($currentUser->isRcUser()) {
             if ($user->isSuperAdmin() || $user->isRcUser()) {
                 return false;
