@@ -35,23 +35,21 @@
                 </li>
             @endif
         @endcan
-        
-        
-{{--            @canImpersonate($guard = null)--}}
-                @if ($PermissionHelper::canImpersonate($userId))
-                    <li>
-                        <x-button.dropdownLink
-                                href="#"
-                                data-impersonate-route="{{ $impersonateRoute }}"
-                                data-modal-target="impersonateModal"
-                                data-modal-toggle="impersonateModal"
-                                data-user-id="{{ $userId }}"
-                                class="hover:bg-primary hover:text-white">
-                            Impersonate
-                        </x-button.dropdownLink>
-                    </li>
-               @endif
-{{--            @endCanImpersonate--}}
+{{--@canImpersonate($guard = null)--}}
+        @if ($PermissionHelper::canImpersonate($userId))
+            <li>
+                <x-button.dropdownLink
+                        href="#"
+                        data-impersonate-route="{{ $impersonateRoute }}"
+                        data-modal-target="impersonateModal"
+                        data-modal-toggle="impersonateModal"
+                        data-user-id="{{ $userId }}"
+                        class="hover:bg-primary hover:text-white">
+                    Impersonate
+                </x-button.dropdownLink>
+            </li>
+       @endif
+{{--@endCanImpersonate--}}
 
         @if (auth()->user()->canDisable($userId))
             <li>
