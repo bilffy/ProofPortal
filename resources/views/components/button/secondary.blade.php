@@ -5,9 +5,8 @@
 {{ $attributes->merge([
     'flavor'=>'secondary',
     'class'=>'px-3 py-2 transition-all hover:transition-all',
+    'hollow' => true,
 ]) }}
-    textColor="primary"
-    hollow="true"
   >
     {{ $slot }}
 </x-button.base>

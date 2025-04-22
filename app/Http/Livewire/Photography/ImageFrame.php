@@ -11,6 +11,7 @@ class ImageFrame extends Component
     public $name;
     public $landscape;
     public $folderName;
+    public $hasImage = false;
 
     public function mount($imageId, $name, $landscape, $folderName)
     {
@@ -18,6 +19,9 @@ class ImageFrame extends Component
         $this->name = $name;
         $this->landscape = $landscape;
         $this->folderName = $folderName;
+
+        $imageService = new ImageService();
+        $this->hasImage = $imageService->getIsImageFound(base64_decode(base64_decode($imageId)));
     }
 
     public function placeholder()

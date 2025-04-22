@@ -386,6 +386,17 @@ class ImageService
     }
 
     /**
+     * Check if image is found based on $key value
+     * @param string $key
+     * @return boolean
+     */
+    public function getIsImageFound($key)
+    {
+        $path = $this->getPath($key.".jpg");
+        return Storage::disk('local')->exists($path);
+    }
+
+    /**
      * This method is used to get the path of the image.
      * The directory is defined in the .env file.
      * @return string

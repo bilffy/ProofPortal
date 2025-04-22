@@ -202,8 +202,14 @@ return [
                 'title' => 'Confirm Download',
                 'confirm' => 'Are you sure you want to download',
                 'number_of' => 'images',
-                'success' => 'Success! If downloading multiple images, you will receive an email with a secure link to download your photos. This may take several minutes to process.'
-            ]
+                'success' => 'Success! If downloading multiple images, you will receive an email with a secure link to download your photos. This may take several minutes to process.',
+                'note' => 'If any of the selected subjects do not have a photo, they cannot be downloaded.',
+            ],
+            'unavailable' => [
+                'title' => 'Download Unavailable',
+                'message' => 'The download cannot proceed, as none of the selected subjects have a photo.',
+                'message2' => 'Please adjust your selection to include subjects with available photos.',
+            ],
         ],
         'photography' => [
             'no_jobs' => [

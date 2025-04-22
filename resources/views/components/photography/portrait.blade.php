@@ -7,6 +7,7 @@
     'event' => null,
     'payload' => null,
     'img' => null,
+    'hasImage' => false,
 ])
 
 @php
@@ -15,8 +16,8 @@
 @endphp
 
 <div id="img_{{$id}}" class="portrait-img rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center {{ $landscape ? 'col-span-2 ':'' }}">
-    <div class="relative h-[229px] overflow-hidden rounded" onclick="handleImageClick('img_{{ $id }}')">
-        <div class="absolute flex w-full justify-end pr-2 pt-2">
+    <div class="relative h-[229px] overflow-hidden rounded" @if($hasImage)onclick="handleImageClick('img_{{ $id }}')"@endif>
+        <div class="absolute flex w-full justify-end pr-2 pt-2 {{ $hasImage ? '' : 'hidden' }}">
             <div class="portrait-img-checkbox group hover:cursor-pointer transition-all 
                         w-[24px] h-[24px] p-1 pt-[3px] border-white border-2
                         flex align-middle justify-center rounded-full 
