@@ -142,6 +142,20 @@ class PhotoGrid extends Component
             'searchTerm' => $this->search,
         ];
         $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
+        $imageCount = $filteredImages->count();
+        $noImageCount = 0;
+        foreach ($filteredImages as $image) {
+            if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey)) {
+                $noImageCount++;
+            } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey)) {
+                $noImageCount++;
+            }
+        }
+
+        $this->dispatch(PhotographyHelper::EV_TOGGLE_NO_IMAGES, [
+            'category' => $this->category,
+            'hasImages' => $imageCount != $noImageCount,
+        ]);
         
         $paginated = $imageService->paginate(
             $filteredImages,

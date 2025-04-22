@@ -17,4 +17,5 @@ class PhotographyHelper
     public const EV_UPDATE_SEARCH = 'EV_UPDATE_SEARCH';
     public const EV_UPDATE_FILTER_DATA = 'EV_UPDATE_FILTER_DATA';
     public const EV_UPDATE_FILENAME_FORMATS = 'EV_UPDATE_FILENAME_FORMATS';
+    public const EV_TOGGLE_NO_IMAGES = 'EV_TOGGLE_NO_IMAGES';
 }

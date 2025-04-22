@@ -123,6 +123,7 @@
             <x-slot name="body">
                 <x-modal.body>
                     <p id="confirm-download-body"></p>
+                    <p id="confirm-download-notes" class="text-neutral-600"></p>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
@@ -153,6 +154,19 @@
             <x-slot name="footer">
                 <x-modal.footer>
                     <x-button.primary onclick="reloadPage()" data-modal-hide="confirmReloadPageModal">Continue</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <x-modal.base id="downloadUnavailableModal" title="{{ $configMessages['unavailable']['title'] }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="download-unavailable-body">{{ $configMessages['unavailable']['message'] }}</p>
+                    <p id="download-unavailable-body-2">{{ $configMessages['unavailable']['message2'] }}</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary data-modal-hide="downloadUnavailableModal">Dismiss</x-button.secondary>
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
@@ -306,6 +320,10 @@
     
     async function showOptionsDownloadRequest() {
         if ($(".grid").attr('total-image-count') != 0) {
+            if (0 == localStorage.getItem(`hasImages_${localStorage.getItem('photographyCategory')}`)) {
+                downloadUnavailableModal.show();
+                return;
+            }
 
             const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
 
@@ -345,6 +363,13 @@
             confirmDownloadModal.show();
             const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
             $('#confirm-download-body').html("{{ $configMessages['request']['confirm']  }} <b>" + selectedImagesLength + "</b> {{ $configMessages['request']['number_of']  }}?");
+
+            const note = "{{ isset($configMessages['request']['note']) ? $configMessages['request']['note'] : '' }}";
+            if (note) {
+                $('#confirm-download-notes').html("<b>Please note:</b><br>" + note);
+            } else {
+                $('#confirm-download-notes').hide();
+            }
         } else {
             alert('No images found');
         }
@@ -377,6 +402,7 @@
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
     const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
+    const downloadUnavailableModal = new Modal(document.getElementById('downloadUnavailableModal'));
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
@@ -475,6 +501,10 @@
 
     Livewire.on('EV_UPDATE_FILENAME_FORMATS', (data) => {
         updateFormatOptions(data[0]);
+    });
+
+    Livewire.on('EV_TOGGLE_NO_IMAGES', (data) => {
+        localStorage.setItem(`hasImages_${data[0]['category']}`, data[0]['hasImages'] ? 1 : 0);
     });
 </script>
 @endpush
