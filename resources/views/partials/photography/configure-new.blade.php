@@ -132,7 +132,8 @@
                                             class="img-permission"
                                             name="permissions[{{$key}}]"
                                             value="{{ $key }}"
-                                            @if($notificationsMatrix['digital_download_permission']['download_portrait'][$key] == true)
+                                            @if(isset($notificationsMatrix['digital_download_permission']['download_portrait'][$key]) 
+                                                && $notificationsMatrix['digital_download_permission']['download_portrait'][$key] == true)
                                                 checked
                                             @endif
                                             >
@@ -148,7 +149,8 @@
                                             class="img-permission"
                                             name="permissions[{{$key}}]"
                                             value="{{ $key }}"
-                                            @if($notificationsMatrix['digital_download_permission']['download_group'][$key] == true)
+                                            @if(isset($notificationsMatrix['digital_download_permission']['download_group'][$key]) 
+                                                && $notificationsMatrix['digital_download_permission']['download_group'][$key] == true)
                                                 checked
                                             @endif
                                             >
@@ -164,7 +166,8 @@
                                             class="img-permission"
                                             name="permissions[{{$key}}]"
                                             value="{{ $key }}"
-                                            @if($notificationsMatrix['digital_download_permission']['download_schoolPhoto'][$key] == true)
+                                            @if(isset($notificationsMatrix['digital_download_permission']['download_schoolPhoto'][$key]) 
+                                                && $notificationsMatrix['digital_download_permission']['download_schoolPhoto'][$key] == true)
                                                 checked
                                             @endif
                                             >
