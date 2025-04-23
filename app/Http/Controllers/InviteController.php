@@ -35,7 +35,9 @@ class InviteController extends Controller
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::findOrFail($id);
-
+        $user->status = User::STATUS_INVITED;
+        $user->save();
+        
         $this->userService->sendInvite($user, auth()->user()->id);
 
         return redirect()->route('users')->with('success', config('app.dialog_config.invite.sent.message') ." ". $user->email);
