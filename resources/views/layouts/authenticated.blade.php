@@ -68,12 +68,12 @@
                                 </div>
                             </div>
                             <div>
-                                <x-button.base class="bg-alert p-1">
+                                <x-button.alert>
                                     <a href="{{ route('impersonate.leave') }}">
                                         Exit
                                         <img class="ml-1" align="right" src="{{ Vite::asset('resources/assets/images/close-round-alert.svg') }}" alt="" width="20px" height="20px">
                                     </a>    
-                                </x-button.base>
+                                </x-button.alert>
                             </div>
                         </div>
                     </div>
