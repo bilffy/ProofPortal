@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\PhotographyHelper;
+use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -224,7 +225,11 @@ class ImageService
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->leftJoin('folder_subjects', 'folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->join('subjects', function ($join) {
+            $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                 ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
+        })
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
         
@@ -254,7 +259,8 @@ class ImageService
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername')
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey')
+            ->distinct()
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
     }
@@ -357,13 +363,21 @@ class ImageService
         $toData = function ($image) use ($key, $category) {
             $fileContent = $this->getImageContent($image->$key);
             $dimensions = getimagesizefromstring($fileContent);
+            $isSubject = $category != 'FOLDER';
+
+            if ($isSubject) {
+                $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+                $classGroup = $subject->folder->ts_foldername ?? '';
+            } else {
+                $classGroup = $image->ts_foldername;
+            }
                 
             return [
                 'id' => base64_encode(base64_encode($image->$key)),
-                'firstname' => $category == 'FOLDER' ? '' : $image->firstname,
-                'lastname' => $category == 'FOLDER' ? '' : $image->lastname,
+                'firstname' => $isSubject ? $image->firstname : '',
+                'lastname' => $isSubject ? $image->lastname : '',
                 'isPortrait' => $dimensions[0] <= $dimensions[1],
-                'classGroup' => $image->ts_foldername,
+                'classGroup' => $classGroup,
                 'category' => $category,
             ];
         };
