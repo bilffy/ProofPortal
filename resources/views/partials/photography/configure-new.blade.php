@@ -78,10 +78,10 @@
 @endphp
 <div class="relative">
     <h3 class="mb-4 text-black">School Settings</h3>
-    <div class="flex w-full mb-16 flex-row">
+    <div class="flex w-full mb-16 flex-col">
         <input type='hidden' value='{{$hash}}' name='schoolHash' id="schoolHash">
-        <div class="bg-neutral-200 w-1/2 p-4 rounded flex-col gap-4">
-            <div id="schoolLogo_container" class="relative bg-white w-[341px] h-[246px] mb-4 p-2 items-center flex justify-center w-full">
+        <div class="bg-neutral-200 w-full p-4 rounded flex gap-4">
+            <div id="schoolLogo_container" class="relative bg-white w-[341px] h-[246px] mb-4 p-4 items-center flex justify-center">
                 <img id="schoolLogoPreview"
                     src={{ $imageUrl }}
                     alt="School Logo Preview"
@@ -108,13 +108,13 @@
                 <p class="mb-0">{{ "$selectedSchool->address, $selectedSchool->suburb, $selectedSchool->postcode" }}</p>
             </div>
         </div>
-        <div class="w-full pl-4">
+        <div class="w-full p-4">
             <div>
                 <p class="mb-2"><strong>Digital Images Permissions</strong></p>
                 <p>Select which User Roles are permitted to View & Download the Digital Images via the Portal</p>
             </div>
             <div>
-                <div class="w-full border rounded lg:w-full xl:w-full">
+                <div class="w-full border rounded lg:w-full xl:w-1/2">
                     <table class=" w-full">
                         <thead>
                             <x-table.headerCell sortable="{{false}}"> </x-table.headerCell>
