@@ -195,6 +195,9 @@
                 <div id="no-jobs-msg" class="d-none p-2">
                     <span class="text-alert">No jobs found. Please select a different season.</span>
                 </div>
+                <div id="job-select-loading" class="d-none">
+                    <x-spinner.icon :size="8"/>
+                </div>
             </div>
         </div>
         <div>
