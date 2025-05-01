@@ -26,13 +26,13 @@
         <table class="w-full text-sm text-left rtl:text-right">
             <thead>
                 <tr>
-                    <x-table.headerCell id="email" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('email')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Email</x-table.headerCell>
-                    <x-table.headerCell class="whitespace-nowrap" id="firstname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('firstname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">First Name</x-table.headerCell>
-                    <x-table.headerCell class="whitespace-nowrap" id="lastname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('lastname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Last Name</x-table.headerCell>
-                    <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" sortable="{{false}}" filterModel="filterBy.role" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
+                    <x-table.headerCell id="email" isLivewire="{{true}}" wireEvent="sortColumn('email')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Email</x-table.headerCell>
+                    <x-table.headerCell class="whitespace-nowrap" id="firstname" isLivewire="{{true}}" wireEvent="sortColumn('firstname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">First Name</x-table.headerCell>
+                    <x-table.headerCell class="whitespace-nowrap" id="lastname" isLivewire="{{true}}" wireEvent="sortColumn('lastname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Last Name</x-table.headerCell>
+                    <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" sortable="{{false}}" filterable="{{true}}" filterModel="filterBy.role" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
                     <x-table.headerCell id="organization" isLivewire="{{true}}" wireEvent="sortColumn('organization')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Franchise/School</x-table.headerCell>
-                    <x-table.headerCell id="status" isLivewire="{{true}}" sortable="{{false}}" wireEvent="sortColumn('status')" filterModel="filterBy.status" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Status</x-table.headerCell>
-                    <x-table.headerCell class="w-[40px]" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
+                    <x-table.headerCell id="status" isLivewire="{{true}}" sortable="{{false}}" filterable="{{true}}" wireEvent="sortColumn('status')" filterModel="filterBy.status" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Status</x-table.headerCell>
+                    <x-table.headerCell class="w-[40px]" sortable="{{false}}"></x-table.headerCell>
                 </tr>
             </thead>
             <tbody>
