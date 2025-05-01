@@ -206,6 +206,9 @@ jQuery(document).ready(function($) {
         }
 
         if (selectedSeasonId && 'none' !== selectedSeasonId) {
+            $('#job-select-loading').removeClass('d-none'); // show loading spinner
+            $('#select_job').next(".select2-container").addClass('d-none'); // hide dropdown container
+            $('#no-jobs-msg').addClass('d-none'); // hide spinner
             $.ajax({
                 url: base_url + '/config-school/fetch-jobs',
                 method: 'GET',
@@ -226,6 +229,13 @@ jQuery(document).ready(function($) {
                             jobSelect.append(`<option value="${job.ts_jobkey}">${job.ts_jobname}</option>`);
                         });
                     }
+                    $('#job-select-loading').addClass('d-none'); // hide loading spinner
+                },
+                error: function (error) {
+                    console.error('Failed to fetch jobs.');
+                    console.error(error);
+                    $('#no-jobs-msg').removeClass('d-none');
+                    $('#job-select-loading').addClass('d-none'); // hide loading spinner
                 }
             });
         }
