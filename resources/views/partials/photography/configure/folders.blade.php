@@ -47,9 +47,21 @@
                                     data-value="{{$folder['is_visible_for_portrait']}}"
                                     {{ $allowPortraitVisible ? 'checked' : '' }}
                                 >
-                                <label class="ml-1 mb-0" for="">
-                                    {{$folder['students']}} portraits
-                                </label>
+                                <div class="column-1">
+                                    <div class="row">
+                                        <label class="ml-1 mb-0" for="">
+                                            {{$folder['students'] + $folder['attached']}} Portraits
+                                        </label>
+                                    </div>
+                                    <div class="flex justify-between text-neutral-500 text-[13px]">
+                                        <label class="ml-1 mb-0" for="Home folder" data-toggle="tooltip" title="Home folder">
+                                            <x-icon icon="user" class="pe-1 fa-xs" /> {{$folder['students']}}
+                                        </label>
+                                        <label class="ml-1 mb-0" for="Attached to folder" data-toggle="tooltip" title="Attached to folder">
+                                            <x-icon icon="paperclip" class="pe-1 fa-xs" /> {{$folder['attached']}}
+                                        </label>
+                                    </div>
+                                </div>
                             </x-table.cell>
                             @if($groupsTabValue)
                                 <x-table.cell class=" items-center">
@@ -63,7 +75,7 @@
                                         {{ $allowGroupVisible ? 'checked' : '' }}
                                     >
                                     <label class="ml-1 mb-0" for="">
-                                        {{$folder['groupCount']}} group photo
+                                        {{$folder['groupCount']}} Group Photo
                                     </label>
                                 </x-table.cell>
                             @endif
