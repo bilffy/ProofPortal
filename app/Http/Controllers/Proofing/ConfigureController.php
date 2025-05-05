@@ -131,7 +131,8 @@ class ConfigureController extends Controller
                         'is_visible_for_portrait' => $folder->is_visible_for_portrait,
                         'is_visible_for_group' => $folder->is_visible_for_group,
                         'groupCount' => is_countable($folderWithImage) ? $folderWithImage->count() : 0,
-                        'students' => $subjectsWithImages->count() // Count of attached subjects with images
+                        'students' => $subjectsWithImages->count(), // Count of homed subjects with images
+                        'attached' => $folder->attachedsubjects->count(), // Count of attached subjects with images
                     ];
                 })->toArray();
             }
