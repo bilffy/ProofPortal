@@ -50,8 +50,8 @@
                     </x-table.cell>
                     <x-table.cell  class="{{ $hideFranchise ? 'hidden' : '' }}">
                         @if ($isAdmin)
-                            <a href="{{ route('users', ['search' => $school->name]) }}">
-                                {{ $school->name }}
+                            <a href="{{ route('users', ['search' => $school->franchise_name]) }}">
+                                {{ $school->franchise_name }}
                             </a>
                         @else
                             {{ $school->franchise_name }}
