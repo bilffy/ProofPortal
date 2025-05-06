@@ -88,11 +88,12 @@ class SchoolList extends Component
         }
         
         $schools->orderBy($this->sortField === 'franchise_name' ? 'franchises.name' : 'schools.' . $this->sortField, $this->sortDirection);
-
+        
         return view('livewire.school-list',
             [
                 'schools' => $schools->paginate(20),
                 'hideFranchise' => $hideFranchise,
+                'isAdmin' => $user->isAdmin()
             ])
             ->layout('layouts.authenticated', [
                 'user' => new UserResource(Auth::user()),

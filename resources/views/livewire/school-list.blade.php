@@ -38,12 +38,24 @@
                         </a>
                     </x-table.cell>
                     <x-table.cell>
-                        <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
-                            {{ $school->name }}
-                        </a>
+                        @if ($isAdmin)
+                            <a href="{{ route('users', ['search' => $school->name]) }}">
+                                {{ $school->name }}
+                            </a>
+                        @else    
+                            <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
+                                {{ $school->name }}
+                            </a>
+                        @endif    
                     </x-table.cell>
                     <x-table.cell  class="{{ $hideFranchise ? 'hidden' : '' }}">
-                        {{ $school->franchise_name }}
+                        @if ($isAdmin)
+                            <a href="{{ route('users', ['search' => $school->name]) }}">
+                                {{ $school->name }}
+                            </a>
+                        @else
+                            {{ $school->franchise_name }}
+                        @endif
                     </x-table.cell>
                 </tr>
             @endforeach
