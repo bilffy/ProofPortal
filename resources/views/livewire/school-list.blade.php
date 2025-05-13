@@ -35,7 +35,7 @@
                     <x-table.cell class="w-1/4">
                         @if ($isAdmin)
                             <a href="{{ route('users', ['search' => $school->name]) }}">
-                                {{ $school->name }}
+                                {{ $school->schoolkey }}
                             </a>
                         @else
                             <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
