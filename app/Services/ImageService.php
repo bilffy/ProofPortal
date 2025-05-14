@@ -441,4 +441,16 @@ class ImageService
             $options
         );
     }
+    
+    /**
+     * Get all the images based on the selected portal subject id.
+     *
+     * @param string $subjectId
+     * 
+     */
+    public function getPortraitImagesByPortalSubjectId(string $subjectId)
+    {
+        // TODO: This should return images based on the subjectId  
+    }
+    
 }
