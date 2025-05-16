@@ -48,7 +48,7 @@
                                     {{ $allowPortraitVisible ? 'checked' : '' }}
                                 >
                                 <div class="column-1">
-                                    <div class="row">
+                                    <div>
                                         <label class="ml-1 mb-0" for="">
                                             {{$folder['students'] + $folder['attached']}} Portraits
                                         </label>
