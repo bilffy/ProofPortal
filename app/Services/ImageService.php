@@ -340,6 +340,58 @@ class ImageService
     }
 
     /**
+     * Get images from database using options given
+     *
+     * @param string $schoolKey
+     * @param string $searchTerm
+     * @param string $searchTerm2
+     * @return Collection
+     */
+    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2): Collection
+    {
+        $query = DB::table(table: 'jobs')
+        ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+        ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+        ->leftJoin('folder_subjects', 'folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->join('subjects', function ($join) {
+            $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                 ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
+        })
+        ->where('jobs.ts_schoolkey', $schoolKey);
+        
+        $query->where(function ($query) {
+            $query->where(function ($subQuery) {
+                // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
+                $subQuery->whereNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->where('jobs.download_available_date', '<=', now());
+            });
+            // in case portrait_download_date and download_available_date are both non-NULL
+            // and the most recent date of the two dates is less than or equal to now
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereNotNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->whereRaw('GREATEST(jobs.portrait_download_date, jobs.download_available_date) <= ?', [now()]);
+            });
+        });
+
+        if($searchTerm) {
+            $query->where(function ($query) use ($searchTerm, $searchTerm2) {
+                $query->where('subjects.firstname', 'like', "%$searchTerm%")
+                    ->orWhere('subjects.lastname', 'like', "%$searchTerm2%");
+            });
+        }
+        
+        return $query
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'seasons.code as year')
+            ->distinct()
+            ->orderBy('year')
+            ->orderBy('subjects.lastname')
+            ->orderBy('subjects.firstname')
+            ->get();
+    }
+
+    /**
      * Get images from the local drive and return them as base64 strings.
      *
      * @param Collection
@@ -378,6 +430,7 @@ class ImageService
                 'lastname' => $isSubject ? $image->lastname : '',
                 'isPortrait' => $dimensions[0] <= $dimensions[1],
                 'classGroup' => $classGroup,
+                'year' => $image->year ?? 0,
                 'category' => $category,
             ];
         };

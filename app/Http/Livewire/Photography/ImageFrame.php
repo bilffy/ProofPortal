@@ -12,13 +12,15 @@ class ImageFrame extends Component
     public $landscape;
     public $folderName;
     public $hasImage = false;
+    public $isLightbox = false;
 
-    public function mount($imageId, $name, $landscape, $folderName)
+    public function mount($imageId, $name, $landscape, $folderName, $isLightbox = false)
     {
         $this->imageId = $imageId;
         $this->name = $name;
         $this->landscape = $landscape;
         $this->folderName = $folderName;
+        $this->isLightbox = $isLightbox;
 
         $imageService = new ImageService();
         $this->hasImage = $imageService->getIsImageFound(base64_decode(base64_decode($imageId)));
@@ -31,7 +33,7 @@ class ImageFrame extends Component
 
     public function rendered($view, $html)
     {
-        $this->dispatch('image-frame-updated', ['imageId' => $this->imageId]);
+        $this->dispatch('image-frame-updated', ['imageId' => $this->imageId, 'isLightbox' => $this->isLightbox]);
     }
 
     public function render()
