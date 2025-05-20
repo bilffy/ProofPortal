@@ -1,6 +1,8 @@
 @extends('layouts.authenticated')
 
 @php
+    use App\Helpers\SchoolContextHelper;
+    
     $highResDownloadOption = $AppSettingsHelper::getByPropertyKey('high_res_download_option');
     $lowResDownloadOption = $AppSettingsHelper::getByPropertyKey('low_res_download_option');
     $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
@@ -18,7 +20,8 @@
     // check if any of $highResDownloadOptionValue or $lowResDownloadOptionValue is false disable the resolution selection
     $isDisabledResolution = !$highResDownloadOptionValue || !$lowResDownloadOptionValue;
     
-    
+    $school = SchoolContextHelper::getSchool();
+    $schoolKey = $school->schoolkey ?? '';
 @endphp
 
 @section('content')
@@ -40,7 +43,8 @@
                 <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
             @endif
             <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
-                <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
+                <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.primary-inverse>
+                <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Clear Selection</x-button.primary-inverse>
                 <x-button.primary 
                         id="btn-download"
                         onclick="showOptionsDownloadRequest()"
@@ -170,14 +174,24 @@
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
+        @include('partials.photography.modals.lightbox-modal', ['schoolKey' => $schoolKey])
     </div>
 @endsection
 
 @push('scripts')
 <script type="module">
     import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
-    function updateImageState(imgCheckbox, isSelected) {
+    function updateImageState(imgCheckbox, isSelected, isLightbox = false) {
+        if (!imgCheckbox) {
+            return;
+        }
         let checkIcon = imgCheckbox.querySelector('i');
+        const isSelectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+        if (isLightbox || isSelectMode) {
+            imgCheckbox.parentElement.classList.remove('hidden');
+        } else {
+            imgCheckbox.parentElement.classList.add('hidden');
+        }
         if (isSelected) {
             imgCheckbox.classList.add('bg-white');
             checkIcon.classList.remove('hidden');
@@ -187,34 +201,50 @@
         }
     }
 
-    function updateDownloadSection(selectedCount) {
-        const downloadBtn = document.querySelector('#btn-download');
-        const clearDownloadBtn = document.querySelector('#btn-download-clear');
+    function updateDownloadSection(selectedCount, isLightbox) {
+        const downloadBtn = document.querySelector(isLightbox ? '#btn-lb-download' : '#btn-download');
+        const clearDownloadBtn = document.querySelector(isLightbox ? '#btn-lb-download-clear' : '#btn-download-clear');
 
         if (selectedCount > 0) {
             clearDownloadBtn.classList.remove('hidden');
+            clearDownloadBtn.innerHTML = 'Clear Selection';
             downloadBtn.innerHTML = `Download Selected (${selectedCount})`;
         } else {
-            clearDownloadBtn.classList.add('hidden');
+            const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+            if (!selectMode) {
+                clearDownloadBtn.classList.add('hidden');
+            }
             downloadBtn.innerHTML = 'Download All';
         }
     }
     
-    function updateDownloadSelection() {
-        const images = JSON.parse(localStorage.getItem('selectedImages'));
-        const portraits = document.querySelectorAll('.portrait-img');
+    function updateDownloadSelection(isLightbox = false) {
+        const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+        const portraits = document.querySelectorAll(isLightbox ? '.modal-content .portrait-img' : '.portrait-img');
 
         portraits.forEach(img => {
             let checkbox = img.querySelector('.portrait-img-checkbox');
-            updateImageState(checkbox, images.includes(img.id));
+            updateImageState(checkbox, images.includes(img.id), isLightbox);
         });
 
-        updateDownloadSection(images.length);
+        updateDownloadSection(images.length, isLightbox);
     }
 
-    function resetImages() {
-        window.localStorage.setItem('selectedImages', JSON.stringify([]));
-        updateDownloadSelection();
+    function resetImages(isLightbox = false) {
+        if (isLightbox) {
+            window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
+        } else {
+            const images = window.localStorage.getItem('selectedImages');
+            const imagesCount = images ? JSON.parse(images).length : 0;
+            window.localStorage.setItem('selectedImages', JSON.stringify([]));
+            if (imagesCount <= 0) {
+                toggleSelectMode(false);
+            } else {
+                const clearDownloadBtn = document.querySelector('#btn-download-clear');
+                clearDownloadBtn.innerHTML = 'Cancel Selection';
+            }
+        }
+        updateDownloadSelection(isLightbox);
     }
 
     function setCategory(category) {
@@ -226,26 +256,39 @@
         setCategory(data)
     }, 300);
 
-    function handleImageClick(imageId) {
-        let selectedItems = window.localStorage.getItem('selectedImages');
+    function handleImageClick(imageId, isLightbox = false, hasImage = false) {
+        const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+        const img = document.querySelector(`#${imageId}`);
+        const name = img.querySelector('.img-decoded-name').textContent;
+        const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
+
+        if (!isLightbox) {
+            if (selectMode) {
+                if (!hasImage) {
+                    return;
+                }
+            } else {
+                showLightboxModal(imageId, name);
+                return;
+            }
+        } else if (!hasImage) {
+            return;
+        }
+        let selectedItems = window.localStorage.getItem(imageItems);
         selectedItems = selectedItems ? JSON.parse(selectedItems) : [];
 
         const isAlreadySelected = selectedItems.includes(imageId);
-        const img = document.querySelector(`#${imageId}`);
 
         if (isAlreadySelected) {
             selectedItems = selectedItems.filter(item => item !== imageId);
         } else {
             selectedItems.push(imageId);
         }
-        
-        window.localStorage.setItem('selectedImages', JSON.stringify(selectedItems));
 
-        updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected);
-        updateDownloadSection(selectedItems.length);
+        window.localStorage.setItem(imageItems, JSON.stringify(selectedItems));
 
-        console.log('Selected Images:', selectedItems);
-        
+        updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected, isLightbox);
+        updateDownloadSection(selectedItems.length, isLightbox);
     }
 
     function getActiveTabId() {
@@ -255,10 +298,13 @@
     
     window.resetImages = resetImages;
     window.handleImageClick = handleImageClick;
+    window.toggleSelectMode = toggleSelectMode;
+    window.updateImageCheckboxes = updateImageCheckboxes;
     window.updateDownloadSelection = updateDownloadSelection;
     resetImages();
     
     document.addEventListener('DOMContentLoaded', () => {
+        window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
         window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
         const activeTabId = getActiveTabId();
@@ -319,15 +365,17 @@
     });
     
     async function showOptionsDownloadRequest() {
-        if ($(".grid").attr('total-image-count') != 0) {
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const isLightbox = !lightboxModal.classList.contains('hidden');
+        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(".grid");
+        if (imgsOrigin.attr('total-image-count') != 0) {
             if (0 == localStorage.getItem(`hasImages_${localStorage.getItem('photographyCategory')}`)) {
                 downloadUnavailableModal.show();
                 return;
             }
 
-            const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-
-            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
+            const selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+            const selectedImagesLength = selectedImages.length === 0 ? imgsOrigin.attr('total-image-count') : selectedImages.length;
             
             if (selectedImagesLength == 1) {
                 $("#folder_format_selection").hide();
@@ -351,17 +399,45 @@
             alert('No images found');
         }
     }
-    
-    function showConfirmDownloadRequest() {
-        showOptionsDownloadModal.hide()
-        confirmDownloadRequest();
+
+    function toggleSelectMode(enable = true) {
+        window.localStorage.setItem('selectMode', enable);
+        updateImageCheckboxes(enable);
+    }
+
+    function updateImageCheckboxes(enable) {
+        const clearDownloadBtn = document.querySelector('#btn-download-clear');
+        const selectModeBtn = document.querySelector('#btn-select-mode');
+        let imgCheckboxes = document.querySelectorAll('.img-checkbox');
+        if (enable) {
+            selectModeBtn.classList.add('hidden');
+            clearDownloadBtn.classList.remove('hidden');
+            clearDownloadBtn.innerHTML = 'Cancel Selection';
+            imgCheckboxes.forEach(checkbox => {
+                checkbox.classList.remove('hidden');
+            });
+        } else {
+            imgCheckboxes.forEach(checkbox => {
+                checkbox.classList.add('hidden');
+            });
+            clearDownloadBtn.innerHTML = 'Clear Selection';
+            clearDownloadBtn.classList.add('hidden');
+            selectModeBtn.classList.remove('hidden');
+        }
     }
     
-    function confirmDownloadRequest() {
-        const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-        if ($(".grid").attr('total-image-count') != 0) {
+    function showConfirmDownloadRequest(isLightbox = false) {
+        showOptionsDownloadModal.hide();
+        const lightboxModal = document.getElementById('lightbox-modal');
+        confirmDownloadRequest(!lightboxModal.classList.contains('hidden'));
+    }
+    
+    function confirmDownloadRequest(isLightbox = false) {
+        const selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(".grid");
+        if (imgsOrigin.attr('total-image-count') != 0) {
             confirmDownloadModal.show();
-            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
+            const selectedImagesLength = selectedImages.length === 0 ? imgsOrigin.attr('total-image-count') : selectedImages.length;
             $('#confirm-download-body').html("{{ $configMessages['request']['confirm']  }} <b>" + selectedImagesLength + "</b> {{ $configMessages['request']['number_of']  }}?");
 
             const note = "{{ isset($configMessages['request']['note']) ? $configMessages['request']['note'] : '' }}";
@@ -397,27 +473,48 @@
             formatSelect.appendChild(newOption);
         });
     }
+
+    function toggleDisableForImgButtons(isLightboxShowing) {
+        $('#btn-download').attr('disabled', isLightboxShowing);
+        $('#btn-download-clear').attr('disabled', isLightboxShowing);
+        $('#btn-select-mode').attr('disabled', isLightboxShowing);
+    }
     
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
     const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
     const downloadUnavailableModal = new Modal(document.getElementById('downloadUnavailableModal'));
+    let lightboxModalElement = document.getElementById('lightbox-modal');
+    const lightboxOptions = {
+        onHide: () => {
+            resetImages(true);
+            toggleDisableForImgButtons(false);
+        },
+        onShow: () => {
+            toggleDisableForImgButtons(true);
+        },
+    };
+    let lightboxModal = new Modal(lightboxModalElement, lightboxOptions);
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
-            const images = JSON.parse(localStorage.getItem('selectedImages'));
-            const imageId = `img_${event.detail[0]['imageId']}`;
+            const isLightbox = event.detail[0]['isLightbox'];
+            const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+            const imageId = isLightbox ? `img-lb_${event.detail[0]['imageId']}` : `img_${event.detail[0]['imageId']}`;
             const img = document.querySelector(`#${imageId}`);
+            const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
             let checkbox = img.querySelector('.portrait-img-checkbox');
-            updateImageState(checkbox, images.includes(imageId));
+            updateImageState(checkbox, images.includes(imageId), isLightbox);
         }, 50);
     });
     
     async function submitDownloadRequest() {
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const isLightbox = !lightboxModal.classList.contains('hidden');
         const tab = getActiveTabId();
         const tabVal = tab.replace("-tab", "");
-        const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
+        let selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
         try {
             const downloadBtn = document.querySelector('#confirm-download-btn');
             const selectedYear = $(`#select_${tabVal}_year`).val();
@@ -425,6 +522,8 @@
             const selectedClass = $(`#select_${tabVal}_class`).val();
             const INDIVIDUAL_CATEGORY = 1;
             const BULK_CATEGORY = 2;
+            const BASE_ORIGIN = 1;
+            const LIGHTBOX_ORIGIN = 2;
             
             console.log('Selected Year:', selectedYear);
             console.log('Selected View:', selectedView);
@@ -441,6 +540,10 @@
             };
             
             console.log('Download Filters:', filters);
+
+            if (isLightbox) {
+                selectedImages = selectedImages.map(img => img.replace('img-lb_', 'img_'));
+            }
             
             const response = await fetch('{{ route('photography.request-download') }}', {
                 method: 'POST',
@@ -498,6 +601,14 @@
     window.confirmDownloadRequest = confirmDownloadRequest;
     window.reloadPage = reloadPage;
     window.updateSchoolConfig = updateSchoolConfig;
+    window.showLightboxModal = function(subjectKey, name) {
+        window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
+        Livewire.dispatch('EV_SELECT_IMAGE', { subject: name });
+        document.querySelector('#lightbox-modal').querySelector('#modal-title').textContent = name;
+        updateDownloadSection(0, true);
+        lightboxModal.show();
+        toggleDisableForImgButtons(true);
+    }
 
     Livewire.on('EV_UPDATE_FILENAME_FORMATS', (data) => {
         updateFormatOptions(data[0]);
