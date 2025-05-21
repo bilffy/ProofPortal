@@ -15,7 +15,7 @@
 
 #photography-root {
     .select2.select2-container.select2-container--default {
-        width: 200px !important;
+        min-width: 200px;
         margin-bottom: 1rem;
     }
     .select2-selection.select2-selection--multiple {
