@@ -17,7 +17,7 @@
     $imgId = $isLightbox ? 'img-lb_' . $id : 'img_' . $id;
 @endphp
 
-<div id="{{ $imgId }}" class="portrait-img rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center hover:cursor-pointer" onclick="handleImageClick('{{ $imgId }}', {{ $isLightbox ? 'true' : 'false' }}, {{ $hasImage ? 'true' : 'false' }}, '{{ $decodedName }}', '{{ $decodedFolder }}')">
+<div id="{{ $imgId }}" class="portrait-img rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center hover:cursor-pointer" onclick="handleImageClick('{{ $imgId }}', {{ $isLightbox ? 'true' : 'false' }}, {{ $hasImage ? 'true' : 'false' }})">
     <div class="relative h-[229px] overflow-hidden rounded">
         <div class="absolute flex w-full justify-end pr-2 pt-2 z-10 {{ $hasImage ? "img-checkbox" . ($isLightbox ? "" : " hidden") : 'hidden' }}">
             <div class="{{ $hasImage ? "portrait-img-checkbox" : "img-not-found"}} group transition-all 

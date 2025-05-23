@@ -12,7 +12,7 @@
                     MSP Photography Timeline
                 </h3>
                 <div id="lb-download-section" class="h-full flex align-middle justify-center items-center gap-4">
-                    <x-button.primary-inverse id="btn-lb-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages(true)">Clear Selection</x-button.primary-inverse>
+                    <x-button.primary-inverse id="btn-lb-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages(true)">Cancel Selection</x-button.primary-inverse>
                     <x-button.primary 
                             id="btn-lb-download"
                             onclick="showOptionsDownloadRequest(true)"
