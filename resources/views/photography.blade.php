@@ -44,7 +44,7 @@
             @endif
             <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
                 <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.primary-inverse>
-                <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Clear Selection</x-button.primary-inverse>
+                <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Cancel Selection</x-button.primary-inverse>
                 <x-button.primary 
                         id="btn-download"
                         onclick="showOptionsDownloadRequest()"
@@ -207,7 +207,6 @@
 
         if (selectedCount > 0) {
             clearDownloadBtn.classList.remove('hidden');
-            clearDownloadBtn.innerHTML = 'Clear Selection';
             downloadBtn.innerHTML = `Download Selected (${selectedCount})`;
         } else {
             const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
@@ -237,12 +236,7 @@
             const images = window.localStorage.getItem('selectedImages');
             const imagesCount = images ? JSON.parse(images).length : 0;
             window.localStorage.setItem('selectedImages', JSON.stringify([]));
-            if (imagesCount <= 0) {
-                toggleSelectMode(false);
-            } else {
-                const clearDownloadBtn = document.querySelector('#btn-download-clear');
-                clearDownloadBtn.innerHTML = 'Cancel Selection';
-            }
+            toggleSelectMode(false);
         }
         updateDownloadSelection(isLightbox);
     }
@@ -412,7 +406,6 @@
         if (enable) {
             selectModeBtn.classList.add('hidden');
             clearDownloadBtn.classList.remove('hidden');
-            clearDownloadBtn.innerHTML = 'Cancel Selection';
             imgCheckboxes.forEach(checkbox => {
                 checkbox.classList.remove('hidden');
             });
@@ -420,7 +413,6 @@
             imgCheckboxes.forEach(checkbox => {
                 checkbox.classList.add('hidden');
             });
-            clearDownloadBtn.innerHTML = 'Clear Selection';
             clearDownloadBtn.classList.add('hidden');
             selectModeBtn.classList.remove('hidden');
         }
