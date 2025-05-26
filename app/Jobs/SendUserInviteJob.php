@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\UserInviteMail;
 use App\Models\User;
+use App\Models\Status;
 use App\Models\UserInviteToken;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -51,6 +52,10 @@ class SendUserInviteJob implements ShouldQueue
         
         // Set the user status to invited
         $this->user->status = User::STATUS_INVITED;
+
+        $status = Status::where('status_external_name', 'invited')->first();
+        $this->user->active_status_id = $status->id;
+        
         $this->user->save();
         
         // Send the invite email
