@@ -11,6 +11,7 @@ use App\Models\Franchise;
 use App\Models\FranchiseUser;
 use App\Helpers\RoleHelper;
 use App\Models\School;
+use App\Models\Status;
 use App\Models\SchoolUser;
 use App\Models\User;
 use App\Rules\MspEmailValidation;
@@ -144,9 +145,12 @@ class UserController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
+        
         DB::beginTransaction();
         try {
+
+            $status = Status::where('status_external_name', 'new')->first();
+            
             $user = User::create([
                 'name' => $decrypted['firstname'] . " " . $decrypted['lastname'],
                 'email' => $decrypted['email'],
@@ -155,6 +159,7 @@ class UserController extends Controller
                 'lastname' => $decrypted['lastname'],
                 'status' => User::STATUS_NEW, // initialize user with NEW status
                 'password' => Hash::make(str()->random(7)), // random value for user creation
+                'active_status_id' => $status->id,
             ]);
     
             $role = Role::findOrFail($decrypted['role'])->name;
