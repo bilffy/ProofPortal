@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Auth;
 
 use App\Models\User;
+use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +72,10 @@ class ResetPassword extends Component
             // Update the user status to active if the user is new or invited
             if ($user->status == User::STATUS_NEW || $user->status == User::STATUS_INVITED) {
                 $user->status = User::STATUS_ACTIVE;
+
+                $status = Status::where('status_external_name', 'active')->first();
+                $user->active_status_id = $status->id;
+                
                 $user->save();
             }
             return redirect()->route('login')->with('status', 'Password updated, please sign in');
