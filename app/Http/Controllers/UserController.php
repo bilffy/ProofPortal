@@ -68,14 +68,19 @@ class UserController extends Controller
             ];
         
 
-        if ($data['role'] == 3 && $data['franchise'] == 0) {
-            $schema1 = array_merge($schema1, ['franchise' => 'required|integer']);
-            $schema2 = array_merge($schema2, ['franchise.required' => 'Franchise is required.']);
-        }
-        
-        if ($data['role'] > 3 && $data['school'] == 0) {
-            $schema1 = array_merge($schema1, ['school' => 'required|integer']);
-            $schema2 = array_merge($schema2, ['school.required' => 'School is required.']);
+        if (array_key_exists('role', $data)) {
+            if ($data['role'] == 3 && $data['franchise'] == 0) {
+                $schema1 = array_merge($schema1, ['franchise' => 'required|integer']);
+                $schema2 = array_merge($schema2, ['franchise.required' => 'Franchise is required.']);
+            }
+            
+            if ($data['role'] > 3 && $data['school'] == 0) {
+                $schema1 = array_merge($schema1, ['school' => 'required|integer']);
+                $schema2 = array_merge($schema2, ['school.required' => 'School is required.']);
+            }
+        } else {
+            unset($schema1['role']);
+            unset($schema1['email']);
         }
         
         $validate = Validator::make($data, $schema1, $schema2);
@@ -192,6 +197,92 @@ class UserController extends Controller
         $this->userService->sendInvite($user, auth()->user()->id);
         session()->forget('register_token'); // Remove token after use
         return response()->json(['redirect_url' => route('users')], 200);
+    }
+
+    public function edit(Request $request)
+    {
+        $user = Auth::user();
+        $franchiseList = $user->isAdmin() ? Franchise::orderBy('name')->get()
+            : ( $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [] );
+        $schoolList = $user->isAdmin() ? School::orderBy('name')->get()
+            : ( $user->isFranchiseLevel()
+                ? School::orderBy('name')->with('franchises')->whereHas('franchises', function ($q) use ($user) { $q->where('franchise_id', $user->getFranchise()->id); })->get()
+                : School::orderBy('name')->where('id', '=', $user->getSchool()->id)->get() );
+
+        // Check if it has school context
+        // This override the franchise level context from the selected school
+        if (SchoolContextHelper::isSchoolContext()) {
+            $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
+            $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
+        }
+
+        $nonce = Str::random(40);
+        session(['edit_user_token' => $nonce]);
+
+        $data = [
+                'user' => new UserResource($user),
+                'roles' => RoleResource::collection(RoleHelper::getAllowedRoles($user->getRole())),
+                'franchises' => $franchiseList,
+                'schools' => $schoolList,
+                'nonce' => $nonce
+        ];
+
+        // if ($request->wantsJson()) {
+            return response()->json($data, 200);
+        // }
+        // return view('editUser', $data);
+    }
+
+    /**
+     * Handle user details update.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function update(Request $request): RedirectResponse|JsonResponse
+    {
+        if ($request->nonce !== session('edit_user_token')) {
+            return response()->json('Invalid Request', 422);
+        }
+
+        $user = Auth::user();
+
+        $request->merge(
+            [
+                'email' => EncryptionHelper::simpleDecrypt($request->email),
+                // 'franchise' => EncryptionHelper::simpleDecrypt($request->franchise),
+                // 'school' => EncryptionHelper::simpleDecrypt($request->school)
+            ]
+        );
+
+        $validator = $this->validator($request->all(['firstname', 'lastname', 'email']));
+        
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $user->update([
+                'name' => $request->firstname . " " . $request->lastname,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+            ]);
+            // Log UPDATE_USER activity
+            ActivityLogHelper::log(LogConstants::EDIT_USER, ['edited_user' => $user->id]);
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            // if ($request->wantsJson()) {
+                return response()->json(['errors' => $e->getMessage()], 422);
+            // }
+            // return redirect()->back()->withInput()->withErrors($e->getMessage());
+        }
+
+        session()->forget('edit_user_token'); // Remove token after use
+        // if ($request->wantsJson()) {
+            return response()->json(['message' => 'Profile successfully updated.'], 200);
+        // }
+        // return response()->json(['redirect_url' => route('users')], 200);
     }
 
     /**

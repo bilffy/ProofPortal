@@ -80,37 +80,34 @@
                 @endImpersonating
                 
                 <div class="flex flex-row items-center">
-                    
                     {{ $user->resource->isSchoolLevel() ? $user->resource?->getSchool()?->name : '' }}
-                    
                     <div class="ms-3 relative">
-        <span class="inline-flex rounded-md float-right">
-            <button
-                    id="userBtn"
-                    type="button"
-                    data-dropdown-toggle="userSettingsAction"
-                    class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800"
-            >
-                <x-avatar-initials text="{{ $AvatarHelper->getInitials($user->resource) }}" />
-                <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
-                <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
-            </button>
-            <x-form.dropdownPanel id="userSettingsAction">
-                {{--<li>
-                    <x-button.dropdownLink href="{{ route('reset.my.password') }}" class="hover:bg-primary hover:text-white">
-                        Profile
-                    </x-button.dropdownLink>
-                </li>--}}
-                <li>
-                    <x-button.dropdownLink href="{{ route('logout') }}" method="post" as="button" class="hover:bg-primary hover:text-white">
-                        Log Out
-                    </x-button.dropdownLink>
-                </li>
-            </x-form.dropdownPanel>
-        </span>
+                        <span class="inline-flex rounded-md float-right">
+                            <button
+                                    id="userBtn"
+                                    type="button"
+                                    data-dropdown-toggle="userSettingsAction"
+                                    class="inline-flex items-center px-3 py-2 border-transparent text-sm leading-4 font-medium rounded-md hover:text-gray-700 focus:outline-none transition ease-in-out duration-150 text-gray-800"
+                            >
+                                <x-avatar-initials id="user-initials" text="{{ $AvatarHelper->getInitials($user->resource) }}" />
+                                <x-icon id="namebarIconUp" class="px-2" icon="caret-up" hidden />
+                                <x-icon id="namebarIconDown" class="px-2" icon="caret-down" />
+                            </button>
+                            <x-form.dropdownPanel id="userSettingsAction">
+                                <li>
+                                    <x-button.dropdownLink onclick="showEditProfile()" as="button" class="hover:bg-primary hover:text-white hover:cursor-pointer">
+                                        Edit Profile
+                                    </x-button.dropdownLink>
+                                </li>
+                                <li>
+                                    <x-button.dropdownLink href="{{ route('logout') }}" method="post" as="button" class="hover:bg-primary hover:text-white">
+                                        Log Out
+                                    </x-button.dropdownLink>
+                                </li>
+                            </x-form.dropdownPanel>
+                        </span>
                     </div>
                 </div>
-
             </header>
             <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4">
                 @if (isset($slot))
@@ -121,62 +118,113 @@
             </main>
             <x-layout.footer />
         </div>
+        <x-modal.base id="editProfileModal" title="Edit Profile" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    @include('partials.users.forms.edit', ['user' => $user])
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary id="edit-profile-btn-cls" data-modal-hide="editProfileModal">Close</x-button.secondary>
+                    <x-button.primary id="edit-profile-btn" type="submit" form="edit-user-form">Save</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
     </div>
-
+    
+    @push('scripts')
     <script type="module">
         import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
         import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+        
+        const editProfileOptions = {
+            onShow: async () => {
+                const form = document.getElementById('edit-user-form');
+                $("#edit-profile-btn").attr('disabled', 'disabled');
+                $("#edit-profile-btn").text('Loading...');
+                $(`#firstname`).val('');
+                $(`#lastname`).val('');
+                $(`#firstname`).attr('readonly', 'readonly');
+                $(`#lastname`).attr('readonly', 'readonly');
+                let response = await fetch('{{ route('api.profile.edit') }}', {
+                    method: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                });
+                
+                let result = await response.json();
+                $(`#nonce`).val(result.nonce);
+                $(`#email`).val(result.user.email || '');
+                $(`#firstname`).val(result.user.firstname || '');
+                $(`#lastname`).val(result.user.lastname || '');
+                $("#edit-profile-btn").removeAttr('disabled');
+                $("#edit-profile-btn").text('Save');
+                $(`#firstname`).removeAttr('readonly');
+                $(`#lastname`).removeAttr('readonly');
+            },
+        };
+        const editProfileModal = new Modal(document.getElementById('editProfileModal'), editProfileOptions);
+
+        function showEditProfile() {
+            editProfileModal.show();
+        }
+        
         document.addEventListener('DOMContentLoaded', (event) => {
+            window.showEditProfile = showEditProfile;
             const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
             if (localStorage.getItem('api_token') === null || id != {{ $user->id }}) {
                 createApiToken();
             }
             startSessionPolling();
         });
-        document.getElementById('input-group-search').addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li');
+        const inputGroupSearch = document.getElementById('input-group-search');
+        if (inputGroupSearch) {
+            inputGroupSearch.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li');
 
-            items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (text.includes(query)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+            let currentIndex = -1;
+            inputGroupSearch.addEventListener('keydown', function(event) {
+                const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li:not([style*="display: none"])');
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    if (currentIndex < items.length - 1) {
+                        currentIndex++;
+                        items.forEach(item => item.classList.remove('bg-gray-200'));
+                        items[currentIndex].classList.add('bg-gray-200');
+                        items[currentIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    if (currentIndex > 0) {
+                        currentIndex--;
+                        items.forEach(item => item.classList.remove('bg-gray-200'));
+                        items[currentIndex].classList.add('bg-gray-200');
+                        items[currentIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (currentIndex >= 0 && currentIndex < items.length) {
+                        items[currentIndex].querySelector('a').click();
+                    }
                 }
             });
-        });
-
-        let currentIndex = -1;
-
-        document.getElementById('input-group-search').addEventListener('keydown', function(event) {
-            const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li:not([style*="display: none"])');
-
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (currentIndex < items.length - 1) {
-                    currentIndex++;
-                    items.forEach(item => item.classList.remove('bg-gray-200'));
-                    items[currentIndex].classList.add('bg-gray-200');
-                    items[currentIndex].scrollIntoView({ block: 'nearest' });
-                }
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                if (currentIndex > 0) {
-                    currentIndex--;
-                    items.forEach(item => item.classList.remove('bg-gray-200'));
-                    items[currentIndex].classList.add('bg-gray-200');
-                    items[currentIndex].scrollIntoView({ block: 'nearest' });
-                }
-            } else if (event.key === 'Enter') {
-                event.preventDefault();
-                if (currentIndex >= 0 && currentIndex < items.length) {
-                    items[currentIndex].querySelector('a').click();
-                }
-            }
-        });
-
+        }
     </script>
-
+    @endpush
     {{-- @stack('scripts') --}}
 @endsection
