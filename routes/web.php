@@ -11,9 +11,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
+use App\Http\Livewire\Settings\FeatureControl;
 use App\Http\Livewire\SchoolView;
 use App\Http\Livewire\Order\Order;
 use App\Http\Controllers\NavBarController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\DisableUserController;
 
@@ -85,7 +87,10 @@ Route::middleware('auth')->group(function () {
     // Navbar routes
     Route::post('/navbar/toggle-collapse', [NavBarController::class, 'toggleCollapse'])->name('navbar.toggleCollapse');
 
-
+    // SETTINGS
+    Route::get('/settings', [SettingsController::class, 'main'])->name('settings.main');
+    Route::get('/settings/feature-control', FeatureControl::class)->name('settings.feature.control');
+    
     //Configure School - fetch jobs by season
         Route::get('/config-school/fetch-jobs', [ConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
     //Configure School - get-job-details of job
