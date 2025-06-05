@@ -1,7 +1,7 @@
 <div>
     <form id="edit-user-form" method="PATCH" action="{{ route('api.profile.update') }}">
         @csrf
-        <input type="hidden" id="nonce" name="nonce" value="">
+        <input type="hidden" id="edit-user-nonce" name="nonce" value="">
         <div class="flex flex-row gap-4 max-w-screen-md">
             <div class="w-full">
                 <div class="mt-1 w-1/2 flex flex-col mb-2">
@@ -94,7 +94,11 @@
                     $('#edit-profile-btn-cls').click();
                 },
                 error: function(response) {
-                    let errors = response.responseJSON.errors;
+                    const jsonResponse = response.responseJSON;
+                    let errors = jsonResponse.errors;
+                    if (jsonResponse.hasOwnProperty('nonce')) {
+                        $('#edit-user-nonce').val(jsonResponse.nonce);
+                    }
                     // iterate the errors object and display the error messages
                     for (let key in errors) {
                         if (errors.hasOwnProperty(key)) {
