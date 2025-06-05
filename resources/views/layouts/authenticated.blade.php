@@ -157,7 +157,8 @@
                 });
                 
                 let result = await response.json();
-                $(`#nonce`).val(result.nonce);
+                console.log({result});
+                $(`#edit-user-nonce`).val(result.nonce);
                 $(`#email`).val(result.user.email || '');
                 $(`#firstname`).val(result.user.firstname || '');
                 $(`#lastname`).val(result.user.lastname || '');

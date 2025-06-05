@@ -257,7 +257,9 @@ class UserController extends Controller
         $validator = $this->validator($request->all(['firstname', 'lastname', 'email']));
         
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            $nonce = Str::random(40);
+            session(['edit_user_token' => $nonce]);
+            return response()->json(['errors' => $validator->errors(), 'nonce' => $nonce], 422);
         }
 
         DB::beginTransaction();
@@ -273,7 +275,9 @@ class UserController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             // if ($request->wantsJson()) {
-                return response()->json(['errors' => $e->getMessage()], 422);
+                $nonce = Str::random(40);
+                session(['edit_user_token' => $nonce]);
+                return response()->json(['errors' => $e->getMessage(), 'nonce' => $nonce], 422);
             // }
             // return redirect()->back()->withInput()->withErrors($e->getMessage());
         }
