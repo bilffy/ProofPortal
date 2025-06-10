@@ -10,7 +10,7 @@
         <div></div>
     </div>
     <div class="relative mb-8 gap-4">
-        
+        @livewire('settings.feature-control')
     </div>
 @endsection
 

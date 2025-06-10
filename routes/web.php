@@ -3,23 +3,22 @@
 use App\Helpers\EncryptionHelper;
 use App\Helpers\PermissionHelper;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DisableUserController;
+use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\PhotographyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Proofing\ConfigureController;
 use App\Http\Controllers\ProofingController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
+use App\Http\Livewire\Order\Order;
+use App\Http\Livewire\SchoolList;
+use App\Http\Livewire\SchoolView;
+use App\Http\Livewire\Settings\FeatureControl;
 use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
-use App\Http\Livewire\SchoolList;
-use App\Http\Livewire\Settings\FeatureControl;
-use App\Http\Livewire\SchoolView;
-use App\Http\Livewire\Order\Order;
-use App\Http\Controllers\NavBarController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\ImpersonateController;
-use App\Http\Controllers\DisableUserController;
-
-use App\Http\Controllers\Proofing\ConfigureController;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
