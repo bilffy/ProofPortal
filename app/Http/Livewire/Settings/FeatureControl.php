@@ -2,33 +2,29 @@
 
 namespace App\Http\Livewire\Settings;
 
+use App\Http\Resources\UserResource;
 use App\Models\Setting;
 use App\Models\User;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Auth;
-use App\Http\Resources\UserResource;
+use Livewire\Component;
 
 class FeatureControl extends Component
 {
-    public $search = '';
-    public $sortField = 'name';
-    public $sortDirection = 'asc';
-
+    public $settingsStates = [];
     public function mount()
     {
-        
+        $this->settingsStates = Setting::pluck('property_value', 'id')
+            ->map(fn($v) => $v === 'true')
+            ->toArray();    
     }
 
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'sortField' => ['except' => 'name'],
-        'sortDirection' => ['except' => 'asc'],
-    ];
-
-    public function sortBy($field)
+    public function updateSettingValue($key, $value)
     {
-        
+        $setting = Setting::find($key);
+        if ($setting) {
+            $setting->property_value = $value === 'true' ? 'false' : 'true';
+            $setting->save();
+        }
     }
     
     public function render()
@@ -42,7 +38,8 @@ class FeatureControl extends Component
         return view('livewire.settings.feature-control',
             [
                 'isAdmin' => $user->isAdmin(),
-                'settings' => $settings
+                'settings' => $settings,
+                'settingsStates' => $this->settingsStates,
             ])
             ->layout('layouts.authenticated', [
                 'user' => new UserResource(Auth::user()),
