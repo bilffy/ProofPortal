@@ -13,6 +13,12 @@ class FeatureControl extends Component
     public $settingsStates = [];
     public function mount()
     {
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            return redirect()->route('dashboard');
+        }
+        
         $this->settingsStates = Setting::pluck('property_value', 'id')
             ->map(fn($v) => $v === 'true')
             ->toArray();    

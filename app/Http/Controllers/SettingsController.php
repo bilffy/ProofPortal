@@ -11,7 +11,11 @@ class SettingsController extends Controller
     public function main(Request $request)
     {   
         $user = Auth::user();
-
+        
+        if (!$user->isAdmin()) {
+            return redirect()->route('dashboard');
+        }
+        
         return view('settings', [
             'user' => new UserResource($user),
             

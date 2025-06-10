@@ -67,6 +67,12 @@
         @endcan
     @endcan
     {{-- <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">For Testing</x-layout.navItem> --}}
+
+    @if ($user->isAdmin())
+        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageSettings" navIcon="cogs" href="{{ route('settings.main') }}">App Settings</x-layout.navItem>
+        
+    @endif
+
 </div>
 
 @push('scripts')
