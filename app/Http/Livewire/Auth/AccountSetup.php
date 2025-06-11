@@ -74,11 +74,11 @@ class AccountSetup extends Component
         User::where('email', $this->email)->firstOrFail();
         
         // check if the old password of the user is correct
-        if (!Auth::validate(['email' => $this->email, 'password' => $this->oldPassword])) {
+        /*if (!Auth::validate(['email' => $this->email, 'password' => $this->oldPassword])) {
             throw ValidationException::withMessages([
                 'email' => ["Old password is incorrect."],
             ]);
-        }
+        }*/
         
         $status = Password::reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password, 'token' => $this->token],
