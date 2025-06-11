@@ -71,7 +71,7 @@
                     encryptedData[item.name] = encryptData(item.value);
                     return;
                 } else if (item.name === 'firstname' || item.name === 'lastname') {
-                    encryptedData[item.name] = sanitizeText(item.value);
+                    encryptedData[item.name] = sanitizeText(item.value).trim();
                     return;
                 }
                 encryptedData[item.name] = item.value;
@@ -127,11 +127,10 @@
     function sanitizeText(value) {
         const textWithoutEmojis = removeEmojis(value);
         // Regex for disallowed characters
-        const disallowed = /[!@#$%^&*()_+\=\[\]{};:"<>,\.?\/~]/g;
-        // Test if value contains any disallowed character
-        const isValid = !disallowed.test(textWithoutEmojis);
+        const disallowed = /[!@#$%^&*()_+\=\[\]{};:"<>,\.?\/~“”]/g;
+        // Replace left and right single quotes with straight quote
         // Replace disallowed characters with ''
-        return (isValid ? textWithoutEmojis : textWithoutEmojis.replace(disallowed, '')).trim();
+        return textWithoutEmojis.replace(/[‘’]/g, "'").replace(disallowed, '');
     }
 
     function removeEmojis(text) {
