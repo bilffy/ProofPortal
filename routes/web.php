@@ -17,6 +17,7 @@ use App\Http\Livewire\Order\Order;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
 use App\Http\Livewire\Settings\FeatureControl;
+use App\Http\Livewire\Settings\RolePermission;
 use App\Http\Middleware\CheckUserRestriction;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +90,7 @@ Route::middleware('auth')->group(function () {
     // SETTINGS
     Route::get('/settings', [SettingsController::class, 'main'])->name('settings.main');
     Route::get('/settings/feature-control', FeatureControl::class)->name('settings.feature.control');
+    Route::get('/settings/role-permission', RolePermission::class)->name('settings.role.permission');
     
     //Configure School - fetch jobs by season
         Route::get('/config-school/fetch-jobs', [ConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
