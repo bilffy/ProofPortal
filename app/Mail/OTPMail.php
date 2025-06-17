@@ -36,7 +36,7 @@ class OTPMail extends Mailable
         $expiration = config('app.otp.expiration_minutes', 60);
         
         return $this->markdown('emails.otp')
-            ->subject('Your MSP Photography Security Code')
+            ->subject('Your MSP School Portal security code')
             ->with([
                 'user' => $this->user,
                 'otp' => $this->otp,
