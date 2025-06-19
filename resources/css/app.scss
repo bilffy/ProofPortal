@@ -44,12 +44,23 @@ body {
   line-height: 1.25rem;
 }
 .multiselect_class_group {
-  font-family: "Times New Roman", monospace;
+  /* font-family: "Times New Roman", monospace; */
+  font-family: Montserrat !important;
   font-size: 444px;
+}
+.select2-selection {
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
 }
 .select2-container--default .select2-search--inline .select2-search__field{
   font-family: Montserrat !important;
   height: 21px !important;
+  /* margin-top: 0 !important; */
+}
+
+.select2-container .select2-search--inline .select2-search__field {
+    margin-top: 0 !important;
 }
 
 /* .bg-secondary {
@@ -57,3 +68,14 @@ body {
     background-color: transparent !important;
     border: 2px solid #005C91 !important;
 } */
+
+.tribute-container {
+    font-family: Montserrat !important;
+    background-color: #EEF2FA !important;
+    border-radius: 4px !important;
+    padding: 0.5rem;
+    .highlight {
+        background-color: #005C91 !important;
+        color: white !important;
+    }
+}

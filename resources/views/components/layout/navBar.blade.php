@@ -70,7 +70,6 @@
 
     @if ($user->isAdmin())
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageSettings" navIcon="cogs" href="{{ route('settings.main') }}">App Settings</x-layout.navItem>
-        
     @endif
 
 </div>

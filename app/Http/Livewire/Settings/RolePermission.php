@@ -14,6 +14,9 @@ class RolePermission extends Component
 {
     public $roles = [];
     public $currentRoleSelected = 'Admin';
+    public $listeners = [
+        'EV_UPDATE_SELECTED_ROLE' => 'showRolesDownstream',
+    ];
     
     public function mount()
     {
@@ -81,6 +84,8 @@ class RolePermission extends Component
         
         $this->roles = $roles;
         $this->currentRoleSelected = $role;
+
+        $this->dispatch('EV_ROLE_LIST_UPDATED', []);
     }
     
 }
