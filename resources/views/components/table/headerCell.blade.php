@@ -1,6 +1,6 @@
 @props(['sortable' => true, 'filterable' => false, 'filterModel' => '', 'filterOptions' => [], 'isLivewire' => false, 'wireEvent' => '', 'sortBy' => '', 'sortDirection' => 'asc'])
 
-<th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2  border-neutral-300 p-2" ]) }} x-cloak>
+<th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2  border-neutral-300 p-2" ]) }} {{ $isLivewire ? 'x-cloak' : '' }}>
     @php
         $isFilterable = $filterable && !empty($filterModel) && !empty($filterOptions);
     @endphp

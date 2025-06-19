@@ -72,7 +72,7 @@ export default {
           info: {
             DEFAULT: '#2E5AAC',
             600: '#2E5AAC',
-            500: '##587BBD',
+            500: '#587BBD',
             400: '#829CCD',
             300: '#ABBDDE',
             200: '#C0CEE6',
