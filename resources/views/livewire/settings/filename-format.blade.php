@@ -24,7 +24,9 @@
                 </div>
                 <x-form.input.text id="input-format-name" placeholder="" class="w-full" />
             </div>
-            <x-button.primary id="btn-add-format" class="place-self-end">Add</x-button.primary>
+            <div class="pt-[29px]">
+                <x-button.primary id="btn-add-format" class="place-self-end">Add</x-button.primary>
+            </div>
         </div>
         <div class="w-full flex flex-row gap-4 mt-4 max-h-96 overflow-y-auto rounded-[4px] border-[1px]">
             <table class="w-full text-sm text-left rtl:text-right">
@@ -147,7 +149,7 @@
                 $('#select_image-types').select2({minimumResultsForSearch: Infinity});
                 $('.select2-selection').addClass('border-neutral');
                 toggleAddButton();
-            }, 100)();
+            }, 200)();
         });
     });
 </script>
