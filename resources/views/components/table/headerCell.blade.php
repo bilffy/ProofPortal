@@ -1,11 +1,11 @@
-@props(['sortable' => true, 'filterable' => false, 'filterModel' => '', 'filterOptions' => [], 'isLivewire' => false, 'wireEvent' => '', 'sortBy' => '', 'sortDirection' => 'asc'])
+@props(['sortable' => true, 'filterable' => false, 'filterModel' => '', 'filterOptions' => [], 'isLivewire' => false, 'wireEvent' => '', 'sortBy' => '', 'sortDirection' => 'asc', 'clickable' => true, 'centered' => false])
 
-<th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2  border-neutral-300 p-2" ]) }} {{ $isLivewire ? 'x-cloak' : '' }}>
+<th scope="col" {{ $attributes->merge([ 'class' => "TableHeaderCell border-b-2 border-neutral-300 p-2" ]) }} {{ $isLivewire ? 'x-cloak' : '' }}>
     @php
         $isFilterable = $filterable && !empty($filterModel) && !empty($filterOptions);
     @endphp
     <div
-        class="flex flex-row hover:cursor-pointer"
+        class="flex flex-row {{ $clickable ? "hover:cursor-pointer" : "" }} {{ $centered ? 'justify-center' : '' }}"
         @if ($isLivewire && $sortable) wire:click.prevent="{{ $wireEvent }}" @endif
         @if ($isFilterable)
             x-data="{
@@ -76,7 +76,7 @@
                 </div>
             </div>
         @endif
-        <div class="flex flex-row gap-2 items-center hover:bg-primary-100 rounded px-2 py-2">
+        <div class="flex flex-row gap-2 items-center {{ $clickable ? "hover:bg-primary-100" : "" }} rounded px-2 py-2">
             @if ($sortable && $sortBy === $attributes['id'])
                 {{-- sort-desc | sort-asc --}}
                 @if ($sortDirection === 'asc')

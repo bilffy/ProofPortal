@@ -1,6 +1,6 @@
 <div class="w-full">
     <div id="filename-format-section">
-        <h5 class="text-xl font-bold">Filename Format Options</h5>
+        <h5 class="text-xl font-bold">File Name Format Options</h5>
         <p class="pt-3">Add filename format options for the downloaded images. Users can select these options from a menu when downloading photos.</p>
         <div class="w-full flex flex-row gap-4 mt-4 items-start">
             <div class="min-w-[110px]">
@@ -26,22 +26,22 @@
             </div>
             <x-button.primary id="btn-add-format" class="place-self-end">Add</x-button.primary>
         </div>
-        <div class="w-full flex flex-row gap-4 mt-4 max-h-96 overflow-y-auto border-y-2">
-            <table class="w-full text-sm text-left rtl:text-right border-x-2">
-                <thead class="sticky top-0 bg-gray-100">
-                    <tr>
-                        <x-table.headerCell id="header-file-pattern" class="p-0.5">File Name Pattern</x-table.headerCell>
-                        <x-table.headerCell id="header-image-type" class="p-0.5">Image Type</x-table.headerCell>
+        <div class="w-full flex flex-row gap-4 mt-4 max-h-96 overflow-y-auto rounded-[4px] border-[1px]">
+            <table class="w-full text-sm text-left rtl:text-right">
+                <thead class="sticky top-0 bg-white">
+                    <tr class="border-b border-[#E6E7E8]">
+                        <x-table.headerCell id="header-file-pattern" class="p-0.5 border-none" clickable="{{false}}">File Name Pattern</x-table.headerCell>
+                        <x-table.headerCell id="header-image-type" class="p-0.5 border-none" clickable="{{false}}">Image Type</x-table.headerCell>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($formats as $format)
-                        <tr>
-                            <x-table.cell class="grid grid-rows-2 gap-1">
+                        <tr class="border-b border-[#E6E7E8] last:border-b-0">
+                            <x-table.cell class="grid grid-rows-2 gap-1 border-none">
                                 <span class="text-lg font-bold">{{ $format['name'] }}</span>
                                 <span class="text-sm">{{ $format['format'] }}</span>
                             </x-table.cell>
-                            <x-table.cell class="w-1/4">
+                            <x-table.cell class="w-1/4 border-none">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach ($format["visibility"] as $visibility)
                                         <x-tag.base class="border-info-600 text-info-600" hollow>{{ ucfirst($visibility) }}</x-tag.base>
