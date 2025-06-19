@@ -30,14 +30,19 @@ class RolePermission extends Component
     public function updatePermission($permission, $role, $value)
     {
         $permission = Permission::findByName($permission . ' ' . strtolower(str_replace(' ', '_', $role)));
+        /** @var Role $role */
+        $role = Role::findByName($role);
         
-        if ($value) {
+        if ($value === true) {
             $permission->assignRole($role);
         } else {
+            
+            
+            
             $permission->removeRole($role);
         }
-        $permission->save();
-        $permission->syncRoles([$role]);
+        //$permission->save();
+        //$permission->syncRoles([$role]);
     }
     
     public function render()
