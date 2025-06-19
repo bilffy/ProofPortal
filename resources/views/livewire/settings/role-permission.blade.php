@@ -11,14 +11,15 @@
                 @endforeach    
             </select>
         </p>
-        <div class="grid grid-cols-5 p-4 text-sm font-medium text-gray-900 bg-gray-100 border-t border-b border-gray-200 gap-x-16 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+        <div class="grid grid-cols-6 p-4 text-sm font-medium text-gray-900 bg-gray-100 border-t border-b border-gray-200 gap-x-16 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
             <div class="flex items-center">Role</div>
             <div>Create/Invite</div>
+            <div>Edit</div>
             <div>Disable</div>
             <div>Impersonate</div>
             <div>Revoke</div>
         </div>
-        <div class="grid grid-cols-5 px-4 py-5 text-sm text-gray-700 border-b border-gray-200 gap-x-16 dark:border-gray-700">
+        <div class="grid grid-cols-6 px-4 py-5 text-sm text-gray-700 border-b border-gray-200 gap-x-16 dark:border-gray-700">
             @foreach ($roles as $role)
                 <div class="text-gray-500 dark:text-gray-400">{{ $role->name }}</div>
                 <div class="flex items-center">
@@ -28,7 +29,16 @@
                             value="{{ $role->id }}"
                             wire:click="updatePermission('invite', '{{ $role->name }}', $event.target.checked)"
                             class="w-4 h-4 text-blue-600"/>
-                    <label for="checkbox_invite_{{ $role->name }}" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Invite {{ $role->name }}</label>
+                    
+                </div>
+                <div class="flex items-center">
+                    <input <@if($role->permissions->contains('name', 'edit ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
+                           id="checkbox_edit_{{ $role->name }}"
+                           type="checkbox"
+                           value="{{ $role->id }}"
+                           wire:click="updatePermission('edit', '{{ $role->name }}', $event.target.checked)"
+                           class="w-4 h-4 text-blue-600">
+
                 </div>
                 <div class="flex items-center">
                     <input <@if($role->permissions->contains('name', 'disable ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif 
@@ -37,7 +47,7 @@
                             value="{{ $role->id }}"
                             wire:click="updatePermission('disable', '{{ $role->name }}', $event.target.checked)"
                             class="w-4 h-4 text-blue-600">
-                    <label for="checkbox_disable_{{ $role->name }}" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Disable {{ $role->name }}</label>
+                    
                 </div>
 
                 <div class="flex items-center">
@@ -47,7 +57,7 @@
                             value="{{ $role->id }}"
                             wire:click="updatePermission('impersonate', '{{ $role->name }}', $event.target.checked)"
                             class="w-4 h-4 text-blue-600">
-                    <label for="checkbox_impersonate_{{ $role->name }}" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Impersonate {{ $role->name }}</label>
+                    
                 </div>
 
                 <div class="flex items-center">
@@ -57,7 +67,7 @@
                             value="{{ $role->id }}"
                             wire:click="updatePermission('revoke', '{{ $role->name }}', $event.target.checked)"
                             class="w-4 h-4 text-blue-600">
-                    <label for="checkbox_revoke_{{ $role->name }}" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Revoke {{ $role->name }}</label>
+                    
                 </div>
             @endforeach    
         </div>
