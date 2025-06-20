@@ -71,6 +71,8 @@ class FilenameFormat extends Component
             'format_key' => $newFormat->format_key,
             'visibility' => $newFormat->visibility,
         ]);
+
+        $this->dispatch('EV_FILENAME_FORMAT_ADDED', []);
     }
     
     public function render()
