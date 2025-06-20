@@ -142,7 +142,8 @@
 
         tribute.attach(taggableInput);
 
-        Livewire.hook('commit', ({ commit, component }) => {
+        // Livewire.hook('commit', ({ commit, component }) => {
+        Livewire.on('EV_FILENAME_FORMAT_ADDED', (data) => {
             document.getElementById('tag-input').innerHTML = '';
             $('#input-format-name').val('');
             debounce(() => {
