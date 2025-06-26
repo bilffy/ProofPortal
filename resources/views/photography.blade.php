@@ -363,7 +363,8 @@
         const isLightbox = !lightboxModal.classList.contains('hidden');
         const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(".grid");
         if (imgsOrigin.attr('total-image-count') != 0) {
-            if (0 == localStorage.getItem(`hasImages_${localStorage.getItem('photographyCategory')}`)) {
+            const storateItem = isLightbox ? `hasImages_LIGHTBOX` : `hasImages_${localStorage.getItem('photographyCategory')}`;
+            if (0 == localStorage.getItem(storateItem)) {
                 downloadUnavailableModal.show();
                 return;
             }
@@ -595,7 +596,7 @@
     window.updateSchoolConfig = updateSchoolConfig;
     window.showLightboxModal = function(subjectKey, name) {
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
-        Livewire.dispatch('EV_SELECT_IMAGE', { subject: name });
+        Livewire.dispatch('EV_SELECT_IMAGE', { subject: name, category: localStorage.getItem('photographyCategory') });
         document.querySelector('#lightbox-modal').querySelector('#modal-title').textContent = name;
         updateDownloadSection(0, true);
         lightboxModal.show();

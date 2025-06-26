@@ -102,7 +102,7 @@ class PhotographyController extends Controller
     }
     
     public function requestDownloadDetails(Request $request)
-    {   
+    {
         // get the nonce from the request header
         if ($request->header('MSP-Nonce') !== session('download-request-nonce')) {
             return response()->json('Invalid Request', 422);
@@ -117,6 +117,7 @@ class PhotographyController extends Controller
             'filters.class' => 'required|string',
             'filters.resolution' => 'required|string|in:high,low',
             'filters.folder_format' => 'required|string|in:all,organize',
+            'tab' => 'required|string|in:PORTRAITS,GROUPS,OTHERS',
         ]);
 
         if ($validator->fails()) {
@@ -134,22 +135,22 @@ class PhotographyController extends Controller
         $selectedFilters['class'] = [];
         $selectedFilters['details'] = empty($images) ? false : true;
         $logImgKeys = [];
+        $tab = $request->input('tab');
 
         if (empty($class)) {
             // Extract the records from the folder_tags table and return an array of tag values
             // based on the selected year, school key, operator, and view
-            $tags = $this->imageService->getFolderForView(
+            $tags = $this->imageService->getFolderForView2(
                 $selectedFilters['year'],
                 $schoolKey,
-                $view == "ALL" ? '!=' : '=',
-                $view != 'ALL' ? $view : 'ALL'
+                $tab,
             )->pluck('external_name')->toArray();
 
             $folders = $this->imageService->getFoldersByTag(
                 $selectedFilters['year'],
                 $schoolKey,
                 $tags,
-                'is_visible_for_portrait' // TODO: get visibility based on selected tab
+                $tab
             )->toArray();
         } else {
             $folders = Folder::whereIn('ts_folderkey', $class)->get();

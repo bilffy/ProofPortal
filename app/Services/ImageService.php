@@ -113,6 +113,10 @@ class ImageService
             case PhotographyHelper::TAB_GROUPS:
             case PhotographyHelper::TAB_OTHERS:
                 $nullName = 'Class';
+                $query->where(function ($q) {
+                    $q->where('folder_tags.external_name', '!=', 'Family')
+                        ->orWhereNull('folders.folder_tag');
+                });
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
             default:
@@ -340,6 +344,49 @@ class ImageService
     }
 
     /**
+     * Get group/folder images from database using options given
+     *
+     * @param string $schoolKey
+     * @param string $searchTerm
+     * @param string $searchTerm2
+     * @return Collection
+     */
+    public function getGroupImages($schoolKey, $searchTerm): Collection
+    {
+        $query = DB::table(table: 'jobs')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where('folders.is_visible_for_group', 1)
+        ;
+
+        $query->where(function ($query) {
+            $query->where(function ($subQuery) {
+                // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
+                $subQuery->whereNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->where('jobs.download_available_date', '<=', now());
+            });
+            // in case portrait_download_date and download_available_date are both non-NULL
+            // and the most recent date of the two dates is less than or equal to now
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereNotNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->whereRaw('GREATEST(jobs.portrait_download_date, jobs.download_available_date) <= ?', [now()]);
+            });
+        });
+
+        if($searchTerm) {
+            $query->where('folders.ts_foldername', 'like', "%$searchTerm%");
+        }
+
+        return $query
+            ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
+            ->orderBy('folders.ts_foldername')
+            ->get();
+    }
+
+    /**
      * Get images from database using options given
      *
      * @param string $schoolKey
@@ -357,7 +404,9 @@ class ImageService
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
                  ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
         })
-        ->where('jobs.ts_schoolkey', $schoolKey);
+        ->where('jobs.ts_schoolkey', $schoolKey)
+        ->where('folders.is_visible_for_portrait', 1)
+        ;
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
