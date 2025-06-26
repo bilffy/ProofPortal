@@ -131,20 +131,11 @@ class PhotoGrid extends Component
         
     }
 
-    private function getImages()
+    private function updateHasImages($images, $imageService)
     {
-        $imageService = new ImageService();
-        $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
-        $options = [
-            'tsSeasonId' => $this->season,
-            'schoolKey' => $this->schoolKey,
-            'folderKeys' => $keys,
-            'searchTerm' => $this->search,
-        ];
-        $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
-        $imageCount = $filteredImages->count();
+        $imageCount = $images->count();
         $noImageCount = 0;
-        foreach ($filteredImages as $image) {
+        foreach ($images as $image) {
             if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey)) {
                 $noImageCount++;
             } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey)) {
@@ -156,6 +147,21 @@ class PhotoGrid extends Component
             'category' => $this->category,
             'hasImages' => $imageCount != $noImageCount,
         ]);
+    }
+
+    private function getImages()
+    {
+        $imageService = new ImageService();
+        $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
+        $options = [
+            'tsSeasonId' => $this->season,
+            'schoolKey' => $this->schoolKey,
+            'folderKeys' => $keys,
+            'searchTerm' => $this->search,
+        ];
+        $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
+
+        $this->updateHasImages($filteredImages, $imageService);
         
         $paginated = $imageService->paginate(
             $filteredImages,
