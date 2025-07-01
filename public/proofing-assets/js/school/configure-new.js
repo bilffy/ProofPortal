@@ -622,14 +622,13 @@ function hideOrShowJobDependentSections(show) {
     });
 
     if (show) {
-        // Select the scrollable container and the section
-        const container = document.getElementById('photography-root').parentElement;
-        const section = document.getElementById('release-dates-section');
+        const section = elements[0];
 
         setTimeout(() => {
-            container.scrollTo({
-                top: section.offsetTop - container.offsetTop, // Calculate the position relative to the container
-                behavior: 'smooth' // Smooth scrolling
+            section.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
             });
         }, 300);
     }
