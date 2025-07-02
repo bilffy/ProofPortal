@@ -260,7 +260,7 @@ jQuery(document).ready(function($) {
         const selectedJobKey = $(this).val();
         // $('#jobType, #digital_download, #folder_config').addClass('d-none');
         $('#jobType, #digital_download').addClass('d-none');
-        hideOrShowJobDependentSections(true);
+        // hideOrShowJobDependentSections(true);
         $('p.alert-message').remove();
     
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
@@ -346,9 +346,11 @@ jQuery(document).ready(function($) {
                         $('#folder_config').html(response.html); // Correctly insert the HTML from the response
                         $("#select_job_access_image").trigger('change');
                     }
+                    hideOrShowJobDependentSections(true);
                 },
                 error: function () {
                     console.error('Failed to load folder configuration.');
+                    hideOrShowJobDependentSections(false);
                 }
             });
         } else {
