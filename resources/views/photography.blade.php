@@ -361,9 +361,10 @@
     async function showOptionsDownloadRequest() {
         const lightboxModal = document.getElementById('lightbox-modal');
         const isLightbox = !lightboxModal.classList.contains('hidden');
-        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(".grid");
+        const category = localStorage.getItem('photographyCategory');
+        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(`#${category.toLowerCase()} .grid`);
         if (imgsOrigin.attr('total-image-count') != 0) {
-            const storateItem = isLightbox ? `hasImages_LIGHTBOX` : `hasImages_${localStorage.getItem('photographyCategory')}`;
+            const storateItem = isLightbox ? `hasImages_LIGHTBOX` : `hasImages_${category}`;
             if (0 == localStorage.getItem(storateItem)) {
                 downloadUnavailableModal.show();
                 return;
@@ -427,7 +428,8 @@
     
     function confirmDownloadRequest(isLightbox = false) {
         const selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
-        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(".grid");
+        const category = localStorage.getItem('photographyCategory');
+        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(`#${category.toLowerCase()} .grid`);
         if (imgsOrigin.attr('total-image-count') != 0) {
             confirmDownloadModal.show();
             const selectedImagesLength = selectedImages.length === 0 ? imgsOrigin.attr('total-image-count') : selectedImages.length;

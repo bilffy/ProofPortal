@@ -250,7 +250,7 @@
             </div>
         </div>
 
-        <div class="job-dependent-section">
+        <div id="folders-table-section" class="job-dependent-section">
             <h5 id="folders-section" class="mb-4 text-black">Select Folders to Display</h5>
             <p>Tick the folders below to make their images available on the portal once the release dates have passed. Unticked folders will remain hidden.</p>
             <div class="d-none" id="jobTypeMsg"></div>
