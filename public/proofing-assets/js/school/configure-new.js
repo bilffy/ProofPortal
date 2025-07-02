@@ -617,21 +617,22 @@ function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
 
 function hideOrShowJobDependentSections(show) {
     const elements = document.querySelectorAll('.job-dependent-section');
-    elements.forEach(element => {
-        element.style.display = show ? '' : 'none';
-    });
+    setTimeout(() => {
+        elements.forEach(element => {
+            if (show) {
+                element.classList.remove('hidden');
+            } else {
+                element.classList.add('hidden');
+            }
+        });
 
-    if (show) {
-        const section = elements[0];
-
-        setTimeout(() => {
-            section.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            });
-        }, 300);
-    }
+        const section = document.getElementById('select_job_access_image');
+        section.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+        });
+    }, 300);
 }
 
 // Checkbox in Notification Email
