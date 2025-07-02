@@ -620,9 +620,9 @@ function hideOrShowJobDependentSections(show) {
     setTimeout(() => {
         elements.forEach(element => {
             if (show) {
-                element.classList.remove('hidden');
+                element.style.display = 'block';
             } else {
-                element.classList.add('hidden');
+                element.style.display = 'none';
             }
         });
 
@@ -632,7 +632,7 @@ function hideOrShowJobDependentSections(show) {
             block: 'center',
             inline: 'nearest'
         });
-    }, 300);
+    }, 200);
 }
 
 // Checkbox in Notification Email
