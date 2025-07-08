@@ -13,8 +13,8 @@ class ImageOptions extends Model
     protected $fillable = [
         'display_name',
         'file_format',
-        'dimensions_width',
-        'dimensions_height',
-        'dpi'
+        'long_edge',
+        'image_use',
     ];
+    
 }
