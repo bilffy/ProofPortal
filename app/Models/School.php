@@ -54,7 +54,8 @@ class School extends Model
      */
     public function getHashedIdAttribute()
     {   
-        return Hashids::encodeHex("$this->id");
+        // return Hashids::encodeHex("$this->id");
+        return encrypt($this->id);
     }
     
 }
