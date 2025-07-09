@@ -32,17 +32,18 @@ class Login extends Component
     
     public function submit(UserService $userService)
     {   
+        // TEST: REMOVE ENCRYPTION FOR LOGIN
         // Decrypt the user credentials
-        $this->email = EncryptionHelper::simpleDecrypt($this->email);
-        $this->password = EncryptionHelper::simpleDecrypt($this->password);
+        // $this->email = EncryptionHelper::simpleDecrypt($this->email);
+        // $this->password = EncryptionHelper::simpleDecrypt($this->password);
         // Validate
         $this->validate();
         // Transfer data to local variables
         $email = $this->email;
         $password = $this->password;
         // Encrypt the user credentials back
-        $this->email = EncryptionHelper::simpleEncrypt($this->email);
-        $this->password = EncryptionHelper::simpleEncrypt($this->password);
+        // $this->email = EncryptionHelper::simpleEncrypt($this->email);
+        // $this->password = EncryptionHelper::simpleEncrypt($this->password);
 
         // Validate the user credentials, if valid, send OTP to the user
         // without authenticating the user

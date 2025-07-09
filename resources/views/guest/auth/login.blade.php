@@ -59,19 +59,20 @@
 
 @push('scripts')
 <script type="module">
-    import { encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+    // TEST: REMOVE ENCRYPTION FOR LOGIN
+    // import { encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     
-    window.addEventListener('livewire:init', () => {
-        Livewire.hook('commit.prepare', ({ component }) => {
-            const { ephemeral, reactive } = component;
-            const { email, password } = Alpine.raw(reactive);
+    // window.addEventListener('livewire:init', () => {
+    //     Livewire.hook('commit.prepare', ({ component }) => {
+    //         const { ephemeral, reactive } = component;
+    //         const { email, password } = Alpine.raw(reactive);
             
-            component.ephemeral = {
-                ...component.ephemeral,
-                email: encryptData(email),
-                password: encryptData(password),
-            };
-        });
-    });
+    //         component.ephemeral = {
+    //             ...component.ephemeral,
+    //             email: encryptData(email),
+    //             password: encryptData(password),
+    //         };
+    //     });
+    // });
 </script>
 @endpush
