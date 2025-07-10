@@ -32,7 +32,7 @@ class Login extends Component
     
     public function submit(UserService $userService)
     {   
-        // TEST: REMOVE ENCRYPTION FOR LOGIN
+        // REMOVE ENCRYPTION FOR LOGIN
         // Decrypt the user credentials
         // $this->email = EncryptionHelper::simpleDecrypt($this->email);
         // $this->password = EncryptionHelper::simpleDecrypt($this->password);

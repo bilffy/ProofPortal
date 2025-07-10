@@ -125,9 +125,11 @@
 
     <script type="module">
         import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
-        import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+        // REMOVE ENCRYPTION FOR SESSION POLLING
+        // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
         document.addEventListener('DOMContentLoaded', (event) => {
-            const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
+            const id = localStorage.getItem('api_token_id') || 0;
+            // const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
             if (localStorage.getItem('api_token') === null || id != {{ $user->id }}) {
                 createApiToken();
             }

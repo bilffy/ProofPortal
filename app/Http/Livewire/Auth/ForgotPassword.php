@@ -32,7 +32,8 @@ class ForgotPassword extends Component
     
     public function submit()
     {
-        $this->email = EncryptionHelper::simpleDecrypt($this->email);
+        // REMOVE ENCRYPTION FOR FORGOT PASSWORD
+        // $this->email = EncryptionHelper::simpleDecrypt($this->email);
         
         $this->validate();
 
