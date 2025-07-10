@@ -59,7 +59,7 @@
 
 @push('scripts')
 <script type="module">
-    // TEST: REMOVE ENCRYPTION FOR LOGIN
+    // REMOVE ENCRYPTION FOR LOGIN
     // import { encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     
     // window.addEventListener('livewire:init', () => {

@@ -43,19 +43,20 @@
             </a>
         </div>
         <script type="module">
-            import { encryptObjectValues, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
-            document.addEventListener('DOMContentLoaded', async () => {
-                //$('#msp-email').focus().val('{{ $email }}');
-                Livewire.hook('commit', ({ commit, component }) => {
-                    if (commit.updates.hasOwnProperty('email')) {
-                        commit.updates = encryptObjectValues(commit.updates);
-                    } else {
-                        var snapshot = JSON.parse(commit.snapshot);
-                        commit.updates = {"email" : encryptData(snapshot.data.email)};
-                    }
-                    return commit;
-                });
-            });
+            // REMOVE ENCRYPTION FOR FORGOT PASSWORD
+            // import { encryptObjectValues, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+            // document.addEventListener('DOMContentLoaded', async () => {
+            //     //$('#msp-email').focus().val('{{ $email }}');
+            //     Livewire.hook('commit', ({ commit, component }) => {
+            //         if (commit.updates.hasOwnProperty('email')) {
+            //             commit.updates = encryptObjectValues(commit.updates);
+            //         } else {
+            //             var snapshot = JSON.parse(commit.snapshot);
+            //             commit.updates = {"email" : encryptData(snapshot.data.email)};
+            //         }
+            //         return commit;
+            //     });
+            // });
         </script>
     </form>
 </main>

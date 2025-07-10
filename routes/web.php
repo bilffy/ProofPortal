@@ -24,7 +24,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/tokens/create', function (Request $request) {
         $user = Auth::user();
         $token = $user->createToken('api_token');
-        return response()->json(['token' => $token->plainTextToken, 'id' => EncryptionHelper::simpleEncrypt($user->id)]);
+        return response()->json(['token' => $token->plainTextToken, 'id' => $user->id]);
+        // return response()->json(['token' => $token->plainTextToken, 'id' => EncryptionHelper::simpleEncrypt($user->id)]);
     });
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
