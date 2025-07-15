@@ -161,7 +161,7 @@
 
 @push('scripts')
 <script type="module">
-    // REMOVE ENCRYPTION FOR PHOTOGRAPHY
+    // TODO: Implement cloudflare-friendly encryption for photography download request
     // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
         let checkIcon = imgCheckbox.querySelector('i');

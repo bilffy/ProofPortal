@@ -13,7 +13,7 @@ class ImpersonateController extends Controller
 {
     public function store(string $id)
     {
-        $id = Hashids::decodeHex($id);
+        // $id = Hashids::decodeHex($id);
         
         // Retrieve the user by ID
         /** @var User $user */

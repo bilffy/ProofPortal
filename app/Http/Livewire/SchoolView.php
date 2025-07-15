@@ -18,8 +18,7 @@ class SchoolView extends Component
     {
         $this->checkUserRole();
         // $id = Hashids::decodeHex($hashedId);
-        $id = decrypt($hashedId);
-        $this->school = School::findOrFail($id);
+        $this->school = School::findOrFail($hashedId);
         
         // redirect to the manage users page if the user is a franchise level
         if (Auth::user()->isFranchiseLevel()) {

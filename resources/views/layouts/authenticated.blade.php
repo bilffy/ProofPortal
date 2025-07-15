@@ -124,59 +124,65 @@
     </div>
 
     <script type="module">
+        // TODO: Implement cloudflare-friendly encryption for session polling
         import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
-        // REMOVE ENCRYPTION FOR SESSION POLLING
         // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+
         document.addEventListener('DOMContentLoaded', (event) => {
-            const id = localStorage.getItem('api_token_id') || 0;
-            // const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
-            if (localStorage.getItem('api_token') === null || id != {{ $user->id }}) {
+            const token = localStorage.getItem('api_token') || '';
+            // const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'), token);
+            const id = localStorage.getItem('api_token_id') === null ? 0 : localStorage.getItem('api_token_id');
+            if (token === '' || id != {{ $user->id }}) {
                 createApiToken();
             }
             startSessionPolling();
         });
-        document.getElementById('input-group-search').addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li');
+        
+        const groupSearchInput = document.getElementById('input-group-search');
+        if (groupSearchInput) {
+            document.getElementById('input-group-search').addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li');
 
-            items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (text.includes(query)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            let currentIndex = -1;
+
+            document.getElementById('input-group-search').addEventListener('keydown', function(event) {
+                const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li:not([style*="display: none"])');
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    if (currentIndex < items.length - 1) {
+                        currentIndex++;
+                        items.forEach(item => item.classList.remove('bg-gray-200'));
+                        items[currentIndex].classList.add('bg-gray-200');
+                        items[currentIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    if (currentIndex > 0) {
+                        currentIndex--;
+                        items.forEach(item => item.classList.remove('bg-gray-200'));
+                        items[currentIndex].classList.add('bg-gray-200');
+                        items[currentIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (currentIndex >= 0 && currentIndex < items.length) {
+                        items[currentIndex].querySelector('a').click();
+                    }
                 }
             });
-        });
-
-        let currentIndex = -1;
-
-        document.getElementById('input-group-search').addEventListener('keydown', function(event) {
-            const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li:not([style*="display: none"])');
-
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (currentIndex < items.length - 1) {
-                    currentIndex++;
-                    items.forEach(item => item.classList.remove('bg-gray-200'));
-                    items[currentIndex].classList.add('bg-gray-200');
-                    items[currentIndex].scrollIntoView({ block: 'nearest' });
-                }
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                if (currentIndex > 0) {
-                    currentIndex--;
-                    items.forEach(item => item.classList.remove('bg-gray-200'));
-                    items[currentIndex].classList.add('bg-gray-200');
-                    items[currentIndex].scrollIntoView({ block: 'nearest' });
-                }
-            } else if (event.key === 'Enter') {
-                event.preventDefault();
-                if (currentIndex >= 0 && currentIndex < items.length) {
-                    items[currentIndex].querySelector('a').click();
-                }
-            }
-        });
+        }
 
     </script>
 

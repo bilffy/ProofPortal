@@ -59,20 +59,19 @@
 
 @push('scripts')
 <script type="module">
-    // REMOVE ENCRYPTION FOR LOGIN
+    // TODO: implement cloudflare-friendly encryption for login
     // import { encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
-    
     // window.addEventListener('livewire:init', () => {
-    //     Livewire.hook('commit.prepare', ({ component }) => {
-    //         const { ephemeral, reactive } = component;
-    //         const { email, password } = Alpine.raw(reactive);
-            
-    //         component.ephemeral = {
-    //             ...component.ephemeral,
-    //             email: encryptData(email),
-    //             password: encryptData(password),
-    //         };
-    //     });
+        // Livewire.hook('commit.prepare', async ({ component }) => {
+        //     const { ephemeral, reactive } = component;
+        //     const { email, password } = Alpine.raw(reactive);
+        //     const passwordNonce = @json($nonce);
+        //     component.ephemeral = {
+        //         ...component.ephemeral,
+        //         email: await encryptData(email, passwordNonce),
+        //         password: await encryptData(password, passwordNonce),
+        //     };
+        // });
     // });
 </script>
 @endpush

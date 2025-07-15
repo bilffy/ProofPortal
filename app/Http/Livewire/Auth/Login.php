@@ -19,6 +19,7 @@ class Login extends Component
     public $email = '';
     public $password = '';
     public $remember = false;
+    // public $nonce;
     
     protected $rules = [
         'email' => 'required|email',
@@ -28,22 +29,24 @@ class Login extends Component
     public function mount()
     {
         $this->email = '';
+        // Generate a unique nonce for this session
+        // $this->nonce = Str::random(16);
     }
     
     public function submit(UserService $userService)
-    {   
-        // REMOVE ENCRYPTION FOR LOGIN
+    {
+        // TODO: Implement cloudflare-friendly decryption/encryption for login component
         // Decrypt the user credentials
-        // $this->email = EncryptionHelper::simpleDecrypt($this->email);
-        // $this->password = EncryptionHelper::simpleDecrypt($this->password);
+        // $this->email = EncryptionHelper::simpleDecrypt($this->email, $this->nonce);
+        // $this->password = EncryptionHelper::simpleDecrypt($this->password, $this->nonce);
         // Validate
         $this->validate();
         // Transfer data to local variables
         $email = $this->email;
         $password = $this->password;
         // Encrypt the user credentials back
-        // $this->email = EncryptionHelper::simpleEncrypt($this->email);
-        // $this->password = EncryptionHelper::simpleEncrypt($this->password);
+        // $this->email = EncryptionHelper::simpleEncrypt($this->email, $this->nonce);
+        // $this->password = EncryptionHelper::simpleEncrypt($this->password, $this->nonce);
 
         // Validate the user credentials, if valid, send OTP to the user
         // without authenticating the user
