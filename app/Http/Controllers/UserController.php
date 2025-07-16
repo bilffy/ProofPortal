@@ -131,7 +131,8 @@ class UserController extends Controller
         $nonce = session('register_token');
 
         try {
-            $decrypted = JsAesPhp::decrypt($encryptedData, $nonce);
+            // $decrypted = JsAesPhp::decrypt($encryptedData, $nonce);
+            $decrypted = $encryptedData;
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Invalid Request'], 400);
         }
