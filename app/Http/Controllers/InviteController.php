@@ -30,7 +30,7 @@ class InviteController extends Controller
      */
     public function inviteSingleUser(string $id)
     {
-        $id = Hashids::decodeHex($id);
+        // $id = Hashids::decodeHex($id);
         
         // Retrieve the user by ID
         /** @var User $user */
@@ -44,7 +44,7 @@ class InviteController extends Controller
     public function checkUserStatus(string $id)
     {
 
-        $id = Hashids::decodeHex($id);
+        // $id = Hashids::decodeHex($id);
         
         // Retrieve the user by ID
         /** @var User $user */
