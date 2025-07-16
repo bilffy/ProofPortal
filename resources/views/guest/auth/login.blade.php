@@ -65,7 +65,7 @@
         // Livewire.hook('commit.prepare', async ({ component }) => {
         //     const { ephemeral, reactive } = component;
         //     const { email, password } = Alpine.raw(reactive);
-        //     const passwordNonce = @json($nonce);
+        {{--     const passwordNonce = @json($nonce); --}}
         //     component.ephemeral = {
         //         ...component.ephemeral,
         //         email: await encryptData(email, passwordNonce),
