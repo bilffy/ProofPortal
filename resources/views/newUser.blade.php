@@ -196,8 +196,9 @@
             removeErrorMessages();
 
             let encryptedData = {};
-            encryptedData['request'] = await JsAesPhp.encrypt(data, nonce);
-            encryptedData['_token'] = token
+            // encryptedData['request'] = await JsAesPhp.encrypt(data, nonce);
+            encryptedData['request'] = data;
+            encryptedData['_token'] = token;
             
             $.ajax({
                 url: $(this).attr('action'),
