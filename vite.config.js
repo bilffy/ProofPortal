@@ -35,6 +35,7 @@ export default defineConfig({
                     'resources/js/helpers/utils.helper.ts',
                     'resources/js/helpers/encryption.helper.ts',
                     'resources/js/helpers/session.helper.ts',
+                    'resources/js/helpers/js-aes-php.ts',
                 ], 
             refresh: true,
         }),

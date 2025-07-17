@@ -2,23 +2,29 @@
 
 namespace App\Helpers;
 
-use Crypt;
+use Nullix\JsAesPhp\JsAesPhp;
 
 class EncryptionHelper
 {
-    public static function simpleEncrypt(string $data): string
+    public static function simpleEncrypt(string $data, $nonce): string
     {
-        return base64_encode(base64_encode($data));
-        // return Crypt::encrypt($data);
+        try {
+            $encrypted = JsAesPhp::encrypt($data, $nonce);
+        } catch (\Exception $e) {
+            return '';
+        }
+
+        return $encrypted;
     }
 
-    public static function simpleDecrypt(string $data = null): string|null
-    {   
-        if ($data === null) {
+    public static function simpleDecrypt(string $data = null, $nonce): string|null
+    {
+        try {
+            $decrypted = JsAesPhp::decrypt($data, $nonce);
+        } catch (\Exception $e) {
             return null;
         }
-        
-        return base64_decode(base64_decode($data));
-        // return Crypt::decryptString($data);
+
+        return $decrypted;
     }
 }

@@ -226,7 +226,8 @@ class PhotographyController extends Controller
             }
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
-            return response()->json(['success' => true, 'data' => $data, 'filename' => EncryptionHelper::simpleEncrypt($filename)]);
+            return response()->json(['success' => true, 'data' => $data, 'filename' => $filename]);
+            // return response()->json(['success' => true, 'data' => $data, 'filename' => EncryptionHelper::simpleEncrypt($filename)]);
         }
 
         // Log DOWNLOAD_PHOTOS activity

@@ -238,7 +238,8 @@ class User extends Authenticatable
      */
     public function getHashedIdAttribute()
     {
-        return Hashids::encodeHex("$this->id");
+        // return Hashids::encodeHex("$this->id");
+        return $this->id;
     }
 
     /**

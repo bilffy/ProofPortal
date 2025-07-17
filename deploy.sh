@@ -22,6 +22,9 @@ do
     --staging)
       COMPOSE_FILE="docker-compose-staging.yml"
       ;;
+    --v1)
+      COMPOSE_FILE="docker-compose-staging-v1.yml"
+      ;;  
     --production)
       COMPOSE_FILE="docker-compose-production.yml"
       ;;
