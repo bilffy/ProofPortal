@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
+use Nullix\JsAesPhp\JsAesPhp;
 
 class UserController extends Controller
 {
@@ -66,7 +67,6 @@ class UserController extends Controller
                 'email.email' => 'Invalid format.',
                 'email.unique' => config('app.dialog_config.account_exist.message')
             ];
-        
 
         if (array_key_exists('role', $data)) {
             if ($data['role'] == 3 && $data['franchise'] == 0) {
@@ -111,8 +111,8 @@ class UserController extends Controller
             $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
             $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
         }
-        
-        $nonce = Str::random(40);
+
+        $nonce = Str::random(16);
         session(['register_token' => $nonce]);
         
         return view('newUser', [
@@ -131,19 +131,21 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        if ($request->nonce !== session('register_token')) {
+        $encryptedData = $request->input('request');
+        $nonce = session('register_token');
+
+        try {
+            // $decrypted = JsAesPhp::decrypt($encryptedData, $nonce);
+            $decrypted = $encryptedData;
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Invalid Request'], 400);
+        }
+        
+        if ($decrypted['nonce'] !== $nonce) {
             return response()->json('Invalid Request', 422);
         }
-
-        $request->merge(
-            [
-                'email' => EncryptionHelper::simpleDecrypt($request->email),
-                'franchise' => EncryptionHelper::simpleDecrypt($request->franchise),
-                'school' => EncryptionHelper::simpleDecrypt($request->school)
-            ]
-        );
         
-        $validator = $this->validator($request->all());
+        $validator = $this->validator($decrypted);
         
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -155,17 +157,17 @@ class UserController extends Controller
             $status = Status::where('status_external_name', 'new')->first();
             
             $user = User::create([
-                'name' => $request->firstname . " " . $request->lastname,
-                'email' => $request->email,
-                'username' => $request->email,
-                'firstname' => $request->firstname,
-                'lastname' => $request->lastname,
+                'name' => $decrypted['firstname'] . " " . $decrypted['lastname'],
+                'email' => $decrypted['email'],
+                'username' => $decrypted['email'],
+                'firstname' => $decrypted['firstname'],
+                'lastname' => $decrypted['lastname'],
                 'status' => User::STATUS_NEW, // initialize user with NEW status
                 'password' => Hash::make(str()->random(7)), // random value for user creation
                 'active_status_id' => $status->id,
             ]);
     
-            $role = Role::findOrFail($request->role)->name;
+            $role = Role::findOrFail($decrypted['role'])->name;
             $user->assignRole($role);
     
             switch ($role)
@@ -173,7 +175,7 @@ class UserController extends Controller
                 case RoleHelper::ROLE_FRANCHISE:
                     FranchiseUser::create([
                         'user_id' => $user->id,
-                        'franchise_id' => $request->franchise
+                        'franchise_id' => $decrypted['franchise']
                     ]);
                     break;
                 case RoleHelper::ROLE_SCHOOL_ADMIN:
@@ -181,7 +183,7 @@ class UserController extends Controller
                 case RoleHelper::ROLE_TEACHER:
                     SchoolUser::create([
                         'user_id' => $user->id,
-                        'school_id' => $request->school
+                        'school_id' => $decrypted['school']
                     ]);
                     break;
             }

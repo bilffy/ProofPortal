@@ -86,7 +86,7 @@ class PermissionHelper
         /** @var User $currentUser */
         $currentUser = Auth::user();
 
-        $userId = Hashids::decodeHex($userId);
+        // $userId = Hashids::decodeHex($userId);
         
         // Retrieve the user by ID
         /** @var User $user */

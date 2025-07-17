@@ -19,6 +19,7 @@ class ForgotPassword extends Component
     public bool $resetLinkStatus = false;
     public $email;
     public $nonce;
+    // public $pwNonce;
     
     protected $rules = [
         'email' => 'required|email',
@@ -28,11 +29,13 @@ class ForgotPassword extends Component
     {
         // Generate a unique nonce for this session
         $this->nonce = Str::random(40);
+        // $this->pwNonce = Str::random(16);
     }
     
     public function submit()
     {
-        $this->email = EncryptionHelper::simpleDecrypt($this->email);
+        // TODO: Implement cloudflare-friendly decryption for forgot password
+        // $this->email = EncryptionHelper::simpleDecrypt($this->email, $this->pwNonce);
         
         $this->validate();
 

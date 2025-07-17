@@ -180,7 +180,8 @@
 
 @push('scripts')
 <script type="module">
-    import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
+    // TODO: Implement cloudflare-friendly encryption for photography download request
+    {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
     function updateImageState(imgCheckbox, isSelected, isLightbox = false) {
         if (!imgCheckbox) {
             return;
@@ -574,7 +575,8 @@
             if (selectedImages.length === 1) {
                 const imgElement = document.createElement('a');
                 imgElement.href = `data:image/jpeg;base64,${result['data']}`;
-                imgElement.download = `${decryptData(result['filename'])}.jpg`;
+                imgElement.download = `${result['filename']}.jpg`;
+                // imgElement.download = `${decryptData(result['filename'])}.jpg`;
                 imgElement.click();
             }
             

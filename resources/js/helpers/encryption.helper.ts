@@ -1,16 +1,18 @@
-export const encryptData = (rawData: string): string => {
-    return btoa(btoa(rawData));
+import JsAesPhp from './js-aes-php';
+
+export const encryptData = async (rawData: string, nonce: string): Promise<string> => {
+    return await JsAesPhp.encrypt(rawData, nonce)
 }
 
-export const decryptData = (encryptedData: string): string => {
-    return atob(atob(encryptedData));
+export const decryptData = async (encryptedData: string, nonce: string): Promise<string> => {
+    return await JsAesPhp.decrypt(encryptedData, nonce);
 }
 
-export const encryptObjectValues = (obj: Record<string, string>): Record<string, string> => {
+export const encryptObjectValues = async (obj: Record<string, string>, nonce: string): Promise<Record<string, string>> => {
     const encryptedObj: Record<string, string> = {};
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
-            encryptedObj[key] = encryptData(obj[key]);
+            encryptedObj[key] = await encryptData(obj[key], nonce);
         }
     }
     return encryptedObj;

@@ -135,9 +135,9 @@
     
     @push('scripts')
     <script type="module">
+        // TODO: Implement cloudflare-friendly encryption for session polling
         import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
-        import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
-        
+        {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
         const editProfileOptions = {
             onShow: async () => {
                 const form = document.getElementById('edit-user-form');
@@ -176,15 +176,18 @@
         
         document.addEventListener('DOMContentLoaded', (event) => {
             window.showEditProfile = showEditProfile;
-            const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
-            if (localStorage.getItem('api_token') === null || id != {{ $user->id }}) {
+            const token = localStorage.getItem('api_token') || '';
+            // const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
+            const id = localStorage.getItem('api_token_id') === null ? 0 : localStorage.getItem('api_token_id');
+            if (token === '' || id != {{ $user->id }}) {
                 createApiToken();
             }
             startSessionPolling();
         });
-        const inputGroupSearch = document.getElementById('input-group-search');
-        if (inputGroupSearch) {
-            inputGroupSearch.addEventListener('input', function() {
+        
+        const groupSearchInput = document.getElementById('input-group-search');
+        if (groupSearchInput) {
+            groupSearchInput.addEventListener('input', function() {
                 const query = this.value.toLowerCase();
                 const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li');
 
@@ -197,8 +200,9 @@
                     }
                 });
             });
+
             let currentIndex = -1;
-            inputGroupSearch.addEventListener('keydown', function(event) {
+            groupSearchInput.addEventListener('keydown', function(event) {
                 const items = document.querySelectorAll('#BreadcrumbSelectSchool ul li:not([style*="display: none"])');
 
                 if (event.key === 'ArrowDown') {

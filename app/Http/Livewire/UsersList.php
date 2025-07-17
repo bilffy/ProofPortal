@@ -50,7 +50,8 @@ class UsersList extends Component
         $roleOptions = [];
         $allowedRoles = RoleHelper::getRoleNamesForFilter($role);
         foreach (RoleHelper::getRolesByNames($allowedRoles) as $role) {
-            $key = base64_encode($role->id);
+            // $key = base64_encode($role->id);
+            $key = $role->id;
             $roleOptions[$key] = $role->name;
         }
         return $roleOptions;
@@ -137,8 +138,8 @@ class UsersList extends Component
                 //     break;
                 case 'role':
                     $parsedFilters['roles.id'] = array_map(function ($value) {
-                        $decodedValue = base64_decode($value);
-                        return intval($decodedValue);
+                        // $decodedValue = base64_decode($value);
+                        return intval($value);
                     }, $values);
                     break;
                 case 'status':
