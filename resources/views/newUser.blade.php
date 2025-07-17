@@ -191,6 +191,7 @@
                     data[item.name] = item.value;
                 }
             });
+            data['exec_datetime'] = new Date();
 
             // remove any errors from the previous submission
             removeErrorMessages();
@@ -199,6 +200,7 @@
             // encryptedData['request'] = await JsAesPhp.encrypt(data, nonce);
             encryptedData['request'] = data;
             encryptedData['_token'] = token;
+            encryptedData['exec_timestamp'] = Date.now();
             
             $.ajax({
                 url: $(this).attr('action'),
