@@ -197,8 +197,7 @@
             removeErrorMessages();
 
             let encryptedData = {};
-            // encryptedData['request'] = await JsAesPhp.encrypt(data, nonce);
-            encryptedData['request'] = data;
+            encryptedData['request'] = await JsAesPhp.encrypt(data, nonce);
             encryptedData['_token'] = token;
             encryptedData['exec_timestamp'] = Date.now();
             

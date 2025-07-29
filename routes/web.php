@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProofingController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckUserRestriction;
+use App\Http\Middleware\NoCacheHeaders;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
@@ -18,9 +19,9 @@ use App\Http\Controllers\ImpersonateController;
 
 use App\Http\Controllers\Proofing\ConfigureController;
 
-Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified', NoCacheHeaders::class])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::post('/tokens/create', function (Request $request) {
         $user = Auth::user();
         $token = $user->createToken('api_token');
