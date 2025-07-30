@@ -19,11 +19,12 @@ use App\Http\Livewire\SchoolView;
 use App\Http\Livewire\Settings\FeatureControl;
 use App\Http\Livewire\Settings\RolePermission;
 use App\Http\Middleware\CheckUserRestriction;
+use App\Http\Middleware\NoCacheHeaders;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified', NoCacheHeaders::class])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::post('/tokens/create', function (Request $request) {
         $user = Auth::user();
         $token = $user->createToken('api_token');
