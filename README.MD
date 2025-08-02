@@ -102,3 +102,13 @@ If the issue persists, feel free to reach out to the development team for assist
 ```
 > To rebuild the container, just add --build parameter 
 
+### Python app (Image resizer):
+> Python app for image resizing, install the python dependencies:
+```
+docker-compose exec php bash
+```
+In your php container, run the following commands:
+```
+$ apt-get install -y  python3-pip --fix-missing
+ 
+$ apt-get install -y python3-pillow
