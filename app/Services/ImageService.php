@@ -554,5 +554,17 @@ class ImageService
     {
         // TODO: This should return images based on the subjectId  
     }
-    
+
+    /**
+     * Get all the Image Options.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getImageOptions()
+    {
+        return DB::table('image_options')
+            ->select('id', 'display_name')
+            ->orderBy('id', 'asc')
+            ->get();
+    }
 }

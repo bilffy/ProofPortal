@@ -62,10 +62,13 @@ class PhotographyController extends Controller
     }
 
     public function showPortraits()
-    {
+    {   
+        $imageOptions = $this->imageService->getImageOptions();
+        
         return view('photography', 
             [
                 'user' => new UserResource(Auth::user()), 
+                'imageOptions' => $imageOptions,
                 'currentTab' => 'portraits',
                 'configMessages' => config('app.dialog_config.download')
             ]

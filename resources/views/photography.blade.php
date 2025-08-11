@@ -78,21 +78,21 @@
                 <x-modal.body>
                     <input type="hidden" id="nonce" name="nonce" value="">
                     <div><b>{{ $configMessages['options']['sub_title']  }}</b></div>
-                    <div @if (!$lowResDownloadOptionValue && !$highResDownloadOptionValue) class="hidden" @endif>
+                    <div>
                         <p>{{ $configMessages['options']['resolution_selection']  }}</p>
-                        <div class="flex flex-col gap-4 @if ($isDisabledResolution) opacity-50 @endif">
+                        <div class="flex flex-col gap-4">
                             <div class="flex flex-col gap-2">
-                                <select id="image_res" class="input" @if ($isDisabledResolution) disabled @endif>
-                                    @if ($lowResDownloadOptionValue)
-                                        <option value="low">Small/Low Res (72 DPI - suitable for viewing on screen)</option>
-                                    @endif
-                                    @if ($highResDownloadOptionValue)
-                                        <option value="high">High Res (300 DPI - suitable for printing)</option>
-                                    @endif    
+                                <select id="image_res" class="input">
+                                    @foreach($imageOptions as $option) 
+                                        <option value="{{ $option->id }}" >
+                                            {{ $option->display_name }}
+                                        </option>
+                                        
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
-                    </div>    
+                    </div>
                     <div id="folder_format_selection">
                         <p>{{ $configMessages['options']['folder_format_selection']  }}</p>
                         <div class="flex flex-col gap-4">
