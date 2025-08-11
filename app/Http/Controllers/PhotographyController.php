@@ -55,7 +55,8 @@ class PhotographyController extends Controller
     {
         return view('photography', 
             [
-                'user' => new UserResource(Auth::user()), 
+                'user' => new UserResource(Auth::user()),
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'configure',
                 'configMessages' => config('app.dialog_config.download')
             ]);
@@ -63,12 +64,10 @@ class PhotographyController extends Controller
 
     public function showPortraits()
     {   
-        $imageOptions = $this->imageService->getImageOptions();
-        
         return view('photography', 
             [
                 'user' => new UserResource(Auth::user()), 
-                'imageOptions' => $imageOptions,
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'portraits',
                 'configMessages' => config('app.dialog_config.download')
             ]
@@ -79,7 +78,8 @@ class PhotographyController extends Controller
     {
         return view('photography', 
             [
-                'user' => new UserResource(Auth::user()), 
+                'user' => new UserResource(Auth::user()),
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'groups',
                 'configMessages' => config('app.dialog_config.download')
             ]
@@ -90,7 +90,8 @@ class PhotographyController extends Controller
     {
         return view('photography', 
             [
-                'user' => new UserResource(Auth::user()), 
+                'user' => new UserResource(Auth::user()),
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'others',
                 'configMessages' => config('app.dialog_config.download')
             ]
