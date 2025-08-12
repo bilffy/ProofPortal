@@ -65,6 +65,8 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/photography/others', [PhotographyController::class, 'showOthers'])->name('photography.others');
         Route::post('/photography/request-download', [PhotographyController::class, 'requestDownloadDetails'])->name('photography.request-download');
         Route::post('/photography/request-download-nonce', [PhotographyController::class, 'execNonce'])->name('photography.request-download-nonce');
+        Route::post('/photography/upload-image', [PhotographyController::class, 'uploadImage'])->name('photography.upload-image');
+        Route::post('/photography/remove-image', [PhotographyController::class, 'removeImage'])->name('photography.remove-image');
     });
     // Proofing
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
