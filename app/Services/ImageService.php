@@ -481,6 +481,7 @@ class ImageService
                 'classGroup' => $classGroup,
                 'year' => $image->year ?? 0,
                 'category' => $category,
+                'isUploaded' => false, // TODO: Make dynamic based on the image origin (user uploaded or updated from MSP)
             ];
         };
 

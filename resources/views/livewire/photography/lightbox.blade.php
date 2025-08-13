@@ -18,8 +18,9 @@
                     $landscape = !$image['isPortrait'];
                     $key = "img-lb_{{$imageId}}";
                     $isLightbox = true;
+                    $isUploaded = $image['isUploaded'] ?? false;
                 @endphp
-                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :key="$key" lazy="on-load"/>
+                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded :key="$key" lazy="on-load"/>
             @endforeach
         </div>
     </div>

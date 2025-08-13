@@ -215,7 +215,14 @@ return [
             'no_jobs' => [
                 'franchise_level' => 'Please go to the Configure tab to enable Jobs & Folders for viewing in the portal',
                 'school_level' => 'Your MSP Photography representative will notify you when your Digital Photos become available on the portal.',
-            ]
+            ],
+            'image_upload' => [
+                'replace_or_remove_title' => 'Replace or Remove Photo',
+                'replace_or_remove_body' => 'Do you want to replace or remove uploaded photo?',
+                'confirm_remove_title' => 'Remove photo confirmation',
+                'confirm_remove_body' => 'Are you sure you want to remove the uploaded photo for',
+                'size_limit' => 'File size cannot exceed 5MB.',
+            ],
         ],
         'configuration' => [
             'reload' => [

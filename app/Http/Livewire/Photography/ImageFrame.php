@@ -13,13 +13,15 @@ class ImageFrame extends Component
     public $folderName;
     public $hasImage = false;
     public $isLightbox = false;
+    public $isUploaded = false;
 
-    public function mount($imageId, $name, $landscape, $folderName, $isLightbox = false)
+    public function mount($imageId, $name, $landscape, $folderName, $isUploaded = false, $isLightbox = false)
     {
         $this->imageId = $imageId;
         $this->name = $name;
         $this->landscape = $landscape;
         $this->folderName = $folderName;
+        $this->isUploaded = $isUploaded;
         $this->isLightbox = $isLightbox;
 
         $imageService = new ImageService();

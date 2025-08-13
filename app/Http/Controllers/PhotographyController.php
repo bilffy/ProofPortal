@@ -58,7 +58,8 @@ class PhotographyController extends Controller
                 'user' => new UserResource(Auth::user()),
                 'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'configure',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]);
     }
 
@@ -69,7 +70,8 @@ class PhotographyController extends Controller
                 'user' => new UserResource(Auth::user()), 
                 'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'portraits',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]
         );
     }
@@ -81,7 +83,8 @@ class PhotographyController extends Controller
                 'user' => new UserResource(Auth::user()),
                 'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'groups',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]
         );
     }
@@ -93,7 +96,8 @@ class PhotographyController extends Controller
                 'user' => new UserResource(Auth::user()),
                 'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'others',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]
         );
     }
@@ -245,5 +249,66 @@ class PhotographyController extends Controller
         session()->forget('download-request-nonce');
         
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    // TODO: Refine implementation with ImageService and new table for uploaded images
+    public function uploadImage(Request $request)
+    {
+        // $validator = Validator::make($request->all(), [
+        //     'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+        // ]);
+
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+
+            // If there is an existing uploaded image, delete previous image
+            $existingImage = Image::where('keyvalue', $request->input('key'))->first();
+            if ($existingImage) {
+                // Remove the existing image file from storage
+                if ($existingImage->path) {
+                    \Storage::disk('public')->delete($existingImage->path);
+                }
+                // Optionally, delete the image record from the database
+                // $existingImage->delete();
+            }
+            $path = $request->file('image')->store('images', 'public');
+
+            return response()->json(['path' => $path]);
+        }
+        
+        return response()->json(['success' => false, 'message' => 'Image file is required.'], 422);
+    }
+
+    // TODO: Refine implementation with ImageService and new table for uploaded images
+    public function removeImage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'key' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], status: 422);
+        }
+
+        // Find the image by key
+        $image = Image::where('keyvalue', $request->input('key'))->first();
+        if (!$image) {
+            return response()->json(['success' => false, 'message' => 'Image not found.'], 404);
+        }
+
+        // Remove the image file from storage
+        $deleted = false;
+        if ($image->path) {
+            $deleted = \Storage::disk('public')->delete($image->path);
+        }
+
+        // Optionally, delete the image record from the database
+        // $image->delete();
+
+        return response()->json(['success' => $deleted]);
     }
 }

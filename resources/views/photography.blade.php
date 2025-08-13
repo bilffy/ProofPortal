@@ -174,6 +174,33 @@
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
+        <x-modal.base id="replaceOrRemovePhotoModal" title="{{ $photographyMessages['image_upload']['replace_or_remove_title'] }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="replace-or-remove-photo-body">{{ $photographyMessages['image_upload']['replace_or_remove_body'] }}</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.primary onclick="showRemovePhotoModal()" id="remove-photo-btn" data-modal-hide="replaceOrRemovePhotoModal">Remove Photo</x-button.primary>
+                    <x-button.primary onclick="replaceUploadedPhoto()" id="replace-photo-btn">Replace Photo</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <x-modal.base id="confirmRemovePhotoModal" title="{{ $photographyMessages['image_upload']['confirm_remove_title'] }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="confirm-remove-body">{{ $photographyMessages['image_upload']['confirm_remove_body'] }} <span id="confirm-remove-body-name"></span>?</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary data-modal-hide="confirmRemovePhotoModal">Cancel</x-button.secondary>
+                    <x-button.primary onclick="removeUploadedPhoto()">Yes</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <input class="hidden" type="file" id="imgUploadInput" accept="image/*" />
         @include('partials.photography.modals.lightbox-modal', ['schoolKey' => $schoolKey])
     </div>
 @endsection
@@ -247,6 +274,51 @@
         Livewire.dispatch('EV_CHANGE_TAB', { category: category });
     }
 
+    function showRemovePhotoModal() {
+        confirmRemovePhotoModal.show();
+    }
+
+    function replaceUploadedPhoto() {
+        console.log("Replace uploaded photo function called");
+
+        const modal = document.getElementById('replaceOrRemovePhotoModal');
+        const imageKey = modal.getAttribute('data-image-key');
+
+        document.getElementById('imgUploadInput').setAttribute('data-image-key', imageKey);
+        document.getElementById('imgUploadInput').click();
+    }
+
+    function removeUploadedPhoto() {
+        console.log("Remove uploaded photo function called");
+
+        const modal = document.getElementById('replaceOrRemovePhotoModal');
+        const imageKey = modal.getAttribute('data-image-key');
+
+        console.log({imageKey});
+
+        fetch('{{ route('photography.remove-image') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ key: imageKey })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove image from UI, show success, etc.
+                console.log('Image removed:', data);
+                // Optionally hide modal, update image grid, etc.
+            } else {
+                console.error('Remove failed:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Remove failed:', error);
+        });
+    }
+
     const debouncedSetCategory = debounce((data) => {
         setCategory(data)
     }, 300);
@@ -256,6 +328,7 @@
         const img = document.querySelector(`#${imageId}`);
         const name = img.querySelector('.img-decoded-name').textContent;
         const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
+        const isUploaded = img.classList.contains('uploaded');
 
         if (!isLightbox) {
             if (selectMode) {
@@ -266,7 +339,20 @@
                 showLightboxModal(imageId, name);
                 return;
             }
+        } else if (hasImage) {
+            if (!selectMode && isUploaded) {
+                document.querySelector('#confirm-remove-body-name').textContent = name;
+                const modal = document.getElementById('replaceOrRemovePhotoModal');
+                modal.setAttribute('data-image-key', imageId);
+                replaceOrRemovePhotoModal.show();
+                return;
+            }
         } else if (!hasImage) {
+            if (!selectMode) {
+                document.getElementById('imgUploadInput').setAttribute('data-image-key', imageId);
+                document.getElementById('imgUploadInput').click();
+                return;
+            }
             return;
         }
         let selectedItems = window.localStorage.getItem(imageItems);
@@ -355,6 +441,42 @@
                     // reset images selected
                     resetImages();
                 }
+            });
+        });
+
+        // Handle image upload from input
+        document.getElementById('imgUploadInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Should not exceed 5MB: 5 * 1024 * 1024 bytes
+            if (file.size > 5 * 1024 * 1024) {
+                alert("{{ $photographyMessages['image_upload']['size_limit'] }}");
+                return;
+            }
+
+            const imageKey = event.currentTarget.dataset.imageKey;
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('image_key', imageKey);
+
+            console.log('imgUploadInput', { file, formData });
+
+            fetch('{{ route('photography.upload-image') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Image uploaded:', {data});
+            })
+            .catch(error => {
+                console.error('Upload failed:', {error});
             });
         });
     });
@@ -481,7 +603,8 @@
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
     const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
     const downloadUnavailableModal = new Modal(document.getElementById('downloadUnavailableModal'));
-    let lightboxModalElement = document.getElementById('lightbox-modal');
+    const replaceOrRemovePhotoModal = new Modal(document.getElementById('replaceOrRemovePhotoModal'));
+    const confirmRemovePhotoModal = new Modal(document.getElementById('confirmRemovePhotoModal'));
     const lightboxOptions = {
         onHide: () => {
             resetImages(true);
@@ -491,7 +614,7 @@
             toggleDisableForImgButtons(true);
         },
     };
-    let lightboxModal = new Modal(lightboxModalElement, lightboxOptions);
+    let lightboxModal = new Modal(document.getElementById('lightbox-modal'), lightboxOptions);
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
@@ -598,6 +721,9 @@
     window.confirmDownloadRequest = confirmDownloadRequest;
     window.reloadPage = reloadPage;
     window.updateSchoolConfig = updateSchoolConfig;
+    window.replaceUploadedPhoto = replaceUploadedPhoto;
+    window.removeUploadedPhoto = removeUploadedPhoto;
+    window.showRemovePhotoModal = showRemovePhotoModal;
     window.showLightboxModal = function(subjectKey, name) {
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
         Livewire.dispatch('EV_SELECT_IMAGE', { subject: name, category: localStorage.getItem('photographyCategory') });
