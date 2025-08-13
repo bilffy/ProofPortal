@@ -75,4 +75,44 @@ class FileStorageService implements FileStorageInterface
     {
         return Storage::disk($this->driver)->url($path);
     }
+
+    /**
+     * Retrieve file contents as Base64 string.
+     *
+     * @param string $path
+     * @return string Base64 encoded data URI
+     * @throws \Exception
+     */
+    public function getBase64(string $path): string
+    {
+        if (!$this->exists($path)) {
+            throw new \Exception("File not found: {$path}");
+        }
+
+        $contents = Storage::disk($this->driver)->get($path);
+
+        // Guess MIME type from extension
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $mime = $this->guessMimeType($extension);
+
+        return "data:{$mime};base64," . base64_encode($contents);
+    }
+
+    /**
+     * Guess MIME type based on file extension.
+     */
+    protected function guessMimeType(string $extension): string
+    {
+        $map = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            'pdf' => 'application/pdf'
+        ];
+
+        return $map[strtolower($extension)] ?? 'application/octet-stream';
+    }
 }
