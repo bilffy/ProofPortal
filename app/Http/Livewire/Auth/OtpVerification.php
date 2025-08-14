@@ -38,6 +38,8 @@ class OtpVerification extends Component
             ? config('app.dialog_config.otp.resend.message1')
             : config('app.dialog_config.otp.resend.message2');
         $this->token = request()->route('token');
+        
+        $this->countdownTime = config('app.otp.expiration_minutes') * 60; // Convert minutes to seconds
     }
 
     public function submit(UserService $userService)
