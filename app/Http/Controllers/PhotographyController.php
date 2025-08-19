@@ -234,32 +234,22 @@ class PhotographyController extends Controller
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
             
-            // get the image directory in .env IMAGE_REPOSITORY
+            // get the path of the image in .env IMAGE_REPOSITORY/print_quality
             $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
             
             $imageOption = ImageOptions::where('id', $selectedFilters['resolution'])->first();
             
-            // check if the file exists and make sure the long_edge option is set
+            // check if the file exists in the print_quality
+            // and make sure the long_edge option is set
             if (file_exists($path) && $imageOption->long_edge) {
-
-                $scriptPath = base_path('image_resizer/resizer.py'); // adjust path to your script
-                
-                // Run Python script
-                $process = new Process([
-                    'python3',
-                    $scriptPath,
-                    $path,
-                    $imageOption->long_edge
-                ]);
-                $process->run();
-
-                if (!$process->isSuccessful()) {
-                    return response()->json([
-                        'error' => $process->getErrorOutput()
-                    ], 500);
+                return $this->resizeImage($path, $imageOption->long_edge, $filename);
+            } else {
+                // get the path of the image in .env IMAGE_REPOSITORY
+                $path = base_path(config('app.image_repository') . '/' . $key . ".jpg");
+                if ($imageOption->long_edge) {
+                    return $this->resizeImage($path, $imageOption->long_edge, $filename);
                 }
-                return response()->json(['success' => true, 'data' => trim($process->getOutput()), 'filename' => $filename]);
-            } 
+            }
             
             // retrieve the image content using the ImageService - as is?
             $imageContent = base64_encode($this->imageService->getImageContent($key));
@@ -342,5 +332,26 @@ class PhotographyController extends Controller
         // $image->delete();
 
         return response()->json(['success' => $deleted]);
+    }
+    
+    private function resizeImage($path, $long_edge, $filename)
+    {
+        $scriptPath = base_path('image_resizer/resizer.py'); // adjust path to your script
+
+        // Run Python script
+        $process = new Process([
+            'python3',
+            $scriptPath,
+            $path,
+            $long_edge
+        ]);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return response()->json([
+                'error' => $process->getErrorOutput()
+            ], 500);
+        }
+        return response()->json(['success' => true, 'data' => trim($process->getOutput()), 'filename' => $filename]);
     }
 }
