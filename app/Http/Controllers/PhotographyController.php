@@ -17,6 +17,7 @@ use App\Models\Job;
 use App\Models\Season;
 use App\Models\Status;
 use App\Models\Subject;
+use App\Models\ImageOptions;
 use App\Services\ImageService;
 use App\Services\SchoolService;
 use Auth;
@@ -24,6 +25,7 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\Process\Process;
 
 class PhotographyController extends Controller
 {
@@ -123,7 +125,7 @@ class PhotographyController extends Controller
             'filters.year' => 'required|string',
             'filters.view' => 'required|string',
             'filters.class' => 'required|string',
-            'filters.resolution' => 'required|string|in:high,low',
+            //'filters.resolution' => 'required|string|in:high,low',
             'filters.folder_format' => 'required|string|in:all,organize',
             'tab' => 'required|string|in:PORTRAITS,GROUPS,OTHERS',
         ]);
@@ -219,9 +221,6 @@ class PhotographyController extends Controller
         // If there is only one image, return the image content
         if (count($images) === 1) {
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
-            $imageContent = base64_encode($this->imageService->getImageContent($key));
-            // return response()->json(['success' => true, 'data' => $imageContent]);
-            $data = $imageContent;
 
             switch ($request->input('tab')) {
                 case PhotographyHelper::TAB_GROUPS:
@@ -234,6 +233,39 @@ class PhotographyController extends Controller
             }
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
+            
+            // get the image directory in .env IMAGE_REPOSITORY
+            $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
+            
+            $imageOption = ImageOptions::where('id', $selectedFilters['resolution'])->first();
+            
+            // check if the file exists and make sure the long_edge option is set
+            if (file_exists($path) && $imageOption->long_edge) {
+
+                $scriptPath = base_path('image_resizer/resizer.py'); // adjust path to your script
+                
+                // Run Python script
+                $process = new Process([
+                    'python3',
+                    $scriptPath,
+                    $path,
+                    $imageOption->long_edge
+                ]);
+                $process->run();
+
+                if (!$process->isSuccessful()) {
+                    return response()->json([
+                        'error' => $process->getErrorOutput()
+                    ], 500);
+                }
+                return response()->json(['success' => true, 'data' => trim($process->getOutput()), 'filename' => $filename]);
+            } 
+            
+            // retrieve the image content using the ImageService - as is?
+            $imageContent = base64_encode($this->imageService->getImageContent($key));
+            // return response()->json(['success' => true, 'data' => $imageContent]);
+            $data = $imageContent;
+
             return response()->json(['success' => true, 'data' => $data, 'filename' => $filename]);
             // return response()->json(['success' => true, 'data' => $data, 'filename' => EncryptionHelper::simpleEncrypt($filename)]);
         }
