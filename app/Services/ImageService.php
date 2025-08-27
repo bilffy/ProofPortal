@@ -469,17 +469,17 @@ class ImageService
             $imgKey = $image->$key;
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
-                $img = Image::where('keyvalue', $image->$key)->where('keyorigin', (strtolower($category)))->first();
-                if ($subject && $img) {
-                    $uploaded = SchoolPhotoUpload::where('subject_id', $subject->id)->where('image_id', $img->id)->exists();
+                if ($subject) {
+                    $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->exists();
+                    $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
                 } else {
                     $uploaded = false;
                 }
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->first();
-                $img = Image::where('keyvalue', $image->$key)->where('keyorigin', (strtolower($category)))->first();
-                if ($folder && $img) {
-                    $uploaded = SchoolPhotoUpload::where('folder_id', $folder->id)->where('image_id', $img->id)->exists();
+                if ($folder) {
+                    $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->exists();
+                    $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
                 } else {
                     $uploaded = false;
                 }
@@ -521,13 +521,8 @@ class ImageService
         if (Storage::disk('local')->exists($path)) {
             $isFound = true;
         } else {
-            $img = Image::where('keyvalue', $key)->first();
-            if ($img) {
-                $path = $this->getPath("uploaded_images/" . $img->ts_imagekey . ".jpg");
-                $isFound = Storage::disk('local')->exists($path);
-            } else {
-                $isFound = false;
-            }
+            $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
+            $isFound = Storage::disk('local')->exists($path);
         }
         $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
 
@@ -546,12 +541,7 @@ class ImageService
         if (Storage::disk('local')->exists($path)) {
             return true;
         } else {
-            $img = Image::where('keyvalue', $key)->first();
-            if ($img) {
-                $path = $this->getPath("uploaded_images/" . $img->ts_imagekey . ".jpg");
-            } else {
-                return false;
-            }
+            $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
         }
         
         return Storage::disk('local')->exists($path);
