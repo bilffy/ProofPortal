@@ -48,6 +48,20 @@ export default {
             active: '#798087',
             disabled: '#CBCED2',
           },
+          tertiary: {
+            DEFAULT: '#E87F54',
+            hover: '#D96A3A',      // slightly darker for hover
+            active: '#C95A2A',     // even darker for active
+            disabled: '#F3C6B2',   // light desaturated for disabled
+            800: '#E87F54',        // base
+            700: '#E16B3B',        // a bit darker
+            600: '#D95A3A',        // darker
+            500: '#C95A2A',        // more dark
+            400: '#F09B7A',        // lighter
+            300: '#F3B08F',        // even lighter
+            200: '#F6C5A4',        // pale
+            100: '#F9DAC0',        // very pale
+          },
           neutral: {
             DEFAULT: '#6F6F6E',
             700: '#206430',
