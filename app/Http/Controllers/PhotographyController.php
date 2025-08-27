@@ -316,24 +316,25 @@ class PhotographyController extends Controller
                     $this->fileStorageService->delete($existingImage->path);
                 };
             }
-            $filename = $image->ts_imagekey . '.' . $img->getClientOriginalExtension();
-            $path = $this->fileStorageService->store('uploaded_images', $img, $filename);
+            $filename = $key . '.' . $img->getClientOriginalExtension();
+            
+            $path = $this->fileStorageService->store(env('FILE_IMAGE_UPLOAD_PATH', ''), $img, $filename);
             $newImage = SchoolPhotoUpload::create([
                 'subject_id' => $subject ? $subject->id : null,
-                'folder_id' => $folder->id,
-                'image_id' => $image->id,
+                'folder_id' => $folder ? $folder->id : null,
+                'image_id' => $image ? $image->id : null,
                 'metadata' => [
                     'original_filename' => $img->getClientOriginalName(),
                     'key' => $key,
                     'origin' => $origin,
-                    'image_key' => $image->ts_imagekey,
+                    'image_key' => $image->ts_imagekey ?? '',
                     'path' => $path,
                 ],
             ]);
             // Log upload activity
             ActivityLogHelper::log(LogConstants::UPLOAD_PHOTO, [
                 'school_key' => SchoolContextHelper::getSchool()->schoolkey ?? '',
-                'imagekey' => $image->ts_imagekey,
+                'imagekey' => $image->ts_imagekey ?? '',
                 'key' => $key,
                 'photo_upload_id' => $newImage->id,
                 'path' => $path,
@@ -379,11 +380,11 @@ class PhotographyController extends Controller
 
         $img = Image::where('keyvalue', $key)
             ->where('keyorigin', $origin)->first();
-        // Find the image by key
-        $image = $image->where('image_id', $img->id)->first();
+        // Find the latest uploaded image
+        $image = $image->latest()->first();
         
         if (!$image) {
-            return response()->json(['success' => false, 'message' => 'Image not found.'], 404);
+            return response()->json(['success' => false, 'message' => 'Uploaded Image not found.'], 404);
         }
 
         // Remove the image file from storage
@@ -396,7 +397,8 @@ class PhotographyController extends Controller
             // Log remove activity
             ActivityLogHelper::log(LogConstants::REMOVE_PHOTO, [
                 'school_key' => SchoolContextHelper::getSchool()->schoolkey ?? '',
-                'imagekey' => $key,
+                'imagekey' => $img->ts_imagekey ?? '',
+                'key' => $key,
                 'photo_upload_id' => $image->id,
                 'path' => $image->path,
             ]);
