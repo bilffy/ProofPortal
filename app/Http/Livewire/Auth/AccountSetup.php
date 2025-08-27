@@ -37,7 +37,8 @@ class AccountSetup extends Component
 
     public function mount($token, $email)
     {
-        $id = Hashids::decodeHex($email);
+        // $id = Hashids::decodeHex($email);
+        $id = $email;
         $this->token = $token;
 
         $user = User::findOrFail($id);

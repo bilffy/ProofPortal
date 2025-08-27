@@ -4,7 +4,7 @@ namespace App\Services\Storage;
 
 interface FileStorageInterface
 {
-    public function store(string $path, mixed $file, array $options = []): string;
+    public function store(string $path, mixed $file, string $filename = null, array $options = []): string;
 
     public function retrieve(string $path);
 

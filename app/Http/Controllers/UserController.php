@@ -137,7 +137,7 @@ class UserController extends Controller
         try {
             $decrypted = JsAesPhp::decrypt($encryptedData, $nonce);
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'Invalid Request', 'data' => $encryptedData, 'nonce' => $nonce, 'msg' => $e->getMessage()], 400);
+            return response()->json(['error' => 'Invalid Request'], 400);
         }
         
         if ($decrypted['nonce'] !== $nonce) {

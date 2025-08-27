@@ -270,7 +270,8 @@ class User extends Authenticatable
     public function canDisable($userId): bool
     {   
         // Decode the user ID
-        $id = Hashids::decodeHex($userId);
+        // $id = Hashids::decodeHex($userId);
+        $id = $userId;
         
         // Check if the user is the same as the current user, if so, return false
         if ($this->id === $id) {
