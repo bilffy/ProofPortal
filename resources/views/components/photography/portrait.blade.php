@@ -20,7 +20,7 @@
 @endphp
 
 <div id="{{ $imgId }}" class="portrait-img {{ $isUploaded ? 'uploaded' : ''}} rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center hover:cursor-pointer" onclick="handleImageClick('{{ $imgId }}', {{ $isLightbox ? 'true' : 'false' }}, {{ $hasImage ? 'true' : 'false' }})">
-    <div class="relative h-[229px] overflow-hidden rounded">
+    <div class="relative h-[229px] overflow-hidden rounded group transition-all">
         <div class="absolute flex w-full justify-end pr-2 pt-2 z-10 {{ $hasImage ? "img-checkbox" . ($isLightbox ? "" : " hidden") : 'hidden' }}">
             <div class="{{ $hasImage ? "portrait-img-checkbox" : "img-not-found"}} group transition-all 
                         w-[24px] h-[24px] p-1 pt-[3px] border-white border-2
@@ -31,8 +31,21 @@
         </div>
         @if ($isUploaded)
             <div class="absolute m-2 z-10 bottom-0 end-0">
-                <div class="flex items-center justify-center w-6 h-6 bg-primary-100 rounded-full">
-                    <x-icon icon="pencil" class="text-white w-6 h-6 text-sm mt-1"/>
+                <div class="relative w-fit h-6 overflow-hidden group flex space-x-1">
+                    <div class="flex items-center justify-center w-6 h-6 bg-tertiary rounded-md invisible 
+                        {{ $isLightbox
+                            ? "hover:bg-tertiary-hover group-hover:visible transition-transform translate-x-full duration-300 group-hover:translate-x-0 z-5"
+                            : ""
+                        }}"
+                        @if($isLightbox) onclick="showRemovePhotoModal(event, '{{ $imgId }}', '{{ $decodedName }}')" @endif
+                    >
+                        <x-icon icon="trash" class="text-white w-6 h-6 text-sm mt-1"/>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 bg-primary rounded-md z-10 {{ $isLightbox ? "hover:bg-primary-hover" : "" }}"
+                        @if($isLightbox) onclick="replaceUploadedPhoto(event, '{{ $imgId }}')" @endif
+                    >
+                        <x-icon icon="pencil" class="text-white w-6 h-6 text-sm mt-1"/>
+                    </div>
                 </div>
             </div>
         @endif
@@ -44,15 +57,11 @@
                     <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
                         <span class="text-white font-semibold text-xl">+ Add Photo</span>
                     </div>
-                @elseif ($isLightbox && $isUploaded)
-                    <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
-                        <x-icon icon="pencil" class="text-white w-10 h-10 text-2xl"/>
-                    </div>
                 @endif
                 <img 
                     src="data:image/jpeg;base64,{{$img}}"
                     alt=""
-                    class="w-full max-w-none {{ ($isLightbox && $noImage) || ($isLightbox && $isUploaded) ? 'group-hover:brightness-[70%]' : '' }}"
+                    class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
                 />
             </div>
         @endif
