@@ -15,6 +15,8 @@ class LogConstants
     public const UPDATE_SCHOOL_DOWNLOAD_PERMISSIONS = 'config.update_download_permissions';
     public const UPDATE_SCHOOL_FOLDER_CONFIG = 'config.update_job_folders';
     public const UPDATE_SCHOOL_DOWNLOAD_TIMELINE_CONFIG = 'config.update_download_timeline';
+    public const UPLOAD_PHOTO = 'user.upload_photo';
+    public const REMOVE_PHOTO = 'user.remove_photo';
 
     public const DISABLE_USER = 'user.disable';
 }

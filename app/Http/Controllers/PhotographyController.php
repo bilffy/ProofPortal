@@ -14,12 +14,14 @@ use App\Models\FilenameFormat;
 use App\Models\Folder;
 use App\Models\Image;
 use App\Models\Job;
+use App\Models\SchoolPhotoUpload;
 use App\Models\Season;
 use App\Models\Status;
 use App\Models\Subject;
 use App\Models\ImageOptions;
 use App\Services\ImageService;
 use App\Services\SchoolService;
+use App\Services\Storage\FileStorageService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -30,17 +32,20 @@ use Symfony\Component\Process\Process;
 class PhotographyController extends Controller
 {
     protected $schoolService;
+    protected $fileStorageService;
     
     /**
      * @var ImageService $imageService
      * @var SchoolService $schoolService
+     * @var FileStorageService $fileStorageService
      */
     private ImageService $imageService;
     
-    public function __construct(ImageService $imageService, SchoolService $schoolService)
+    public function __construct(ImageService $imageService, SchoolService $schoolService, FileStorageService $fileStorageService)
     {
         $this->imageService = $imageService;
         $this->schoolService = $schoolService;
+        $this->fileStorageService = $fileStorageService;
     }
 
     public function index()
@@ -276,30 +281,67 @@ class PhotographyController extends Controller
     // TODO: Refine implementation with ImageService and new table for uploaded images
     public function uploadImage(Request $request)
     {
-        // $validator = Validator::make($request->all(), [
-        //     'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-        // ]);
-
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
 
+        if ($request->hasFile('image')) {
+            $img = $request->file('image');
+            $imgKey = $request->input('image_key');
+            $key = base64_decode(base64_decode($imgKey));
+            // $folderKey = $request->input('folder_id');
+            $subject = Subject::where('ts_subjectkey', $key)->first();
+            if ($subject) {
+                $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
+                $existingImage = SchoolPhotoUpload::where('subject_id', $subject->id)->first();
+                $origin = 'subject';
+            } else {
+                $folder = Folder::where('ts_folderkey', $key)->first();
+                if (!$folder) {
+                    return response()->json(['success' => false, 'message' => 'Origin not found.'], 404);
+                }
+                $existingImage = SchoolPhotoUpload::where('folder_id', $folder->id)->first();
+                $origin = 'folder';
+            }
+            $image = Image::where('keyvalue', $key)
+                ->where('keyorigin', $origin)->first();
             // If there is an existing uploaded image, delete previous image
-            $existingImage = Image::where('keyvalue', $request->input('key'))->first();
             if ($existingImage) {
                 // Remove the existing image file from storage
                 if ($existingImage->path) {
-                    \Storage::disk('public')->delete($existingImage->path);
-                }
-                // Optionally, delete the image record from the database
-                // $existingImage->delete();
+                    $this->fileStorageService->delete($existingImage->path);
+                };
             }
-            $path = $request->file('image')->store('images', 'public');
+            $filename = $image->ts_imagekey . '.' . $img->getClientOriginalExtension();
+            $path = $this->fileStorageService->store('uploaded_images', $img, $filename);
+            $newImage = SchoolPhotoUpload::create([
+                'subject_id' => $subject ? $subject->id : null,
+                'folder_id' => $folder->id,
+                'image_id' => $image->id,
+                'metadata' => [
+                    'original_filename' => $img->getClientOriginalName(),
+                    'key' => $key,
+                    'origin' => $origin,
+                    'image_key' => $image->ts_imagekey,
+                    'path' => $path,
+                ],
+            ]);
+            // Log upload activity
+            ActivityLogHelper::log(LogConstants::UPLOAD_PHOTO, [
+                'school_key' => SchoolContextHelper::getSchool()->schoolkey ?? '',
+                'imagekey' => $image->ts_imagekey,
+                'key' => $key,
+                'photo_upload_id' => $newImage->id,
+                'path' => $path,
+            ]);
 
-            return response()->json(['path' => $path]);
+            $originKey = base64_encode(base64_encode($key));
+
+            return response()->json(['success' => true, 'path' => $path, 'key' => $originKey, 'uploadId' => $newImage ? $newImage->id : 0]);
         }
         
         return response()->json(['success' => false, 'message' => 'Image file is required.'], 422);
@@ -309,29 +351,60 @@ class PhotographyController extends Controller
     public function removeImage(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'key' => 'required|string',
+            'image_key' => 'required|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], status: 422);
         }
+        
+        $imgKey = $request->input('image_key');
+        $key = base64_decode(base64_decode($imgKey));
 
+        $subject = Subject::where('ts_subjectkey', $key)->first();
+        if ($subject) {
+            $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
+            $image = SchoolPhotoUpload::where('subject_id', $subject->id)
+                ->where('folder_id', $folder->id);
+            $origin = 'subject';
+        } else {
+            $folder = Folder::where('ts_folderkey', $key)->first();
+            if (!$folder) {
+                return response()->json(['success' => false, 'message' => 'Origin not found.', 'key' => $key], 404);
+            }
+            $image = SchoolPhotoUpload::where('folder_id', $folder->id)
+                ->where('subject_id', null);
+            $origin = 'folder';
+        }
+
+        $img = Image::where('keyvalue', $key)
+            ->where('keyorigin', $origin)->first();
         // Find the image by key
-        $image = Image::where('keyvalue', $request->input('key'))->first();
+        $image = $image->where('image_id', $img->id)->first();
+        
         if (!$image) {
             return response()->json(['success' => false, 'message' => 'Image not found.'], 404);
         }
 
         // Remove the image file from storage
         $deleted = false;
-        if ($image->path) {
-            $deleted = \Storage::disk('public')->delete($image->path);
+        if (isset($image->metadata['path'])) {
+            $deleted = $this->fileStorageService->delete($image->metadata['path']);
         }
 
-        // Optionally, delete the image record from the database
-        // $image->delete();
+        if ($deleted) {
+            // Log remove activity
+            ActivityLogHelper::log(LogConstants::REMOVE_PHOTO, [
+                'school_key' => SchoolContextHelper::getSchool()->schoolkey ?? '',
+                'imagekey' => $key,
+                'photo_upload_id' => $image->id,
+                'path' => $image->path,
+            ]);
+        }
 
-        return response()->json(['success' => $deleted]);
+        $originKey = base64_encode(base64_encode($key));
+
+        return response()->json(['success' => $deleted, 'key' => $originKey]);
     }
     
     private function resizeImage($path, $long_edge, $filename)

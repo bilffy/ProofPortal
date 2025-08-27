@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Photography;
 
 use App\Services\ImageService;
 use Livewire\Component;
+use App\Helpers\PhotographyHelper;
 
 class ImageFrame extends Component
 {
@@ -14,6 +15,11 @@ class ImageFrame extends Component
     public $hasImage = false;
     public $isLightbox = false;
     public $isUploaded = false;
+
+    protected $listeners = [
+        PhotographyHelper::EV_IMAGE_UPLOADED => 'updateImage',
+        PhotographyHelper::EV_IMAGE_DELETED => 'removeImage',
+    ];
 
     public function mount($imageId, $name, $landscape, $folderName, $isUploaded = false, $isLightbox = false)
     {
@@ -31,6 +37,24 @@ class ImageFrame extends Component
     public function placeholder()
     {
         return view('livewire.photography.image-frame', ['image' => '']);
+    }
+
+    public function updateImage($key)
+    {
+        if ($key && $key === $this->imageId) {
+            $this->isUploaded = true;
+            $this->hasImage = true;
+            $this->dispatch('image-frame-updated', ['imageId' => $this->imageId, 'isLightbox' => $this->isLightbox]);
+        }
+    }
+
+    public function removeImage($key)
+    {
+        if ($key && $key === $this->imageId) {
+            $this->isUploaded = false;
+            $this->hasImage = false;
+            $this->dispatch('image-frame-updated', ['imageId' => $this->imageId, 'isLightbox' => $this->isLightbox]);
+        }
     }
 
     public function rendered($view, $html)

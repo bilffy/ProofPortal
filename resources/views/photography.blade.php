@@ -182,6 +182,7 @@
             </x-slot>
             <x-slot name="footer">
                 <x-modal.footer>
+                    <x-button.secondary onclick="selectPhoto()" id="select-photo-btn" data-modal-hide="replaceOrRemovePhotoModal">Select Photo</x-button.secondary>
                     <x-button.primary onclick="showRemovePhotoModal()" id="remove-photo-btn" data-modal-hide="replaceOrRemovePhotoModal">Remove Photo</x-button.primary>
                     <x-button.primary onclick="replaceUploadedPhoto()" id="replace-photo-btn">Replace Photo</x-button.primary>
                 </x-modal.footer>
@@ -274,18 +275,41 @@
         Livewire.dispatch('EV_CHANGE_TAB', { category: category });
     }
 
+    function selectPhoto() {
+        const modal = document.getElementById('replaceOrRemovePhotoModal');
+        const imageKey = modal.getAttribute('data-image-key');
+        const img = document.querySelector(`#${imageKey}`);
+        const imageItems = 'selectedLightboxImages';
+        
+        let selectedItems = window.localStorage.getItem(imageItems);
+        selectedItems = selectedItems ? JSON.parse(selectedItems) : [];
+
+        const isAlreadySelected = selectedItems.includes(imageKey);
+
+        if (isAlreadySelected) {
+            selectedItems = selectedItems.filter(item => item !== imageKey);
+        } else {
+            selectedItems.push(imageKey);
+        }
+
+        window.localStorage.setItem(imageItems, JSON.stringify(selectedItems));
+
+        updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected, true);
+        updateDownloadSection(selectedItems.length, true);
+    }
+
     function showRemovePhotoModal() {
         confirmRemovePhotoModal.show();
     }
 
     function replaceUploadedPhoto() {
-        console.log("Replace uploaded photo function called");
-
         const modal = document.getElementById('replaceOrRemovePhotoModal');
         const imageKey = modal.getAttribute('data-image-key');
 
         document.getElementById('imgUploadInput').setAttribute('data-image-key', imageKey);
         document.getElementById('imgUploadInput').click();
+
+        replaceOrRemovePhotoModal.hide();
     }
 
     function removeUploadedPhoto() {
@@ -302,15 +326,15 @@
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({ key: imageKey })
+            body: JSON.stringify({ image_key: imageKey.split('_')[1] })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Remove image from UI, show success, etc.
-                console.log('Image removed:', data);
-                // Optionally hide modal, update image grid, etc.
+                Livewire.dispatch('EV_IMAGE_DELETED', { key: data.key });
+                confirmRemovePhotoModal.hide();
             } else {
+                console.log({data});
                 console.error('Remove failed:', data.message);
             }
         })
@@ -445,7 +469,7 @@
         });
 
         // Handle image upload from input
-        document.getElementById('imgUploadInput').addEventListener('change', function(event) {
+        document.getElementById('imgUploadInput').addEventListener('change', async function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -455,7 +479,7 @@
                 return;
             }
 
-            const imageKey = event.currentTarget.dataset.imageKey;
+            const imageKey = event.currentTarget.dataset.imageKey.split('_')[1];
 
             const formData = new FormData();
             formData.append('image', file);
@@ -463,21 +487,32 @@
 
             console.log('imgUploadInput', { file, formData });
 
-            fetch('{{ route('photography.upload-image') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Image uploaded:', {data});
-            })
-            .catch(error => {
-                console.error('Upload failed:', {error});
-            });
+            try {
+                const response = await fetch('{{ route('photography.upload-image') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Handle success, e.g., update UI, show success message
+                    console.log('Image uploaded successfully:', {result});
+                    if (result.uploadId) {
+                        // Update livewire component
+                        Livewire.dispatch('EV_IMAGE_UPLOADED', { key: result.key });
+                    }
+                } else {
+                    console.error('Upload failed:', {result});
+                }
+                event.target.value = '';
+            } catch (error) {
+                event.target.value = '';
+                console.error('Error uploading image:', error);
+                return;
+            }
         });
     });
     
@@ -723,6 +758,7 @@
     window.updateSchoolConfig = updateSchoolConfig;
     window.replaceUploadedPhoto = replaceUploadedPhoto;
     window.removeUploadedPhoto = removeUploadedPhoto;
+    window.selectPhoto = selectPhoto;
     window.showRemovePhotoModal = showRemovePhotoModal;
     window.showLightboxModal = function(subjectKey, name) {
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));

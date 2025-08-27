@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Helpers\PhotographyHelper;
+use App\Models\Folder;
+use App\Models\Image;
+use App\Models\SchoolPhotoUpload;
 use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -20,7 +23,7 @@ class ImageService
     {
         return DB::table('seasons')
             ->select('id', 'ts_season_id', 'code as Year')
-            ->orderBy('code', 'desc')
+            ->orderBy('code', direction: 'desc')
             ->get();
     }
 
@@ -462,9 +465,28 @@ class ImageService
         }
 
         $toData = function ($image) use ($key, $category) {
-            $fileContent = $this->getImageContent($image->$key);
-            $dimensions = getimagesizefromstring($fileContent);
             $isSubject = $category != 'FOLDER';
+            $imgKey = $image->$key;
+            if ($isSubject) {
+                $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+                $img = Image::where('keyvalue', $image->$key)->where('keyorigin', (strtolower($category)))->first();
+                if ($subject && $img) {
+                    $uploaded = SchoolPhotoUpload::where('subject_id', $subject->id)->where('image_id', $img->id)->exists();
+                } else {
+                    $uploaded = false;
+                }
+            } else {
+                $folder = Folder::where('ts_folderkey', $image->$key)->first();
+                $img = Image::where('keyvalue', $image->$key)->where('keyorigin', (strtolower($category)))->first();
+                if ($folder && $img) {
+                    $uploaded = SchoolPhotoUpload::where('folder_id', $folder->id)->where('image_id', $img->id)->exists();
+                } else {
+                    $uploaded = false;
+                }
+            }
+            $fileContent = $this->getImageContent($imgKey);
+            
+            $dimensions = getimagesizefromstring($fileContent);
 
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
@@ -481,7 +503,7 @@ class ImageService
                 'classGroup' => $classGroup,
                 'year' => $image->year ?? 0,
                 'category' => $category,
-                'isUploaded' => false, // TODO: Make dynamic based on the image origin (user uploaded or updated from MSP)
+                'isUploaded' => $uploaded,
             ];
         };
 
@@ -496,7 +518,17 @@ class ImageService
     public function getImageContent($key)
     {
         $path = $this->getPath($key.".jpg");
-        $isFound = Storage::disk('local')->exists($path);
+        if (Storage::disk('local')->exists($path)) {
+            $isFound = true;
+        } else {
+            $img = Image::where('keyvalue', $key)->first();
+            if ($img) {
+                $path = $this->getPath("uploaded_images/" . $img->ts_imagekey . ".jpg");
+                $isFound = Storage::disk('local')->exists($path);
+            } else {
+                $isFound = false;
+            }
+        }
         $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
 
         return $fileContent;
@@ -509,7 +541,19 @@ class ImageService
      */
     public function getIsImageFound($key)
     {
+
         $path = $this->getPath($key.".jpg");
+        if (Storage::disk('local')->exists($path)) {
+            return true;
+        } else {
+            $img = Image::where('keyvalue', $key)->first();
+            if ($img) {
+                $path = $this->getPath("uploaded_images/" . $img->ts_imagekey . ".jpg");
+            } else {
+                return false;
+            }
+        }
+        
         return Storage::disk('local')->exists($path);
     }
 

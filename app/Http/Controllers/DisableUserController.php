@@ -14,7 +14,7 @@ class DisableUserController extends Controller
 {
     public function disable(string $id)
     {
-        $id = Hashids::decodeHex($id);
+        // $id = Hashids::decodeHex($id);
         
         // Retrieve the user by ID
         /** @var User $user */
