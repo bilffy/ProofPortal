@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\FilenameFormatHelper;
 use App\Helpers\PhotographyHelper;
 use App\Models\Folder;
 use App\Models\Image;
@@ -170,6 +171,7 @@ class ImageService
         $query = DB::table('schools')
             ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_season_id', $seasonId)
             ->where("folders.$visibilityColumn", 1);
 
@@ -185,7 +187,7 @@ class ImageService
             });
 
         return $query
-            ->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id')
+            ->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id', 'seasons.code as year')
             ->orderBy('folders.ts_foldername')
             ->get();
     }
@@ -237,6 +239,7 @@ class ImageService
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
                  ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
         })
+        ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
         
@@ -266,7 +269,7 @@ class ImageService
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey')
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'seasons.code as year')
             ->distinct()
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
@@ -287,6 +290,7 @@ class ImageService
         // $query = DB::table(table: 'images')
         // ->join('jobs', 'jobs.ts_job_id', '=', 'images.ts_job_id')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+        ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
         // ->where('images.keyorigin', 'Folder')
@@ -314,7 +318,7 @@ class ImageService
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('folders.ts_folderkey', 'folders.ts_foldername')
+            ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
             ->orderBy('folders.ts_foldername');
     }
 
@@ -492,9 +496,9 @@ class ImageService
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
                 $classGroup = $subject->folder->ts_foldername ?? '';
             } else {
-                $classGroup = $image->ts_foldername;
+                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
             }
-                
+
             return [
                 'id' => base64_encode(base64_encode($image->$key)),
                 'firstname' => $isSubject ? $image->firstname : '',
