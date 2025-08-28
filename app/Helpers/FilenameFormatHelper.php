@@ -125,4 +125,11 @@ class FilenameFormatHelper
         }
         return $format;
     }
+
+    public static function removeYearAndDelimiter($name, $year): string
+    {
+        if (!$year) return $name;
+        $pattern = '/[\s\-_()]*' . preg_quote($year, '/') . '[\s\-_()]*/';
+        return trim(preg_replace($pattern, ' ', $name));
+    }
 }
