@@ -403,29 +403,35 @@ class ImageService
             return null;
         }
     }
-    
 
     // public function getImageContent($key)
     // {
-    //     $smbServer = env('SMB_SERVER');
+    //     $smbServers = [
+    //         env('SMB_IMAGE_SERVER'),
+    //         env('SMB_GROUP_SERVER')
+    //     ];
     //     $smbUser = env('SMB_USER');
     //     $smbPassword = env('SMB_PASSWORD');
 
-    //     $path = "{$key[0]}/{$key[1]}/{$key}.jpg";
+    //     $fileSizes = ['_800', '_1600'];
     //     $tempFile = '/tmp/' . uniqid('smb_', true) . '.jpg';
-    //     $command = "smbclient {$smbServer} -U {$smbUser}%{$smbPassword} -c 'get \"{$path}\" \"{$tempFile}\"' 2>&1";
 
-    //     $output = shell_exec($command);
+    //     foreach ($smbServers as $server) {
+    //         foreach ($fileSizes as $size) {
+    //             $path = "{$key[0]}/{$key[1]}/{$key}{$size}.jpg";
+    //             $command = "smbclient {$server} -U {$smbUser}%{$smbPassword} -c 'get \"{$path}\" \"{$tempFile}\"' 2>&1";
+    //             shell_exec($command);
 
-    //     if (file_exists($tempFile)) {
-    //         $imageContent = file_get_contents($tempFile);
-    //         unlink($tempFile);
-    //         return $imageContent;
+    //             if (file_exists($tempFile)) {
+    //                 $imageContent = file_get_contents($tempFile);
+    //                 unlink($tempFile);
+    //                 return $imageContent;
+    //             }
+    //         }
     //     }
 
     //     try {
-    //         $fallbackPath = Storage::disk('local')->get('not_found.jpg');
-    //         return $fallbackPath;
+    //         return Storage::disk('local')->get('not_found.jpg');
     //     } catch (\Exception $e) {
     //         return null;
     //     }
