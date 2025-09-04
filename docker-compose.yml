@@ -1,0 +1,90 @@
+name: msp
+# version: '3.8'
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: msp_php
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - msp
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    image: msp_node
+    container_name: msp_node
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/node_modules
+    networks:
+      - msp
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: msp_nginx
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/local/conf:/etc/nginx/conf.d
+    ports:
+      - "8080:80"
+    depends_on:
+      - php
+      - database
+    networks:
+      - msp
+
+  database:
+    image: percona:8
+    platform: linux/amd64
+    container_name: msp_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: msp
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root_secret
+      TZ: ${APP_TIMEZONE}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./blueprintData.sql:/docker-entrypoint-initdb.d/data.sql
+    ports:
+      - "3311:3306"
+    networks:
+      - msp
+
+  redis:
+    image: redis:alpine
+    container_name: msp_redis
+    ports:
+      - "6380:6379"
+    networks:
+      - msp
+  
+  mailhog:
+    image: mailhog/mailhog
+    container_name: msp_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - msp
+  
+networks:
+  msp:
+
+volumes:
+  mysql_data:

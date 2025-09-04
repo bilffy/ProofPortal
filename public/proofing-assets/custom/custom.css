@@ -1,0 +1,359 @@
+.page-header {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+th.actions {
+    min-width: 135px;
+}
+
+.mnw-50 {
+    min-width: 50px;
+}
+
+.mnw-100 {
+    min-width: 100px;
+}
+
+.mnw-110 {
+    min-width: 110px;
+}
+
+.mnw-120 {
+    min-width: 120px;
+}
+
+.mnw-130 {
+    min-width: 130px;
+}
+
+.mnw-140 {
+    min-width: 140px;
+}
+
+.mnw-150 {
+    min-width: 150px;
+}
+
+.mnw-200 {
+    min-width: 200px;
+}
+
+.mnw-250 {
+    min-width: 250px;
+}
+
+.mnw-300 {
+    min-width: 300px;
+}
+
+.mt-50 {
+    margin-top: 50px !important;
+}
+
+.mt-100 {
+    margin-top: 100px !important;
+}
+
+.invalid-feedback-test {
+    margin-top: -5px;
+    margin-bottom: 9px;
+    margin-left: 130px
+}
+
+/* Form Controls */
+input[type="radio"],
+input[type="checkbox"] {
+    box-sizing: border-box;
+    padding: 0;
+    height: 20px;
+    width: 20px;
+    border-radius: 2px;
+    border: 1px solid black;
+    background-color: white;
+}
+
+/**
+START: Override CoreUI Styles to align with MSP Branding
+ */
+.st0 {
+    fill: #FDB913;
+}
+
+.st1 {
+    /* BS Success Equivalent ($green) */
+    fill: #B5D334;
+}
+
+.st2 {
+    /* BS Primary Equivalent ($blue) */
+    fill: #00B3DF;
+}
+
+.st3 {
+    fill: #07A88F;
+}
+
+.st4 {
+    /* BS Warning Equivalent ($yellow)*/
+    fill: #FDDD00;
+}
+
+.st5 {
+    /* BS Info Equivalent ($cyan)*/
+    fill: #0090BA;
+}
+
+.st6 {
+    /* Footer */
+    fill: #005C91;
+}
+
+.st7 {
+    /* BS ($orange)*/
+    fill: #F99B1C;
+}
+
+.st8 {
+    /* BS Danger Equivalent ($red)*/
+    fill: #ED2124;
+}
+
+body {
+    font-family: Montserrat,sans-serif!important;
+    font-size: 1rem;
+    color: #595b5d;
+    line-height: 1.5rem;
+    text-rendering: optimizeLegibility;
+    background-color: #F5F7FA;
+}
+
+.app-header {
+    font-size: 16px;
+}
+
+.app-header.navbar {
+    height: 110px;
+}
+
+.app-header.navbar .navbar-brand {
+    width: 200px;
+    height: 110px;
+    padding: 0;
+    margin: 0;
+    background-image: url("../img/msp_logo.svg");
+    background-position: center center;
+    background-size: auto 80px;
+    border-bottom: 1px solid #c2cfd6;
+}
+
+@media (max-width: 991px) {
+    .app-header.navbar .navbar-brand {
+        position: unset !important;
+    }
+}
+
+.app-header-mobile {
+    position: absolute !important;
+}
+
+.header-fixed .app-body {
+    margin-top: 110px;
+}
+
+.navbar-nav .nav-item, .navbar-nav .nav-link {
+    color: #595b5d;
+    font-weight: 700;
+}
+
+.app-footer {
+    font-size: 12px;
+    color: #fff;
+    background: #005C91;
+}
+
+.card {
+    border: 2px solid #969696;
+    border-radius: 12px;
+}
+
+.card-header {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.card-footer {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.btn {
+    border-radius: 6px;
+}
+
+.icon, .fa {
+    border-radius: 6px;
+    font-family:var(--fa-style-family, "Font Awesome 6 Free");font-weight:var(--fa-style, 900)
+}
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+    margin: .25em 0 1em
+}
+
+.h1, h1 {
+    font-size: 30px;
+    color: #00B3DF;
+    margin: 0 0 .5em
+}
+
+.h2, h2 {
+    font-size: 22px;
+    color: #00B3DF
+}
+
+.h3, .h4, h3, h4 {
+    font-size: 18px;
+    color: #005C91;
+    margin: 0 0 20px
+}
+
+.h4, h4 {
+    color: #005C91;
+    font-weight: 400
+}
+
+.h5, .h6, h5, h6 {
+    font-size: 16px;
+    color: #005C91;
+    margin: 0 0 20px
+}
+
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+    color: #00B3DF;
+}
+
+.display-1 {
+    font-size: 4.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.display-2 {
+    font-size: 4.0rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.display-3 {
+    font-size: 3.0rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.display-4 {
+    font-size: 2.0rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.display-5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.display-6 {
+    font-size: 1.0rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/**
+END: Override CoreUI Styles to align with MSP Branding
+ */
+
+hr.style1 {
+    border-top: 1px solid #8c8b8b;
+}
+
+hr.style2 {
+    border-top: 3px double #8c8b8b;
+}
+
+hr.style3 {
+    border-top: 1px dashed #e9e8e8;
+}
+
+hr.style4 {
+    border-top: 1px dotted #8c8b8b;
+}
+
+hr.style5 {
+    background-color: #fff;
+    border-top: 2px dashed #8c8b8b;
+}
+
+hr.style6 {
+    background-color: #fff;
+    border-top: 2px dotted #8c8b8b;
+}
+
+hr.style7 {
+    border-top: 1px solid #8c8b8b;
+    border-bottom: 1px solid #fff;
+}
+
+hr.style8 {
+    border-top: 1px solid #8c8b8b;
+    border-bottom: 1px solid #fff;
+}
+
+hr.style8:after {
+    content: '';
+    display: block;
+    margin-top: 2px;
+    border-top: 1px solid #8c8b8b;
+    border-bottom: 1px solid #fff;
+}
+
+hr.style9 {
+    border-top: 1px dashed #8c8b8b;
+    border-bottom: 1px dashed #fff;
+}
+
+hr.style10 {
+    border-top: 1px dotted #8c8b8b;
+    border-bottom: 1px dotted #fff;
+}
+
+.bg-success-light {
+    background-color: rgba(7, 168, 143, 0.10) !important;
+}
+
+.bg-primary-light {
+    background-color: rgba(0, 179, 223, 0.21) !important;
+}
+
+.bg-info-light {
+    background-color: rgba(0, 144, 186, 0.2) !important;
+}
+
+.bg-warning-light {
+    background-color: rgba(253, 221, 0, 0.21) !important;
+}
+
+.bg-danger-light {
+    background-color: rgba(237, 33, 36, 0.21) !important;
+}
+
+
+
+.text-warning {
+    color: #fda900 !important;
+}
+
+a.text-warning:focus, a.text-warning:hover {
+    color: #ca9800 !important;
+}

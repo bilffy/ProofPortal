@@ -1,0 +1,12 @@
+<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Maps / near me">
+<mask id="mask0_70_8896" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="3" y="3" width="18" height="18">
+<g id="Icon Mask">
+<path id="Round" d="M18.9492 4.00296L4.26921 10.143C3.43921 10.493 3.45921 11.673 4.28921 11.993L9.62921 14.063C9.88921 14.163 10.0992 14.373 10.1992 14.633L12.2592 19.963C12.5792 20.803 13.7692 20.823 14.1192 19.993L20.2692 5.32296C20.5992 4.49296 19.7692 3.66296 18.9492 4.00296Z" fill="black"/>
+</g>
+</mask>
+<g mask="url(#mask0_70_8896)">
+<rect id="Color Fill" y="0.264648" width="24" height="24" fill="#6F6F6E"/>
+</g>
+</g>
+</svg>

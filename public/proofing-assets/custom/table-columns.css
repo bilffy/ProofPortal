@@ -1,0 +1,9 @@
+.idx-id {
+    max-width: 80px;
+}
+
+.idx-property-value {
+    max-width: 200px;
+    overflow: hidden;
+}
+

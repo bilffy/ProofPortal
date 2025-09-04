@@ -1,0 +1,40 @@
+.select2 {
+    .selection {
+        .select2-selection {
+            /* background-color: red; */
+            padding: .5rem;
+            height: 40px;
+            .select2-selection__arrow {
+                top: 6px;
+                right: 8px
+            }
+        }
+        
+    }
+}
+
+#photography-root {
+    .select2.select2-container.select2-container--default {
+        min-width: 200px;
+        margin-bottom: 1rem;
+    }
+    .select2-selection.select2-selection--multiple {
+        height: auto !important;
+        li.select2-selection__choice {
+            margin-left: 0px !important;
+            background-color: #e6e7e8 !important;
+            border-color: #cbcbcb !important;
+            button {
+                border-right-color: #cbcbcb !important;
+            }
+        }
+    }
+}
+
+.select2-results ul.select2-results__options li.select2-results__option--selected {
+    background-color: #e6e7e8;
+}
+
+.select2-results ul.select2-results__options li.select2-results__option--selected.select2-results__option--highlighted {
+    background-color: #005890 !important;
+}

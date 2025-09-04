@@ -1,0 +1,12 @@
+<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Maps / place">
+<mask id="mask0_70_8928" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="5" y="2" width="14" height="20">
+<g id="Icon Mask">
+<path id="Round" fill-rule="evenodd" clip-rule="evenodd" d="M5 9.5293C5 5.6593 8.13 2.5293 12 2.5293C15.87 2.5293 19 5.6593 19 9.5293C19 13.6993 14.58 19.4493 12.77 21.6393C12.37 22.1193 11.64 22.1193 11.24 21.6393C9.42 19.4493 5 13.6993 5 9.5293ZM9.5 9.5293C9.5 10.9093 10.62 12.0293 12 12.0293C13.38 12.0293 14.5 10.9093 14.5 9.5293C14.5 8.1493 13.38 7.0293 12 7.0293C10.62 7.0293 9.5 8.1493 9.5 9.5293Z" fill="black"/>
+</g>
+</mask>
+<g mask="url(#mask0_70_8928)">
+<rect id="Color Fill" y="0.264648" width="24" height="24" fill="#6F6F6E"/>
+</g>
+</g>
+</svg>
