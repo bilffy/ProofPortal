@@ -31,4 +31,3 @@ docker-compose.override.yml
 ###> macOS custom attributes  ###
 .DS_Store
 ###< macOS ###
-/image_repository
