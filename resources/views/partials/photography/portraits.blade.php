@@ -97,6 +97,9 @@
 
     window.performPortaitSearch = performPortaitSearch;
     window.addEventListener('load', () => {
+        
+        console.log("jQuery version:", $.fn.jquery);
+        console.log("Select2 loaded:", typeof $.fn.select2);
         $('#select_portraits_year').select2({placeholder: "Select a Year"});
         $('#select_portraits_year').change(updateGridView);
         $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
