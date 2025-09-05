@@ -60,22 +60,34 @@
             Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: 'PORTRAITS' });
         }
     }
+
     function updateGridView(event) {
         const selectedYear = $('#select_portraits_year').val();
         const selectedView = $('#select_portraits_view').val();
         const selectedClass = $('#select_portraits_class').val();
-        
+
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
-    };
-    function updateSelect2Options(selector, options) {
+    }
+
+    function updateSelect2Options(selector, options, placeholder = "Select an option") {
         const select = $(selector);
         select.empty(); // Clear existing options
 
-        $.each(options, function(value, text) {
-            select.append(new Option(text, value));
+        const data = Object.entries(options).map(([value, text]) => ({id: value, text: text}));
+        
+        // Re-initialize Select2 with new data
+        select.select2({
+            data: data,
+            placeholder: placeholder,
+            allowClear: true,
+            width: '100%'
         });
+
+        // Trigger change to refresh
+        select.trigger('change');
     }
+
     function disableForms() {
         $('#select_portraits_year').prop('disabled', true);
         $('#select_portraits_view').prop('disabled', true);
@@ -83,9 +95,10 @@
         $('#image-search-portraits').prop('disabled', true);
         updateDownloadsForPortraits();
     }
+
     function updateDownloadsForPortraits(activeTab = '') {
         let tab = activeTab;
-        if (isEmptyString(tab)) {
+        if (!tab) {
             const activeTabEl = document.querySelector('.tab-button[aria-selected="true"]');
             tab = activeTabEl ? activeTabEl.id : null;
         }
@@ -96,22 +109,33 @@
     window.updateDownloadsForPortraits = updateDownloadsForPortraits;
 
     window.performPortaitSearch = performPortaitSearch;
+
     window.addEventListener('load', () => {
-        $('#select_portraits_year').select2({placeholder: "Select a Year"});
-        $('#select_portraits_year').change(updateGridView);
-        $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
-        $('#select_portraits_view').change(updateGridView);
-        $('#select_portraits_class').select2({placeholder: "All"});
-        $('#select_portraits_class').change(updateGridView);
+        // Initialize Select2 for all selects with placeholders
+        $('#select_portraits_year').select2({placeholder: "Select a Year", width: '100%'}).change(updateGridView);
+														   
+        $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity, width: '100%'}).change(updateGridView);
+														   
+        $('#select_portraits_class').select2({placeholder: "All", width: '100%'}).change(updateGridView);
+															
 
         @if ($season == 0)
             disableForms();
         @endif
     });
 
+    // Listen for Livewire updates
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
-        if (data[0] == 'PORTRAITS') {
-            updateSelect2Options(`#select_portraits_${data[1]}`, data[2]);
+        if (data[0] === 'PORTRAITS') {
+            const selector = `#select_portraits_${data[1]}`;
+            const options = data[2]; // {value: text}
+            let placeholder = "Select an option";
+
+            if (data[1] === 'year') placeholder = "Select a Year";
+            if (data[1] === 'view') placeholder = "Select a View";
+            if (data[1] === 'class') placeholder = "All";
+
+            updateSelect2Options(selector, options, placeholder);
         }
     });
 </script>
