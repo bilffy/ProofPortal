@@ -13,7 +13,6 @@ $selectedSeason = session('selectedSeason') ?? '[]';
         <link rel="shortcut icon" href="{{ asset('proofing-assets/img/msp_logo.svg') }}">
         @vite(['resources/css/app.scss', 'resources/js/app.ts'])
         <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
-        <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js" integrity="sha512-4MvcHwcbqXKUHB6Lx3Zb5CEAVoE9u84qN+ZSMM6s7z8IeJriExrV3ND5zRze9mxNlABJ6k864P/Vl8m0Sd3DtQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" integrity="sha512-aD9ophpFQ61nFZP6hXYu4Q/b/USW7rpLCQLX6Bi0WJHXNO7Js/fUENpBQf/+P4NtpzNX0jSgR5zVvPOJp+W2Kg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
         <!-- Icons -->
@@ -241,7 +240,8 @@ $selectedSeason = session('selectedSeason') ?? '[]';
         <script src="{{ asset('proofing-assets/vendors/js/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('proofing-assets/vendors/js/pace.min.js') }}"></script>
         <script src="{{ asset('proofing-assets/js/app.js') }}"></script>
-
+        <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js" integrity="sha512-4MvcHwcbqXKUHB6Lx3Zb5CEAVoE9u84qN+ZSMM6s7z8IeJriExrV3ND5zRze9mxNlABJ6k864P/Vl8m0Sd3DtQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
         <!-- CoreUI main scripts -->
         @yield('js')
         @stack('scripts')
