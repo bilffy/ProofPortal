@@ -96,7 +96,7 @@
     window.updateDownloadsForPortraits = updateDownloadsForPortraits;
 
     window.performPortaitSearch = performPortaitSearch;
-    window.addEventListener('load', () => {
+    $(document).ready(function () {
         $('#select_portraits_year').select2({placeholder: "Select a Year"});
         $('#select_portraits_year').change(updateGridView);
         $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
