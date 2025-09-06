@@ -70,14 +70,26 @@
     };
     function updateSelect2Options(selector, options) {
         const select = $(selector);
-        select.empty(); // Clear existing options
+
+        // Destroy existing select2 instance
+        if (select.hasClass("select2-hidden-accessible")) {
+            select.select2('destroy');
+        }
+
+        select.empty();
 
         $.each(options, function(value, text) {
             select.append(new Option(text, value));
         });
 
-        select.trigger('change.select2');
+        // Re-init select2 with placeholder
+        let placeholder = "Select";
+        if (selector.includes("class")) placeholder = "All";
+        if (selector.includes("view")) placeholder = "Select a View";
+
+        select.select2({ placeholder: placeholder });
     }
+
     function disableForms() {
         $('#select_portraits_year').prop('disabled', true);
         $('#select_portraits_view').prop('disabled', true);
