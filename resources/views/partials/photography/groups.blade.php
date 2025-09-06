@@ -97,7 +97,7 @@
     window.updateDownloadsForGroups = updateDownloadsForGroups;
 
     window.performGroupSearch = performGroupSearch;
-    window.addEventListener('load', () => {
+    $(document).ready(function () {
         $('#select_groups_year').select2({placeholder: "Select a Year"});
         $('#select_groups_year').change(updateGridView);
         $('#select_groups_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
