@@ -75,6 +75,7 @@
         $.each(options, function(value, text) {
             select.append(new Option(text, value));
         });
+        select.trigger('change');
     }
     function disableForms() {
         $('#select_portraits_year').prop('disabled', true);
