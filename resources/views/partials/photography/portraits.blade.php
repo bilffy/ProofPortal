@@ -70,26 +70,12 @@
     };
     function updateSelect2Options(selector, options) {
         const select = $(selector);
-
-        // Destroy existing select2 instance
-        if (select.hasClass("select2-hidden-accessible")) {
-            select.select2('destroy');
-        }
-
-        select.empty();
+        select.empty(); // Clear existing options
 
         $.each(options, function(value, text) {
             select.append(new Option(text, value));
         });
-
-        // Re-init select2 with placeholder
-        let placeholder = "Select";
-        if (selector.includes("class")) placeholder = "All";
-        if (selector.includes("view")) placeholder = "Select a View";
-
-        select.select2({ placeholder: placeholder });
     }
-
     function disableForms() {
         $('#select_portraits_year').prop('disabled', true);
         $('#select_portraits_view').prop('disabled', true);
@@ -124,6 +110,8 @@
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
+        console.log($('#select_portraits_view option').length);
+        console.log($('#select_portraits_class option').length);
         if (data[0] == 'PORTRAITS') {
             updateSelect2Options(`#select_portraits_${data[1]}`, data[2]);
         }
