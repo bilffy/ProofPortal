@@ -110,11 +110,9 @@
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
-        console.log("Incoming options:", data[2]); // check this!
         if (data[0] == 'PORTRAITS') {
             updateSelect2Options(`#select_portraits_${data[1]}`, data[2]);
         }
     });
-
 </script>
 @endpush
