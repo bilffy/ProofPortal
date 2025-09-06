@@ -240,7 +240,7 @@
                                         
                                                     <div class="form-group text-center">
                                                         <input type="checkbox"
-                                                            class="form-check-input folder-details-is-visible-for-proofing text-center mt-2 ml-0 mr-0"
+                                                            class="form-check-input folder-details-is-visible-for-proofing text-center bmt-2 ml-0 mr-0"
                                                             id="is-visible-for-proofing-{{ $folderKey }}"
                                                             name="is-visible-for-proofing-{{ $folderName }}"
                                                             data-folder-key="{{ $folderKey }}"
@@ -269,7 +269,7 @@
                                         
                                                     <div class="form-group text-center">
                                                         <input type="checkbox"
-                                                            class="form-check-input folder-details-is-edit-portraits text-center mt-2 ml-0 mr-0"
+                                                            class="form-check-input folder-details-is-edit-portraits text-center bmt-2 ml-0 mr-0"
                                                             id="is-edit-portraits-{{ $folderKey }}"
                                                             name="is-edit-portraits-{{ $folderName }}"
                                                             data-folder-key="{{ $folderKey }}"
@@ -314,7 +314,7 @@
                                         
                                                     <div class="form-group text-center">
                                                         <input type="checkbox"
-                                                            class="form-check-input folder-details-is-edit-group text-center mt-2 ml-0 mr-0"
+                                                            class="form-check-input folder-details-is-edit-group text-center bmt-2 ml-0 mr-0"
                                                             id="is-edit-group-{{ $folderKey }}"
                                                             name="is-edit-group-{{ $folderName }}"
                                                             data-folder-key="{{ $folderKey }}"
@@ -346,7 +346,7 @@
                                         
                                                             <div class="form-group text-center">
                                                                 <input type="checkbox"
-                                                                    class="form-check-input folder-details-is-subject-list-allowed text-center mt-2 ml-0 mr-0"
+                                                                    class="form-check-input folder-details-is-subject-list-allowed text-center bmt-2 ml-0 mr-0"
                                                                     id="is-subject-list-allowed-{{ $folderKey }}"
                                                                     name="is-subject-list-allowed-{{ $folderName }}"
                                                                     data-folder-key="{{ $folderKey }}"
@@ -410,14 +410,14 @@
                                                                     </div> 
                                         
                                                                     <div id="{{ $folderKey }}-bar" class="d-none">
-                                                                        <div id="progress-wrp-{{ $folderKey }}" class="progress mt-2 mb-2">
+                                                                        <div id="progress-wrp-{{ $folderKey }}" class="progress bmt-2 mb-2">
                                                                             <div class="progress-bar" role="progressbar"
                                                                                  style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                         
-                                                                    <div id="{{ $folderKey }}-error" class="alert alert-danger d-none p-1 mt-2 mb-2">
+                                                                    <div id="{{ $folderKey }}-error" class="alert alert-danger d-none p-1 bmt-2 mb-2">
                                                                         Error MSG
                                                                     </div>
                                                                 </div>
@@ -448,7 +448,7 @@
                                                     <div class="form-group text-center">
                                                         <!-- Checkbox -->
                                                         <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-principal text-center mt-2 ml-0 mr-0"
+                                                               class="form-check-input folder-details-is-edit-principal text-center bmt-2 ml-0 mr-0"
                                                                id="is-edit-principal-{{ $folderKey }}"
                                                                name="is-edit-principal-{{ $folderName }}"
                                                                data-folder-key="{{ $folderKey }}"
@@ -481,7 +481,7 @@
                                                     <div class="form-group text-center">
                                                         <!-- Checkbox -->
                                                         <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-deputy text-center mt-2 ml-0 mr-0"
+                                                               class="form-check-input folder-details-is-edit-deputy text-center bmt-2 ml-0 mr-0"
                                                                id="is-edit-deputy-{{ $folderKey }}"
                                                                name="is-edit-deputy-{{ $folderName }}"
                                                                data-folder-key="{{ $folderKey }}"
@@ -514,7 +514,7 @@
                                                     <div class="form-group text-center">
                                                         <!-- Checkbox -->
                                                         <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-teacher text-center mt-2 ml-0 mr-0"
+                                                               class="form-check-input folder-details-is-edit-teacher text-center bmt-2 ml-0 mr-0"
                                                                id="is-edit-teacher-{{ $folderKey }}"
                                                                name="is-edit-teacher-{{ $folderName }}"
                                                                data-folder-key="{{ $folderKey }}"
@@ -547,7 +547,7 @@
                                                     <div class="form-group text-center">
                                                         <!-- Checkbox -->
                                                         <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-salutation text-center mt-2 ml-0 mr-0"
+                                                               class="form-check-input folder-details-is-edit-salutation text-center bmt-2 ml-0 mr-0"
                                                                id="is-edit-salutation-{{ $folderKey }}"
                                                                name="is-edit-salutation-{{ $folderName }}"
                                                                data-folder-key="{{ $folderKey }}"
@@ -580,7 +580,7 @@
                                                     <div class="form-group text-center">
                                                         <!-- Checkbox -->
                                                         <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-job-title text-center mt-2 ml-0 mr-0"
+                                                               class="form-check-input folder-details-is-edit-job-title text-center bmt-2 ml-0 mr-0"
                                                                id="is-edit-job-title-{{ $folderKey }}"
                                                                name="is-edit-job-title-{{ $folderName }}"
                                                                data-folder-key="{{ $folderKey }}"

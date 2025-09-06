@@ -69,7 +69,7 @@
                             </div>
 
                             <!-- Math Question Section -->
-                            <div class="col-12 mt-2">
+                            <div class="col-12 bmt-2">
                                 @php
                                     $figureA = mt_rand(1, 9);
                                     $figureB = mt_rand(1, 9);

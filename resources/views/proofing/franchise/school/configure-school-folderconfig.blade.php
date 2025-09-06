@@ -3,7 +3,7 @@
     $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
 @endphp    
 
-    <div class="row mt-2">
+    <div class="row bmt-2">
         <div class="col-12 m-auto">
             <p class="h5 lead mb-1"><strong>{{ __('Folder Configuration') }}</strong></p>
         </div>
@@ -65,7 +65,7 @@
                                             @endphp
                                             <div class="form-group text-center">
                                                 <input type="checkbox"
-                                                    class="form-check-input folder-details-is-visible-for-portrait text-center mt-2 ml-0 mr-0"
+                                                    class="form-check-input folder-details-is-visible-for-portrait text-center bmt-2 ml-0 mr-0"
                                                     id="is-visible-for-portrait"
                                                     name="is-visible-for-portrait-{{ $folderName }}"
                                                     data-folder-id="{{ $fIdHash }}"
@@ -87,7 +87,7 @@
                                                 @endphp
                                                 <div class="form-group text-center">
                                                     <input type="checkbox"
-                                                        class="form-check-input folder-details-is-visible-for-group text-center mt-2 ml-0 mr-0"
+                                                        class="form-check-input folder-details-is-visible-for-group text-center bmt-2 ml-0 mr-0"
                                                         id="is-visible-for-group"
                                                         name="is-visible-for-group-{{ $folderName }}"
                                                         data-folder-id="{{ $fIdHash }}"

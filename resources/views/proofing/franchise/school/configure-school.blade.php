@@ -394,7 +394,7 @@
                             </div>
                         </div>   
 
-                        <div class="row mt-2 pl-3">
+                        <div class="row bmt-2 pl-3">
                             <div id="ajax-response-readable" class="alert d-none" role="alert"></div>
                         </div>
 

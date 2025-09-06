@@ -171,7 +171,7 @@ $ssrsPassword = config('settings.ssrs_password');
                         <p class="mb-1"><strong>Folder:</strong> {{ config('settings.ssrs_folder') }}</p>
                         <p class="mb-1"><strong>Report:</strong> {{ $report->name }}</p>
 
-                        <p class="mt-2 mb-0"><strong>Parameters:</strong></p>
+                        <p class="bmt-2 mb-0"><strong>Parameters:</strong></p>
                         <table class="table table-bordered table-striped table-sm">
                             <thead>
                                 <tr>

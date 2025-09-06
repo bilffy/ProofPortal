@@ -26,7 +26,7 @@
     @endphp
 
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
-        <div class="row mt-2">
+        <div class="row bmt-2">
             <div class="col-12">
                 <p class="display-4">
                     {{ __('What would you like to Proof?') }}

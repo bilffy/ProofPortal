@@ -93,7 +93,7 @@
                                             <div id="inputFieldsContainer_{{ $skHash }}"></div>
                                             <!-- Input field templates -->
                                             <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$spellingTemplateID}}_{{ $skHash }}">
-                                                <div id="spelling_{{ $skHash }}" class="mt-2">
+                                                <div id="spelling_{{ $skHash }}" class="bmt-2">
                                                     <div id="first_name_{{ $skHash }}">
                                                         <label for="{{ $skHash }}-new_first_name" class="mt-3">First Name</label>
                                                         <input type="text" name="{{ $skHash }}_new_first_name" id="{{ $skHash }}-new_first_name" class="form-control {{ $skHash }}-form-spelling-first-name" value="{{ $subject->firstname }}">
@@ -106,14 +106,14 @@
                                             </template>
 
                                             <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$pictureTemplateID}}_{{ $skHash }}">
-                                                <div id="picture_{{ $skHash }}" class="mt-2">
+                                                <div id="picture_{{ $skHash }}" class="bmt-2">
                                                     <label for="{{ $skHash }}-picture_issue" class="mt-3">Do you know who this is? Type their name below or leave it blank.</label>
                                                     <input type="text" name="{{ $skHash }}_picture_issue" id="{{ $skHash }}-picture_issue" class="form-control" >
                                                 </div>
                                             </template>
 
                                             <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$wrongclassTemplateID}}_{{ $skHash }}">
-                                                <div id="folder_{{ $skHash }}" class="mt-2">
+                                                <div id="folder_{{ $skHash }}" class="bmt-2">
                                                     <label for="{{ $skHash }}-folder_issue" class="mt-3">Do you know which Class/Group they belong to? If so, select from below.</label>
                                                     <select name="{{ $skHash }}_folder_issue" id="{{ $skHash }}-folder_issue" class="form-control homedfolders">
                                                         <option value="">I'm not sure</option>

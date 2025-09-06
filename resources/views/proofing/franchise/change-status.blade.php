@@ -88,7 +88,7 @@
                             <thead>
                             <tr>
                                 @if($selectedJob->reviewStatuses->id !== $locked && $selectedJob->reviewStatuses->id !== $archived)
-                                    <th scope="col" style="width: 50px;" class="text-center"><input type="checkbox" id="check_all" class="mt-2 ml-0 mr-0"></th>
+                                    <th scope="col" style="width: 50px;" class="text-center"><input type="checkbox" id="check_all" class="bmt-2 ml-0 mr-0"></th>
                                 @endif
                                 <th scope="col">{{ __('Folder Name') }}</th>
                                 <th scope="col" class="text-center">{{ __('Current Status') }}</th>
@@ -99,7 +99,7 @@
                             @foreach ($selectedFolders as $folder)
                                 <tr>
                                     @if($selectedJob->reviewStatuses->id !== $locked && $selectedJob->reviewStatuses->id !== $archived)
-                                        <td class="align-middle text-center"><input type="checkbox" value="{{ Crypt::encryptString($folder->ts_folder_id) }}" class="mt-2 ml-0 mr-0 folder-checkbox"></td>
+                                        <td class="align-middle text-center"><input type="checkbox" value="{{ Crypt::encryptString($folder->ts_folder_id) }}" class="bmt-2 ml-0 mr-0 folder-checkbox"></td>
                                     @endif
                                     <td class="align-middle">{{ $folder->ts_foldername }}</td>
                                     <td class="align-middle text-center">{{ $folder->reviewStatuses->status_external_name }}</td>
