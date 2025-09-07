@@ -161,14 +161,8 @@
 
 @push('scripts')
 <script type="module">
-document.addEventListener("DOMContentLoaded", () => {
-    // ✅ Initialize modals first
-    window.confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
-    window.successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
-    window.showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
-    window.confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'));
-
-    // ✅ Utility functions
+    // TODO: Implement cloudflare-friendly encryption for photography download request
+    // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
         let checkIcon = imgCheckbox.querySelector('i');
         if (isSelected) {
@@ -192,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
             downloadBtn.innerHTML = 'Download All';
         }
     }
-
+    
     function updateDownloadSelection() {
         const images = JSON.parse(localStorage.getItem('selectedImages'));
         const portraits = document.querySelectorAll('.portrait-img');
@@ -231,99 +225,93 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             selectedItems.push(imageId);
         }
-
+        
         window.localStorage.setItem('selectedImages', JSON.stringify(selectedItems));
 
         updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected);
         updateDownloadSection(selectedItems.length);
 
-													   
-		
+        console.log('Selected Images:', selectedItems);
+        
     }
 
     function getActiveTabId() {
         const activeTab = document.querySelector('.tab-button[aria-selected="true"]');
         return activeTab ? activeTab.id : null;
     }
-
-    // ✅ Make functions globally available
+    
     window.resetImages = resetImages;
     window.handleImageClick = handleImageClick;
     window.updateDownloadSelection = updateDownloadSelection;
-
     resetImages();
-
-    // ✅ Tabs handling
-															
-    const tabs = document.querySelectorAll('.tab-button');
-    const activeTabId = getActiveTabId();
-    switch (activeTabId) {
-        case 'portraits-tab':
-            debouncedSetCategory('PORTRAITS');
-            break;
-        case 'groups-tab':
-            debouncedSetCategory('GROUPS');
-            break;
-        case 'others-tab':
-            debouncedSetCategory('OTHERS');
-            break;
-    }
-    tabs.forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            e.preventDefault();
-            const url = tab.getAttribute('href');
-            history.pushState({ path: url }, '', url);
-            if (window.localStorage.getItem('reloadPhotography')) {
-                confirmReloadPageModal.show();
-                const reloadModal = document.getElementById('confirmReloadPageModal');
-                const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
-                reloadModalCloseBtn.addEventListener('click', () => reloadPage());
-                document.addEventListener('click', (e) => {
-                    if (e.target === reloadModal) {
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        window.localStorage.removeItem('reloadPhotography');
+        const tabs = document.querySelectorAll('.tab-button');
+        const activeTabId = getActiveTabId();
+        switch (activeTabId) {
+            case 'portraits-tab':
+                debouncedSetCategory('PORTRAITS');
+                break;
+            case 'groups-tab':
+                debouncedSetCategory('GROUPS');
+                break;
+            case 'others-tab':
+                debouncedSetCategory('OTHERS');
+                break;
+        }
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = tab.getAttribute('href');
+                history.pushState({ path: url }, '', url);
+                if (window.localStorage.getItem('reloadPhotography')) {
+                    confirmReloadPageModal.show();
+                    const reloadModal = document.getElementById('confirmReloadPageModal');
+                    const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
+                    // Reload when clicking close button
+                    reloadModalCloseBtn.addEventListener('click', () => {
                         reloadPage();
-                    }
-                }, false);
-            } else {
-                const tabId = e.target.id;
-                const downloadSection = document.querySelector('#download-section');
-                if ('configure-tab' == tabId || 'configure-new-tab' == tabId) {
-                    downloadSection.classList.add('hidden');
+                    });
+                    // Reload when clicking outside of the modal
+                    document.addEventListener('click', (e) => {
+                        if (e.target === reloadModal) {
+                            reloadPage();
+                        }
+                    }, false);
                 } else {
-											
-																	  
-																						
-																			   
-                    downloadSection.classList.remove('hidden');
-							
-																   
-                    if ('portraits-tab' == tabId) {
-                        window.updateDownloadsForPortraits(tabId);
-                        setCategory('PORTRAITS');
-                    } else if ('groups-tab' == tabId) {
-                        window.updateDownloadsForGroups(tabId);
-                        setCategory('GROUPS');
-                    } else if ('others-tab' == tabId) {
-                        window.updateDownloadsForOthers(tabId);
-                        setCategory('OTHERS');
-						 
+                    const tab = e.target.id;
+                    // Hide download section when in configuration tab
+                    const downloadSection = document.querySelector('#download-section');
+                    if ('configure-tab' == tab || 'configure-new-tab' == tab) {
+                        downloadSection.classList.add('hidden');
+                    } else {
+                        downloadSection.classList.remove('hidden');
+                        if ('portraits-tab' == tab) {
+                            window.updateDownloadsForPortraits(tab);
+                            setCategory('PORTRAITS');
+                        } else if ('groups-tab' == tab) {
+                            window.updateDownloadsForGroups(tab);
+                            setCategory('GROUPS');
+                        } else if ('others-tab' == tab) {
+                            window.updateDownloadsForOthers(tab);
+                            setCategory('OTHERS');
+                        }
                     }
-											
-								  
+                    // reset images selected
+                    resetImages();
                 }
-                resetImages();
-            }
+            });
         });
     });
-
-    // ✅ Download modals
-    window.showOptionsDownloadRequest = async function () {
+    
+    async function showOptionsDownloadRequest() {
         if ($(".grid").attr('total-image-count') != 0) {
 
             const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
 
-																																	
-			
+            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
+            
             if (selectedImagesLength == 1) {
                 $("#folder_format_selection").hide();
             } else {
@@ -338,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 body: {}
             });
-
+            
             let result = await response.json();
             $(`#nonce`).val(result.data.nonce);
             showOptionsDownloadModal.show();
@@ -346,13 +334,13 @@ document.addEventListener("DOMContentLoaded", () => {
             alert('No images found');
         }
     }
-
-    window.showConfirmDownloadRequest = function () {
-        showOptionsDownloadModal.hide();
+    
+    function showConfirmDownloadRequest() {
+        showOptionsDownloadModal.hide()
         confirmDownloadRequest();
     }
-
-    window.confirmDownloadRequest = function () {
+    
+    function confirmDownloadRequest() {
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
         if ($(".grid").attr('total-image-count') != 0) {
             confirmDownloadModal.show();
@@ -363,34 +351,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    window.updateSchoolConfig = function () {
+    function updateSchoolConfig() {
         $('#configure-tab').text('Configure*');
         $('#configure-new-tab').text('Configure-new*');
         window.localStorage.setItem('reloadPhotography', true);
     }
 
-    window.reloadPage = function () {
+    function reloadPage() {
         window.location.reload();
     }
 
-    window.updateFormatOptions = function (options) {
+    function updateFormatOptions(options) {
         const formatSelect = document.getElementById('filename_format');
-								 
+        // Clear existing options
         formatSelect.innerHTML = '';
-						  
-        Object.values(options).forEach(({ name, format_key }) => {
+        // Add new options
+        Object.values(options).forEach(({name, format_key}) => {
             const newOption = document.createElement('option');
             newOption.value = format_key;
             newOption.textContent = name;
             formatSelect.appendChild(newOption);
         });
     }
-
-																							
-																							
-																									
-																							   
-	
+    
+    const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
+    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
+    const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
+    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
+    
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
             const images = JSON.parse(localStorage.getItem('selectedImages'));
@@ -400,8 +388,8 @@ document.addEventListener("DOMContentLoaded", () => {
             updateImageState(checkbox, images.includes(imageId));
         }, 50);
     });
-
-    window.submitDownloadRequest = async function () {
+    
+    async function submitDownloadRequest() {
         const tab = getActiveTabId();
         const tabVal = tab.replace("-tab", "");
         const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
@@ -412,13 +400,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const selectedClass = $(`#select_${tabVal}_class`).val();
             const INDIVIDUAL_CATEGORY = 1;
             const BULK_CATEGORY = 2;
-
-														
-														
-																		  
-			
+            
+            console.log('Selected Year:', selectedYear);
+            console.log('Selected View:', selectedView);
+            console.log('Selected Class:', JSON.stringify(selectedClass));
+            
             $(downloadBtn).html(`<x-spinner.button />`);
-
+            
             let filters = {
                 year: selectedYear,
                 view: selectedView,
@@ -426,9 +414,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 resolution: $('#image_res').val(),
                 folder_format: $('#folder_format').val()
             };
-
-													  
-			
+            
+            console.log('Download Filters:', filters);
+            
             const response = await fetch('{{ route('photography.request-download') }}', {
                 method: 'POST',
                 headers: {
@@ -437,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     'MSP-Nonce': $(`#nonce`).val()
                 },
                 body: JSON.stringify(
-                    {
+                    { 
                         images: selectedImages,
                         category: selectedImages.length === 1 ? INDIVIDUAL_CATEGORY : BULK_CATEGORY,
                         filters: filters,
@@ -446,28 +434,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 )
             });
-
-								  
-			
-            if (!response.ok) {
-									 
+            
+            console.log(response);
+            
+            // check if response has error and throw error, get the error status
+            if (await !response.ok) {
                 throw new Error('Network response was not ok');
             }
-
+            
             const result = await response.json();
-
-			
-								
-			
-											
+            //console.log('Download request successful:', result);
+            
+            console.log(result);
+            
+            // only if selected image is one
             if (selectedImages.length === 1) {
                 const imgElement = document.createElement('a');
                 imgElement.href = `data:image/jpeg;base64,${result['data']}`;
                 imgElement.download = `${result['filename']}.jpg`;
-																				  
+                // imgElement.download = `${decryptData(result['filename'])}.jpg`;
                 imgElement.click();
             }
-
+            
             $(downloadBtn).html("Download");
             resetImages();
             document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
@@ -479,19 +467,16 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error('Error submitting download request:', error);
         }
     }
-	
-																   
-																   
-														 
-														   
-								   
-												   
+    
+    window.showOptionsDownloadRequest = showOptionsDownloadRequest;
+    window.showConfirmDownloadRequest = showConfirmDownloadRequest;
+    window.submitDownloadRequest = submitDownloadRequest;
+    window.confirmDownloadRequest = confirmDownloadRequest;
+    window.reloadPage = reloadPage;
+    window.updateSchoolConfig = updateSchoolConfig;
 
-    // ✅ Livewire listener
     Livewire.on('EV_UPDATE_FILENAME_FORMATS', (data) => {
         updateFormatOptions(data[0]);
     });
-});
 </script>
 @endpush
-
