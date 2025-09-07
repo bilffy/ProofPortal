@@ -68,14 +68,14 @@
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
     };
-    function updateSelect2Options(selector, options) {
-        const select = $(selector);
-        select.empty(); // Clear existing options
+    // function updateSelect2Options(selector, options) {
+    //     const select = $(selector);
+    //     select.empty(); // Clear existing options
 
-        $.each(options, function(value, text) {
-            select.append(new Option(text, value));
-        });
-    }
+    //     $.each(options, function(value, text) {
+    //         select.append(new Option(text, value));
+    //     });
+    // }
     function disableForms() {
         $('#select_portraits_year').prop('disabled', true);
         $('#select_portraits_view').prop('disabled', true);
