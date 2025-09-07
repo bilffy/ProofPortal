@@ -52,7 +52,7 @@
 </div>
 
 @push('scripts')
-<script type="module">
+<script>
     function performPortaitSearch(event) {
         if (event.key === 'Enter') {
             Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'PORTRAITS' });
@@ -68,14 +68,14 @@
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
     };
-    // function updateSelect2Options(selector, options) {
-    //     const select = $(selector);
-    //     select.empty(); // Clear existing options
+    function updateSelect2Options(selector, options) {
+        const select = $(selector);
+        select.empty(); // Clear existing options
 
-    //     $.each(options, function(value, text) {
-    //         select.append(new Option(text, value));
-    //     });
-    // }
+        $.each(options, function(value, text) {
+            select.append(new Option(text, value));
+        });
+    }
     function disableForms() {
         $('#select_portraits_year').prop('disabled', true);
         $('#select_portraits_view').prop('disabled', true);
@@ -96,7 +96,7 @@
     window.updateDownloadsForPortraits = updateDownloadsForPortraits;
 
     window.performPortaitSearch = performPortaitSearch;
-    $(document).ready(function () {
+    window.addEventListener('load', () => {
         $('#select_portraits_year').select2({placeholder: "Select a Year"});
         $('#select_portraits_year').change(updateGridView);
         $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
