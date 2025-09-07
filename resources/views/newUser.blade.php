@@ -105,7 +105,7 @@
 @endsection
 
 @push('scripts')
-<script type="module">
+<script>
     import JsAesPhp from "{{ Vite::asset('resources/js/helpers/js-aes-php.ts') }}"
     
     let user = {{ Js::from($user) }}

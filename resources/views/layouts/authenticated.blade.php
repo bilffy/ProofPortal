@@ -123,7 +123,7 @@
         </div>
     </div>
 
-    <script type="module">
+    <script>
         // TODO: Implement cloudflare-friendly encryption for session polling
         import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
         // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"

@@ -71,7 +71,7 @@
 </div>
 
 @push('scripts')
-<script type="module">
+<script>
     import { NAV_TABS } from "{{ Vite::asset('resources/js/helpers/constants.helper.ts') }}"
     import { getCurrentNav, getNavTabId } from "{{ Vite::asset('resources/js/helpers/utils.helper.ts') }}"
 
