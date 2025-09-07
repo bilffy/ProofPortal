@@ -114,7 +114,7 @@
         {{ $users->onEachSide(1)->links('vendor.livewire.pagination') }}
     </div>
 
-    <script>
+    <script type="module">
 
         async function checkUserStatus(route) {
             const response = await fetch(route, {

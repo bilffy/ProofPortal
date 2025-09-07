@@ -80,7 +80,7 @@
 </x-modal.base>
 
 @push('scripts')
-<script>
+<script type="module">
     window.addEventListener("load", function () {
         $('[data-modal-toggle="inviteModal"]').on('click', function() {
             const email = $(this).closest('tr').find('td:first-child').text().trim();

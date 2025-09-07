@@ -42,7 +42,7 @@
                 Back to login
             </a>
         </div>
-        <script>
+        <script type="module">
             // TODO: Implement cloudflare-friendly encryption for forgot password
             // import { encryptObjectValues, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
             // import JsAesPhp from "{{ Vite::asset('resources/js/helpers/js-aes-php.ts') }}"

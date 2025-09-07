@@ -177,7 +177,7 @@ $selectedSeason = session('selectedSeason') ?? '[]';
             </div>
         </div>
 
-        <script>
+        <script type="module">
             //let navCollapsed = false;
             import { getCurrentNav, getNavTabId } from "{{ Vite::asset('resources/js/helpers/utils.helper.ts') }}"
 

@@ -53,7 +53,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script type="module">
     function performOtherSearch(event) {
         if (event.key === 'Enter') {
             Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'OTHERS' });

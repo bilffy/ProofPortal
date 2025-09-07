@@ -58,7 +58,7 @@
 </main>
 
 @push('scripts')
-<script>
+<script type="module">
     // TODO: implement cloudflare-friendly encryption for login
     // import { encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     // window.addEventListener('livewire:init', () => {

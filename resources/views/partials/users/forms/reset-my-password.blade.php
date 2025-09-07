@@ -46,7 +46,7 @@
 </div>
 
 @push('scripts')
-    <script>
+    <script type="module">
        
     </script>
 

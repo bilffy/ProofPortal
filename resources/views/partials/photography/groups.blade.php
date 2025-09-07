@@ -53,7 +53,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script type="module">
     function performGroupSearch(event) {
         if (event.key === 'Enter') {
             Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'GROUPS' });
