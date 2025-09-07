@@ -161,6 +161,12 @@
 
 @push('scripts')
 <script type="module">
+    
+    const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
+    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
+    const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
+    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'));
+    
     // TODO: Implement cloudflare-friendly encryption for photography download request
     // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
@@ -373,11 +379,6 @@
             formatSelect.appendChild(newOption);
         });
     }
-    
-    const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
-    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
-    const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
-    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
