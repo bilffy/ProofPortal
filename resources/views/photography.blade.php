@@ -160,7 +160,7 @@
 @endsection
 
 @push('scripts')
-<script type="module">console.log("Blade script loaded!");
+<script type="module">
     // TODO: Implement cloudflare-friendly encryption for photography download request
     // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
