@@ -160,26 +160,7 @@
 @endsection
 
 @push('scripts')
-<script type="module">  
-    document.addEventListener("DOMContentLoaded", () => {
-        const confirmDownloadModalEl = document.getElementById('confirmDownloadModal');
-        const successDownloadModalEl = document.getElementById('successDownloadModal');
-        const showOptionsDownloadModalEl = document.getElementById('showOptionsDownloadModal');
-        const confirmReloadPageModalEl = document.getElementById('confirmReloadPageModal');
-
-        // Initialize only if element exists
-        const confirmDownloadModal = confirmDownloadModalEl ? new Modal(confirmDownloadModalEl) : null;
-        const successDownloadModal = successDownloadModalEl ? new Modal(successDownloadModalEl) : null;
-        const showOptionsDownloadModal = showOptionsDownloadModalEl ? new Modal(showOptionsDownloadModalEl) : null;
-        const confirmReloadPageModal = confirmReloadPageModalEl ? new Modal(confirmReloadPageModalEl) : null;
-
-        // Expose globally if needed
-        window.confirmDownloadModal = confirmDownloadModal;
-        window.successDownloadModal = successDownloadModal;
-        window.showOptionsDownloadModal = showOptionsDownloadModal;
-        window.confirmReloadPageModal = confirmReloadPageModal;
-    });
-
+<script type="module">
     // TODO: Implement cloudflare-friendly encryption for photography download request
     // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
     function updateImageState(imgCheckbox, isSelected) {
@@ -281,7 +262,7 @@
         }
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
-                e.preventDefault();
+                // e.preventDefault();
                 const url = tab.getAttribute('href');
                 history.pushState({ path: url }, '', url);
                 if (window.localStorage.getItem('reloadPhotography')) {
@@ -392,6 +373,11 @@
             formatSelect.appendChild(newOption);
         });
     }
+    
+    const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
+    const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
+    const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
+    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
