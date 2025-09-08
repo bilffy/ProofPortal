@@ -7,7 +7,7 @@
     $otherTab = $AppSettingsHelper::getByPropertyKey('other_tab');
     $configureTabV1 = $AppSettingsHelper::getByPropertyKey('configure_tab_v1');
     $configureTabV2 = $AppSettingsHelper::getByPropertyKey('configure_tab_v2');
-    
+    dd($configureTabV1->property_value.', '.$configureTabV2->property_value);
     $highResDownloadOptionValue = $highResDownloadOption ? $highResDownloadOption->property_value === 'true' ? true : false : true; 
     $lowResDownloadOptionValue = $lowResDownloadOption ? $lowResDownloadOption->property_value === 'true' ? true : false : true;
     $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
@@ -26,18 +26,18 @@
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
                 @if ($configureTabV1Value)
-                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" href="{{route('photography.configure')}}">Configure</x-tabs.tab>
+                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
                 @endif
                 @if ($configureTabV2Value)
-                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" href="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
+                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
                 @endif
             @endrole
-            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" href="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
+            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
             @if ($groupsTabValue)    
-                <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" href="{{route('photography.groups')}}">Groups</x-tabs.tab>
+                <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
             @endif
             @if ($otherTabValue)
-                <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" href="{{route('photography.others')}}">Others</x-tabs.tab>
+                <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
             @endif
             <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
