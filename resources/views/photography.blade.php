@@ -262,9 +262,7 @@
         }
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
-                // e.preventDefault();
                 const url = tab.getAttribute('href');
-                history.pushState({ path: url }, '', url);
                 if (window.localStorage.getItem('reloadPhotography')) {
                     confirmReloadPageModal.show();
                     const reloadModal = document.getElementById('confirmReloadPageModal');
