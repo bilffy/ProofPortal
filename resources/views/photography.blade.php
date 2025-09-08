@@ -7,7 +7,7 @@
     $otherTab = $AppSettingsHelper::getByPropertyKey('other_tab');
     $configureTabV1 = $AppSettingsHelper::getByPropertyKey('configure_tab_v1');
     $configureTabV2 = $AppSettingsHelper::getByPropertyKey('configure_tab_v2');
-    dd($configureTabV1->property_value.', '.$configureTabV2->property_value);
+    
     $highResDownloadOptionValue = $highResDownloadOption ? $highResDownloadOption->property_value === 'true' ? true : false : true; 
     $lowResDownloadOptionValue = $lowResDownloadOption ? $lowResDownloadOption->property_value === 'true' ? true : false : true;
     $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
