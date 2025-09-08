@@ -247,7 +247,10 @@
     
     document.addEventListener('DOMContentLoaded', () => {
         window.localStorage.removeItem('reloadPhotography');
+
         const tabs = document.querySelectorAll('.tab-button');
+
+        // Set active tab category on page load
         const activeTabId = getActiveTabId();
         switch (activeTabId) {
             case 'portraits-tab':
@@ -260,48 +263,36 @@
                 debouncedSetCategory('OTHERS');
                 break;
         }
+
         tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const url = tab.getAttribute('href');
-                if (window.localStorage.getItem('reloadPhotography')) {
-                    confirmReloadPageModal.show();
-                    const reloadModal = document.getElementById('confirmReloadPageModal');
-                    const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
-                    // Reload when clicking close button
-                    reloadModalCloseBtn.addEventListener('click', () => {
-                        reloadPage();
-                    });
-                    // Reload when clicking outside of the modal
-                    document.addEventListener('click', (e) => {
-                        if (e.target === reloadModal) {
-                            reloadPage();
-                        }
-                    }, false);
+            tab.addEventListener('click', () => {
+                const tabId = tab.id;
+                const downloadSection = document.querySelector('#download-section');
+
+                // Toggle download section for configure tabs
+                if (tabId === 'configure-tab' || tabId === 'configure-new-tab') {
+                    downloadSection.classList.add('hidden');
                 } else {
-                    const tab = e.target.id;
-                    // Hide download section when in configuration tab
-                    const downloadSection = document.querySelector('#download-section');
-                    if ('configure-tab' == tab || 'configure-new-tab' == tab) {
-                        downloadSection.classList.add('hidden');
-                    } else {
-                        downloadSection.classList.remove('hidden');
-                        if ('portraits-tab' == tab) {
-                            window.updateDownloadsForPortraits(tab);
-                            setCategory('PORTRAITS');
-                        } else if ('groups-tab' == tab) {
-                            window.updateDownloadsForGroups(tab);
-                            setCategory('GROUPS');
-                        } else if ('others-tab' == tab) {
-                            window.updateDownloadsForOthers(tab);
-                            setCategory('OTHERS');
-                        }
+                    downloadSection.classList.remove('hidden');
+
+                    if (tabId === 'portraits-tab') {
+                        window.updateDownloadsForPortraits(tabId);
+                        setCategory('PORTRAITS');
+                    } else if (tabId === 'groups-tab') {
+                        window.updateDownloadsForGroups(tabId);
+                        setCategory('GROUPS');
+                    } else if (tabId === 'others-tab') {
+                        window.updateDownloadsForOthers(tabId);
+                        setCategory('OTHERS');
                     }
-                    // reset images selected
-                    resetImages();
                 }
+
+                // Reset selected images whenever a new tab is clicked
+                resetImages();
             });
         });
     });
+
     
     async function showOptionsDownloadRequest() {
         if ($(".grid").attr('total-image-count') != 0) {
