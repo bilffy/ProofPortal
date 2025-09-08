@@ -4,3 +4,4 @@ import.meta.glob([
     '../assets/**',
 ]);
 import { Modal } from 'flowbite';
+import 'select2';
