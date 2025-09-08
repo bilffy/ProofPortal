@@ -377,7 +377,7 @@
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
-    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
+    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'));
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
