@@ -52,7 +52,7 @@
 </div>
 
 @push('scripts')
-<script type="module">
+<script>
     function performPortaitSearch(event) {
         if (event.key === 'Enter') {
             Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'PORTRAITS' });
