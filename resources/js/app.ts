@@ -3,3 +3,5 @@ import 'flowbite';
 import.meta.glob([
     '../assets/**',
 ]);
+import { Modal } from 'flowbite';
+(window as any).Modal = Modal;
