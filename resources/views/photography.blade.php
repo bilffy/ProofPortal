@@ -26,18 +26,18 @@
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
                 @if ($configureTabV1Value)
-                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
+                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" href="{{route('photography.configure')}}">Configure</x-tabs.tab>
                 @endif
                 @if ($configureTabV2Value)
-                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
+                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" href="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
                 @endif
             @endrole
-            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
+            <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" href="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
             @if ($groupsTabValue)    
-                <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" route="{{route('photography.groups')}}">Groups</x-tabs.tab>
+                <x-tabs.tab id="groups" isActive="{{$currentTab == 'groups'}}" href="{{route('photography.groups')}}">Groups</x-tabs.tab>
             @endif
             @if ($otherTabValue)
-                <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
+                <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" href="{{route('photography.others')}}">Others</x-tabs.tab>
             @endif
             <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
                 <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
@@ -247,10 +247,7 @@
     
     document.addEventListener('DOMContentLoaded', () => {
         window.localStorage.removeItem('reloadPhotography');
-
         const tabs = document.querySelectorAll('.tab-button');
-
-        // Set active tab category on page load
         const activeTabId = getActiveTabId();
         switch (activeTabId) {
             case 'portraits-tab':
@@ -263,36 +260,50 @@
                 debouncedSetCategory('OTHERS');
                 break;
         }
-
         tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.id;
-                const downloadSection = document.querySelector('#download-section');
-
-                // Toggle download section for configure tabs
-                if (tabId === 'configure-tab' || tabId === 'configure-new-tab') {
-                    downloadSection.classList.add('hidden');
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = tab.getAttribute('href');
+                history.pushState({ path: url }, '', url);
+                if (window.localStorage.getItem('reloadPhotography')) {
+                    confirmReloadPageModal.show();
+                    const reloadModal = document.getElementById('confirmReloadPageModal');
+                    const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
+                    // Reload when clicking close button
+                    reloadModalCloseBtn.addEventListener('click', () => {
+                        reloadPage();
+                    });
+                    // Reload when clicking outside of the modal
+                    document.addEventListener('click', (e) => {
+                        if (e.target === reloadModal) {
+                            reloadPage();
+                        }
+                    }, false);
                 } else {
-                    downloadSection.classList.remove('hidden');
-
-                    if (tabId === 'portraits-tab') {
-                        window.updateDownloadsForPortraits(tabId);
-                        setCategory('PORTRAITS');
-                    } else if (tabId === 'groups-tab') {
-                        window.updateDownloadsForGroups(tabId);
-                        setCategory('GROUPS');
-                    } else if (tabId === 'others-tab') {
-                        window.updateDownloadsForOthers(tabId);
-                        setCategory('OTHERS');
+                    const tab = e.target.id;
+                    // Hide download section when in configuration tab
+                    const downloadSection = document.querySelector('#download-section');
+                    if ('configure-tab' == tab || 'configure-new-tab' == tab) {
+                        downloadSection.classList.add('hidden');
+                    } else {
+                        downloadSection.classList.remove('hidden');
+                        if ('portraits-tab' == tab) {
+                            window.updateDownloadsForPortraits(tab);
+                            setCategory('PORTRAITS');
+                        } else if ('groups-tab' == tab) {
+                            window.updateDownloadsForGroups(tab);
+                            setCategory('GROUPS');
+                        } else if ('others-tab' == tab) {
+                            window.updateDownloadsForOthers(tab);
+                            setCategory('OTHERS');
+                        }
                     }
+                    // reset images selected
+                    resetImages();
                 }
-
-                // Reset selected images whenever a new tab is clicked
-                resetImages();
             });
         });
     });
-
     
     async function showOptionsDownloadRequest() {
         if ($(".grid").attr('total-image-count') != 0) {
