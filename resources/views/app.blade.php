@@ -51,7 +51,7 @@
     <script src="/proofing-assets/vendors/js/jquery-ui.min.js"></script>
     <script src="/proofing-assets/vendors/js/bootstrap.bundle.min.js"></script>
     <script src="/proofing-assets/vendors/js/pace.min.js"></script>
-    <script src="/proofing-assets/js/app.js"></script>
+    {{-- <script src="/proofing-assets/js/app.js"></script> --}}
     <!-- END OF Proofing Assets: Bootstrap and necessary plugins -->
 
     <!-- CoreUI main scripts -->
