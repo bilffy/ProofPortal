@@ -40,11 +40,6 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    build: {
-        rollupOptions: {
-            external: ['select2'],
-        },
-    },
     base: process.env.ASSET_URL || '/build/',	
     resolve: {
         alias: {
