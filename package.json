@@ -34,6 +34,7 @@
         "jquery": "^3.7.1",
         "js-aes-php": "^1.0.1",
         "js-crypto-aes": "^1.0.6",
+        "select2": "^4.1.0-rc.0",
         "vue": "^3.4.31",
         "vue-loader": "^17.4.2"
     }
