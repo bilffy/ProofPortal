@@ -49,10 +49,10 @@
     <script src="/proofing-assets/vendors/js/jquery-ui.min.js"></script>
     <script src="/proofing-assets/vendors/js/bootstrap.bundle.min.js"></script>
     <script src="/proofing-assets/vendors/js/pace.min.js"></script>
-    <script src="/proofing-assets/js/legacy-app.js"></script>
     <!-- END OF Proofing Assets: Bootstrap and necessary plugins -->
 
     @vite(entrypoints: ['resources/css/app.scss', 'resources/js/app.ts'])
+    <script src="/proofing-assets/js/legacy-app.js"></script>
     <!-- CoreUI main scripts -->
     @yield('js')
     @stack('scripts')
