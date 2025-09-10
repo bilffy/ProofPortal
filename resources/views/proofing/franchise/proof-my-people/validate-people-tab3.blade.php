@@ -2,7 +2,10 @@
 <fieldset id="ValidateStep3">
     @if($artifact->isNotEmpty())
         @php
-            $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->first()->name);
+            $imagePath = 'groupImages/' . $artifact->first()->name;
+            if (Storage::disk('public')->exists($imagePath)) {
+                $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->first()->name);
+            }
             $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->first()->name);
             $image_url = URL::asset('proofing-assets/img/440x290.png');
             list($width, $height) = getimagesize($imageWidthHeight);
