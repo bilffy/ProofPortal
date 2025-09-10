@@ -259,7 +259,7 @@ class ImageController extends Controller
     {
         // Validate the request for a file
             $request->validate([
-                'file' => 'image|mimes:jpeg,png,jpg|max:15360', // Restrict to image files only
+                'file' => 'image|mimes:jpeg,png,jpg|max:102400', // 100 MB
                 'folder_key' => 'required|string',
                 'folder_name' => 'required|string',
             ]);
@@ -273,7 +273,7 @@ class ImageController extends Controller
             
         // Define the file name as folder_key.extension
             $fileName = $folderKey . '.' . $extension;
-            dd($fileName);
+            
         // Store the file in the 'groupImages' folder in the public disk
             $filePath = $file->storeAs('groupImages', $fileName, 'public');
             $this->imageService->createGroupImage($folderKey, $extension);
