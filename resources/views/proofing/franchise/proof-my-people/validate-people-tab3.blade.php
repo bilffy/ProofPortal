@@ -1,9 +1,9 @@
 
 <fieldset id="ValidateStep3">
-    @if(isset($artifact))
+    @if($artifact->isNotEmpty())
         @php
-            $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->name);
-            $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->name);
+            $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->first()->name);
+            $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->first()->name);
             $image_url = URL::asset('proofing-assets/img/440x290.png');
             list($width, $height) = getimagesize($imageWidthHeight);
 

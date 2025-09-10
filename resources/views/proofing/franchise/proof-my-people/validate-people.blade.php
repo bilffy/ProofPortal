@@ -115,8 +115,8 @@
             $subjectNames = $allSubjectsByJob->map(function ($subject) {
                 return $subject->firstname . ' ' . $subject->lastname;
             });
-            if(isset($currentFolder->images)){
-                $artifactNameCrypt = Crypt::encryptString($currentFolder->images->name);
+            if ($currentFolder->images->isNotEmpty()) {
+                $artifactNameCrypt = Crypt::encryptString($currentFolder->images->first()->name);
             }
         @endphp
 

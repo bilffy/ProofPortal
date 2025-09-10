@@ -369,7 +369,7 @@
                                                                 <div class="col-4 text-center">
                                                                     @php
                                                                         $imageData = $folder->images;
-                                                                        if(isset($imageData)) {
+                                                                        if(count($imageData) !== 0) {
                                                                             $imageUrl = asset('storage/groupImages/'.$imageData->name);
                                                                             $deleteLinkVisible = isset($imageData->name);
                                                                         } else {
