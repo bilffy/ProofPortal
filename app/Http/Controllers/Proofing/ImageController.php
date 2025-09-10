@@ -266,7 +266,7 @@ class ImageController extends Controller
 
         // Retrieve the uploaded file
             $file = $request->file('file');
-            
+            dd($file);
         // Get the folder_key and file extension
             $folderKey = $request->input('folder_key');
             $extension = $file->getClientOriginalExtension();
