@@ -275,7 +275,7 @@ class ImageController extends Controller
             $fileName = $folderKey . '.' . $extension;
             
         // Store the file in the 'groupImages' folder in the public disk
-            $filePath = $file->storeAs('groupImages', $fileName, 'public');
+            $filePath = $file->storeAs('groupImages', $fileName, 'public');dd($filePath);
             $this->imageService->createGroupImage($folderKey, $extension);
             
         // Respond with success and the full URL of the uploaded file
