@@ -369,11 +369,20 @@
                                                                 <div class="col-4 text-center">
                                                                     @php
                                                                         $imageData = $folder->images;
-                                                                        if(count($imageData) !== 0) {
-                                                                            $imageUrl = asset('storage/groupImages/'.$imageData->name);
-                                                                            $deleteLinkVisible = isset($imageData->name);
+                                                                        $placeholder = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');
+                                                                        if($imageData->isNotEmpty()) {
+                                                                            $imageName = $imageData->first()->name;
+                                                                            $imagePath = 'groupImages/' . $imageName;
+                                                                            if (Storage::disk('public')->exists($imagePath)) {
+                                                                                $imageUrl = asset('storage/' . $imagePath);
+                                                                                $deleteLinkVisible = isset($imageData->first()->name);
+                                                                            } else {
+                                                                                // File missing on disk, fallback to placeholder
+                                                                                $imageUrl = $placeholder;
+                                                                                $deleteLinkVisible = '';
+                                                                            }
                                                                         } else {
-                                                                            $imageUrl = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');
+                                                                            $imageUrl = $placeholder;
                                                                             $deleteLinkVisible = '';
                                                                         }
                                                                     @endphp
