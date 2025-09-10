@@ -5,11 +5,10 @@
             $imagePath = 'groupImages/' . $artifact->first()->name;
             if (Storage::disk('public')->exists($imagePath)) {
                 $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->first()->name);
+                $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->first()->name);
+                $image_url = URL::asset('proofing-assets/img/440x290.png');
+                list($width, $height) = getimagesize($imageWidthHeight);
             }
-            $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->first()->name);
-            $image_url = URL::asset('proofing-assets/img/440x290.png');
-            list($width, $height) = getimagesize($imageWidthHeight);
-
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
