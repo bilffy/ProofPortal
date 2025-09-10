@@ -1,24 +1,12 @@
 
 <fieldset id="ValidateStep3">
-    @if(isset($artifact))
+    @if(isset($artifact) && Storage::disk('public')->exists('groupImages/' . $artifact->first()->name))
         @php
-            $scaledImageUrl = '';
-            $image_url = '';
-            $width = 0;
-            $height = 0;
-            $fileName = $artifact->first()->name;
-            $imagePath = 'groupImages/' . $fileName;
+            $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->first()->name);
+            $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->first()->name);
             $image_url = URL::asset('proofing-assets/img/440x290.png');
+            list($width, $height) = getimagesize($imageWidthHeight);
 
-                if (Storage::disk('public')->exists($imagePath)) {
-                    $scaledImageUrl = asset('storage/' . $imagePath);
-
-                    $imageFullPath = storage_path('app/public/' . $imagePath);
-
-                    if (file_exists($imageFullPath)) {
-                        [$width, $height] = getimagesize($imageFullPath);
-                    }
-                }
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
