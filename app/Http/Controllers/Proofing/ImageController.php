@@ -258,15 +258,15 @@ class ImageController extends Controller
     public function groupImageUploadFile(Request $request)
     {
         // Validate the request for a file
-            $request->validate([
-                'file' => 'image|mimes:jpeg,png,jpg|max:102400', // 100 MB
-                'folder_key' => 'required|string',
-                'folder_name' => 'required|string',
-            ]);
+            // $request->validate([
+            //     'file' => 'image|mimes:jpeg,png,jpg|max:102400', // 100 MB
+            //     'folder_key' => 'required|string',
+            //     'folder_name' => 'required|string',
+            // ]);
 
         // Retrieve the uploaded file
             $file = $request->file('file');
-            dd($file);
+
         // Get the folder_key and file extension
             $folderKey = $request->input('folder_key');
             $extension = $file->getClientOriginalExtension();
