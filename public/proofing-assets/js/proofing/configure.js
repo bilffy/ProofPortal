@@ -267,7 +267,7 @@
                     }
                 };
         
-                Upload.prototype.successHandling = function (data) {
+                Upload.prototype.successHandling = function (data) {console.log(data);
                     if (data.error) {
                         $("#" + this.folder_key + "-bar").addClass('d-none');
                         $("#" + this.folder_key + "-error").removeClass('d-none').text(data.error.data.message);
