@@ -40,7 +40,6 @@
     @hasanyrole(implode("|", $nonSchoolLevelRoles))
         @if ($SchoolContextHelper->isSchoolContext())
             <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
-            {{-- <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabSchoolConfig" navIcon="gear" href="{{ route('config-school') }}">Config School</x-layout.navItem> --}}
             
             @if ($proofingMenuValue)
                 <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
@@ -66,7 +65,6 @@
             {{--<x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>--}}
         @endcan
     @endcan
-    {{-- <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">For Testing</x-layout.navItem> --}}
 
     @if ($user->isAdmin())
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageSettings" navIcon="cogs" href="{{ route('settings.main') }}">App Settings</x-layout.navItem>
@@ -86,32 +84,6 @@
         const targetElement = `#${getNavTabId(getCurrentNav())}`;
 
         $(targetElement).addClass('bg-primary text-white rounded-e-md');
-        
-        // Collapsible Sidebar Navigation
-        // $('#btnToggleNavBar').on("click", function() {
-        //     navCollapsed = !navCollapsed;
-        //     localStorage.setItem('navCollapsed', JSON.stringify(navCollapsed));
-
-        //     // Animate toggle button icon
-        //     $('#logo').toggleClass('logoRegular logoSM');
-        //     $('#btnCollapse').toggleClass('fa-chevron-left fa-chevron-right');
-        //     $('#btnCollapseExpand').toggleClass('pr-0 pr-5')
-        //     $('div.hideOnCollapse').toggleClass('textCollapsed textExpanded')
-
-        //     // AJAX call to save collapsed state
-        //     $.ajax({
-        //         url: '{{ route("navbar.toggleCollapse") }}',
-        //         method: 'POST',
-        //         data: {
-        //             _token: '{{ csrf_token() }}',
-        //             collapsed: navCollapsed
-        //         },
-        //         success: function(response) {
-        //             // Optionally handle the response
-        //         }
-        //     });
-        // });
-        
     }, false);
 </script>
 
@@ -127,21 +99,4 @@
         transition: all .1s;
         background-image: url( {{ Vite::asset('resources/assets/images/MSP-Logo.svg') }} );
     }
-    /* .logoSM {
-        width: 47px;
-        min-height: 40px;
-        transition: all .3s;
-        background-image: url( {{Vite::asset('resources/assets/images/MSP-Logo-sm.svg')}} );
-    }
-
-    .textCollapsed {
-        width: 0 !important;
-        overflow: hidden;
-    }
-    .textExpanded {
-        width: 100%;
-        overflow: hidden;
-        transition: .2s all;
-        padding-right: 3rem;
-    } */
 </style>

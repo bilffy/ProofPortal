@@ -494,7 +494,7 @@ class ImageService
 
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
-                $classGroup = $subject->folder->ts_foldername ?? '';
+                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null);
             } else {
                 $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
             }

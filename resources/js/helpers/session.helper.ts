@@ -45,7 +45,6 @@ export const createApiToken = async () => {
         success: function (response: any) {
             localStorage.setItem('api_token', response.token);
             localStorage.setItem('api_token_id', response.id);
-            console.log({response});
         },
         error: function (error: any) {
             console.error('Error checking session:', error);

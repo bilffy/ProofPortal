@@ -28,9 +28,6 @@
     <div x-data id="photography-root" class="container3 p-4">
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                {{-- @if ($configureTabV1Value)
-                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
-                @endif --}}
                 @if ($configureTabV1Value)
                     <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure</x-tabs.tab>
                 @endif
@@ -55,9 +52,6 @@
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                {{-- <x-tabs.tabContent id="configure">
-                    @include('partials.photography.configure')
-                </x-tabs.tabContent> --}}
                 <x-tabs.tabContent id="configure-new">
                     @include('partials.photography.configure-new')
                 </x-tabs.tabContent>
@@ -294,11 +288,8 @@
     }
 
     function removeUploadedPhoto() {
-        console.log("Remove uploaded photo function called");
         const modal = document.getElementById('confirmRemovePhotoModal');
         const imageKey = modal.getAttribute('data-image-key');
-
-        console.log({imageKey});
 
         fetch('{{ route('photography.remove-image') }}', {
             method: 'POST',
@@ -314,7 +305,6 @@
                 Livewire.dispatch('EV_IMAGE_DELETED', { key: data.key });
                 confirmRemovePhotoModal.hide();
             } else {
-                console.log({data});
                 console.error('Remove failed:', data.message);
             }
         })
@@ -457,8 +447,6 @@
             formData.append('image', file);
             formData.append('image_key', imageKey);
 
-            console.log('imgUploadInput', { file, formData });
-
             try {
                 const response = await fetch('{{ route('photography.upload-image') }}', {
                     method: 'POST',
@@ -470,8 +458,6 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    // Handle success, e.g., update UI, show success message
-                    console.log('Image uploaded successfully:', {result});
                     if (result.uploadId) {
                         // Update livewire component
                         Livewire.dispatch('EV_IMAGE_UPLOADED', { key: result.key });
@@ -651,10 +637,6 @@
             const BASE_ORIGIN = 1;
             const LIGHTBOX_ORIGIN = 2;
             
-            console.log('Selected Year:', selectedYear);
-            console.log('Selected View:', selectedView);
-            console.log('Selected Class:', JSON.stringify(selectedClass));
-            
             $(downloadBtn).html(`<x-spinner.button />`);
             
             let filters = {
@@ -664,8 +646,6 @@
                 resolution: $('#image_res').val(),
                 folder_format: $('#folder_format').val()
             };
-            
-            console.log('Download Filters:', filters);
 
             if (isLightbox) {
                 selectedImages = selectedImages.map(img => img.replace('img-lb_', 'img_'));
@@ -689,17 +669,12 @@
                 )
             });
             
-            console.log(response);
-            
             // check if response has error and throw error, get the error status
             if (await !response.ok) {
                 throw new Error('Network response was not ok');
             }
             
             const result = await response.json();
-            //console.log('Download request successful:', result);
-            
-            console.log(result);
             
             // only if selected image is one
             if (selectedImages.length === 1) {

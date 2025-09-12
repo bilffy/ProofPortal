@@ -15,6 +15,7 @@ class ImageFrame extends Component
     public $hasImage = false;
     public $isLightbox = false;
     public $isUploaded = false;
+    public $image = '';
 
     protected $listeners = [
         PhotographyHelper::EV_IMAGE_UPLOADED => 'updateImage',
@@ -36,7 +37,8 @@ class ImageFrame extends Component
 
     public function placeholder()
     {
-        return view('livewire.photography.image-frame', ['image' => '']);
+        $this->image = '';
+        return view('livewire.photography.image-frame');
     }
 
     public function updateImage($key)
@@ -67,7 +69,8 @@ class ImageFrame extends Component
         $imageService = new ImageService();
         $key = base64_decode(base64_decode($this->imageId));
         $imageContent = $imageService->getImageContent($key);
+        $this->image = base64_encode($imageContent);
 
-        return view('livewire.photography.image-frame', ['image' => base64_encode($imageContent)]);
+        return view('livewire.photography.image-frame');
     }
 }

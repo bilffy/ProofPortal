@@ -54,11 +54,12 @@
 
 @push('scripts')
 <script type="module">
+    const category = "{{ $category }}";
     function performOtherSearch(event) {
         if (event.key === 'Enter') {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'OTHERS' });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: category });
         } else if (!event.currentTarget.value) {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: 'OTHERS' });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: category });
         }
     }
     function updateGridView(event) {
@@ -67,7 +68,7 @@
         const selectedClass = $('#select_others_class').val();
         
         resetImages();
-        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'OTHERS'});
+        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: category});
     };
     function updateSelect2Options(selector, options) {
         const select = $(selector);
@@ -110,7 +111,7 @@
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
-        if (data[0] == 'OTHERS') {
+        if (data[0] == category) {
             updateSelect2Options(`#select_others_${data[1]}`, data[2]);
         }
     });

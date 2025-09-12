@@ -278,7 +278,6 @@ class PhotographyController extends Controller
         return response()->json(['success' => true, 'data' => $data]);
     }
 
-    // TODO: Refine implementation with ImageService and new table for uploaded images
     public function uploadImage(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -293,7 +292,6 @@ class PhotographyController extends Controller
             $img = $request->file('image');
             $imgKey = $request->input('image_key');
             $key = base64_decode(base64_decode($imgKey));
-            // $folderKey = $request->input('folder_id');
             $subject = Subject::where('ts_subjectkey', $key)->first();
             if ($subject) {
                 $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
@@ -348,7 +346,6 @@ class PhotographyController extends Controller
         return response()->json(['success' => false, 'message' => 'Image file is required.'], 422);
     }
 
-    // TODO: Refine implementation with ImageService and new table for uploaded images
     public function removeImage(Request $request)
     {
         $validator = Validator::make($request->all(), [

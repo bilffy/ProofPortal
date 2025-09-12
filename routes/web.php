@@ -38,10 +38,6 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     // Profile API routes
     Route::get('profile/edit', [UserController::class, 'edit'])->name(name: 'api.profile.edit');
     Route::patch('profile/update', [UserController::class, 'update'])->name(name: 'api.profile.update');
-    
-    // Test pages
-    // Route::get('/schoolhome', [TestController::class, 'test2'])->name('test2'); // FOR TESTING
-    // Route::get('/test-photography', [TestController::class, 'index'])->name('test.photography'); // FOR TESTING
 
     $permissions = PermissionHelper::ACT_CREATE . " " . PermissionHelper::SUB_USER;
     Route::group(['middleware' => ["permission:{$permissions}"]], function () {
@@ -58,7 +54,6 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     $permissionCanAccessPhotos = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PHOTOGRAPHY;
     Route::group(['middleware' => ["permission:{$permissionCanAccessPhotos}", CheckUserRestriction::class]], function () {
         Route::get('/photography', [PhotographyController::class, 'index'])->name('photography');
-        // Route::get('/photography/configure', [PhotographyController::class, 'showConfiguration'])->middleware(['role:Franchise'])->name('photography.configure');
         Route::get('/photography/configure', [PhotographyController::class, 'showConfiguration'])->middleware(['role:Franchise'])->name('photography.configure-new');
         Route::get('/photography/portraits', [PhotographyController::class, 'showPortraits'])->name('photography.portraits');
         Route::get('/photography/groups', [PhotographyController::class, 'showGroups'])->name('photography.groups');
@@ -114,14 +109,6 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/config-school/school-logo/{encryptedPath}', [ConfigureController::class, 'showSchoolLogo'])->name('school.logo');
     //Configure School - School Logo Delete
         Route::post('/config-school/delete-school-logo', [ConfigureController::class, 'deleteSchoolLogo'])->name('delete.school.logo');
-    //Configure School - view
-        // Route::get('/config-school', [ConfigureController::class, 'configSchool'])->name('config-school');
 });
-
-// Livewire::setUpdateRoute(function ($handle) {
-//     return Route::post('/livewire/update', $handle)
-//         ->middleware(ThrottleRequests::class);
-// });
-
 
 require __DIR__.'/auth.php';

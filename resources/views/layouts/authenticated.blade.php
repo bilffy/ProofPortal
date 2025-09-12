@@ -157,7 +157,6 @@
                 });
                 
                 let result = await response.json();
-                console.log({result});
                 $(`#edit-user-nonce`).val(result.nonce);
                 $(`#email`).val(result.user.email || '');
                 $(`#firstname`).val(result.user.firstname || '');
@@ -231,5 +230,4 @@
         }
     </script>
     @endpush
-    {{-- @stack('scripts') --}}
 @endsection

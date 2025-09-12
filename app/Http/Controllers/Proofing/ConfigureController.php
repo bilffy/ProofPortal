@@ -12,7 +12,6 @@ use App\Services\EncryptDecryptService;
 use App\Services\JobService;
 use App\Services\FolderService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use App\Services\SeasonService;
 use App\Services\SchoolService;
 use App\Http\Resources\UserResource;
@@ -46,32 +45,33 @@ class ConfigureController extends Controller
 
     //////////////////////////////////-------------------------------Config School------------------------------------///////////////////////////////////////////
     
-    public function configSchool()
-    {
-        $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()->schoolkey;
-        $selectedSchool = $this->schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->first();
-        $filePath = '';
-        if ($selectedSchool && $selectedSchool->school_logo) {
-            $filePath = 'school_logos/' . $selectedSchool->school_logo;
-        }
-        $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
-        $encryptedPath = $selectedSchool->school_logo ? Crypt::encryptString($filePath) : '';
-        $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
-        $defaultSeasonCode = $seasons->where('is_default', 1)->select('code', 'ts_season_id')->first();
-        $syncJobsbySchoolkey =  $this->jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
-        $selectedFolders = [];
+    // Removed, logic is moved to configure-new blade file
+    // public function configSchool()
+    // {
+    //     $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()->schoolkey;
+    //     $selectedSchool = $this->schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->first();
+    //     $filePath = '';
+    //     if ($selectedSchool && $selectedSchool->school_logo) {
+    //         $filePath = 'school_logos/' . $selectedSchool->school_logo;
+    //     }
+    //     $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
+    //     $encryptedPath = $selectedSchool->school_logo ? Crypt::encryptString($filePath) : '';
+    //     $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
+    //     $defaultSeasonCode = $seasons->where('is_default', 1)->select('code', 'ts_season_id')->first();
+    //     $syncJobsbySchoolkey =  $this->jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
+    //     $selectedFolders = [];
 
-        return view('proofing.franchise.school.configure-school', [
-            'selectedSchool' => $selectedSchool, 
-            'encryptedPath' => $encryptedPath, 
-            'hash' => $hash, 
-            'seasons' => $seasons, 
-            'syncJobsbySchoolkey' => $syncJobsbySchoolkey, 
-            'defaultSeasonCode' => $defaultSeasonCode, 
-            'selectedFolders' => $selectedFolders,
-            'user' => new UserResource(Auth::user()),
-        ]);
-    }
+    //     return view('proofing.franchise.school.configure-school', [
+    //         'selectedSchool' => $selectedSchool, 
+    //         'encryptedPath' => $encryptedPath, 
+    //         'hash' => $hash, 
+    //         'seasons' => $seasons, 
+    //         'syncJobsbySchoolkey' => $syncJobsbySchoolkey, 
+    //         'defaultSeasonCode' => $defaultSeasonCode, 
+    //         'selectedFolders' => $selectedFolders,
+    //         'user' => new UserResource(Auth::user()),
+    //     ]);
+    // }
 
     public function showSchoolLogo($encryptedPath)
     {
@@ -159,7 +159,6 @@ class ConfigureController extends Controller
         $selectedFolders = $request->folders;
 
         // Render the folder configuration view with the selected folders
-        // $foldersHtml = view('proofing.franchise.school.configure-school-folderconfig', compact('selectedFolders'))->render();
         $foldersHtml = view('partials.photography.configure.folders', compact('selectedFolders'))->render();
 
         // Return the rendered HTML in the JSON response

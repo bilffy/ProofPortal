@@ -48,8 +48,6 @@
     <!-- Proofing Assets: Bootstrap and necessary plugins -->
     <script src="/proofing-assets/vendors/js/jquery.min.js"></script>
     <script src="/proofing-assets/vendors/js/popper2.11.8.min.js"></script>
-    <script src="/proofing-assets/vendors/js/jquery-ui.min.js"></script>
-    <script src="/proofing-assets/vendors/js/bootstrap.bundle.min.js"></script>
     <script src="/proofing-assets/vendors/js/pace.min.js"></script>
     <script src="/proofing-assets/js/app.js"></script>
     <!-- END OF Proofing Assets: Bootstrap and necessary plugins -->
