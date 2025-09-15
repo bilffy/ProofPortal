@@ -276,9 +276,9 @@ class ImageController extends Controller
     
         // Convert JPEG to baseline to avoid blank previews
         if (in_array(strtolower($extension), ['jpg', 'jpeg'])) {
-            $image = Image::make($file->getRealPath())
-                ->encode('jpg', 90)    // adjust quality if needed
-                ->interlace(false);    // baseline JPEG
+            $image = \Intervention\Image\ImageManagerStatic::make($file->getRealPath())
+                ->encode('jpg', 90)
+                ->interlace(false);
             Storage::disk('public')->put('groupImages/' . $fileName, (string) $image);
         } else {
             // Store other formats normally
