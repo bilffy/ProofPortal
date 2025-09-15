@@ -159,8 +159,10 @@ Route::group(['middleware' => ["permission:{$permissionCanProof}"]], function ()
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
             'php_ini_loaded_file' => php_ini_loaded_file(),
+            'php_fpm_config' => phpinfo(INFO_GENERAL), // Grab PHP info to see the config file
         ];
     });
+    
     //Folder-Image Delete
     Route::post('/franchise/config-job/delete-file', [ImageController::class, 'groupImageDeleteFile'])->name('groupImage.deleteFile');
     //TNJ Refresh
