@@ -26,7 +26,7 @@
                         w-[24px] h-[24px] p-1 pt-[3px] border-white border-2
                         flex align-middle justify-center rounded-full 
                         hover:bg-primary-100">
-                <x-icon icon="check text-primary group-hover:text-white hidden"/>
+                <x-icon icon="check text-primary hidden"/>
             </div>
         </div>
         @if ($isUploaded)

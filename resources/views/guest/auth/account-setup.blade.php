@@ -24,11 +24,6 @@
             <input class="border rounded-md p-2 border-neutral" wire:model="lastName" required placeholder="Last Name" autocomplete="lastName" />
             @error('lastName') <span class="error">{{ $message }}</span> @enderror
         </div>
-
-        {{--<div class="flex flex-col mb-4">
-            <input @required("Enter your old password") class="border rounded-md p-2 border-neutral" type="password" wire:model="oldPassword" required placeholder="Old Password" autocomplete="old-password" />
-            @error('oldPassword') <span class="error">{{ $message }}</span> @enderror
-        </div>--}}
         
         <div class="flex flex-col mb-4">
             <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />

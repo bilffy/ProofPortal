@@ -4,7 +4,6 @@
                 open: false,
                 selected: @entangle($model),
                 toggle(item, type) {
-                    console.log({item, type});
                     if (this.selected.includes(item)) {
                         this.selected = this.selected.filter(i => i !== item);
                     } else {

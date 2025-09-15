@@ -1,7 +1,3 @@
-@php
-    
-@endphp
-
 @extends('layouts.authenticated')
 
 @section('content')

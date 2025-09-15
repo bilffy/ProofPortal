@@ -47,7 +47,5 @@
 
 @push('scripts')
     <script type="module">
-       
     </script>
-
 @endpush
