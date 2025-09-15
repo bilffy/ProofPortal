@@ -158,6 +158,7 @@ Route::group(['middleware' => ["permission:{$permissionCanProof}"]], function ()
         return [
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
+            'php_ini_loaded_file' => php_ini_loaded_file(),
         ];
     });
     //Folder-Image Delete
