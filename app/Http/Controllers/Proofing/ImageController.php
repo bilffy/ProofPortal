@@ -257,32 +257,36 @@ class ImageController extends Controller
 
     public function groupImageUploadFile(Request $request)
     {
-        // Validate the request for a file
-            $request->validate([
-                'file' => 'image|mimes:jpeg,png,jpg|max:102400', // 100 MB
-                'folder_key' => 'required|string',
-                'folder_name' => 'required|string',
-            ]);
-
-        // Retrieve the uploaded file
-            $file = $request->file('file');
-
-        // Get the folder_key and file extension
-            $folderKey = $request->input('folder_key');
-            $extension = $file->getClientOriginalExtension();
-            
-        // Define the file name as folder_key.extension
-            $fileName = $folderKey . '.' . $extension;
-            
-        // Store the file in the 'groupImages' folder in the public disk
-            $filePath = $file->storeAs('groupImages', $fileName, 'public');
-            $this->imageService->createGroupImage($folderKey, $extension);
-            
-        // Respond with success and the full URL of the uploaded file
-            return response()->json([
-                'message' => 'Image uploaded successfully',
-                'full_url' => asset('/storage/'.$filePath),  // This generates the public URL
-            ]);
+        // Validate the request
+        $request->validate([
+            'file' => 'image|mimes:jpeg,png,jpg|max:102400', // 100 MB
+            'folder_key' => 'required|string',
+            'folder_name' => 'required|string',
+        ]);
+    
+        $file = $request->file('file');
+        $folderKey = $request->input('folder_key');
+        $extension = $file->getClientOriginalExtension();
+        $fileName = $folderKey . '.' . $extension;
+    
+        // Convert JPEG to baseline using Intervention Image
+        if (in_array(strtolower($extension), ['jpg', 'jpeg'])) {
+            $image = Image::make($file->getRealPath())
+                ->encode('jpg', 90)   // Adjust quality if needed
+                ->interlace(false);   // Convert to baseline
+            Storage::disk('public')->put('groupImages/' . $fileName, (string) $image);
+        } else {
+            // For other images, store normally
+            Storage::disk('public')->putFileAs('groupImages', $file, $fileName);
+        }
+    
+        // Optional: log in DB
+        $this->imageService->createGroupImage($folderKey, $extension);
+    
+        return response()->json([
+            'message' => 'Image uploaded successfully',
+            'full_url' => asset('/storage/groupImages/' . $fileName) . '?t=' . time(), // Cache-busting
+        ]);
     }
 
     public function groupImageDeleteFile(Request $request)
