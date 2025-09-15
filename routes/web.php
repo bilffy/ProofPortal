@@ -153,14 +153,7 @@ Route::group(['middleware' => ["permission:{$permissionCanProof}"]], function ()
     //Folder-config update all
     Route::post('/franchise/config-job/folder-config/update/all', [ConfigureController::class, 'folderConfigAll'])->name('config-job.folderConfigAll');
     //Folder-Image Upload
-    // Route::post('/franchise/config-job/upload-file', [ImageController::class, 'groupImageUploadFile'])->name('groupImage.uploadFile');
-    Route::post('/franchise/config-job/upload-file', function () {
-        return [
-            'upload_max_filesize' => ini_get('upload_max_filesize'),
-            'post_max_size' => ini_get('post_max_size'),
-            'php_ini_loaded_file' => php_ini_loaded_file(),
-        ];
-    });
+    Route::post('/franchise/config-job/upload-file', [ImageController::class, 'groupImageUploadFile'])->name('groupImage.uploadFile');
     //Folder-Image Delete
     Route::post('/franchise/config-job/delete-file', [ImageController::class, 'groupImageDeleteFile'])->name('groupImage.deleteFile');
     //TNJ Refresh
