@@ -1,6 +1,6 @@
 
 <fieldset id="ValidateStep3">
-    @if(isset($artifact) && Storage::disk('public')->exists('groupImages/' . $artifact->first()->name))
+    @if(isset($artifact))
         @php
             $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->first()->name);
             $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->first()->name);
