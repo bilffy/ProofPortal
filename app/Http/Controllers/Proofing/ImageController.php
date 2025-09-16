@@ -301,7 +301,7 @@ class ImageController extends Controller
         $fileName = $folderKey . '.' . $extension;
     
         // Create ImageManager instance
-        $manager = new ImageManager(['driver' => 'gd']); // or 'imagick'
+        $manager = new ImageManager('gd'); // or 'imagick'
         $image = $manager->make($file->getRealPath());
     
         // Convert to baseline JPEG to prevent blank preview
