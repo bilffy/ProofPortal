@@ -119,7 +119,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 });
 
 //Proofing
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', NoCacheHeaders::class)->group(function () {
 $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
 Route::group(['middleware' => ["permission:{$permissionCanProof}"]], function () {
     //Dashboard
