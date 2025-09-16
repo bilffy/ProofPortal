@@ -255,34 +255,73 @@ class ImageController extends Controller
         return redirect()->route('proofing');
     }
 
+    // public function groupImageUploadFile(Request $request)
+    // {
+    //     // Validate the request for a file
+    //         $request->validate([
+    //             'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 100 MB
+    //             'folder_key' => 'required|string',
+    //             'folder_name' => 'required|string',
+    //         ]);
+
+    //     // Retrieve the uploaded file
+    //         $file = $request->file('file');
+
+    //     // Get the folder_key and file extension
+    //         $folderKey = $request->input('folder_key');
+    //         $extension = $file->getClientOriginalExtension();
+            
+    //     // Define the file name as folder_key.extension
+    //         $fileName = $folderKey . '.' . $extension;
+            
+    //     // Store the file in the 'groupImages' folder in the public disk
+    //         $filePath = $file->storeAs('groupImages', $fileName, 'public');
+    //         $this->imageService->createGroupImage($folderKey, $extension);
+            
+    //     // Respond with success and the full URL of the uploaded file
+    //         return response()->json([
+    //             'message' => 'Image uploaded successfully',
+    //             'full_url' => asset('/storage/'.$filePath),  // This generates the public URL
+    //         ]);
+    // }
+
     public function groupImageUploadFile(Request $request)
     {
-        // Validate the request for a file
-            $request->validate([
-                'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 100 MB
-                'folder_key' => 'required|string',
-                'folder_name' => 'required|string',
-            ]);
+        // Validate the request
+        $request->validate([
+            'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 25 MB
+            'folder_key' => 'required|string',
+            'folder_name' => 'required|string',
+        ]);
 
-        // Retrieve the uploaded file
-            $file = $request->file('file');
+        // Retrieve uploaded file
+        $file = $request->file('file');
+        $folderKey = $request->input('folder_key');
+        $extension = $file->getClientOriginalExtension();
 
-        // Get the folder_key and file extension
-            $folderKey = $request->input('folder_key');
-            $extension = $file->getClientOriginalExtension();
-            
-        // Define the file name as folder_key.extension
-            $fileName = $folderKey . '.' . $extension;
-            
-        // Store the file in the 'groupImages' folder in the public disk
-            $filePath = $file->storeAs('groupImages', $fileName, 'public');
-            $this->imageService->createGroupImage($folderKey, $extension);
-            
-        // Respond with success and the full URL of the uploaded file
-            return response()->json([
-                'message' => 'Image uploaded successfully',
-                'full_url' => asset('/storage/'.$filePath),  // This generates the public URL
-            ]);
+        // File name as folder_key.extension
+        $fileName = $folderKey . '.' . $extension;
+
+        // Use Intervention Image to process the file
+        $image = Image::make($file->getRealPath());
+
+        // Convert to baseline JPEG if needed
+        if (strtolower($extension) === 'jpg' || strtolower($extension) === 'jpeg') {
+            $image->interlace(false);
+        }
+
+        // Save to storage/app/public/groupImages
+        $savePath = storage_path('app/public/groupImages/' . $fileName);
+        $image->save($savePath);
+
+        // Optional: record in database
+        $this->imageService->createGroupImage($folderKey, $extension);
+
+        // Respond with success and public URL
+        return response()->json([
+            'message' => 'Image uploaded successfully',
+            'full_url' => asset('storage/groupImages/' . $fileName),
+        ]);
     }
 
     public function groupImageDeleteFile(Request $request)
