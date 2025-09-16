@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\ImageService;
 use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
 use App\Services\Proofing\JobService;
 use Illuminate\Support\Facades\Crypt; 
 use App\Http\Resources\UserResource;
@@ -285,44 +286,42 @@ class ImageController extends Controller
     //         ]);
     // }
 
+
     public function groupImageUploadFile(Request $request)
     {
-        // Validate the request
         $request->validate([
             'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 25 MB
             'folder_key' => 'required|string',
             'folder_name' => 'required|string',
         ]);
-
-        // Retrieve uploaded file
+    
         $file = $request->file('file');
         $folderKey = $request->input('folder_key');
         $extension = $file->getClientOriginalExtension();
-
-        // File name as folder_key.extension
         $fileName = $folderKey . '.' . $extension;
-
-        // Use Intervention Image to process the file
-        $image = Image::make($file->getRealPath());
-
-        // Convert to baseline JPEG if needed
+    
+        // Create ImageManager instance
+        $manager = new ImageManager(['driver' => 'gd']); // or 'imagick'
+        $image = $manager->make($file->getRealPath());
+    
+        // Convert to baseline JPEG to prevent blank preview
         if (strtolower($extension) === 'jpg' || strtolower($extension) === 'jpeg') {
             $image->interlace(false);
         }
-
-        // Save to storage/app/public/groupImages
+    
+        // Save the processed image
         $savePath = storage_path('app/public/groupImages/' . $fileName);
         $image->save($savePath);
-
-        // Optional: record in database
+    
+        // Optional: save info to DB
         $this->imageService->createGroupImage($folderKey, $extension);
-
-        // Respond with success and public URL
+    
         return response()->json([
             'message' => 'Image uploaded successfully',
             'full_url' => asset('storage/groupImages/' . $fileName),
         ]);
     }
+    
 
     public function groupImageDeleteFile(Request $request)
     {
