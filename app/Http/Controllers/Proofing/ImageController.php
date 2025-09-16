@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\ImageService;
 use Intervention\Image\Facades\Image;
-use Intervention\Image\ImageManager;
 use App\Services\Proofing\JobService;
 use Illuminate\Support\Facades\Crypt; 
 use App\Http\Resources\UserResource;
@@ -285,43 +284,43 @@ class ImageController extends Controller
     //             'full_url' => asset('/storage/'.$filePath),  // This generates the public URL
     //         ]);
     // }
-
+    
 
     public function groupImageUploadFile(Request $request)
     {
+        // Validate the request
         $request->validate([
-            'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 25 MB
+            'file' => 'required|file|mimes:jpeg,png,jpg|max:25600', // 25 MB
             'folder_key' => 'required|string',
             'folder_name' => 'required|string',
         ]);
-    
+
         $file = $request->file('file');
+
+        // Get folder key and extension
         $folderKey = $request->input('folder_key');
         $extension = $file->getClientOriginalExtension();
+
+        // Generate file name
         $fileName = $folderKey . '.' . $extension;
-    
-        // Create ImageManager instance
-        $manager = new ImageManager('gd'); // or 'imagick'
-        $image = $manager->make($file->getRealPath());
-    
-        // Convert to baseline JPEG to prevent blank preview
-        if (strtolower($extension) === 'jpg' || strtolower($extension) === 'jpeg') {
-            $image->interlace(false);
-        }
-    
-        // Save the processed image
-        $savePath = storage_path('app/public/groupImages/' . $fileName);
-        $image->save($savePath);
-    
-        // Optional: save info to DB
+
+        // Save the file to storage/app/public/groupImages
+        $filePath = $file->storeAs('groupImages', $fileName, 'public');
+
+        // Make sure file permissions allow Nginx to read
+        $fullPath = storage_path('app/public/' . $filePath);
+        chmod($fullPath, 0644); // readable by everyone
+
+        // Optional: save record to database
         $this->imageService->createGroupImage($folderKey, $extension);
-    
+
+        // Return JSON with public URL
         return response()->json([
             'message' => 'Image uploaded successfully',
-            'full_url' => asset('storage/groupImages/' . $fileName),
+            'full_url' => asset('storage/' . $filePath),
         ]);
     }
-    
+
 
     public function groupImageDeleteFile(Request $request)
     {
