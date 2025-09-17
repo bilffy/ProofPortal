@@ -259,7 +259,7 @@ class ImageController extends Controller
     {
         // Validate the request for a file
             $request->validate([
-                'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 100 MB
+                'file' => 'image|mimes:jpeg,png,jpg|max:25600', // 25 MB
                 'folder_key' => 'required|string',
                 'folder_name' => 'required|string',
             ]);
