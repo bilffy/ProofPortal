@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class NoCacheHeaders
 {
@@ -16,9 +18,23 @@ class NoCacheHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        return $response
-            ->header('Cache-Control', 'no-store, no-transform, must-revalidate')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', '0');
+
+        // Skip caching headers for redirects
+        if ($response instanceof RedirectResponse) {
+            return $response;
+        }
+
+        // Add headers safely for JSON, HTML, and file responses
+        $headers = [
+            'Cache-Control' => 'no-store, no-transform, must-revalidate',
+            'Pragma'        => 'no-cache',
+            'Expires'       => '0',
+        ];
+
+        foreach ($headers as $key => $value) {
+            $response->headers->set($key, $value);
+        }
+
+        return $response;
     }
 }
