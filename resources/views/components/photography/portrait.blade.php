@@ -49,22 +49,24 @@
                 </div>
             </div>
         @endif
-        @if ('' == $img)
-            <x-spinner.image />
-        @else
-            <div class="flex items-center h-full bg-[#E6E7E8] group {{ $hasImage ? 'hover:scale-[1.05] hover:transition-all' : '' }}">
-                @if ($isLightbox && $noImage)
-                    <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
-                        <span class="text-white font-semibold text-xl">+ Add Photo</span>
-                    </div>
-                @endif
-                <img 
-                    src="data:image/jpeg;base64,{{$img}}"
-                    alt=""
-                    class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                />
-            </div>
-        @endif
+        <div id="img-content-{{ $id }}" class="h-full w-full">
+            @if ('' == $img)
+                <x-spinner.image />
+            @else
+                <div class="flex items-center h-full bg-[#E6E7E8] group {{ $hasImage ? 'hover:scale-[1.05] hover:transition-all' : '' }}">
+                    @if ($isLightbox && $noImage)
+                        <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
+                            <span class="text-white font-semibold text-xl">+ Add Photo</span>
+                        </div>
+                    @endif
+                    <img 
+                        src="data:image/jpeg;base64,{{$img}}"
+                        alt=""
+                        class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                    />
+                </div>
+            @endif
+        </div>
     </div>
     <div class="justify-between py-2 text-sm" data-toggle="tooltip" title="{{ $decodedName . "\n" . $decodedFolder }}">
         <div>

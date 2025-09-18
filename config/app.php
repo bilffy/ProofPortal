@@ -222,6 +222,8 @@ return [
                 'confirm_remove_title' => 'Remove photo confirmation',
                 'confirm_remove_body' => 'Are you sure you want to remove the uploaded photo for',
                 'size_limit' => 'File size cannot exceed 5MB.',
+                'success' => 'Image uploaded successfully.',
+                'fail' => 'Image upload failed.',
             ],
         ],
         'configuration' => [

@@ -542,7 +542,7 @@ class ImageService
     {
 
         $path = $this->getPath($key.".jpg");
-        if (Storage::disk('local')->exists($path)) {
+        if (Storage::disk('local')->exists(path: $path)) {
             return true;
         } else {
             $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
