@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Auth;
@@ -63,7 +64,22 @@ class SchoolList extends Component
     }
     
     public function render()
-    {   
+    {
+        $validator = Validator::make(
+            ['search' => $this->search],
+            [
+                'search' => ['nullable', 'string', 'regex:/^[a-zA-Z0-9\s\.@_\-]+$/'],
+            ],
+            [
+                'search.regex' => 'Search contains invalid characters.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            // reset search if validation fails
+            $this->search = "";
+        }
+        
         /** @var User $user */
         $user = Auth::user();
         

@@ -9,6 +9,7 @@ use App\Services\CollectionQueryService;
 use Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Validator;
 
 class UsersList extends Component
 {
@@ -84,7 +85,7 @@ class UsersList extends Component
     }
 
     public function performSearch()
-    {
+    {   
         $this->resetPage();
     }
 
@@ -179,6 +180,21 @@ class UsersList extends Component
     
     public function render()
     {
+        $validator = Validator::make(
+            ['search' => $this->search],
+            [
+                'search' => ['nullable', 'string', 'regex:/^[a-zA-Z0-9\s\.@_\-]+$/'],
+            ],
+            [
+                'search.regex' => 'Search contains invalid characters.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            // reset search if validation fails
+            $this->search = "";
+        }
+        
         /** @var User $user */
         $user = Auth::user();
         $usersQuery = User::query()
@@ -217,8 +233,6 @@ class UsersList extends Component
             'check_status' => config('app.dialog_config.invite.check_status'),
         ];
         
-        return view('livewire.users-list', compact('users', 'configMessages'), [
-            
-        ]);
+        return view('livewire.users-list', compact('users', 'configMessages'), []);
     }
 }
