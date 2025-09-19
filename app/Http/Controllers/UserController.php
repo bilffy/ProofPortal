@@ -46,8 +46,10 @@ class UserController extends Controller
     {
         $schema1 = 
             [
-                'firstname' => 'required|string|max:255',
-                'lastname' => 'required|string|max:255',
+                //'firstname' => 'required|string|max:255',
+                //'lastname' => 'required|string|max:255',
+                'firstname' => 'required|string|max:50|no_special_chars',
+                'lastname' => 'required|string|max:50|no_special_chars',
                 'email' => [
                     'required',
                     'string',
