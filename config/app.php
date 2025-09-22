@@ -149,7 +149,7 @@ return [
         ],
         'invalid_email_forgot_password' => [
             'title' => 'Forgot Password',
-            'message' => "We can't find a user with that email address.",
+            'message' => "If the account exists, you'll get an email shortly.",
         ],
         'email_sent_forgot_password' => [
             'title' => 'Email sent',
