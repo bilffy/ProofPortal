@@ -28,7 +28,7 @@
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@inertiajs/vue3": "^1.2.0",
         "@vitejs/plugin-vue": "^5.0.5",
-        "bootstrap": "^5.3.3",
+        "bootstrap": "^5.3.8",
         "crypto-js": "^4.2.0",
         "flatpickr": "^4.6.13",
         "flowbite": "^2.5.1",
