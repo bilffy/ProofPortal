@@ -52,46 +52,48 @@ class ForgotPassword extends Component
 
             // Prevent replay attacks by checking if the nonce was already used
             if (session()->has("forgot-password-nonce-{$this->nonce}")) {
-                return redirect()->route('login');
-                /*throw ValidationException::withMessages([
+                //return redirect()->route('login');
+                throw ValidationException::withMessages([
                     'email' => ['This request has already been processed. Reload the page and try again.'],
-                ]);*/
+                ]);
             }
             
             $token = Password::createToken($user);
             $user->notify(new ResetPassword($token, $user));
-            $status = Password::RESET_LINK_SENT;
+            //$status = Password::RESET_LINK_SENT;
         } else {
-            $status = Password::INVALID_USER;
+            //$status = Password::INVALID_USER;
 
             $key = 'forgot-password:' . Request::ip(); 
 
             if (RateLimiter::tooManyAttempts($key, 5)) { // 5 attempts per minute per IP
-                return redirect()->route('login');
-                /*throw ValidationException::withMessages([
+                //return redirect()->route('login');
+                throw ValidationException::withMessages([
                     'email' => ['Too many attempts. Please try again later.'],
-                ]);*/
+                ]);
             }
 
             RateLimiter::hit($key, 60); // Store attempt with 60 seconds expiration
         }
 
-        if ($status == Password::RESET_LINK_SENT) {
+        //if ($status == Password::RESET_LINK_SENT) {
             $this->resetLinkStatus = true;
-        }
+        //}
 
         // Store the nonce to prevent re-use
         session(["forgot-password-nonce-{$this->nonce}" => true]);
         
-        throw ValidationException::withMessages([
+        /*throw ValidationException::withMessages([
             'email' => [trans(config('app.dialog_config.invalid_email_forgot_password.message'))],
-        ]);
+        ]);*/
     }
     
     public function render()
     {
         if ($this->resetLinkStatus) {
-            return view('guest.auth.reset-password-link-sent');
+            return view('guest.auth.reset-password-link-sent',
+                ['message' => config('app.dialog_config.email_sent_forgot_password.message')]  
+            );
         }
         
         return view('guest.auth.send-reset-password-link');
