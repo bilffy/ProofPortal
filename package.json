@@ -30,10 +30,12 @@
         "@vitejs/plugin-vue": "^5.0.5",
         "bootstrap": "^5.3.3",
         "crypto-js": "^4.2.0",
+        "flatpickr": "^4.6.13",
         "flowbite": "^2.5.1",
         "jquery": "^3.7.1",
         "js-aes-php": "^1.0.1",
         "js-crypto-aes": "^1.0.6",
+        "moment": "^2.30.1",
         "vue": "^3.4.31",
         "vue-loader": "^17.4.2"
     }

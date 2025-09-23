@@ -1,11 +1,4 @@
 @section('css')
-    {{-- Flatpickr --}}
-    <link href="{{ URL::asset('proofing-assets/vendors/css/flatpickr.min.css') }}" rel="stylesheet" />
-    {{-- Bootstrap Multiselect --}}
-    <link href="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/css/bootstrap-multiselect.css')}}" rel="stylesheet" />
-    {{-- Select2 --}}
-    <link href="{{ URL::asset('proofing-assets/plugins/select2/css/select2.min.css')}}" rel="stylesheet" />
-
     <style>
         .custom-file-label:hover {
             background-color: #0056b3; /* Darker shade on hover */
@@ -436,14 +429,5 @@
 </div>
 
 @section('js')
-
-    <script>
-        jQuery.noConflict();
-    </script>
-
-    <script src="{{ URL::asset('proofing-assets/vendors/moment/moment.js') }}"></script>
-    <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>
-    <script src="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/js/bootstrap-multiselect.js') }}"></script>
-    <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
-    <script src="{{ URL::asset('proofing-assets/js/school/configure.js') }}"></script>
+    <script type="module" src="{{ Vite::asset('public/proofing-assets/js/school/configure.js') }}"></script>
 @stop

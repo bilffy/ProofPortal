@@ -382,10 +382,10 @@ jQuery(document).ready(function($) {
 
                 // Only destroy datetimepicker if it's already initialized
                 if ($('#portrait_download_start_picker').data("flatpickr")) {
-                    $('#portrait_download_start_picker').flatpickr().destroy();
+                    $('#portrait_download_start_picker')[0]._flatpickr.destroy();
                 }
                 if ($('#group_download_start_picker').data("flatpickr")) {
-                    $('#group_download_start_picker').flatpickr().destroy();
+                    $('#group_download_start_picker')[0]._flatpickr.destroy();
                 }
 
                 portraitDateToDisplay = downloadAvailableDateInFormat;
@@ -402,7 +402,7 @@ jQuery(document).ready(function($) {
                     }
 
                     // Event listener for when a date is selected from the portrait download date picker
-                    $('#portrait_download_start_picker').flatpickr({
+                    flatpickr('#portrait_download_start_picker', {
                         enableTime: true,
                         dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
                         disableMobile: true,
@@ -411,7 +411,7 @@ jQuery(document).ready(function($) {
                     });
 
                     // Event listener for when a date is selected from the group download date picker
-                    $('#group_download_start_picker').flatpickr({
+                    flatpickr('#group_download_start_picker', {
                         enableTime: true,
                         dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
                         disableMobile: true,
