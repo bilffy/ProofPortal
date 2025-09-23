@@ -46,7 +46,7 @@
     @livewireScripts
 
     <!-- Proofing Assets: Bootstrap and necessary plugins -->
-    <script type="module" src="{{ Vite::asset('public/proofing-assets/js/app.js') }}"></script>
+    <script type="module" src="{{ URL::asset('proofing-assets/js/app.js') }}"></script>
     <!-- END OF Proofing Assets: Bootstrap and necessary plugins -->
 
     <!-- CoreUI main scripts -->
