@@ -149,11 +149,11 @@ return [
         ],
         'invalid_email_forgot_password' => [
             'title' => 'Forgot Password',
-            'message' => "If the account exists, you'll get an email shortly.",
+            'message' => "We can't find a user with that email address.",
         ],
         'email_sent_forgot_password' => [
             'title' => 'Email sent',
-            'message' => "A password reset link has been sent to the associated email. Please check your inbox.",
+            'message' => "If the account exists, you'll get an email shortly.",
         ],
         'otp' => [
             'title' => 'Verification Code',
