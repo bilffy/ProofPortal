@@ -57,7 +57,7 @@
     <div class="flex w-full mb-16 flex-col">
         <div class="bg-neutral-200 w-full p-4 rounded flex gap-4">
             <div class="relative bg-white w-[341px] h-[246px] mb-4 p-4 items-center flex justify-center">
-                <img src={{ Vite::asset('public/proofing-assets/img/schoolLogo/5.png') }} alt="" class="object-contain w-full h-full">
+                <img src={{ URL::asset('proofing-assets/img/schoolLogo/5.png') }} alt="" class="object-contain w-full h-full">
                 <button 
                     class="
                         p-2 rounded-s
@@ -233,5 +233,5 @@
 </div>
 
 @section('js')
-    <script type="module" src="{{ Vite::asset('public/proofing-assets/js/school/configure.js') }}"></script>
+    <script type="module" src="{{ URL::asset('proofing-assets/js/school/configure.js') }}"></script>
 @stop
