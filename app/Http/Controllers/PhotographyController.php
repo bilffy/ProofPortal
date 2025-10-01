@@ -19,6 +19,7 @@ use App\Models\Status;
 use App\Models\Subject;
 use App\Services\ImageService;
 use App\Services\SchoolService;
+use App\Services\UserService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -103,6 +104,14 @@ class PhotographyController extends Controller
     
     public function requestDownloadDetails(Request $request)
     {   
+        $school = SchoolContextHelper::getSchool();
+
+        $user = Auth::user();
+        
+        if (UserService::isCanAccessImage($user, $school) === false) {
+            abort(403, 'Access denied.');                    
+        }      
+
         // get the nonce from the request header
         if ($request->header('MSP-Nonce') !== session('download-request-nonce')) {
             return response()->json('Invalid Request', 422);
@@ -125,7 +134,6 @@ class PhotographyController extends Controller
         
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
-        $school = SchoolContextHelper::getSchool();
         $schoolKey = $school->schoolkey ?? '';
         $view = $selectedFilters['view'];
         $class = json_decode($selectedFilters['class']);
