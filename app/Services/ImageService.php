@@ -2,7 +2,12 @@
 
 namespace App\Services;
 
+use App\Helpers\FilenameFormatHelper;
 use App\Helpers\PhotographyHelper;
+use App\Models\Folder;
+use App\Models\Image;
+use App\Models\SchoolPhotoUpload;
+use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -19,7 +24,7 @@ class ImageService
     {
         return DB::table('seasons')
             ->select('id', 'ts_season_id', 'code as Year')
-            ->orderBy('code', 'desc')
+            ->orderBy('code', direction: 'desc')
             ->get();
     }
 
@@ -112,6 +117,10 @@ class ImageService
             case PhotographyHelper::TAB_GROUPS:
             case PhotographyHelper::TAB_OTHERS:
                 $nullName = 'Class';
+                $query->where(function ($q) {
+                    $q->where('folder_tags.external_name', '!=', 'Family')
+                        ->orWhereNull('folders.folder_tag');
+                });
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
             default:
@@ -162,6 +171,7 @@ class ImageService
         $query = DB::table('schools')
             ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_season_id', $seasonId)
             ->where("folders.$visibilityColumn", 1);
 
@@ -177,7 +187,7 @@ class ImageService
             });
 
         return $query
-            ->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id')
+            ->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id', 'seasons.code as year')
             ->orderBy('folders.ts_foldername')
             ->get();
     }
@@ -224,7 +234,12 @@ class ImageService
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->leftJoin('folder_subjects', 'folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->join('subjects', function ($join) {
+            $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                 ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
+        })
+        ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey);
         
@@ -254,7 +269,8 @@ class ImageService
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername')
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'seasons.code as year')
+            ->distinct()
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
     }
@@ -274,6 +290,7 @@ class ImageService
         // $query = DB::table(table: 'images')
         // ->join('jobs', 'jobs.ts_job_id', '=', 'images.ts_job_id')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+        ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
         // ->where('images.keyorigin', 'Folder')
@@ -301,7 +318,7 @@ class ImageService
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('folders.ts_folderkey', 'folders.ts_foldername')
+            ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
             ->orderBy('folders.ts_foldername');
     }
 
@@ -334,6 +351,103 @@ class ImageService
     }
 
     /**
+     * Get group/folder images from database using options given
+     *
+     * @param string $schoolKey
+     * @param string $searchTerm
+     * @param string $searchTerm2
+     * @return Collection
+     */
+    public function getGroupImages($schoolKey, $searchTerm): Collection
+    {
+        $query = DB::table(table: 'jobs')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where('folders.is_visible_for_group', 1)
+        ;
+
+        $query->where(function ($query) {
+            $query->where(function ($subQuery) {
+                // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
+                $subQuery->whereNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->where('jobs.download_available_date', '<=', now());
+            });
+            // in case portrait_download_date and download_available_date are both non-NULL
+            // and the most recent date of the two dates is less than or equal to now
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereNotNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->whereRaw('GREATEST(jobs.portrait_download_date, jobs.download_available_date) <= ?', [now()]);
+            });
+        });
+
+        if($searchTerm) {
+            $query->where('folders.ts_foldername', 'like', "%$searchTerm%");
+        }
+
+        return $query
+            ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
+            ->orderBy('folders.ts_foldername')
+            ->get();
+    }
+
+    /**
+     * Get images from database using options given
+     *
+     * @param string $schoolKey
+     * @param string $searchTerm
+     * @param string $searchTerm2
+     * @return Collection
+     */
+    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2): Collection
+    {
+        $query = DB::table(table: 'jobs')
+        ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+        ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+        ->leftJoin('folder_subjects', 'folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->join('subjects', function ($join) {
+            $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                 ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
+        })
+        ->where('jobs.ts_schoolkey', $schoolKey)
+        ->where('folders.is_visible_for_portrait', 1)
+        ;
+        
+        $query->where(function ($query) {
+            $query->where(function ($subQuery) {
+                // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
+                $subQuery->whereNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->where('jobs.download_available_date', '<=', now());
+            });
+            // in case portrait_download_date and download_available_date are both non-NULL
+            // and the most recent date of the two dates is less than or equal to now
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereNotNull('jobs.portrait_download_date')
+                    ->whereNotNull('jobs.download_available_date')
+                    ->whereRaw('GREATEST(jobs.portrait_download_date, jobs.download_available_date) <= ?', [now()]);
+            });
+        });
+
+        if($searchTerm) {
+            $query->where(function ($query) use ($searchTerm, $searchTerm2) {
+                $query->where('subjects.firstname', 'like', "%$searchTerm%")
+                    ->orWhere('subjects.lastname', 'like', "%$searchTerm2%");
+            });
+        }
+        
+        return $query
+            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'seasons.code as year')
+            ->distinct()
+            ->orderBy('year')
+            ->orderBy('subjects.lastname')
+            ->orderBy('subjects.firstname')
+            ->get();
+    }
+
+    /**
      * Get images from the local drive and return them as base64 strings.
      *
      * @param Collection
@@ -355,16 +469,45 @@ class ImageService
         }
 
         $toData = function ($image) use ($key, $category) {
-            $fileContent = $this->getImageContent($image->$key);
+            $isSubject = $category != 'FOLDER';
+            $imgKey = $image->$key;
+            if ($isSubject) {
+                $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+                if ($subject) {
+                    $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->exists();
+                    $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+                } else {
+                    $uploaded = false;
+                }
+            } else {
+                $folder = Folder::where('ts_folderkey', $image->$key)->first();
+                if ($folder) {
+                    $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->exists();
+                    $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+                } else {
+                    $uploaded = false;
+                }
+            }
+            $fileContent = $this->getImageContent($imgKey);
+            
             $dimensions = getimagesizefromstring($fileContent);
-                
+
+            if ($isSubject) {
+                $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null);
+            } else {
+                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
+            }
+
             return [
                 'id' => base64_encode(base64_encode($image->$key)),
-                'firstname' => $category == 'FOLDER' ? '' : $image->firstname,
-                'lastname' => $category == 'FOLDER' ? '' : $image->lastname,
+                'firstname' => $isSubject ? $image->firstname : '',
+                'lastname' => $isSubject ? $image->lastname : '',
                 'isPortrait' => $dimensions[0] <= $dimensions[1],
-                'classGroup' => $image->ts_foldername,
+                'classGroup' => $classGroup,
+                'year' => $image->year ?? 0,
                 'category' => $category,
+                'isUploaded' => $uploaded,
             ];
         };
 
@@ -379,10 +522,33 @@ class ImageService
     public function getImageContent($key)
     {
         $path = $this->getPath($key.".jpg");
-        $isFound = Storage::disk('local')->exists($path);
+        if (Storage::disk('local')->exists($path)) {
+            $isFound = true;
+        } else {
+            $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
+            $isFound = Storage::disk('local')->exists($path);
+        }
         $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
 
         return $fileContent;
+    }
+
+    /**
+     * Check if image is found based on $key value
+     * @param string $key
+     * @return boolean
+     */
+    public function getIsImageFound($key)
+    {
+
+        $path = $this->getPath($key.".jpg");
+        if (Storage::disk('local')->exists($path)) {
+            return true;
+        } else {
+            $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
+        }
+        
+        return Storage::disk('local')->exists($path);
     }
 
     /**
@@ -415,5 +581,29 @@ class ImageService
             $page,
             $options
         );
+    }
+    
+    /**
+     * Get all the images based on the selected portal subject id.
+     *
+     * @param string $subjectId
+     * 
+     */
+    public function getPortraitImagesByPortalSubjectId(string $subjectId)
+    {
+        // TODO: This should return images based on the subjectId  
+    }
+
+    /**
+     * Get all the Image Options.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getImageOptions()
+    {
+        return DB::table('image_options')
+            ->select('id', 'display_name')
+            ->orderBy('id', 'asc')
+            ->get();
     }
 }

@@ -80,4 +80,56 @@ class FilenameFormatHelper
         }
         return $options;
     }
+
+    public static function getFormatOptionsList(): array
+    {
+        $tables = [
+            'subjects',
+            'folders',
+            'seasons',
+        ];
+        $allowedTypes = ['int', 'varchar'];
+        $fields = [];
+        $options = [];
+        
+        foreach ($tables as $table) {
+            if (!DB::getSchemaBuilder()->hasTable($table)) {
+                continue;
+            }
+            $columns = DB::getSchemaBuilder()->getColumnListing($table);
+            foreach ($columns as $column) {
+                $type = DB::getSchemaBuilder()->getColumnType($table, $column);
+                if (!in_array($type, $allowedTypes)) {
+                    continue;
+                }
+                $fields[] = "{{$table}.{$column}}";
+            }
+        }
+
+        foreach ($fields as $field) {
+            $key = self::generateFormatKey($field);
+            $options[$key] = $field;
+        }
+
+        return $options;
+    }
+
+    public static function generateFormatKey($format): string
+    {
+        if (preg_match('/\{(.*?)\}/', $format, $matches)) {
+            $parts = explode('.', $matches[1]);
+            $parts = array_map(function($part) {
+                return str_replace(' ', '', ucwords(str_replace('_', ' ', $part)));
+            }, $parts);
+            return implode('.', $parts);
+        }
+        return $format;
+    }
+
+    public static function removeYearAndDelimiter($name, $year): string
+    {
+        if (!$year) return $name;
+        $pattern = '/[\s\-_()]*' . preg_quote($year, '/') . '[\s\-_()]*/';
+        return trim(preg_replace($pattern, ' ', $name));
+    }
 }

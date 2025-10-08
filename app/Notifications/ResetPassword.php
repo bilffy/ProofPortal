@@ -31,11 +31,18 @@ class ResetPassword extends Notification
     public function toMail($notifiable)
     {
         $expiration = config('auth.passwords.users.expire');
-        $resetUrl = url(config('app.url').route('password.reset', ['token' => $this->token, 'email' => $notifiable->getEmailForPasswordReset()], false));
+        $resetUrl = url(config('app.url').route('password.reset', 
+                [
+                    'token' => $this->token, 
+                    //'email' => $notifiable->getEmailForPasswordReset()
+                    'email' => $this->user->getHashedIdAttribute()
+                ], 
+                false));
+        
         $fullName = ucfirst($this->user->firstname) .' '. ucfirst($this->user->lastname);
         
         return (new MailMessage)
-            ->subject('Request password reset for '. $fullName)
+            ->subject('Reset your MSP School Portal password')
             ->markdown('emails.reset_password', [
                 'firstname' => $this->user->firstname,
                 'resetUrl' => $resetUrl,

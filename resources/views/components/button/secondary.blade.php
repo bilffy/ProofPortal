@@ -4,9 +4,9 @@
 <x-button.base
 {{ $attributes->merge([
     'flavor'=>'secondary',
-    'class'=>'px-3 py-2 transition-all hover:transition-all',
+    'class'=>'px-3 py-2 transition-all text:secondary border-secondary hover:transition-all hover:bg-secondary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed',
+    'hollow' => true,
 ]) }}
-    textColor="#ffffff"
   >
     {{ $slot }}
 </x-button.base>

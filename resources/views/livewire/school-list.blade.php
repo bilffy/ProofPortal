@@ -24,26 +24,44 @@
     <table class="w-full text-sm text-left rtl:text-right">
         <thead>
             <tr>
-                <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" filterable="{{false}}">School Key</x-table.headerCell>
-                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" filterable="{{false}}">School Name</x-table.headerCell>
-                <x-table.headerCell class="{{ $hideFranchise ? 'hidden' : '' }}" id="name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" filterable="{{false}}">Franchise</x-table.headerCell>
+                <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}" >School Key</x-table.headerCell>
+                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">School Name</x-table.headerCell>
+                <x-table.headerCell class="{{ $hideFranchise ? 'hidden' : '' }}" id="franchise_name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">Franchise</x-table.headerCell>
             </tr>
         </thead>
         <tbody>
             @foreach ($schools as $school)
                 <tr>
                     <x-table.cell class="w-1/4">
-                        <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
-                            {{ $school->schoolkey }}
-                        </a>
+                        @if ($isAdmin)
+                            <a href="{{ route('users', ['search' => $school->name]) }}">
+                                {{ $school->schoolkey }}
+                            </a>
+                        @else
+                            <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
+                                {{ $school->schoolkey }}
+                            </a>
+                        @endif    
                     </x-table.cell>
                     <x-table.cell>
-                        <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
-                            {{ $school->name }}
-                        </a>
+                        @if ($isAdmin)
+                            <a href="{{ route('users', ['search' => $school->name]) }}">
+                                {{ $school->name }}
+                            </a>
+                        @else    
+                            <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
+                                {{ $school->name }}
+                            </a>
+                        @endif    
                     </x-table.cell>
                     <x-table.cell  class="{{ $hideFranchise ? 'hidden' : '' }}">
-                        {{ $school->franchise_name }}
+                        @if ($isAdmin)
+                            <a href="{{ route('users', ['search' => $school->franchise_name]) }}">
+                                {{ $school->franchise_name }}
+                            </a>
+                        @else
+                            {{ $school->franchise_name }}
+                        @endif
                     </x-table.cell>
                 </tr>
             @endforeach

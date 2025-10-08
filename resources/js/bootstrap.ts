@@ -5,10 +5,12 @@ import moment from 'moment';
 import flatpickr from 'flatpickr';
 import 'flowbite';
 import 'bootstrap';
+import Tribute from "tributejs";
 
 window.$ = jquery;
 window.jQuery = jquery;
 window.axios = axios;
 window.moment = moment;
 window.flatpickr = flatpickr;
+window.Tribute = Tribute;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

@@ -157,10 +157,10 @@
     };
     
     window.addEventListener('load', () => {
-        $('#select_role').select2({minimumResultsForSearch: Infinity});
+        $('#select_role').select2({minimumResultsForSearch: Infinity, placeholder: "Select"});
         $('#select_role').change(toggleLevelOptions);
-        $('#select_school').select2();
-        $('#select_franchise').select2();
+        $('#select_school').select2({placeholder: "Select"});
+        $('#select_franchise').select2({placeholder: "Select"});
         
         if (selectedRole) {
             updateSelectByRole(roles[selectedRole]);

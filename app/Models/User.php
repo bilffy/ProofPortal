@@ -87,6 +87,7 @@ class User extends Authenticatable
         'password_expiry_date',
         'is_setup_complete',
         'status',
+        'disabled',
     ];
 
     /**
@@ -145,6 +146,16 @@ class User extends Authenticatable
         return $this->hasRole([RoleHelper::ROLE_SCHOOL_ADMIN, RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER]);
     }
 
+    public function isPhotoCoordinator()
+    {
+        return $this->hasRole([RoleHelper::ROLE_PHOTO_COORDINATOR]);
+    }
+
+    public function isTeacher()
+    {
+        return $this->hasRole([RoleHelper::ROLE_TEACHER]);
+    }
+    
     // Get the latest otp
     public function getLatestOtp()
     {
@@ -230,6 +241,14 @@ class User extends Authenticatable
         // return Hashids::encodeHex("$this->id");
         return $this->id;
     }
+
+    /**
+     * Get the Hashed Email attribute.
+     */
+    public function getHashedEmailAttribute()
+    {
+        return Hashids::encodeHex("$this->email");
+    }
     
     /**
      * @return bool
@@ -245,4 +264,90 @@ class User extends Authenticatable
 //        return true;
 //    }
 
+    /**
+     * @return bool
+     */
+    public function canDisable($userId): bool
+    {   
+        // Decode the user ID
+        // $id = Hashids::decodeHex($userId);
+        $id = $userId;
+        
+        // Check if the user is the same as the current user, if so, return false
+        if ($this->id === $id) {
+            return false;
+        }
+        
+        /** @var User $user */
+        $user = User::query()->find($id);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($this->isRcUser()) {
+            if ($user->isAdmin()) {
+                return false;
+            }
+            return true;
+        }
+
+        if ($this->isFranchiseLevel()) {
+            if ($user->isAdmin() || $user->isFranchiseLevel()) {
+                return false;
+            }
+            
+            // check if $user belongs to the same franchise
+            if ($this->franchises()->where('franchises.id', $user->getFranchise()->id)->exists()) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        if ($this->isSchoolAdmin()) {
+            if ($user->isAdmin() || $user->isFranchiseLevel() || $user->isSchoolAdmin()) {
+                return false;
+            }
+            
+            // check if $user belongs to the same school
+            if ($this->schools()->where('schools.id', $user->getSchool()->id)->exists()) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        if ($this->isPhotoCoordinator()) {
+            if ($user->isAdmin() || $user->isFranchiseLevel() || $user->isSchoolAdmin() || $user->isPhotoCoordinator()) {
+                return false;
+            }
+            
+            // check if $user belongs to the same school
+            if ($this->schools()->where('schools.id', $user->getSchool()->id)->exists()) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        if ($this->isTeacher()) {
+            if ($user->isAdmin() || $user->isFranchiseLevel() || $user->isSchoolAdmin() || $user->isPhotoCoordinator() || $user->isTeacher()) {
+                return false;
+            }
+            
+            // check if $user belongs to the same school
+            if ($this->schools()->where('schools.id', $user->getSchool()->id)->exists()) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        return false;
+    }
 }

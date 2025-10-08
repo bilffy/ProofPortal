@@ -25,7 +25,8 @@ class Order extends Component
         
         return view('livewire.order',
             [
-                'user' => $user
+                'user' => $user,
+                'schoolKey' => $user->getSchool()->schoolkey,
                 
             ])
             ->layout('layouts.authenticated', [

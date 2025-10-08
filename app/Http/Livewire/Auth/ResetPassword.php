@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Vinkla\Hashids\Facades\Hashids;
 
 #[Layout('layouts.guest')]
 class ResetPassword extends Component
@@ -27,13 +28,14 @@ class ResetPassword extends Component
         'password_confirmation' => 'required',
     ];
 
-    public function mount($token)
+    public function mount($token, $email)
     {
-        $this->email = request()->email;
+        // $id = Hashids::decodeHex($email);
+        $id = $email;
         $this->token = $token;
-        
-        // Check if the user exists otherwise throw an exception
-        User::where('email', $this->email)->firstOrFail();
+
+        $user = User::findOrFail($id);
+        $this->email = $user->email;
         
         $this->password = '';
         
@@ -52,6 +54,10 @@ class ResetPassword extends Component
     public function submit()
     {
         $this->validate();
+
+        //$id = Hashids::decodeHex($this->email);
+        //$user = User::findOrFail($id);
+        //$this->email = $user->email;
         
         // Check if the user exists otherwise throw an exception
         $user = User::where('email', $this->email)->firstOrFail();

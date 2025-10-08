@@ -24,6 +24,7 @@ class Image extends Model
         'keyvalue',
         'keyorigin',
         'protected',
+        'portal_subject_id'
     ];
     
     //Subjects Table

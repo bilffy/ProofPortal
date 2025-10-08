@@ -4,4 +4,7 @@
     name="{{$name}}"
     folderName="{{$folderName}}"
     landscape="{{$landscape}}"
+    hasImage="{{$hasImage}}"
+    isLightbox="{{$isLightbox}}"
+    isUploaded="{{$isUploaded}}"
 />

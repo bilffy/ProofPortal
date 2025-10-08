@@ -25,7 +25,7 @@
                 <span wire:loading wire:target="submit"><x-spinner.button label="Verify" /></span>
             </x-button.primary>
             <x-button.link id="resend-button" cursor="" disabled wire:click="resendOtp('{{ $email }}')" wire:loading.attr="disabled" class="opacity-50">
-                <span wire:target="resendOtp('{{ $email }}')" wire:loading.remove>Resend Code</span>
+                <span id="resend-button-span" wire:target="resendOtp('{{ $email }}')" wire:loading.remove>Resend Code</span>
                 <span wire:loading wire:target="resendOtp('{{ $email }}')">
                     <x-spinner.button label="Resend Code" />
                 </span>
@@ -58,7 +58,8 @@
                     );
                     
                     if (timeLeft <= enabledResendTime && timeLeft > 0) {
-                        resendButton.prop('disabled', false).removeClass('opacity-50').addClass('text-[#F49A00] cursor-pointer underline');
+                        resendButton.prop('disabled', false).removeClass('opacity-50').addClass('cursor-pointer');
+                        $("#resend-button-span").css('color', '#F49A00');
                     } else if (timeLeft <= 0) {
                         clearInterval(timerInterval); // Stop the timer when it reaches 0
                         // reload the page

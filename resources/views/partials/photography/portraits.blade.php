@@ -46,18 +46,19 @@
                 $level = $isFranchiseLevel ? 'franchise_level' : 'school_level';
                 $color = $isFranchiseLevel ? 'alert' : 'neutral-300';
             @endphp
-            <div class="w-full text-center text-{{ $color  }}">{{ config('app.dialog_config.photography.no_jobs.' . $level) }}</div>
+            <div class="w-full text-center text-{{ $color  }}">{{ $photographyMessages['no_jobs'][$level] }}</div>
         @endif
     </div>
 </div>
 
 @push('scripts')
 <script type="module">
+    const category = "{{ $category }}";
     function performPortaitSearch(event) {
         if (event.key === 'Enter') {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: 'PORTRAITS' });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: event.currentTarget.value, category: category });
         } else if (!event.currentTarget.value) {
-            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: 'PORTRAITS' });
+            Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: category });
         }
     }
     function updateGridView(event) {
@@ -66,7 +67,7 @@
         const selectedClass = $('#select_portraits_class').val();
         
         resetImages();
-        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: 'PORTRAITS'});
+        Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: category});
     };
     function updateSelect2Options(selector, options) {
         const select = $(selector);
@@ -110,7 +111,7 @@
     });
 
     Livewire.on('EV_UPDATE_FILTER_DATA', (data) => {
-        if (data[0] == 'PORTRAITS') {
+        if (data[0] == category) {
             updateSelect2Options(`#select_portraits_${data[1]}`, data[2]);
         }
     });

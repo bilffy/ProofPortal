@@ -9,4 +9,6 @@ export const NAV_TABS = {
     MANAGE_USERS: 'Manage Users',
     REPORTS: 'Reports',
     ORDER: 'Ordering',
+    CONFIG_SCHOOL: 'School Config',
+    APP_SETTINGS: 'App Settings',
 }

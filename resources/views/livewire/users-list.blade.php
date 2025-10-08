@@ -26,13 +26,13 @@
         <table class="w-full text-sm text-left rtl:text-right">
             <thead>
                 <tr>
-                    <x-table.headerCell id="email" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('email')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Email</x-table.headerCell>
-                    <x-table.headerCell class="whitespace-nowrap" id="firstname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('firstname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">First Name</x-table.headerCell>
-                    <x-table.headerCell class="whitespace-nowrap" id="lastname" filterable="{{false}}" isLivewire="{{true}}" wireEvent="sortColumn('lastname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Last Name</x-table.headerCell>
-                    <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" filterModel="filterBy.role" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
+                    <x-table.headerCell id="email" isLivewire="{{true}}" wireEvent="sortColumn('email')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Email</x-table.headerCell>
+                    <x-table.headerCell class="whitespace-nowrap" id="firstname" isLivewire="{{true}}" wireEvent="sortColumn('firstname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">First Name</x-table.headerCell>
+                    <x-table.headerCell class="whitespace-nowrap" id="lastname" isLivewire="{{true}}" wireEvent="sortColumn('lastname')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Last Name</x-table.headerCell>
+                    <x-table.headerCell id="role" isLivewire="{{true}}" wireEvent="sortColumn('role')" sortable="{{false}}" filterable="{{true}}" filterModel="filterBy.role" :filterOptions="$roleOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Role</x-table.headerCell>
                     <x-table.headerCell id="organization" isLivewire="{{true}}" wireEvent="sortColumn('organization')" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Franchise/School</x-table.headerCell>
-                    <x-table.headerCell id="status" isLivewire="{{true}}" wireEvent="sortColumn('status')" filterModel="filterBy.status" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Status</x-table.headerCell>
-                    <x-table.headerCell class="w-[40px]" sortable="{{false}}" filterable="{{false}}"></x-table.headerCell>
+                    <x-table.headerCell id="status" isLivewire="{{true}}" sortable="{{false}}" filterable="{{true}}" wireEvent="sortColumn('status')" filterModel="filterBy.status" :filterOptions="$statusOptions" sortBy="{{$sortBy}}" sortDirection="{{$sortDirection}}">Status</x-table.headerCell>
+                    <x-table.headerCell class="w-[40px]" sortable="{{false}}"></x-table.headerCell>
                 </tr>
             </thead>
             <tbody>
@@ -46,6 +46,7 @@
                             $inviteRoute = route("invite.single", ["id" => $userId ]);
                             $impersonateRoute = route("impersonate.store", ["id" => $userId ]);
                             $checkStatusRoute = route('invite.check-user-status', ['id' => $userId]);
+                            $disableRoute = route("disable.user", ["id" => $userId ]);
                             $role = is_null($user->getRole()) ? '' : $user->getRole();
                             $dropDownId = "optionsDropdown" . $userId;
                         @endphp
@@ -69,6 +70,7 @@
                                 impersonateRoute="{{ $impersonateRoute }}"
                                 checkStatusRoute="{{ $checkStatusRoute }}"
                                 user="{{ $user }}"
+                                disableRoute="{{ $disableRoute }}"
                             />
                         </x-table.cell>
                     </tr>
@@ -110,6 +112,20 @@
         </x-slot>
     </x-modal.base>
 
+    <x-modal.base id="disableModal" title="Disable User" body="components.modal.body" footer="components.modal.footer">
+        <x-slot name="body">
+            <x-modal.body>
+                <p id="disable-modal-email"></p>
+            </x-modal.body>
+        </x-slot>
+        <x-slot name="footer">
+            <x-modal.footer>
+                <x-button.secondary data-modal-hide="disableModal">Cancel</x-button.secondary>
+                <x-button.primary  id="accept-disable" data-disable-route="">Disable</x-button.primary>
+            </x-modal.footer>
+        </x-slot>
+    </x-modal.base>
+    
     <div class="w-full flex items-center justify-center py-4">
         {{ $users->onEachSide(1)->links('vendor.livewire.pagination') }}
     </div>
@@ -172,6 +188,20 @@
                 $(this).@disabled(true);
                 $(this).html(`<x-spinner.button />`);
                 window.location.href = $(this).attr('data-impersonate-route');
+            });
+
+            $('[data-modal-toggle="disableModal"]').on('click', function() {
+                const email = $(this).closest('tr').find('td:first-child').text().trim();
+                const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+                const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
+                $('#accept-disable').attr('data-disable-route', $(this).attr('data-disable-route'));
+                $('#disable-modal-email').html("Are you sure you want to disable this account  <b>" + fname + " " + lname + " (" + email + ")?</b>");
+            });
+
+            $('#accept-disable').on('click', function() {
+                $(this).@disabled(true);
+                $(this).html(`<x-spinner.button />`);
+                window.location.href = $(this).attr('data-disable-route');
             });
         }
 

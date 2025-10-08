@@ -50,6 +50,12 @@ class ForgotPassword extends Component
 
         if ($user) {
 
+            if ($user->disabled) {
+                throw ValidationException::withMessages([
+                    'email' => [trans(config('app.dialog_config.invalid_email_forgot_password.message'))],
+                ]);
+            }
+            
             // Prevent replay attacks by checking if the nonce was already used
             if (session()->has("forgot-password-nonce-{$this->nonce}")) {
                 //return redirect()->route('login');
@@ -57,7 +63,7 @@ class ForgotPassword extends Component
                     'email' => ['This request has already been processed. Reload the page and try again.'],
                 ]);
             }
-            
+
             $token = Password::createToken($user);
             $user->notify(new ResetPassword($token, $user));
             //$status = Password::RESET_LINK_SENT;

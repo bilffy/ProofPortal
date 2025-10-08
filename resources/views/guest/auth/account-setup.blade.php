@@ -5,7 +5,7 @@
 <main class="mt-8 bg-white rounded-lg overflow-hidden border-[#969696] border-2 p-8 px-12">
     <h1 class="text-3xl text-[#02B3DF] mb-4"> Account Setup</h1>
 
-    @error('email') <span class="error">{{ $message }}</span> @enderror
+    @error('email') <div class="mb-4 font-bold text-3xl text-red-600">{{ $message }}</div> @enderror
 
     <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
         <div class="hidden">

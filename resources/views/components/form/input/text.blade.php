@@ -11,6 +11,6 @@
 <input
     {{ $attributes->merge([
         'ref' => "input",
-        'class' => "border rounded-md p-2 border-neutral"
+        'class' => "border rounded-md p-2 border-neutral read-only:opacity-50 read-only:cursor-not-allowed read-only:bg-neutral-300",
     ]) }}
 />

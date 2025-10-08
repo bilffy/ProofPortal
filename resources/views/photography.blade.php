@@ -1,6 +1,8 @@
 @extends('layouts.authenticated')
 
 @php
+    use App\Helpers\SchoolContextHelper;
+    
     $highResDownloadOption = $AppSettingsHelper::getByPropertyKey('high_res_download_option');
     $lowResDownloadOption = $AppSettingsHelper::getByPropertyKey('low_res_download_option');
     $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
@@ -18,7 +20,8 @@
     // check if any of $highResDownloadOptionValue or $lowResDownloadOptionValue is false disable the resolution selection
     $isDisabledResolution = !$highResDownloadOptionValue || !$lowResDownloadOptionValue;
     
-    
+    $school = SchoolContextHelper::getSchool();
+    $schoolKey = $school->schoolkey ?? '';
 @endphp
 
 @section('content')
@@ -26,10 +29,7 @@
         <x-tabs.tabContainer tabsWrapper="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
                 @if ($configureTabV1Value)
-                    <x-tabs.tab id="configure" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure')}}">Configure</x-tabs.tab>
-                @endif
-                @if ($configureTabV2Value)
-                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure-new</x-tabs.tab>
+                    <x-tabs.tab id="configure-new" isActive="{{$currentTab == 'configure'}}" route="{{route('photography.configure-new')}}">Configure</x-tabs.tab>
                 @endif
             @endrole
             <x-tabs.tab id="portraits" isActive="{{$currentTab == 'portraits'}}" route="{{route('photography.portraits')}}">Portraits</x-tabs.tab>
@@ -40,7 +40,8 @@
                 <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
             @endif
             <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
-                <x-button.primary id="btn-download-clear" hollow class="border-none hidden" onclick="resetImages()">Clear Selection</x-button.primary>
+                <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.primary-inverse>
+                <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Cancel Selection</x-button.primary-inverse>
                 <x-button.primary 
                         id="btn-download"
                         onclick="showOptionsDownloadRequest()"
@@ -51,9 +52,6 @@
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
             @role($RoleHelper::ROLE_FRANCHISE)
-                <x-tabs.tabContent id="configure">
-                    @include('partials.photography.configure')
-                </x-tabs.tabContent>
                 <x-tabs.tabContent id="configure-new">
                     @include('partials.photography.configure-new')
                 </x-tabs.tabContent>
@@ -74,21 +72,21 @@
                 <x-modal.body>
                     <input type="hidden" id="nonce" name="nonce" value="">
                     <div><b>{{ $configMessages['options']['sub_title']  }}</b></div>
-                    <div @if (!$lowResDownloadOptionValue && !$highResDownloadOptionValue) class="hidden" @endif>
+                    <div>
                         <p>{{ $configMessages['options']['resolution_selection']  }}</p>
-                        <div class="flex flex-col gap-4 @if ($isDisabledResolution) opacity-50 @endif">
+                        <div class="flex flex-col gap-4">
                             <div class="flex flex-col gap-2">
-                                <select id="image_res" class="input" @if ($isDisabledResolution) disabled @endif>
-                                    @if ($lowResDownloadOptionValue)
-                                        <option value="low">Small/Low Res (72 DPI - suitable for viewing on screen)</option>
-                                    @endif
-                                    @if ($highResDownloadOptionValue)
-                                        <option value="high">High Res (300 DPI - suitable for printing)</option>
-                                    @endif    
+                                <select id="image_res" class="input">
+                                    @foreach($imageOptions as $option) 
+                                        <option value="{{ $option->id }}" >
+                                            {{ $option->display_name }}
+                                        </option>
+                                        
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
-                    </div>    
+                    </div>
                     <div id="folder_format_selection">
                         <p>{{ $configMessages['options']['folder_format_selection']  }}</p>
                         <div class="flex flex-col gap-4">
@@ -123,6 +121,7 @@
             <x-slot name="body">
                 <x-modal.body>
                     <p id="confirm-download-body"></p>
+                    <p id="confirm-download-notes" class="text-neutral-600"></p>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
@@ -156,15 +155,65 @@
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
+        <x-modal.base id="downloadUnavailableModal" title="{{ $configMessages['unavailable']['title'] }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="download-unavailable-body">{{ $configMessages['unavailable']['message'] }}</p>
+                    <p id="download-unavailable-body-2">{{ $configMessages['unavailable']['message2'] }}</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary data-modal-hide="downloadUnavailableModal">Dismiss</x-button.secondary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <x-modal.base id="replaceOrRemovePhotoModal" title="{{ $photographyMessages['image_upload']['replace_or_remove_title'] }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="replace-or-remove-photo-body">{{ $photographyMessages['image_upload']['replace_or_remove_body'] }}</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.primary onclick="showRemovePhotoModal()" id="remove-photo-btn" data-modal-hide="replaceOrRemovePhotoModal">Remove Photo</x-button.primary>
+                    <x-button.primary onclick="replaceUploadedPhoto()" id="replace-photo-btn">Replace Photo</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <x-modal.base id="confirmRemovePhotoModal" title="{{ $photographyMessages['image_upload']['confirm_remove_title'] }}" body="components.modal.body" footer="components.modal.footer">
+            <x-slot name="body">
+                <x-modal.body>
+                    <p id="confirm-remove-body">{{ $photographyMessages['image_upload']['confirm_remove_body'] }} <span id="confirm-remove-body-name"></span>?</p>
+                </x-modal.body>
+            </x-slot>
+            <x-slot name="footer">
+                <x-modal.footer>
+                    <x-button.secondary data-modal-hide="confirmRemovePhotoModal">Cancel</x-button.secondary>
+                    <x-button.primary onclick="removeUploadedPhoto()">Yes</x-button.primary>
+                </x-modal.footer>
+            </x-slot>
+        </x-modal.base>
+        <input class="hidden" type="file" id="imgUploadInput" accept="image/*" />
+        @include('partials.photography.modals.lightbox-modal', ['schoolKey' => $schoolKey])
     </div>
 @endsection
 
 @push('scripts')
 <script type="module">
     // TODO: Implement cloudflare-friendly encryption for photography download request
-    // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
-    function updateImageState(imgCheckbox, isSelected) {
+    {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
+    function updateImageState(imgCheckbox, isSelected, isLightbox = false) {
+        if (!imgCheckbox) {
+            return;
+        }
         let checkIcon = imgCheckbox.querySelector('i');
+        const isSelectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+        if (isLightbox || isSelectMode) {
+            imgCheckbox.parentElement.classList.remove('hidden');
+        } else {
+            imgCheckbox.parentElement.classList.add('hidden');
+        }
         if (isSelected) {
             imgCheckbox.classList.add('bg-white');
             checkIcon.classList.remove('hidden');
@@ -174,34 +223,44 @@
         }
     }
 
-    function updateDownloadSection(selectedCount) {
-        const downloadBtn = document.querySelector('#btn-download');
-        const clearDownloadBtn = document.querySelector('#btn-download-clear');
+    function updateDownloadSection(selectedCount, isLightbox) {
+        const downloadBtn = document.querySelector(isLightbox ? '#btn-lb-download' : '#btn-download');
+        const clearDownloadBtn = document.querySelector(isLightbox ? '#btn-lb-download-clear' : '#btn-download-clear');
 
         if (selectedCount > 0) {
             clearDownloadBtn.classList.remove('hidden');
             downloadBtn.innerHTML = `Download Selected (${selectedCount})`;
         } else {
-            clearDownloadBtn.classList.add('hidden');
+            const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+            if (!selectMode) {
+                clearDownloadBtn.classList.add('hidden');
+            }
             downloadBtn.innerHTML = 'Download All';
         }
     }
     
-    function updateDownloadSelection() {
-        const images = JSON.parse(localStorage.getItem('selectedImages'));
-        const portraits = document.querySelectorAll('.portrait-img');
+    function updateDownloadSelection(isLightbox = false) {
+        const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+        const portraits = document.querySelectorAll(isLightbox ? '.modal-content .portrait-img' : '.portrait-img');
 
         portraits.forEach(img => {
             let checkbox = img.querySelector('.portrait-img-checkbox');
-            updateImageState(checkbox, images.includes(img.id));
+            updateImageState(checkbox, images.includes(img.id), isLightbox);
         });
 
-        updateDownloadSection(images.length);
+        updateDownloadSection(images.length, isLightbox);
     }
 
-    function resetImages() {
-        window.localStorage.setItem('selectedImages', JSON.stringify([]));
-        updateDownloadSelection();
+    function resetImages(isLightbox = false) {
+        if (isLightbox) {
+            window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
+        } else {
+            const images = window.localStorage.getItem('selectedImages');
+            const imagesCount = images ? JSON.parse(images).length : 0;
+            window.localStorage.setItem('selectedImages', JSON.stringify([]));
+            toggleSelectMode(false);
+        }
+        updateDownloadSelection(isLightbox);
     }
 
     function setCategory(category) {
@@ -209,30 +268,94 @@
         Livewire.dispatch('EV_CHANGE_TAB', { category: category });
     }
 
+    function showRemovePhotoModal(event, imageKey = '', name = '') {
+        if (event) {
+            event.stopPropagation();
+        }
+        document.querySelector('#confirm-remove-body-name').textContent = name;
+        const modal = document.getElementById('confirmRemovePhotoModal');
+        modal.setAttribute('data-image-key', imageKey);
+        confirmRemovePhotoModal.show();
+    }
+
+    function replaceUploadedPhoto(event, imageKey = '') {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        document.getElementById('imgUploadInput').setAttribute('data-image-key', imageKey);
+        document.getElementById('imgUploadInput').click();
+    }
+
+    function removeUploadedPhoto() {
+        const modal = document.getElementById('confirmRemovePhotoModal');
+        const imageKey = modal.getAttribute('data-image-key');
+
+        fetch('{{ route('photography.remove-image') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ image_key: imageKey.split('_')[1] })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Livewire.dispatch('EV_IMAGE_DELETED', { key: data.key });
+                confirmRemovePhotoModal.hide();
+            } else {
+                console.error('Remove failed:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Remove failed:', error);
+        });
+    }
+
     const debouncedSetCategory = debounce((data) => {
         setCategory(data)
     }, 300);
 
-    function handleImageClick(imageId) {
-        let selectedItems = window.localStorage.getItem('selectedImages');
+    function handleImageClick(imageId, isLightbox = false, hasImage = false) {
+        const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+        const img = document.querySelector(`#${imageId}`);
+        const name = img.querySelector('.img-decoded-name').textContent;
+        const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
+        const isUploaded = img.classList.contains('uploaded');
+
+        if (!isLightbox) {
+            if (selectMode) {
+                if (!hasImage) {
+                    return;
+                }
+            } else {
+                showLightboxModal(imageId, name);
+                return;
+            }
+        } else if (!hasImage) {
+            if (!selectMode) {
+                document.getElementById('imgUploadInput').setAttribute('data-image-key', imageId);
+                document.getElementById('imgUploadInput').click();
+                return;
+            }
+            return;
+        }
+        let selectedItems = window.localStorage.getItem(imageItems);
         selectedItems = selectedItems ? JSON.parse(selectedItems) : [];
 
         const isAlreadySelected = selectedItems.includes(imageId);
-        const img = document.querySelector(`#${imageId}`);
 
         if (isAlreadySelected) {
             selectedItems = selectedItems.filter(item => item !== imageId);
         } else {
             selectedItems.push(imageId);
         }
-        
-        window.localStorage.setItem('selectedImages', JSON.stringify(selectedItems));
 
-        updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected);
-        updateDownloadSection(selectedItems.length);
+        window.localStorage.setItem(imageItems, JSON.stringify(selectedItems));
 
-        console.log('Selected Images:', selectedItems);
-        
+        updateImageState(img.querySelector('.portrait-img-checkbox'), !isAlreadySelected, isLightbox);
+        updateDownloadSection(selectedItems.length, isLightbox);
     }
 
     function getActiveTabId() {
@@ -242,10 +365,13 @@
     
     window.resetImages = resetImages;
     window.handleImageClick = handleImageClick;
+    window.toggleSelectMode = toggleSelectMode;
+    window.updateImageCheckboxes = updateImageCheckboxes;
     window.updateDownloadSelection = updateDownloadSelection;
     resetImages();
     
     document.addEventListener('DOMContentLoaded', () => {
+        window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
         window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
         const activeTabId = getActiveTabId();
@@ -303,14 +429,65 @@
                 }
             });
         });
+
+        // Handle image upload from input
+        document.getElementById('imgUploadInput').addEventListener('change', async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Should not exceed 5MB: 5 * 1024 * 1024 bytes
+            if (file.size > 5 * 1024 * 1024) {
+                alert("{{ $photographyMessages['image_upload']['size_limit'] }}");
+                return;
+            }
+
+            const imageKey = event.currentTarget.dataset.imageKey.split('_')[1];
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('image_key', imageKey);
+
+            try {
+                const response = await fetch('{{ route('photography.upload-image') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    if (result.uploadId) {
+                        // Update livewire component
+                        Livewire.dispatch('EV_IMAGE_UPLOADED', { key: result.key });
+                    }
+                } else {
+                    console.error('Upload failed:', {result});
+                }
+                event.target.value = '';
+            } catch (error) {
+                event.target.value = '';
+                console.error('Error uploading image:', error);
+                return;
+            }
+        });
     });
     
     async function showOptionsDownloadRequest() {
-        if ($(".grid").attr('total-image-count') != 0) {
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const isLightbox = !lightboxModal.classList.contains('hidden');
+        const category = localStorage.getItem('photographyCategory');
+        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(`#${category.toLowerCase()} .grid`);
+        if (imgsOrigin.attr('total-image-count') != 0) {
+            const storateItem = isLightbox ? `hasImages_LIGHTBOX` : `hasImages_${category}`;
+            if (0 == localStorage.getItem(storateItem)) {
+                downloadUnavailableModal.show();
+                return;
+            }
 
-            const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-
-            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
+            const selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+            const selectedImagesLength = selectedImages.length === 0 ? imgsOrigin.attr('total-image-count') : selectedImages.length;
             
             if (selectedImagesLength == 1) {
                 $("#folder_format_selection").hide();
@@ -334,18 +511,52 @@
             alert('No images found');
         }
     }
-    
-    function showConfirmDownloadRequest() {
-        showOptionsDownloadModal.hide()
-        confirmDownloadRequest();
+
+    function toggleSelectMode(enable = true) {
+        window.localStorage.setItem('selectMode', enable);
+        updateImageCheckboxes(enable);
+    }
+
+    function updateImageCheckboxes(enable) {
+        const clearDownloadBtn = document.querySelector('#btn-download-clear');
+        const selectModeBtn = document.querySelector('#btn-select-mode');
+        let imgCheckboxes = document.querySelectorAll('.img-checkbox');
+        if (enable) {
+            selectModeBtn.classList.add('hidden');
+            clearDownloadBtn.classList.remove('hidden');
+            imgCheckboxes.forEach(checkbox => {
+                checkbox.classList.remove('hidden');
+            });
+        } else {
+            imgCheckboxes.forEach(checkbox => {
+                checkbox.classList.add('hidden');
+            });
+            clearDownloadBtn.classList.add('hidden');
+            selectModeBtn.classList.remove('hidden');
+        }
     }
     
-    function confirmDownloadRequest() {
-        const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
-        if ($(".grid").attr('total-image-count') != 0) {
+    function showConfirmDownloadRequest(isLightbox = false) {
+        showOptionsDownloadModal.hide();
+        const lightboxModal = document.getElementById('lightbox-modal');
+        confirmDownloadRequest(!lightboxModal.classList.contains('hidden'));
+    }
+    
+    function confirmDownloadRequest(isLightbox = false) {
+        const selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+        const category = localStorage.getItem('photographyCategory');
+        const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(`#${category.toLowerCase()} .grid`);
+        if (imgsOrigin.attr('total-image-count') != 0) {
             confirmDownloadModal.show();
-            const selectedImagesLength = selectedImages.length === 0 ? $(".grid").attr('total-image-count') : selectedImages.length;
+            const selectedImagesLength = selectedImages.length === 0 ? imgsOrigin.attr('total-image-count') : selectedImages.length;
             $('#confirm-download-body').html("{{ $configMessages['request']['confirm']  }} <b>" + selectedImagesLength + "</b> {{ $configMessages['request']['number_of']  }}?");
+
+            const note = "{{ isset($configMessages['request']['note']) ? $configMessages['request']['note'] : '' }}";
+            if (note) {
+                $('#confirm-download-notes').html("<b>Please note:</b><br>" + note);
+            } else {
+                $('#confirm-download-notes').hide();
+            }
         } else {
             alert('No images found');
         }
@@ -373,26 +584,49 @@
             formatSelect.appendChild(newOption);
         });
     }
+
+    function toggleDisableForImgButtons(isLightboxShowing) {
+        $('#btn-download').attr('disabled', isLightboxShowing);
+        $('#btn-download-clear').attr('disabled', isLightboxShowing);
+        $('#btn-select-mode').attr('disabled', isLightboxShowing);
+    }
     
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
     const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
+    const downloadUnavailableModal = new Modal(document.getElementById('downloadUnavailableModal'));
+    const replaceOrRemovePhotoModal = new Modal(document.getElementById('replaceOrRemovePhotoModal'));
+    const confirmRemovePhotoModal = new Modal(document.getElementById('confirmRemovePhotoModal'));
+    const lightboxOptions = {
+        onHide: () => {
+            resetImages(true);
+            toggleDisableForImgButtons(false);
+        },
+        onShow: () => {
+            toggleDisableForImgButtons(true);
+        },
+    };
+    let lightboxModal = new Modal(document.getElementById('lightbox-modal'), lightboxOptions);
     
     window.addEventListener('image-frame-updated', event => {
         setTimeout(() => {
-            const images = JSON.parse(localStorage.getItem('selectedImages'));
-            const imageId = `img_${event.detail[0]['imageId']}`;
+            const isLightbox = event.detail[0]['isLightbox'];
+            const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
+            const imageId = isLightbox ? `img-lb_${event.detail[0]['imageId']}` : `img_${event.detail[0]['imageId']}`;
             const img = document.querySelector(`#${imageId}`);
+            const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
             let checkbox = img.querySelector('.portrait-img-checkbox');
-            updateImageState(checkbox, images.includes(imageId));
+            updateImageState(checkbox, images.includes(imageId), isLightbox);
         }, 50);
     });
     
     async function submitDownloadRequest() {
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const isLightbox = !lightboxModal.classList.contains('hidden');
         const tab = getActiveTabId();
         const tabVal = tab.replace("-tab", "");
-        const selectedImages = JSON.parse(localStorage.getItem('selectedImages'));
+        let selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
         try {
             const downloadBtn = document.querySelector('#confirm-download-btn');
             const selectedYear = $(`#select_${tabVal}_year`).val();
@@ -400,10 +634,8 @@
             const selectedClass = $(`#select_${tabVal}_class`).val();
             const INDIVIDUAL_CATEGORY = 1;
             const BULK_CATEGORY = 2;
-            
-            console.log('Selected Year:', selectedYear);
-            console.log('Selected View:', selectedView);
-            console.log('Selected Class:', JSON.stringify(selectedClass));
+            const BASE_ORIGIN = 1;
+            const LIGHTBOX_ORIGIN = 2;
             
             $(downloadBtn).html(`<x-spinner.button />`);
             
@@ -414,8 +646,10 @@
                 resolution: $('#image_res').val(),
                 folder_format: $('#folder_format').val()
             };
-            
-            console.log('Download Filters:', filters);
+
+            if (isLightbox) {
+                selectedImages = selectedImages.map(img => img.replace('img-lb_', 'img_'));
+            }
             
             const response = await fetch('{{ route('photography.request-download') }}', {
                 method: 'POST',
@@ -435,17 +669,12 @@
                 )
             });
             
-            console.log(response);
-            
             // check if response has error and throw error, get the error status
             if (await !response.ok) {
                 throw new Error('Network response was not ok');
             }
             
             const result = await response.json();
-            //console.log('Download request successful:', result);
-            
-            console.log(result);
             
             // only if selected image is one
             if (selectedImages.length === 1) {
@@ -474,9 +703,24 @@
     window.confirmDownloadRequest = confirmDownloadRequest;
     window.reloadPage = reloadPage;
     window.updateSchoolConfig = updateSchoolConfig;
+    window.replaceUploadedPhoto = replaceUploadedPhoto;
+    window.removeUploadedPhoto = removeUploadedPhoto;
+    window.showRemovePhotoModal = showRemovePhotoModal;
+    window.showLightboxModal = function(subjectKey, name) {
+        window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
+        Livewire.dispatch('EV_SELECT_IMAGE', { subject: name, category: localStorage.getItem('photographyCategory') });
+        document.querySelector('#lightbox-modal').querySelector('#modal-title').textContent = name;
+        updateDownloadSection(0, true);
+        lightboxModal.show();
+        toggleDisableForImgButtons(true);
+    }
 
     Livewire.on('EV_UPDATE_FILENAME_FORMATS', (data) => {
         updateFormatOptions(data[0]);
+    });
+
+    Livewire.on('EV_TOGGLE_NO_IMAGES', (data) => {
+        localStorage.setItem(`hasImages_${data[0]['category']}`, data[0]['hasImages'] ? 1 : 0);
     });
 </script>
 @endpush

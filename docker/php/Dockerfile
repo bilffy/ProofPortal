@@ -50,4 +50,15 @@ RUN pecl install redis \
 RUN wget https://getcomposer.org/download/2.7.7/composer.phar && mv composer.phar /usr/local/bin/composer && chmod a+x /usr/local/bin/composer
 RUN mkdir -p /root/.composer
 
+# Install system Python, pip, and venv support
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv python3-distutils
+
+# Create a virtualenv for Python packages
+RUN python3 -m venv /opt/pyenv && \
+    /opt/pyenv/bin/pip install --no-cache-dir Pillow
+
+# Add symlink for easy CLI use
+RUN ln -s /opt/pyenv/bin/python /usr/local/bin/py
+
 WORKDIR /var/www

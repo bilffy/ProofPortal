@@ -61,6 +61,13 @@ class Login extends Component
             /** @var User $user */
             $user = User::where('email', $email)->firstOrFail();
             
+            // check if user is disabled
+            if ($user->disabled) {
+                throw ValidationException::withMessages([
+                    'email' => config('app.dialog_config.invalid_login.message'),
+                ]);
+            }
+            
             //check if OTP is disabled
             if (config('app.otp.disable')) {
                 // Log LOGIN activity

@@ -14,38 +14,45 @@ use App\Models\FilenameFormat;
 use App\Models\Folder;
 use App\Models\Image;
 use App\Models\Job;
+use App\Models\SchoolPhotoUpload;
 use App\Models\Season;
 use App\Models\Status;
 use App\Models\Subject;
+use App\Models\ImageOptions;
 use App\Services\ImageService;
 use App\Services\SchoolService;
+use App\Services\Storage\FileStorageService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\Process\Process;
 
 class PhotographyController extends Controller
 {
     protected $schoolService;
+    protected $fileStorageService;
     
     /**
      * @var ImageService $imageService
      * @var SchoolService $schoolService
+     * @var FileStorageService $fileStorageService
      */
     private ImageService $imageService;
     
-    public function __construct(ImageService $imageService, SchoolService $schoolService)
+    public function __construct(ImageService $imageService, SchoolService $schoolService, FileStorageService $fileStorageService)
     {
         $this->imageService = $imageService;
         $this->schoolService = $schoolService;
+        $this->fileStorageService = $fileStorageService;
     }
 
     public function index()
     {
         $user = Auth::user();
         if ($user->isFranchiseLevel() && SchoolContextHelper::isSchoolContext()) {
-            return redirect()->route('photography.configure');
+            return redirect()->route('photography.configure-new');
         } else {
             return redirect()->route('photography.portraits');
         }
@@ -55,19 +62,23 @@ class PhotographyController extends Controller
     {
         return view('photography', 
             [
-                'user' => new UserResource(Auth::user()), 
+                'user' => new UserResource(Auth::user()),
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'configure',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]);
     }
 
     public function showPortraits()
-    {
+    {   
         return view('photography', 
             [
                 'user' => new UserResource(Auth::user()), 
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'portraits',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]
         );
     }
@@ -76,9 +87,11 @@ class PhotographyController extends Controller
     {
         return view('photography', 
             [
-                'user' => new UserResource(Auth::user()), 
+                'user' => new UserResource(Auth::user()),
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'groups',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]
         );
     }
@@ -87,9 +100,11 @@ class PhotographyController extends Controller
     {
         return view('photography', 
             [
-                'user' => new UserResource(Auth::user()), 
+                'user' => new UserResource(Auth::user()),
+                'imageOptions' => $this->imageService->getImageOptions(),
                 'currentTab' => 'others',
-                'configMessages' => config('app.dialog_config.download')
+                'configMessages' => config('app.dialog_config.download'),
+                'photographyMessages' => config('app.dialog_config.photography')
             ]
         );
     }
@@ -102,7 +117,7 @@ class PhotographyController extends Controller
     }
     
     public function requestDownloadDetails(Request $request)
-    {   
+    {
         // get the nonce from the request header
         if ($request->header('MSP-Nonce') !== session('download-request-nonce')) {
             return response()->json('Invalid Request', 422);
@@ -115,8 +130,9 @@ class PhotographyController extends Controller
             'filters.year' => 'required|string',
             'filters.view' => 'required|string',
             'filters.class' => 'required|string',
-            'filters.resolution' => 'required|string|in:high,low',
+            //'filters.resolution' => 'required|string|in:high,low',
             'filters.folder_format' => 'required|string|in:all,organize',
+            'tab' => 'required|string|in:PORTRAITS,GROUPS,OTHERS',
         ]);
 
         if ($validator->fails()) {
@@ -134,22 +150,22 @@ class PhotographyController extends Controller
         $selectedFilters['class'] = [];
         $selectedFilters['details'] = empty($images) ? false : true;
         $logImgKeys = [];
+        $tab = $request->input('tab');
 
         if (empty($class)) {
             // Extract the records from the folder_tags table and return an array of tag values
             // based on the selected year, school key, operator, and view
-            $tags = $this->imageService->getFolderForView(
+            $tags = $this->imageService->getFolderForView2(
                 $selectedFilters['year'],
                 $schoolKey,
-                $view == "ALL" ? '!=' : '=',
-                $view != 'ALL' ? $view : 'ALL'
+                $tab,
             )->pluck('external_name')->toArray();
 
             $folders = $this->imageService->getFoldersByTag(
                 $selectedFilters['year'],
                 $schoolKey,
                 $tags,
-                'is_visible_for_portrait' // TODO: get visibility based on selected tab
+                $tab
             )->toArray();
         } else {
             $folders = Folder::whereIn('ts_folderkey', $class)->get();
@@ -210,9 +226,6 @@ class PhotographyController extends Controller
         // If there is only one image, return the image content
         if (count($images) === 1) {
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $images[0])));
-            $imageContent = base64_encode($this->imageService->getImageContent($key));
-            // return response()->json(['success' => true, 'data' => $imageContent]);
-            $data = $imageContent;
 
             switch ($request->input('tab')) {
                 case PhotographyHelper::TAB_GROUPS:
@@ -225,6 +238,29 @@ class PhotographyController extends Controller
             }
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
+            
+            // get the path of the image in .env IMAGE_REPOSITORY/print_quality
+            $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
+            
+            $imageOption = ImageOptions::where('id', $selectedFilters['resolution'])->first();
+            
+            // check if the file exists in the print_quality
+            // and make sure the long_edge option is set
+            if (file_exists($path) && $imageOption->long_edge) {
+                return $this->resizeImage($path, $imageOption->long_edge, $filename);
+            } else {
+                // get the path of the image in .env IMAGE_REPOSITORY
+                $path = base_path(config('app.image_repository') . '/' . $key . ".jpg");
+                if ($imageOption->long_edge) {
+                    return $this->resizeImage($path, $imageOption->long_edge, $filename);
+                }
+            }
+            
+            // retrieve the image content using the ImageService - as is?
+            $imageContent = base64_encode($this->imageService->getImageContent($key));
+            // return response()->json(['success' => true, 'data' => $imageContent]);
+            $data = $imageContent;
+
             return response()->json(['success' => true, 'data' => $data, 'filename' => $filename]);
             // return response()->json(['success' => true, 'data' => $data, 'filename' => EncryptionHelper::simpleEncrypt($filename)]);
         }
@@ -240,5 +276,154 @@ class PhotographyController extends Controller
         session()->forget('download-request-nonce');
         
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        if ($request->hasFile('image')) {
+            $img = $request->file('image');
+            $imgKey = $request->input('image_key');
+            $key = base64_decode(base64_decode($imgKey));
+            $subject = Subject::where('ts_subjectkey', $key)->first();
+            if ($subject) {
+                $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
+                $existingImage = SchoolPhotoUpload::where('subject_id', $subject->id)->first();
+                $origin = 'subject';
+            } else {
+                $folder = Folder::where('ts_folderkey', $key)->first();
+                if (!$folder) {
+                    return response()->json(['success' => false, 'message' => 'Origin not found.'], 404);
+                }
+                $existingImage = SchoolPhotoUpload::where('folder_id', $folder->id)->first();
+                $origin = 'folder';
+            }
+            $image = Image::where('keyvalue', $key)
+                ->where('keyorigin', $origin)->first();
+            // If there is an existing uploaded image, delete previous image
+            if ($existingImage) {
+                // Remove the existing image file from storage
+                if ($existingImage->path) {
+                    $this->fileStorageService->delete($existingImage->path);
+                };
+            }
+            $filename = $key . '.' . $img->getClientOriginalExtension();
+            
+            $path = $this->fileStorageService->store(env('FILE_IMAGE_UPLOAD_PATH', ''), $img, $filename);
+            $newImage = SchoolPhotoUpload::create([
+                'subject_id' => $subject ? $subject->id : null,
+                'folder_id' => $folder ? $folder->id : null,
+                'image_id' => $image ? $image->id : null,
+                'metadata' => [
+                    'original_filename' => $img->getClientOriginalName(),
+                    'key' => $key,
+                    'origin' => $origin,
+                    'image_key' => $image->ts_imagekey ?? '',
+                    'path' => $path,
+                ],
+            ]);
+            // Log upload activity
+            ActivityLogHelper::log(LogConstants::UPLOAD_PHOTO, [
+                'school_key' => SchoolContextHelper::getSchool()->schoolkey ?? '',
+                'imagekey' => $image->ts_imagekey ?? '',
+                'key' => $key,
+                'photo_upload_id' => $newImage->id,
+                'path' => $path,
+            ]);
+
+            $originKey = base64_encode(base64_encode($key));
+
+            return response()->json(['success' => true, 'path' => $path, 'key' => $originKey, 'uploadId' => $newImage ? $newImage->id : 0]);
+        }
+        
+        return response()->json(['success' => false, 'message' => 'Image file is required.'], 422);
+    }
+
+    public function removeImage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image_key' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], status: 422);
+        }
+        
+        $imgKey = $request->input('image_key');
+        $key = base64_decode(base64_decode($imgKey));
+
+        $subject = Subject::where('ts_subjectkey', $key)->first();
+        if ($subject) {
+            $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
+            $image = SchoolPhotoUpload::where('subject_id', $subject->id)
+                ->where('folder_id', $folder->id);
+            $origin = 'subject';
+        } else {
+            $folder = Folder::where('ts_folderkey', $key)->first();
+            if (!$folder) {
+                return response()->json(['success' => false, 'message' => 'Origin not found.', 'key' => $key], 404);
+            }
+            $image = SchoolPhotoUpload::where('folder_id', $folder->id)
+                ->where('subject_id', null);
+            $origin = 'folder';
+        }
+
+        $img = Image::where('keyvalue', $key)
+            ->where('keyorigin', $origin)->first();
+        // Find the latest uploaded image
+        $image = $image->latest()->first();
+        
+        if (!$image) {
+            return response()->json(['success' => false, 'message' => 'Uploaded Image not found.'], 404);
+        }
+
+        // Remove the image file from storage
+        $deleted = false;
+        if (isset($image->metadata['path'])) {
+            $deleted = $this->fileStorageService->delete($image->metadata['path']);
+        }
+
+        if ($deleted) {
+            // Log remove activity
+            ActivityLogHelper::log(LogConstants::REMOVE_PHOTO, [
+                'school_key' => SchoolContextHelper::getSchool()->schoolkey ?? '',
+                'imagekey' => $img->ts_imagekey ?? '',
+                'key' => $key,
+                'photo_upload_id' => $image->id,
+                'path' => $image->path,
+            ]);
+        }
+
+        $originKey = base64_encode(base64_encode($key));
+
+        return response()->json(['success' => $deleted, 'key' => $originKey]);
+    }
+    
+    private function resizeImage($path, $long_edge, $filename)
+    {
+        $scriptPath = base_path('image_resizer/resizer.py'); // adjust path to your script
+
+        // Run Python script
+        $process = new Process([
+            'python3',
+            $scriptPath,
+            $path,
+            $long_edge
+        ]);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return response()->json([
+                'error' => $process->getErrorOutput()
+            ], 500);
+        }
+        return response()->json(['success' => true, 'data' => trim($process->getOutput()), 'filename' => $filename]);
     }
 }

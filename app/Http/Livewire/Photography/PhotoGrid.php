@@ -111,7 +111,7 @@ class PhotoGrid extends Component
             $resetClass = key_exists('view', $this->filters) && $view != $this->filters['view'];
             $allClasses = [];
             foreach ($options as $option) {
-                $classOptions[$option->ts_folderkey] = $option->ts_foldername;
+                $classOptions[$option->ts_folderkey] = FilenameFormatHelper::removeYearAndDelimiter($option->ts_foldername, $option->year);
                 $allClasses[] = $option->ts_folderkey;
             }
             $this->filters['allClasses'] = $allClasses;
@@ -130,6 +130,24 @@ class PhotoGrid extends Component
         $this->setupFilters($year, $view, $class);
         $this->resetPage();
         
+    }
+
+    private function updateHasImages($images, $imageService)
+    {
+        $imageCount = $images->count();
+        $noImageCount = 0;
+        foreach ($images as $image) {
+            if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey)) {
+                $noImageCount++;
+            } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey)) {
+                $noImageCount++;
+            }
+        }
+
+        $this->dispatch(PhotographyHelper::EV_TOGGLE_NO_IMAGES, [
+            'category' => $this->category,
+            'hasImages' => $imageCount != $noImageCount,
+        ]);
     }
 
     private function getImages()
@@ -158,6 +176,8 @@ class PhotoGrid extends Component
             'searchTerm' => $this->search,
         ];
         $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
+
+        $this->updateHasImages($filteredImages, $imageService);
         
         $paginated = $imageService->paginate(
             $filteredImages,
