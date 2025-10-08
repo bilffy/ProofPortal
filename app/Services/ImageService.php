@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\FilenameFormatHelper;
+use App\Helpers\ImageHelper;
 use App\Helpers\PhotographyHelper;
 use App\Models\Folder;
 use App\Models\Image;
@@ -521,15 +522,8 @@ class ImageService
      */
     public function getImageContent($key)
     {
-        $path = $this->getPath($key.".jpg");
-        if (Storage::disk('local')->exists($path)) {
-            $isFound = true;
-        } else {
-            $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
-            $isFound = Storage::disk('local')->exists($path);
-        }
-        $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
-
+        $path = ImageHelper::getImagePath($key);       
+        $fileContent = Storage::disk('local')->get(empty($path) ? ImageHelper::NOT_FOUND_IMG : $path);
         return $fileContent;
     }
 
@@ -540,14 +534,10 @@ class ImageService
      */
     public function getIsImageFound($key)
     {
-
-        $path = $this->getPath($key.".jpg");
-        if (Storage::disk('local')->exists(path: $path)) {
-            return true;
-        } else {
-            $path = $this->getPath(env('FILE_IMAGE_UPLOAD_PATH', '') . "/" . $key . ".jpg");
+        $path = ImageHelper::getImagePath($key);
+        if ($path === '') {
+            return false;
         }
-        
         return Storage::disk('local')->exists($path);
     }
 

@@ -698,8 +698,8 @@
             // only if selected image is one
             if (selectedImages.length === 1) {
                 const imgElement = document.createElement('a');
-                imgElement.href = `data:image/jpeg;base64,${result['data']}`;
-                imgElement.download = `${result['filename']}.jpg`;
+                imgElement.href = `data:image/${result['extension']};base64,${result['data']}`;
+                imgElement.download = `${result['filename']}.${result['extension']}`;
                 // imgElement.download = `${decryptData(result['filename'])}.jpg`;
                 imgElement.click();
             }

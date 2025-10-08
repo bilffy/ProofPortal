@@ -59,8 +59,13 @@
                             <span class="text-white font-semibold text-xl">+ Add Photo</span>
                         </div>
                     @endif
+                    @php
+                        $imageData = base64_decode($img);
+                        $imageInfo = getimagesizefromstring($imageData);
+                        $mimeType = $imageInfo['mime'] ?? 'image/jpeg';
+                    @endphp
                     <img 
-                        src="data:image/jpeg;base64,{{$img}}"
+                        src="data:{{$mimeType}};base64,{{$img}}"
                         alt=""
                         class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
                     />
