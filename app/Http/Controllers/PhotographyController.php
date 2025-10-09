@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\EncryptionHelper;
+use App\Helpers\ImageHelper;
 use App\Helpers\PhotographyHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Models\DownloadDetail;
@@ -25,6 +26,7 @@ use App\Services\Storage\FileStorageService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\Process\Process;
@@ -240,28 +242,38 @@ class PhotographyController extends Controller
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
             
             // get the path of the image in .env IMAGE_REPOSITORY/print_quality
-            $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
-            
+            // UPDATED: Refer to filesystems' disks configuration for the path
+            // $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
             $imageOption = ImageOptions::where('id', $selectedFilters['resolution'])->first();
-            
+            $files = ImageHelper::findImageFiles($key);
             // check if the file exists in the print_quality
-            // and make sure the long_edge option is set
-            if (file_exists($path) && $imageOption->long_edge) {
-                return $this->resizeImage($path, $imageOption->long_edge, $filename);
-            } else {
-                // get the path of the image in .env IMAGE_REPOSITORY
-                $path = base_path(config('app.image_repository') . '/' . $key . ".jpg");
-                if ($imageOption->long_edge) {
-                    return $this->resizeImage($path, $imageOption->long_edge, $filename);
+            if (!empty($files)) {
+                $printQualityFiles = array_filter($files, function($file) {
+                    return str_contains($file, 'print_quality');
+                });
+                if (!empty($printQualityFiles)) {
+                    $path = array_values($printQualityFiles)[0];
+                } else {
+                    $path = $files[0];
                 }
+                $basePath = ImageHelper::getStorageBasePath();
+                $path = str_replace($basePath, "", $path);
+            } else {
+                $path = '';
             }
-            
+            $fileExtension = File::extension($path);
+            // and make sure to resizeImage if the long_edge option is set
+            if ($imageOption->long_edge) {
+                return $this->resizeImage($path, $imageOption->long_edge, $filename, $fileExtension);
+            }
             // retrieve the image content using the ImageService - as is?
             $imageContent = base64_encode($this->imageService->getImageContent($key));
-            // return response()->json(['success' => true, 'data' => $imageContent]);
-            $data = $imageContent;
-
-            return response()->json(['success' => true, 'data' => $data, 'filename' => $filename]);
+            return response()->json([
+                'success' => true,
+                'data' => $imageContent,
+                'filename' => $filename,
+                'extension' => $fileExtension,
+            ]);
             // return response()->json(['success' => true, 'data' => $data, 'filename' => EncryptionHelper::simpleEncrypt($filename)]);
         }
 
@@ -280,8 +292,10 @@ class PhotographyController extends Controller
 
     public function uploadImage(Request $request)
     {
+        $imgExtensions = ImageHelper::getExtensionsAsString();
+        $imageValidator = 'required|image|mimes:' . $imgExtensions . '|max:5120';
         $validator = Validator::make($request->all(), [
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'image' => $imageValidator,
         ]);
 
         if ($validator->fails()) {
@@ -406,7 +420,7 @@ class PhotographyController extends Controller
         return response()->json(['success' => $deleted, 'key' => $originKey]);
     }
     
-    private function resizeImage($path, $long_edge, $filename)
+    private function resizeImage($path, $long_edge, $filename, $fileExtension)
     {
         $scriptPath = base_path('image_resizer/resizer.py'); // adjust path to your script
 
@@ -424,6 +438,11 @@ class PhotographyController extends Controller
                 'error' => $process->getErrorOutput()
             ], 500);
         }
-        return response()->json(['success' => true, 'data' => trim($process->getOutput()), 'filename' => $filename]);
+        return response()->json([
+            'success' => true,
+            'data' => trim($process->getOutput()),
+            'filename' => $filename,
+            'extension' => $fileExtension
+        ]);
     }
 }

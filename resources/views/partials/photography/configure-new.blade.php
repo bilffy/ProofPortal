@@ -24,6 +24,7 @@
 
 @php
     use Carbon\Carbon;
+    use App\Helpers\ImageHelper;
     use App\Helpers\SchoolContextHelper;
     use App\Services\SchoolService;
     use App\Services\JobService;
@@ -75,7 +76,7 @@
         $folderTypes['portrait'] = 'Portrait / Group';
         $folderTypes['special_group'] = 'Speciality';
     }
-
+    $imageTypes = ImageHelper::getExtensionsAsString('.');
 @endphp
 <div class="relative">
     <h3 class="mb-4 text-black">School Settings</h3>
@@ -93,7 +94,7 @@
                 <input type="file"
                     class="form-control-file schoolLogo d-none"
                     id="schoolLogo"
-                    name="schoolLogo" accept=".jpg, .jpeg, .png">
+                    name="schoolLogo" accept="{{ $imageTypes }}"> 
                 <button 
                     id="schoolLogoBtn"
                     class="p-2 rounded-s absolute bottom-[16px]

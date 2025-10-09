@@ -291,6 +291,10 @@
         const modal = document.getElementById('confirmRemovePhotoModal');
         const imageKey = modal.getAttribute('data-image-key');
 
+        let imageFrame = document.getElementById(`img-content-${imageKey.split('_')[1]}`);
+        // replace imageFrame inner content with x-spinner.image component
+        {{--imageFrame.innerHTML = '<x-spinner.image></x-spinner.image>';--}}
+
         fetch('{{ route('photography.remove-image') }}', {
             method: 'POST',
             headers: {
@@ -436,18 +440,24 @@
             if (!file) return;
 
             // Should not exceed 5MB: 5 * 1024 * 1024 bytes
-            if (file.size > 5 * 1024 * 1024) {
-                alert("{{ $photographyMessages['image_upload']['size_limit'] }}");
-                return;
-            }
+            // if (file.size > 5 * 1024 * 1024) {
+            //     alert("{{ $photographyMessages['image_upload']['size_limit'] }}");
+            //     event.target.value = '';
+            //     return;
+            // }
 
-            const imageKey = event.currentTarget.dataset.imageKey.split('_')[1];
+            const originalKey = event.currentTarget.dataset.imageKey;
+            const imageKey = originalKey.split('_')[1];
 
             const formData = new FormData();
             formData.append('image', file);
             formData.append('image_key', imageKey);
 
             try {
+                let imageFrame = document.getElementById(`img-content-${imageKey}`);
+                // replace imageFrame inner content with x-spinner.image component
+                {{--imageFrame.innerHTML = '<x-spinner.image></x-spinner.image>';--}}
+                
                 const response = await fetch('{{ route('photography.upload-image') }}', {
                     method: 'POST',
                     headers: {
@@ -461,14 +471,23 @@
                     if (result.uploadId) {
                         // Update livewire component
                         Livewire.dispatch('EV_IMAGE_UPLOADED', { key: result.key });
+                        alert("{{ $photographyMessages['image_upload']['success'] }}");
                     }
                 } else {
                     console.error('Upload failed:', {result});
+                    if (result.message) {
+                        alert(`Image upload failed: ${result.message}`);
+                    } else if (result.errors && result.errors.image && result.errors.image.length > 0) {
+                        alert(`Image upload failed: ${result.errors.image[0]}`);
+                    } else {
+                        alert("{{ $photographyMessages['image_upload']['fail'] }}");
+                    }
                 }
                 event.target.value = '';
             } catch (error) {
                 event.target.value = '';
                 console.error('Error uploading image:', error);
+                alert("{{ $photographyMessages['image_upload']['fail'] }}");
                 return;
             }
         });
@@ -679,8 +698,8 @@
             // only if selected image is one
             if (selectedImages.length === 1) {
                 const imgElement = document.createElement('a');
-                imgElement.href = `data:image/jpeg;base64,${result['data']}`;
-                imgElement.download = `${result['filename']}.jpg`;
+                imgElement.href = `data:image/${result['extension']};base64,${result['data']}`;
+                imgElement.download = `${result['filename']}.${result['extension']}`;
                 // imgElement.download = `${decryptData(result['filename'])}.jpg`;
                 imgElement.click();
             }

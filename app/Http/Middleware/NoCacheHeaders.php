@@ -16,6 +16,10 @@ class NoCacheHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        // If no header method, return response as is
+        if (!method_exists($response, 'header')) {
+            return $response;
+        }
         return $response
             ->header('Cache-Control', 'no-store, no-transform, must-revalidate')
             ->header('Pragma', 'no-cache')
