@@ -472,7 +472,12 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
     const schoolKey = $('#schoolHash').val();
 
     // Check if a file is selected and validate file type
-    if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+    // TODO: Use the ImageHelper to get valid image extensions from backend
+    const validExtensions = ['jpg', 'jpeg', 'png', 'bmp'];
+    const validExtensionsUpper = validExtensions.map(ext => ext.toUpperCase());
+    const prefixExtensions = validExtensions.map(ext => 'image/' + ext);
+    // Check if the file type is in the list of valid extensions
+    if (file && prefixExtensions.includes(file.type)) {
         // Use FormData to handle file uploads
         const formData = new FormData();
         formData.append('schoolLogo', file);
@@ -501,7 +506,7 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
         });
     } else {
         // Display an error message or reset the preview
-        alert('Please upload a valid image file (JPG, JPEG, PNG).');
+        alert(`Please upload a valid image file (${validExtensionsUpper.join(', ')}).`);
         preview.src = ''; // Clear the preview image
         preview.style.display = 'none'; // Hide the preview
         deleteLink.style.display = 'none'; // Hide the delete link

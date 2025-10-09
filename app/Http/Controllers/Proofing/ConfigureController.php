@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Proofing;
 
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
+use App\Helpers\ImageHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Folder;
 use App\Models\Job;
@@ -175,9 +176,11 @@ class ConfigureController extends Controller
 
     public function uploadSchoolLogo(Request $request)
     {
+        $imgExtensions = ImageHelper::getExtensionsAsString();
+        $imageValidator = 'required|image|mimes:' . $imgExtensions . '|max:2048';
         // Validate the file first, including file type and size
         $request->validate([
-            'schoolLogo' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Require an image of specific types and size limit
+            'schoolLogo' => $imageValidator, // Require an image of specific types and size limit
         ]);
     
         $decryptedSchoolKey = $this->getDecryptData($request->schoolKey);
