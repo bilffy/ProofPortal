@@ -14,6 +14,7 @@ use App\Helpers\AvatarHelper;
 use App\Helpers\UiSettingHelper;
 use App\Helpers\AppSettingsHelper;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
         view()->share('SchoolContextHelper', new SchoolContextHelper());
         view()->share('PhotographyHelper', new PhotographyHelper());
         view()->share('AppSettingsHelper', new AppSettingsHelper());
+
+        Validator::extend('no_special_chars', function ($attribute, $value, $parameters, $validator) {
+            return preg_match('/^[a-zA-Z0-9\s\-]+$/', $value);
+        });
+
+        Validator::replacer('no_special_chars', function ($message, $attribute, $rule, $parameters) {
+            return "The $attribute contains invalid characters.";
+        });
         
         JsonResource::withoutWrapping();
     }

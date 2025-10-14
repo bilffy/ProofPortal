@@ -6,6 +6,7 @@ use App\Helpers\FilenameFormatHelper;
 use App\Helpers\PhotographyHelper;
 use App\Services\ImageService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -151,6 +152,21 @@ class PhotoGrid extends Component
 
     private function getImages()
     {
+        $validator = Validator::make(
+            ['search' => $this->search],
+            [
+                'search' => ['nullable', 'string', 'regex:/^[a-zA-Z0-9\s\.@_\-]+$/'],
+            ],
+            [
+                'search.regex' => 'Search contains invalid characters.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            // reset search if validation fails
+            $this->search = "";
+        }
+        
         $imageService = new ImageService();
         $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
         $options = [

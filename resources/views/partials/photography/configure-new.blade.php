@@ -1,4 +1,5 @@
 @section('css')
+
     {{-- Flatpickr --}}
     
     <link href="{{ URL::asset('proofing-assets/vendors/css/flatpickr.min.css') }}" rel="stylesheet" />
