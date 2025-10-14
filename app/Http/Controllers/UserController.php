@@ -248,13 +248,13 @@ class UserController extends Controller
 
         $user = Auth::user();
 
-        $request->merge(
+        /*$request->merge(
             [
                 'email' => EncryptionHelper::simpleDecrypt($request->email),
                 // 'franchise' => EncryptionHelper::simpleDecrypt($request->franchise),
                 // 'school' => EncryptionHelper::simpleDecrypt($request->school)
             ]
-        );
+        );*/
 
         $validator = $this->validator($request->all(['firstname', 'lastname', 'email']));
         
