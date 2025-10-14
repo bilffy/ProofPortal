@@ -522,7 +522,7 @@ class ImageService
      */
     public function getImageContent($key)
     {
-        $path = ImageHelper::getImagePath($key);       
+        $path = ImageHelper::getImagePath($key);
         $fileContent = Storage::disk('local')->get(empty($path) ? ImageHelper::NOT_FOUND_IMG : $path);
         return $fileContent;
     }

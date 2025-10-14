@@ -19,7 +19,11 @@
     $noImage = empty($hasImage) || !$hasImage;
 @endphp
 
-<div id="{{ $imgId }}" class="portrait-img {{ $isUploaded ? 'uploaded' : ''}} rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center hover:cursor-pointer" onclick="handleImageClick('{{ $imgId }}', {{ $isLightbox ? 'true' : 'false' }}, {{ $hasImage ? 'true' : 'false' }})">
+<div id="{{ $imgId }}"
+    class="portrait-img {{ $isUploaded ? 'uploaded' : ''}} rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center hover:cursor-pointer"
+    onclick="handleImageClick('{{ $imgId }}', {{ $isLightbox ? 'true' : 'false' }}, {{ $hasImage ? 'true' : 'false' }})"
+    x-data="{ showSpinner: false }"
+>
     <div class="relative h-[229px] overflow-hidden rounded group transition-all">
         <div class="absolute flex w-full justify-end pr-2 pt-2 z-10 {{ $hasImage ? "img-checkbox" . ($isLightbox ? "" : " hidden") : 'hidden' }}">
             <div class="{{ $hasImage ? "portrait-img-checkbox" : "img-not-found"}} group transition-all 
@@ -53,23 +57,28 @@
             @if ('' == $img)
                 <x-spinner.image />
             @else
-                <div class="flex items-center h-full bg-[#E6E7E8] group {{ $hasImage ? 'hover:scale-[1.05] hover:transition-all' : '' }}">
-                    @if ($isLightbox && $noImage)
-                        <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
-                            <span class="text-white font-semibold text-xl">+ Add Photo</span>
-                        </div>
-                    @endif
-                    @php
-                        $imageData = base64_decode($img);
-                        $imageInfo = getimagesizefromstring($imageData);
-                        $mimeType = $imageInfo['mime'] ?? 'image/jpeg';
-                    @endphp
-                    <img 
-                        src="data:{{$mimeType}};base64,{{$img}}"
-                        alt=""
-                        class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                    />
-                </div>
+                <template x-if="showSpinner">
+                    <x-spinner.image />
+                </template>
+                <template x-if="!showSpinner">
+                    <div class="flex items-center h-full bg-[#E6E7E8] group {{ $hasImage ? 'hover:scale-[1.05] hover:transition-all' : '' }}">
+                        @if ($isLightbox && $noImage)
+                            <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
+                                <span class="text-white font-semibold text-xl">+ Add Photo</span>
+                            </div>
+                        @endif
+                        @php
+                            $imageData = base64_decode($img);
+                            $imageInfo = getimagesizefromstring($imageData);
+                            $mimeType = $imageInfo['mime'] ?? 'image/jpeg';
+                        @endphp
+                        <img 
+                            src="data:{{$mimeType}};base64,{{$img}}"
+                            alt=""
+                            class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                        />
+                    </div>
+                </template>
             @endif
         </div>
     </div>

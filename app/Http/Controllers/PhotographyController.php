@@ -309,24 +309,33 @@ class PhotographyController extends Controller
             $subject = Subject::where('ts_subjectkey', $key)->first();
             if ($subject) {
                 $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
-                $existingImage = SchoolPhotoUpload::where('subject_id', $subject->id)->first();
+                $existingImages = SchoolPhotoUpload::where('subject_id', $subject->id)->get();
                 $origin = 'subject';
             } else {
                 $folder = Folder::where('ts_folderkey', $key)->first();
                 if (!$folder) {
                     return response()->json(['success' => false, 'message' => 'Origin not found.'], 404);
                 }
-                $existingImage = SchoolPhotoUpload::where('folder_id', $folder->id)->first();
+                $existingImages = SchoolPhotoUpload::where('folder_id', $folder->id)->get();
                 $origin = 'folder';
             }
             $image = Image::where('keyvalue', $key)
                 ->where('keyorigin', $origin)->first();
             // If there is an existing uploaded image, delete previous image
-            if ($existingImage) {
-                // Remove the existing image file from storage
-                if ($existingImage->path) {
-                    $this->fileStorageService->delete($existingImage->path);
-                };
+            if ($existingImages->count() > 0) {
+                foreach ($existingImages as $existingImage) {
+                    $metadata = $existingImage->metadata;
+                    $existingPath = $metadata['path'] ?? null;
+                    // Remove the existing image file from storage
+                    if (!empty($existingPath)) {
+                        $this->fileStorageService->delete($existingPath);
+                        // Update $existingImage record remove path in metadata
+                        $metadata['path'] = ''; // No path means file is deleted
+                        $existingImage->update([
+                            'metadata' => $metadata,
+                        ]);
+                    };
+                }
             }
             $filename = $key . '.' . $img->getClientOriginalExtension();
             
@@ -400,8 +409,15 @@ class PhotographyController extends Controller
 
         // Remove the image file from storage
         $deleted = false;
-        if (isset($image->metadata['path'])) {
-            $deleted = $this->fileStorageService->delete($image->metadata['path']);
+        $metadata = $image->metadata;
+        if (isset($metadata['path'])) {
+            $deleted = $this->fileStorageService->delete($metadata['path']);
+            if ($deleted) {
+                $metadata['path'] = ''; // No path means file is deleted
+                $image->update([
+                    'metadata' => $metadata,
+                ]);
+            }
         }
 
         if ($deleted) {
