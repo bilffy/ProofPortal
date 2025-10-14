@@ -51,7 +51,6 @@ class UserController extends Controller
                 'email' => [
                     'required',
                     'string',
-                    'lowercase',
                     'max:255',
                     'email:rfc', // Basic check for email format
                     'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', // Ensures a dot + valid TLD
