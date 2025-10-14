@@ -291,9 +291,9 @@
         const modal = document.getElementById('confirmRemovePhotoModal');
         const imageKey = modal.getAttribute('data-image-key');
 
-        let imageFrame = document.getElementById(`img-content-${imageKey.split('_')[1]}`);
-        // replace imageFrame inner content with x-spinner.image component
-        {{--imageFrame.innerHTML = '<x-spinner.image></x-spinner.image>';--}}
+        // Show spinner component
+        let imageFrame = document.getElementById(imageKey);
+        Alpine.$data(imageFrame).showSpinner = true;
 
         fetch('{{ route('photography.remove-image') }}', {
             method: 'POST',
@@ -310,10 +310,12 @@
                 confirmRemovePhotoModal.hide();
             } else {
                 console.error('Remove failed:', data.message);
+                Alpine.$data(imageFrame).showSpinner = false;
             }
         })
         .catch(error => {
             console.error('Remove failed:', error);
+            Alpine.$data(imageFrame).showSpinner = false;
         });
     }
 
@@ -439,13 +441,6 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // Should not exceed 5MB: 5 * 1024 * 1024 bytes
-            // if (file.size > 5 * 1024 * 1024) {
-            //     alert("{{ $photographyMessages['image_upload']['size_limit'] }}");
-            //     event.target.value = '';
-            //     return;
-            // }
-
             const originalKey = event.currentTarget.dataset.imageKey;
             const imageKey = originalKey.split('_')[1];
 
@@ -454,9 +449,9 @@
             formData.append('image_key', imageKey);
 
             try {
-                let imageFrame = document.getElementById(`img-content-${imageKey}`);
-                // replace imageFrame inner content with x-spinner.image component
-                {{--imageFrame.innerHTML = '<x-spinner.image></x-spinner.image>';--}}
+                // Show spinner component
+                let imageFrame = document.getElementById(originalKey);
+                Alpine.$data(imageFrame).showSpinner = true;
                 
                 const response = await fetch('{{ route('photography.upload-image') }}', {
                     method: 'POST',
@@ -472,9 +467,12 @@
                         // Update livewire component
                         Livewire.dispatch('EV_IMAGE_UPLOADED', { key: result.key });
                         alert("{{ $photographyMessages['image_upload']['success'] }}");
+                    } else {
+                        Alpine.$data(imageFrame).showSpinner = false;
                     }
                 } else {
                     console.error('Upload failed:', {result});
+                    Alpine.$data(imageFrame).showSpinner = false;
                     if (result.message) {
                         alert(`Image upload failed: ${result.message}`);
                     } else if (result.errors && result.errors.image && result.errors.image.length > 0) {
@@ -487,6 +485,7 @@
             } catch (error) {
                 event.target.value = '';
                 console.error('Error uploading image:', error);
+                Alpine.$data(imageFrame).showSpinner = false;
                 alert("{{ $photographyMessages['image_upload']['fail'] }}");
                 return;
             }
@@ -629,11 +628,12 @@
     let lightboxModal = new Modal(document.getElementById('lightbox-modal'), lightboxOptions);
     
     window.addEventListener('image-frame-updated', event => {
+        const isLightbox = event.detail[0]['isLightbox'];
+        const imageId = isLightbox ? `img-lb_${event.detail[0]['imageId']}` : `img_${event.detail[0]['imageId']}`;
+        const img = document.querySelector(`#${imageId}`);
+        Alpine.$data(img).showSpinner = false;
         setTimeout(() => {
-            const isLightbox = event.detail[0]['isLightbox'];
             const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
-            const imageId = isLightbox ? `img-lb_${event.detail[0]['imageId']}` : `img_${event.detail[0]['imageId']}`;
-            const img = document.querySelector(`#${imageId}`);
             const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
             let checkbox = img.querySelector('.portrait-img-checkbox');
             updateImageState(checkbox, images.includes(imageId), isLightbox);

@@ -28,7 +28,7 @@ class ImageHelper
     {
         $basePath = self::getStorageBasePath($base);
         // Define common image extensions
-        $imageExtensions = self::getValidImageExtensions(true);
+        $imageExtensions = self::getValidImageExtensions(false);
         $extensions = implode(',', $imageExtensions);
         
         // Create patterns for both base path and subdirectories
