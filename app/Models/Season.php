@@ -22,4 +22,9 @@ class Season extends Model
         'is_default',
     ];
     
+    //Proofing    
+    public function jobs(){
+        return $this->hasMany('App\Models\Job', 'timestone_season_id','timestone_season_id');
+    }
+    
 }

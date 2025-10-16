@@ -187,6 +187,22 @@ class User extends Authenticatable
         return $this->getFranchise();
     }
 
+    public function getSchoolOrFranchiseDetail()
+    {
+        if ($this->isAdmin()) {
+            return ""; // Admin users do not need an alphacode
+        }
+    
+        // Check if the user is at the franchise level
+        if ($this->isFranchiseLevel()) {
+            return $this->getFranchise();
+        }
+    
+        // For school-level users, retrieve the associated franchise's alphacode
+        $school = $this->getSchool();
+        return $school?->franchises->first();
+    }
+
     public function getInvitableRoles()
     {
         // Todo: Update logic using permissions

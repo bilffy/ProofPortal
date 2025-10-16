@@ -34,6 +34,7 @@ return new class extends Migration
             $table->foreign('jobsync_status_id')->references('id')->on('status')->onDelete('cascade');
             $table->foreign('foldersync_status_id')->references('id')->on('status')->onDelete('cascade');
             $table->foreign('job_status_id')->references('id')->on('status')->onDelete('cascade');
+            $table->index('ts_job_id');
         });
     }
 

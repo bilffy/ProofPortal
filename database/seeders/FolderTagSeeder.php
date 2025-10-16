@@ -36,11 +36,6 @@ class FolderTagSeeder extends Seeder
                 'created_at' => Carbon::now(),
             ],
             [
-                'tag' => 'student',
-                'external_name' => 'Student',
-                'created_at' => Carbon::now(),
-            ],
-            [
                 'tag' => 'c',
                 'external_name' => 'Student',
                 'created_at' => Carbon::now(),

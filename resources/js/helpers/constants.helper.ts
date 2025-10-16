@@ -9,4 +9,5 @@ export const NAV_TABS = {
     MANAGE_USERS: 'Manage Users',
     REPORTS: 'Reports',
     ORDER: 'Ordering',
+    CONFIG_SCHOOL: 'config-school'
 }

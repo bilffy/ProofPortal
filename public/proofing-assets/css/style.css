@@ -157,7 +157,7 @@ body {
     line-height: 1.5;
     color: #151b1e;
     text-align: left;
-    background-color: #e4e5e6;
+    /* background-color: #e4e5e6; */
 }
 
 [tabindex="-1"]:focus {
@@ -13411,3 +13411,31 @@ hr.transparent {
 *[dir="rtl"] .callout-default {
     border-right-color: #536c79;
 }
+
+img.lazyload {
+    filter: blur(10px);
+    transform: scale(1.05);
+    transition: filter 0.3s ease-out, transform 0.3s ease-out, opacity 0.3s;
+    opacity: 0.8;
+  }
+
+  img.lazyload.loaded {
+    filter: blur(0);
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  /* Example layout styling */
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .image-grid img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }

@@ -54,7 +54,27 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'timezone' => env('APP_TIMEZONE', 'UTC'),
+            // 'timezone' => env('APP_TIMEZONE', 'UTC'),
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'timestone' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST_TIMESTONE', 'percona-uat10.msp.local'),
+            'port' => env('DB_PORT_TIMESTONE', '3306'),
+            'database' => env('DB_DATABASE_TIMESTONE', 'timestone'),
+            'username' => env('DB_USERNAME_TIMESTONE', 'forge'),
+            'password' => env('DB_PASSWORD_TIMESTONE', 'forge'),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

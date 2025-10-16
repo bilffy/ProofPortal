@@ -1,4 +1,9 @@
 
+@php
+    $selectedJob = session('selectedJob') ?? '[]';
+    $selectedSeason = session('selectedSeason') ?? '[]';
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -141,20 +146,33 @@
                     </div>
                 </header>
                 {{-- Proofing --}}
-                    <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4">
-                        <div class="container3 p-4">
-                            <!-- Breadcrumb -->
-                            <!-- Breadcrumb -->
-                            <div class="container-fluid">
-                                <div id="ui-view" style="opacity: 1;">
-                                    <div class="animated fadeIn">
-                                        @yield('content')
-                                    </div>
+                <main class="w-full @if(!Session::has('selectedJob') && !Session::has('selectedSeason') && Session::get('openJob') === false) p-4 @endif bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4">
+                    @if(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true)
+                        <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
+                            <div class="col-12">
+                                <span class="lead m-0 mr-2">
+                                {!! __("You are currently working on <strong>:school</strong> in the <strong>:season</strong> Season", ['school' => $selectedJob['ts_jobname'], 'season' => $selectedSeason['code']]) !!}
+                                    <a href="{{route('dashboard.closeJob')}}">[Close Job]</a>                            
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+                    <div class="container3 p-4">
+                        <!-- Breadcrumb -->
+                        @if(!Session::has('selectedJob') && !Session::has('selectedSeason') && Session::get('openJob') === false)
+                            <div class="mt-3"></div>
+                        @endif
+                        <!-- Breadcrumb -->
+                        <div class="container-fluid">
+                            <div id="ui-view" style="opacity: 1;">
+                                <div class="animated fadeIn">
+                                    @yield('content')
                                 </div>
                             </div>
                         </div>
-                    </main>
-                    <!-- /Main content -->
+                    </div>
+                </main>
+                <!-- /Main content -->
                 {{-- Proofing --}}
                 <x-layout.footer />
             </div>

@@ -376,14 +376,75 @@ class ImageService
      * @param string $key
      * @return string|null
      */
+    // public function getImageContent($key)
+    // {
+    //     $path = $this->getPath($key.".jpg");
+    //     $isFound = Storage::disk('local')->exists($path);
+    //     $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
+
+    //     return $fileContent;
+    // }
+
     public function getImageContent($key)
     {
-        $path = $this->getPath($key.".jpg");
-        $isFound = Storage::disk('local')->exists($path);
-        $fileContent = Storage::disk('local')->get($isFound ? $path : "/not_found.jpg");
-
-        return $fileContent;
+        $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+        $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+    
+        // List of possible image paths
+        $imagePaths = [
+            "{$baseImagePath}_800.jpg",
+            "{$baseImagePath}_1600.jpg",
+            "{$baseGroupPath}_800.jpg",
+            "{$baseGroupPath}_1600.jpg",
+        ];
+    
+        // Iterate over possible paths and return the first readable file
+        foreach ($imagePaths as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                return file_get_contents($path);
+            }
+        }
+    
+        // Return fallback image if no valid image is found
+        try {
+            return Storage::disk('local')->get('not_found.jpg');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
+
+    // public function getImageContent($key)
+    // {
+    //     $smbServers = [
+    //         env('SMB_IMAGE_SERVER'),
+    //         env('SMB_GROUP_SERVER')
+    //     ];
+    //     $smbUser = env('SMB_USER');
+    //     $smbPassword = env('SMB_PASSWORD');
+
+    //     $fileSizes = ['_800', '_1600'];
+    //     $tempFile = '/tmp/' . uniqid('smb_', true) . '.jpg';
+
+    //     foreach ($smbServers as $server) {
+    //         foreach ($fileSizes as $size) {
+    //             $path = "{$key[0]}/{$key[1]}/{$key}{$size}.jpg";
+    //             $command = "smbclient {$server} -U {$smbUser}%{$smbPassword} -c 'get \"{$path}\" \"{$tempFile}\"' 2>&1";
+    //             shell_exec($command);
+
+    //             if (file_exists($tempFile)) {
+    //                 $imageContent = file_get_contents($tempFile);
+    //                 unlink($tempFile);
+    //                 return $imageContent;
+    //             }
+    //         }
+    //     }
+
+    //     try {
+    //         return Storage::disk('local')->get('not_found.jpg');
+    //     } catch (\Exception $e) {
+    //         return null;
+    //     }
+    // }
 
     /**
      * This method is used to get the path of the image.
