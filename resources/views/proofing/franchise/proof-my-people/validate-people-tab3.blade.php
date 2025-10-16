@@ -5,11 +5,6 @@
             $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->name);
             $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->name);
             $image_url = URL::asset('proofing-assets/img/440x290.png');
-            if (file_exists($imageWidthHeight)) {
-                list($width, $height) = getimagesize($imageWidthHeight);
-            } else {
-                $width = $height = 0;
-            }
 
         @endphp
         <div class="row" id="group_thumbnail">
@@ -18,13 +13,14 @@
                     <div class="row">
                         <div class="group-image-holder col-12 ml-auto mr-auto">
                             <div class="click-box-wrapper">
+                                @if (file_exists($imageWidthHeight)) 
                                     <img src="{{ $scaledImageUrl }}"
                                         class="mx-auto d-block group-image"
                                         style="max-width: 100%;"
                                         data-native-width="{{ $width }}"
                                         data-native-height="{{ $height }}"
                                         data-artifact-name="{{$artifactNameCrypt}}">
-
+                                @endif
                                 <div class="click-box d-none"></div>
                             </div>
                         </div>
