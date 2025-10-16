@@ -5,7 +5,11 @@
             $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->name);
             $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->name);
             $image_url = URL::asset('proofing-assets/img/440x290.png');
-            list($width, $height) = getimagesize($imageWidthHeight);
+            if (file_exists($imageWidthHeight)) {
+                list($width, $height) = getimagesize($imageWidthHeight);
+            } else {
+                $width = $height = 0;
+            }
 
         @endphp
         <div class="row" id="group_thumbnail">
