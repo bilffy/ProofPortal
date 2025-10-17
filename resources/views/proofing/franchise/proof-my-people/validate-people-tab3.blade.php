@@ -2,15 +2,17 @@
 <fieldset id="ValidateStep3">
     @if(isset($artifact) && isset($artifact->name))
         @php
-            $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->name);
-            $imageWidthHeight = storage_path('app/public/groupImages/'.$artifact->name);
-            $image_url = URL::asset('proofing-assets/img/440x290.png');
-            if (file_exists($imageWidthHeight)) {
-                list($width, $height) = getimagesize($imageWidthHeight);
-            } else {
-                $width = $height = 0;
-            }
+            $scaledImageUrl = $image_url = URL::asset('proofing-assets/img/440x290.png');
+            $width = $height = 0;
+            $artifactNameCrypt = $artifact->name ?? '';
 
+            if(isset($artifact) && isset($artifact->name)) {
+                $imagePath = storage_path('app/public/groupImages/'.$artifact->name);
+                if (file_exists($imagePath)) {
+                    $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->name);
+                    list($width, $height) = getimagesize($imagePath);
+                }
+            }
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
@@ -18,13 +20,13 @@
                     <div class="row">
                         <div class="group-image-holder col-12 ml-auto mr-auto">
                             <div class="click-box-wrapper">
-                                @if (file_exists($imageWidthHeight)) 
+                                @if(file_exists(storage_path('app/public/groupImages/'.$artifact->name ?? '')))
                                     <img src="{{ $scaledImageUrl }}"
                                         class="mx-auto d-block group-image"
                                         style="max-width: 100%;"
                                         data-native-width="{{ $width }}"
                                         data-native-height="{{ $height }}"
-                                        data-artifact-name="{{$artifactNameCrypt}}">
+                                        data-artifact-name="{{ $artifactNameCrypt }}">
                                 @endif
                                 <div class="click-box d-none"></div>
                             </div>
