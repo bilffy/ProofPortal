@@ -26,6 +26,7 @@ class Subject extends Model
         'ts_job_id',
         'ts_folder_id',
         'ts_subject_id',
+        'external_subject_id',
         'is_locked',
     ];
 
