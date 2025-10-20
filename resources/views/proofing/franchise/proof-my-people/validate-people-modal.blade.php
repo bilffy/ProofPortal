@@ -258,11 +258,13 @@
                                                 // Generate a signed URL for the image
                                                 // $image_url = route('serve.image', ['filename' => $newimageName]);
                                                 $image_url = route('serve.image', ['filename' => $skEncrypted]); 
+                                                $salutation = !empty($subject['salutation']) ? $subject['salutation'] . '. ' : '';
                                             }
                                         @endphp
-        
-                                          <tr class="person-row {{ $skHash }}"
-                                            data-subject-name="{{ strtolower($subject->firstname) }} {{ strtolower($subject->lastname) }}">
+
+                                        <tr class="person-row {{ $skHash }}"
+                                            data-subject-name="{{ trim(strtolower($salutation . ($subject->firstname ?? '') . ' ' . ($subject->lastname ?? ''))) }}">
+
                                             <td class="idx-artifact text-center pt-2 pb-1">
                                                 <div class="person-pic-wrapper d-inline">
                                                     <img style="max-height: 100px;" class="lazyload mx-auto d-block" src="public_path('proofing-assets/img/subject-image.png')" data-src="{{ $image_url }}" alt="Subject Image">

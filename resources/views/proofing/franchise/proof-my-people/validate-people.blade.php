@@ -113,7 +113,8 @@
             $principalExistNote = Config::get('constants.PRINCIPAL_EXIST_NOTE');
             $principalNote = Config::get('constants.PRINCIPAL_NOTE');
             $subjectNames = $allSubjectsByJob->map(function ($subject) {
-                return $subject->firstname . ' ' . $subject->lastname;
+                $salutation = ($subject['salutation'] ?? '') . '. ';
+                return trim($salutation . $subject->firstname . ' ' . $subject->lastname);
             });
             if(isset($currentFolder->images)){
                 $artifactNameCrypt = Crypt::encryptString($currentFolder->images->name);

@@ -956,7 +956,10 @@ $(document).ready(function () {
                     $("." + skHash + "-grid-spelling-title").val(title);
                     $("." + skHash + "-grid-spelling-salutation").val(salutation);
 
-                    $('tr.person-row.'+ skHash).attr('data-subject-name', first_name.toLowerCase() + " " + last_name.toLowerCase());
+                    var addsalutation = salutation ? salutation + '. ' : '';
+                    var fullNameNew = (addsalutation.toLowerCase() + first_name.toLowerCase() + ' ' + last_name.toLowerCase()).trim();
+
+                    $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameNew);
 
                     if($('#allSubjectNames').val().includes(fullNameOld)){                    
                         var inputValue = $('#allSubjectNames').val();
@@ -1022,7 +1025,6 @@ $(document).ready(function () {
             $("#subject-name-filter-feedback").text("");
         }
     });
-
 
     var linkHide = $(".people-photos-hide");
     var linkShow = $(".people-photos-show");
@@ -1294,9 +1296,12 @@ $(document).ready(function () {
                         $('.'+ skHash +'-grid-spelling-title').val(responseData.title);
                         $('.'+ skHash +'-grid-spelling-salutation').val(responseData.salutation);
 
-                        $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
+                        $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none');
 
-                        $('tr.person-row.'+ skHash).attr('data-subject-name', responseData.first_name.toLowerCase() + " " + responseData.last_name.toLowerCase());
+                        var addsalutation = responseData.salutation ? responseData.salutation + '. ' : '';
+                        var fullNameNew = (addsalutation.toLowerCase() + responseData.first_name.toLowerCase() + ' ' + responseData.last_name.toLowerCase()).trim();
+    
+                        $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameNew);
     
                         // Define or select the modal element
                         var modal = $('#' + skHash + '_modal'); // Adjust the selector to target the correct modal
