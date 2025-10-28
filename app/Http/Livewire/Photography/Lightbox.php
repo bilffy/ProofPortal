@@ -12,6 +12,7 @@ class Lightbox extends Component
     public $subject = "";
     public $schoolKey = "";
     public $category = PhotographyHelper::TAB_PORTRAITS;
+    public $externalSubjectId = "";
 
     protected $listeners = [
         PhotographyHelper::EV_SELECT_IMAGE => 'updateSubject',
@@ -22,15 +23,17 @@ class Lightbox extends Component
         $this->schoolKey = $schoolKey;
     }
 
-    public function updateSubject($subject, $category)
+    public function updateSubject($subject, $category, $externalSubjectId)
     {
         $this->subject = $subject;
         $this->category = $category;
+        $this->externalSubjectId = $externalSubjectId;
     }
 
     private function getImages()
     {
         $imageService = new ImageService();
+        
         switch ($this->category) {
             case PhotographyHelper::TAB_GROUPS:
             case PhotographyHelper::TAB_OTHERS:
@@ -40,9 +43,11 @@ class Lightbox extends Component
             case PhotographyHelper::TAB_PORTRAITS:
             default:
                 $s = explode(' ', $this->subject);
-                $images = $imageService->getSubjectImages($this->schoolKey, $s[0], $s[1]);
+                $images = $imageService->getSubjectImages($this->schoolKey, $s[0], $s[1], $this->externalSubjectId);
         }
-
+        
+        dd($images);
+        
         $imageCount = $images->count();
         $noImageCount = 0;
         foreach ($images as $image) {
@@ -57,7 +62,10 @@ class Lightbox extends Component
             'category' => 'LIGHTBOX',
             'hasImages' => $imageCount > 0 && $imageCount != $noImageCount,
         ]);
-        return $imageService->getImagesAsBase64($images, $this->category);
+        
+        $list = $imageService->getImagesAsBase64($images, $this->category); 
+        
+        return $list;
     }
 
     public function render()

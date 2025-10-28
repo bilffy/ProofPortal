@@ -16,13 +16,14 @@ class ImageFrame extends Component
     public $isLightbox = false;
     public $isUploaded = false;
     public $image = '';
+    public $externalSubjectId = null;
 
     protected $listeners = [
         PhotographyHelper::EV_IMAGE_UPLOADED => 'updateImage',
         PhotographyHelper::EV_IMAGE_DELETED => 'removeImage',
     ];
 
-    public function mount($imageId, $name, $landscape, $folderName, $isUploaded = false, $isLightbox = false)
+    public function mount($imageId, $name, $landscape, $folderName, $isUploaded = false, $isLightbox = false, $externalSubjectId = null)
     {
         $this->imageId = $imageId;
         $this->name = $name;
@@ -30,7 +31,8 @@ class ImageFrame extends Component
         $this->folderName = $folderName;
         $this->isUploaded = $isUploaded;
         $this->isLightbox = $isLightbox;
-
+        $this->externalSubjectId = $externalSubjectId;
+        
         $imageService = new ImageService();
         $this->hasImage = $imageService->getIsImageFound(base64_decode(base64_decode($imageId)));
     }

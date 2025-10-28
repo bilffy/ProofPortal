@@ -10,6 +10,7 @@
     'hasImage' => false,
     'isLightbox' => false,
     'isUploaded' => false,
+    'externalSubjectId' => null,
 ])
 
 @php
@@ -22,6 +23,7 @@
 <div id="{{ $imgId }}"
     class="portrait-img {{ $isUploaded ? 'uploaded' : ''}} rounded-md w-[186] px-2 pt-2 flex flex-col align-middle relative justify-center hover:cursor-pointer"
     onclick="handleImageClick('{{ $imgId }}', {{ $isLightbox ? 'true' : 'false' }}, {{ $hasImage ? 'true' : 'false' }})"
+    data-external-subject-id="{{ $externalSubjectId }}" 
     x-data="{ showSpinner: false }"
 >
     <div class="relative h-[229px] overflow-hidden rounded group transition-all">
