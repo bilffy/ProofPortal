@@ -7,4 +7,5 @@
     hasImage="{{$hasImage}}"
     isLightbox="{{$isLightbox}}"
     isUploaded="{{$isUploaded}}"
+    externalSubjectId="{{$externalSubjectId}}"
 />

@@ -13,8 +13,9 @@
                     $landscape = !$image['isPortrait'];
                     $key = "img_{{$imageId}}";
                     $isUploaded = $image['isUploaded'] ?? false;
+                    $externalSubjectId = !$isFolder ? $image['externalSubjectId'] : null;
                 @endphp
-                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :key="$key" lazy="on-load"/>
+                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId :key="$key" lazy="on-load"/>
             @endforeach
         </div>
         <div class="mt-4 mb-4 flex justify-center">

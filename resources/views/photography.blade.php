@@ -329,14 +329,15 @@
         const name = img.querySelector('.img-decoded-name').textContent;
         const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
         const isUploaded = img.classList.contains('uploaded');
-
+        const externalSubjectId = img.dataset.externalSubjectId;
+        
         if (!isLightbox) {
             if (selectMode) {
                 if (!hasImage) {
                     return;
                 }
             } else {
-                showLightboxModal(imageId, name);
+                showLightboxModal(imageId, name, externalSubjectId);
                 return;
             }
         } else if (!hasImage) {
@@ -725,9 +726,13 @@
     window.replaceUploadedPhoto = replaceUploadedPhoto;
     window.removeUploadedPhoto = removeUploadedPhoto;
     window.showRemovePhotoModal = showRemovePhotoModal;
-    window.showLightboxModal = function(subjectKey, name) {
+    window.showLightboxModal = function(subjectKey, name, externalSubjectId) {
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
-        Livewire.dispatch('EV_SELECT_IMAGE', { subject: name, category: localStorage.getItem('photographyCategory') });
+        Livewire.dispatch('EV_SELECT_IMAGE', { 
+            subject: name, 
+            category: localStorage.getItem('photographyCategory'),
+            externalSubjectId: externalSubjectId
+        });
         document.querySelector('#lightbox-modal').querySelector('#modal-title').textContent = name;
         updateDownloadSection(0, true);
         lightboxModal.show();

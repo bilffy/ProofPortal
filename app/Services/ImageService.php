@@ -270,7 +270,13 @@ class ImageService
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'seasons.code as year')
+            ->select(
+                'subjects.firstname', 
+                'subjects.lastname', 
+                'subjects.ts_subjectkey', 
+                'seasons.code as year',
+                'subjects.external_subject_id'
+            )
             ->distinct()
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
@@ -400,9 +406,10 @@ class ImageService
      * @param string $schoolKey
      * @param string $searchTerm
      * @param string $searchTerm2
+     * @param string $externalSubjectId
      * @return Collection
      */
-    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2): Collection
+    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2, $externalSubjectId = null): Collection
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
@@ -438,9 +445,18 @@ class ImageService
                     ->orWhere('subjects.lastname', 'like', "%$searchTerm2%");
             });
         }
+
+        if($externalSubjectId) {
+            $query->where('subjects.external_subject_id', $externalSubjectId);
+        }
         
         return $query
-            ->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'seasons.code as year')
+            ->select('subjects.firstname', 
+                'subjects.lastname', 
+                'subjects.ts_subjectkey', 
+                'seasons.code as year',
+                'subjects.external_subject_id'
+            )
             ->distinct()
             ->orderBy('year')
             ->orderBy('subjects.lastname')
@@ -509,6 +525,7 @@ class ImageService
                 'year' => $image->year ?? 0,
                 'category' => $category,
                 'isUploaded' => $uploaded,
+                'externalSubjectId' => $isSubject ? $image->external_subject_id : null,
             ];
         };
 

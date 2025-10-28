@@ -2,6 +2,7 @@
     'title' => "Lightbox Modal",
     'subject' => null,
     'schoolKey' => '',
+    'externalSubjectId' => null,
 ])
 
 <x-modal.lightbox id='lightbox-modal' :$title body="components.modal.body">
@@ -21,7 +22,7 @@
                     </x-button.primary>
                 </div>
             </div>
-            <livewire:photography.lightbox :$subject :$schoolKey/>
+            <livewire:photography.lightbox :$subject :$schoolKey :$externalSubjectId/>
         </x-modal.body>
     </x-slot>
 </x-modal.lightbox>
