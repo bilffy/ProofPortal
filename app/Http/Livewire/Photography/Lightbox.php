@@ -46,8 +46,6 @@ class Lightbox extends Component
                 $images = $imageService->getSubjectImages($this->schoolKey, $s[0], $s[1], $this->externalSubjectId);
         }
         
-        dd($images);
-        
         $imageCount = $images->count();
         $noImageCount = 0;
         foreach ($images as $image) {
