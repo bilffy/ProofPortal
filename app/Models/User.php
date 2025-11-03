@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
 use Auth;
@@ -169,7 +170,9 @@ class User extends Authenticatable
 
     public function getRoleId()
     {
-        return $this->getRoleIds()->first();
+        $roleName = $this->getRole();
+        $role = Role::findByName($roleName);
+        return $role->id;
     }
     
     public function getFranchise()
