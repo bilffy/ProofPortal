@@ -1,4 +1,4 @@
-@props(['label' => '', 'required' => false])
+@props(['label' => '', 'required' => false, 'readonly' => false])
 
 @if (!empty($label))
     <label class="mb-2" for="">
@@ -13,4 +13,5 @@
         'ref' => "input",
         'class' => "border rounded-md p-2 border-neutral read-only:opacity-50 read-only:cursor-not-allowed read-only:bg-neutral-300",
     ]) }}
+    @readonly($readonly)
 />

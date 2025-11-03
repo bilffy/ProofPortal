@@ -78,7 +78,7 @@
                         </div>
                     </div>
                 @endImpersonating
-                
+
                 <div class="flex flex-row items-center">
                     {{ $user->resource->isSchoolLevel() ? $user->resource?->getSchool()?->name : '' }}
                     <div class="ms-3 relative">
@@ -127,7 +127,7 @@
             <x-slot name="footer">
                 <x-modal.footer>
                     <x-button.secondary id="edit-profile-btn-cls" data-modal-hide="editProfileModal">Close</x-button.secondary>
-                    <x-button.primary id="edit-profile-btn" type="submit" form="edit-user-form">Save</x-button.primary>
+                    <x-button.primary id="edit-profile-btn" type="submit" form="edit-profile-form">Save</x-button.primary>
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
@@ -140,21 +140,42 @@
         {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
         const editProfileOptions = {
             onShow: async () => {
-                const form = document.getElementById('edit-user-form');
+                const form = document.getElementById('edit-profile-form');
                 $("#edit-profile-btn").attr('disabled', 'disabled');
                 $("#edit-profile-btn").text('Loading...');
                 $(`#firstname`).val('');
                 $(`#lastname`).val('');
                 $(`#firstname`).attr('readonly', 'readonly');
                 $(`#lastname`).attr('readonly', 'readonly');
+                if (!localStorage.getItem('api_token')) {
+                    await createApiToken();
+                }
+                
                 let response = await fetch('{{ route('api.profile.edit') }}', {
                     method: 'GET',
                     dataType: 'json',
                     headers: {
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Authorization': `Bearer ${localStorage.getItem('api_token')}`
                     },
                 });
+                
+                if (response.status === 401) {
+                    await createApiToken();
+                    // Retry the request with the new token
+                    response = await fetch('{{ route('api.profile.edit') }}', {
+                        method: 'GET',
+                        dataType: 'json',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Authorization': `Bearer ${localStorage.getItem('api_token')}`
+                        },
+                    });
+                }
                 
                 let result = await response.json();
                 $(`#edit-user-nonce`).val(result.nonce);

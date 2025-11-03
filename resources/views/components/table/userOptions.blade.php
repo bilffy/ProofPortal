@@ -9,18 +9,33 @@
         'impersonateRoute' => '', 
         'checkStatusRoute' => '', 
         'user' => null,
-        'disableRoute' => ''
+        'disableRoute' => '',
+        'editRoute' => '',
     ]
 )
 
-<div id="options_{{$userId}}">
+@php
+    use App\Helpers\PermissionHelper;
+    use App\Models\User;
+
+    $isUser = $userId == auth()->id();
+    $isNotActiveOtherUser = !$isUser && $status != User::STATUS_ACTIVE;
+    $canInvite = PermissionHelper::toPermission(PermissionHelper::ACT_INVITE, subject: $role);
+    $canEdit = auth()->user()->canInvite($userId);
+    $canImpersonate = PermissionHelper::canImpersonate($userId);
+    $canDisable = auth()->user()->canDisable($userId) && $status != User::STATUS_DISABLED;
+
+    $disableOptions = $isUser || !($canDisable || $canImpersonate || $canEdit || ($canInvite && $isNotActiveOtherUser));
+@endphp
+
+<div id="options_{{$userId}}" @if($disableOptions) class="hidden" @endif>
     <x-button.link id="btn_{{$dropDownId}}" data-dropdown-toggle={{$dropDownId}} data-initialized="false">
         <x-icon class="px-2 cursor-pointer" icon="ellipsis" />
     </x-button.link>
     <!-- Dropdown menu -->
     <x-form.dropdownPanel id={{$dropDownId}}>
-        @can ($PermissionHelper->toPermission($PermissionHelper::ACT_INVITE, $role))
-            @if ($userId != auth()->id() && $status != $User::STATUS_ACTIVE)
+        @can ($canInvite)
+            @if ($isNotActiveOtherUser)
                 <li>
                     <x-button.dropdownLink
                         href="#" 
@@ -35,8 +50,18 @@
                 </li>
             @endif
         @endcan
+        {{-- Use 'Can Invite' for 'Can Edit' decisions --}}
+        @if ($canEdit)
+            <li>
+                <x-button.dropdownLink
+                        href="{{ $editRoute }}"
+                        class="hover:bg-primary hover:text-white">
+                    Edit
+                </x-button.dropdownLink>
+            </li>
+        @endif
 {{--@canImpersonate($guard = null)--}}
-        @if ($PermissionHelper::canImpersonate($userId))
+        @if ($canImpersonate)
             <li>
                 <x-button.dropdownLink
                         href="#"
@@ -50,8 +75,7 @@
             </li>
        @endif
 {{--@endCanImpersonate--}}
-
-        @if (auth()->user()->canDisable($userId))
+        @if ($canDisable)
             <li>
                 <x-button.dropdownLink
                         href="#"
