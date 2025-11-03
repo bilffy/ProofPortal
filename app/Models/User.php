@@ -166,6 +166,11 @@ class User extends Authenticatable
     {
         return $this->getRoleNames()->first();
     }
+
+    public function getRoleId()
+    {
+        return $this->getRoleIds()->first();
+    }
     
     public function getFranchise()
     {
@@ -188,6 +193,18 @@ class User extends Authenticatable
         return $this->isAdmin()
             ? ( $withAdmin ? Franchise::getMSP()?->name : "" )
             : ( $this->isFranchiseLevel() ? $this->getFranchise()?->name : $this->getSchool()?->name );
+    }
+
+    public function getSchoolId()
+    {
+        $school = $this->getSchool();
+        return $school ? $school->id : 0;
+    }
+
+    public function getFranchiseId()
+    {
+        $franchise = $this->getFranchise();
+        return $franchise ? $franchise->id : 0;
     }
 
     public function getOrganization()
@@ -346,6 +363,40 @@ class User extends Authenticatable
             }
             
             return false;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canInvite($userId): bool
+    {   
+        // Decode the user ID
+        // $id = Hashids::decodeHex($userId);
+        $id = $userId;
+        
+        // Check if the user is the same as the current user, if so, return false
+        if ($this->id === $id) {
+            return false;
+        }
+        
+        /** @var User $user */
+        $user = User::query()->find($id);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        if ($this->isSuperAdmin()) { // For Super Admins
+            return $user->isAdmin() || $user->isFranchiseLevel();
+        } else if ($this->isRcUser()) { // For RC Users
+            return $user->isRcUser() || $user->isFranchiseLevel();
+        } else if ($this->isFranchiseLevel()) { // For Franchise Admins
+            return $user->isSchoolAdmin() || $user->isPhotoCoordinator();
+        } else if ($this->isSchoolAdmin() || $this->isPhotoCoordinator()) { // For School Admins and Photo Coordinators
+            return $user->isPhotoCoordinator() || $user->isTeacher();
         }
         
         return false;

@@ -71,6 +71,7 @@
                                 checkStatusRoute="{{ $checkStatusRoute }}"
                                 user="{{ $user }}"
                                 disableRoute="{{ $disableRoute }}"
+                                editRoute="{{ route('users.edit', ['id' => $userId]) }}"
                             />
                         </x-table.cell>
                     </tr>

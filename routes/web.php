@@ -36,9 +36,10 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     // Profile API routes
-    Route::get('profile/edit', [UserController::class, 'edit'])->name(name: 'api.profile.edit');
-    Route::patch('profile/update', [UserController::class, 'update'])->name(name: 'api.profile.update');
-
+    Route::get('profile/edit', [UserController::class, 'edit'])->name('api.profile.edit');
+    Route::patch('profile/update', [UserController::class, 'update'])->name('api.profile.update');
+    
+    // Account Creation
     $permissions = PermissionHelper::ACT_CREATE . " " . PermissionHelper::SUB_USER;
     Route::group(['middleware' => ["permission:{$permissions}"]], function () {
         // Users routes
@@ -48,6 +49,12 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
         Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
         Route::get('/invite/check-user-status/{id}', [InviteController::class, 'checkUserStatus'])->name('invite.check-user-status');
+    });
+    // Edit other users
+    $editPermissions = PermissionHelper::ACT_CREATE . " " . PermissionHelper::SUB_USER;
+    Route::group(['middleware' => ["permission:{$editPermissions}"]], function () {
+        Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::patch('users/{id}/update', [UserController::class, 'update'])->name('users.update');
     });
     
     //Photography

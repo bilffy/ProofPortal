@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Nullix\JsAesPhp\JsAesPhp;
 
@@ -42,8 +43,9 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    protected function validator(array $data)
+    protected function validator(array $data, $user = null)
     {
+        $uniqueEmail = empty($user) ? 'unique:'.User::class : Rule::unique('users', 'email')->ignore($user->id);
         $schema1 = 
             [
                 //'firstname' => 'required|string|max:255',
@@ -56,7 +58,8 @@ class UserController extends Controller
                     'max:255',
                     'email:rfc', // Basic check for email format
                     'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', // Ensures a dot + valid TLD
-                    'unique:'.User::class,
+                    // 'unique:'.User::class,
+                    $uniqueEmail,
                     // new MspEmailValidation(), //Disable for now
                 ],
                 'role' => 'required|integer',
@@ -203,7 +206,19 @@ class UserController extends Controller
 
     public function edit(Request $request)
     {
+        $isApiRequest = $request->ajax() || $request->expectsJson();
+        $editTokenName = $isApiRequest ? 'edit_profile_token' : 'edit_user_token';
         $user = Auth::user();
+        if (!$isApiRequest) {
+            $editUserId = $request->route('id');
+            if ($user->canInvite($editUserId)) {
+                $editUser = User::findOrFail($editUserId);
+            } else {
+                // redirect to users list with error
+                return redirect()->route('users')->with('error', 'Unable to process your request');
+            }
+        }
+
         $franchiseList = $user->isAdmin() ? Franchise::orderBy('name')->get()
             : ( $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [] );
         $schoolList = $user->isAdmin() ? School::orderBy('name')->get()
@@ -219,20 +234,22 @@ class UserController extends Controller
         }
 
         $nonce = Str::random(40);
-        session(['edit_user_token' => $nonce]);
+        session([$editTokenName => $nonce]);
 
         $data = [
-                'user' => new UserResource($user),
-                'roles' => RoleResource::collection(RoleHelper::getAllowedRoles($user->getRole())),
-                'franchises' => $franchiseList,
-                'schools' => $schoolList,
-                'nonce' => $nonce
+            'user' => new UserResource($user),
+            'targetUser' => new UserResource($isApiRequest ? $user : $editUser),
+            'roles' => RoleResource::collection(RoleHelper::getAllowedRoles($user->getRole())),
+            'franchises' => $franchiseList,
+            'schools' => $schoolList,
+            'nonce' => $nonce
         ];
 
-        // if ($request->wantsJson()) {
+        if ($isApiRequest) {
             return response()->json($data, 200);
-        // }
-        // return view('editUser', $data);
+        }
+
+        return view('editUser', $data);
     }
 
     /**
@@ -242,53 +259,177 @@ class UserController extends Controller
      */
     public function update(Request $request): RedirectResponse|JsonResponse
     {
-        if ($request->nonce !== session('edit_user_token')) {
+        $input = $request->json()->all();
+        $isEditUserForm = $request->route('id');
+        $editTokenName = $isEditUserForm ? 'edit_user_token' : 'edit_profile_token';
+        $user = Auth::user();
+        
+        if ($isEditUserForm) {
+            $editUserId = $request->route('id');
+            if (Auth::user()->canInvite($editUserId)) {
+                $user = User::findOrFail($editUserId);
+            } else {
+                // redirect to users list with error
+                return redirect()->route('users')->with('error', 'Unable to process your request');
+            }
+        } else {
+            
+        }
+        if (!$user) {
+            return response()->json('User not found', 404);
+        }
+        // If json() is empty, try getting the raw content
+        if (empty($input)) {
+            $input = json_decode($request->getContent(), true) ?? [];
+        }
+        // If still empty, try decrypting the 'request' input
+        if (empty($input)) {
+             try {
+                $encryptedData = $request->input('request');
+                $input = JsAesPhp::decrypt($encryptedData, session($editTokenName));
+            } catch (\Throwable $e) {
+                $nonce = Str::random(40);
+                session([$editTokenName => $nonce]);
+                return response()->json(['error' => 'Invalid Request', 'nonce' => $nonce, 'message' => $e->getMessage()], 400);
+            }
+        }
+        if (empty($input['nonce']) || $input['nonce'] !== session($editTokenName)) {
             return response()->json('Invalid Request', 422);
         }
 
-        $user = Auth::user();
+        $keys = $isEditUserForm
+            ? ['firstname', 'lastname', 'email', 'role', 'school', 'franchise']
+            : ['firstname', 'lastname', 'email'];
+        // get key value pairs from $input based on $keys array
+        $formInput = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $input)) {
+                $formInput[$key] = $input[$key];
+            }
+        }
 
-        /*$request->merge(
-            [
-                'email' => EncryptionHelper::simpleDecrypt($request->email),
-                // 'franchise' => EncryptionHelper::simpleDecrypt($request->franchise),
-                // 'school' => EncryptionHelper::simpleDecrypt($request->school)
-            ]
-        );*/
-
-        $validator = $this->validator($request->all(['firstname', 'lastname', 'email']));
-        
+        $validator = $this->validator($formInput, $user);
         if ($validator->fails()) {
             $nonce = Str::random(40);
-            session(['edit_user_token' => $nonce]);
+            session([$editTokenName => $nonce]);
             return response()->json(['errors' => $validator->errors(), 'nonce' => $nonce], 422);
         }
 
         DB::beginTransaction();
         try {
-            $user->update([
-                'name' => $request->firstname . " " . $request->lastname,
-                'firstname' => $request->firstname,
-                'lastname' => $request->lastname,
-            ]);
+            $updatedData = $formInput;
+            $updatedData['name'] = $formInput['firstname'] . " " . $formInput['lastname'];
+            $originalRole = $user->getRoleId();
+            $originalFranchise = $user->isFranchiseLevel() ? $user->getFranchiseId() : 0;
+            $originalSchool = $user->isSchoolLevel() ? $user->getSchoolId() : 0;
+            if ($isEditUserForm) {
+                $user->update($updatedData);
+                $changes = $user->getChanges();
+                
+                if ($changes && array_key_exists('email', $changes)) {
+                    // If email is changed, send invitation email
+                    $this->userService->sendInvite($user, auth()->user()->id);
+                }
+                
+                $role = Role::findOrFail($updatedData['role'])->name;
+                // If role is changed, update the role assignments
+                // If role is the same but franchise/school is changed, update the respective assignments
+                if ($user->hasRole($role)) {
+                    if ($user->hasRole(RoleHelper::ROLE_FRANCHISE)) {
+                        $franchiseUser = FranchiseUser::where('user_id', $user->id)->first();
+                        if ($franchiseUser && $franchiseUser->franchise_id != $updatedData['franchise']) {
+                            $franchiseUser->update(['franchise_id' => $updatedData['franchise']]);
+                        }
+                    } elseif ($user->hasAnyRole([RoleHelper::ROLE_SCHOOL_ADMIN, RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER])) {
+                        $schoolUser = SchoolUser::where('user_id', $user->id)->first();
+                        if ($schoolUser && $schoolUser->school_id != $updatedData['school']) {
+                            $schoolUser->update(['school_id' => $updatedData['school']]);
+                        }
+                    }
+                } else {
+                    // Remove existing roles and assign new role
+                    $oldRoles = $user->getRoleNames();
+                    foreach ($oldRoles as $roleName) {
+                        // Delete FranchiseUser or SchoolUser based on old role
+                        switch ($roleName)
+                        {
+                            case RoleHelper::ROLE_FRANCHISE:
+                                FranchiseUser::get([
+                                    'user_id' => $user->id,
+                                ])->first()->delete();
+                                break;
+                            case RoleHelper::ROLE_SCHOOL_ADMIN:
+                            case RoleHelper::ROLE_PHOTO_COORDINATOR:
+                            case RoleHelper::ROLE_TEACHER:
+                                SchoolUser::get([
+                                    'user_id' => $user->id,
+                                ])->first()->delete();
+                                break;
+                        }
+                        $user->removeRole($roleName);
+                    }
+                    $user->assignRole($role);
+                    // Add new role assignments
+                    switch ($role)
+                    {
+                        case RoleHelper::ROLE_FRANCHISE:
+                            FranchiseUser::create([
+                                'user_id' => $user->id,
+                                'franchise_id' => $updatedData['franchise']
+                            ]);
+                            break;
+                        case RoleHelper::ROLE_SCHOOL_ADMIN:
+                        case RoleHelper::ROLE_PHOTO_COORDINATOR:
+                        case RoleHelper::ROLE_TEACHER:
+                            SchoolUser::create([
+                                'user_id' => $user->id,
+                                'school_id' => $updatedData['school']
+                            ]);
+                            break;
+                    }
+                }
+            } else {
+                $user->update($updatedData);
+                $changes = $user->getChanges();
+            }
+            $updatedFields = [];
+            foreach ($updatedData as $field => $value) {
+                switch ($field) {
+                    case 'role':
+                        if ($value != $originalRole) {
+                            $updatedFields[$field] = $value;
+                        }
+                        break;
+                    case 'franchise':
+                        if (0 == $originalFranchise || $value != $originalFranchise) {
+                            $updatedFields[$field] = $value;
+                        }
+                        break;
+                    case 'school':
+                        if (0 == $originalSchool || $value != $originalSchool) {
+                            $updatedFields[$field] = $value;
+                        }
+                        break;
+                    default:
+                        if (array_key_exists($field, $changes)) {
+                            $updatedFields[$field] = $value;
+                        }
+                }
+            }
             // Log UPDATE_USER activity
-            ActivityLogHelper::log(LogConstants::EDIT_USER, ['edited_user' => $user->id]);
+            ActivityLogHelper::log(LogConstants::EDIT_USER, ['edited_user' => $user->id, 'updated_fields' => $updatedFields]);
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
-            // if ($request->wantsJson()) {
-                $nonce = Str::random(40);
-                session(['edit_user_token' => $nonce]);
-                return response()->json(['errors' => $e->getMessage(), 'nonce' => $nonce], 422);
-            // }
-            // return redirect()->back()->withInput()->withErrors($e->getMessage());
+            $nonce = Str::random(40);
+            session([$editTokenName => $nonce]);
+            return response()->json(['errors' => $e->getMessage(), 'nonce' => $nonce], 422);
         }
 
-        session()->forget('edit_user_token'); // Remove token after use
-        // if ($request->wantsJson()) {
-            return response()->json(['message' => 'Profile successfully updated.'], 200);
-        // }
-        // return response()->json(['redirect_url' => route('users')], 200);
+        session()->forget($editTokenName); // Remove token after use
+        $message = 'User successfully updated.';
+        $url = redirect()->route('users')->with('success', $message)->getTargetUrl();
+        return response()->json(['message' => $message, 'redirect_url' => $url], 200);
     }
 
     /**

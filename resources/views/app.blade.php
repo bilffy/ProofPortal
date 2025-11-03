@@ -40,6 +40,8 @@
 <body class="font-sans antialiased">
     @if(session('success'))
         <x-toast-success message="{{  session('success') }}" />
+    @elseif(session('error'))
+        <x-toast-error message="{{  session('error') }}" />
     @endif
 
     @yield('main')
