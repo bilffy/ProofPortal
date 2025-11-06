@@ -201,6 +201,18 @@ class PhotographyController extends Controller
         // get the season code as the year
         $selectedFilters['year'] = $season->code;
         
+        // check if the image belongs to the school, basically schoolKey should match
+        foreach ($images as $image) {
+            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
+            $imgRecord = Image::where('keyvalue', $key)->first();
+            if ($imgRecord) {
+                $job = Job::where('ts_job_id', $imgRecord->ts_job_id)->first();
+                if ($job && $job->ts_schoolkey !== $schoolKey) {
+                    return response()->json('Invalid Request', 422);
+                }
+            }
+        }
+        
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
             'requested_date' => now(),
@@ -215,11 +227,12 @@ class PhotographyController extends Controller
 
             // remove the img_ prefix, then decode the base64 encoded image
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
+            
             // Add to logged image keys
             $logImgKeys[] = $key;
             // Query the Image model to get the image data
             $image = Image::where('keyvalue', $key)->first();
-
+            
             if ($image) {
                 $job = Job::where('ts_job_id', $image->ts_job_id)->first();
                 if ($job) {
