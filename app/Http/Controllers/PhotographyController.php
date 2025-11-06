@@ -136,6 +136,7 @@ class PhotographyController extends Controller
         
         $validator = Validator::make($request->all(), [
             'images' => 'array',
+            'images.*' => ['string', 'not_regex:/\\$/'], // reject any item containing a `$`
             'category' => 'required|integer|in:1,2',
             'filters' => 'required|array',
             'filters.year' => 'required|string',
