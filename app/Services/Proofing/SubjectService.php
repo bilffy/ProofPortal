@@ -20,7 +20,7 @@ class SubjectService
         // Eager load images for subjects
         $homedSubjects = Subject::with(['images:id,keyvalue,ts_imagekey'])
         ->where('ts_folder_id', $folderId)
-        ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'ts_subject_id')->get();
+        ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'prefix', 'suffix', 'ts_subject_id')->get();
 
         return $homedSubjects;
     }

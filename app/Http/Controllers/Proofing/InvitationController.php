@@ -16,6 +16,7 @@ use App\Models\Franchise;
 use App\Models\JobUser;
 use App\Models\Folder;
 use App\Models\User;
+use App\Models\School;
 use Carbon\Carbon;
 use Session;
 use Auth;
@@ -107,20 +108,84 @@ class InvitationController extends Controller
         ]);
     }
 
+    // public function inviteSingle($role, $jobKeyHash)
+    // {
+    //     $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKeyHash))->first();
+    //     $user = Auth::user(); 
+    //     $userLevels = $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [];
+    //     foreach ($userLevels as $userLevel) {
+    //         $emails[] = User::whereHas('franchises', function ($query) use ($userLevel) {
+    //             $query->where('franchise_id', $userLevel->id);
+    //         })
+    //         ->whereNotNull('email') // Ensure the email is registered
+    //         ->pluck('email')
+    //         ->toArray(); // Ensure the plucked emails are converted to an array
+    //     }
+
+    //     return view('proofing.franchise.invitations.invitation_single', [
+    //         'expiryDate' => $this->getAccountExpirationDate(),
+    //         'role' => $role,
+    //         'selectedJob' => $selectedJob,
+    //         'emails' => $emails,
+    //         'user' => new UserResource($user)
+    //     ]);
+    // }
+
     public function inviteSingle($role, $jobKeyHash)
     {
-        $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKeyHash))->first();
+        $selectedJob = $this->jobService
+            ->getJobByJobKey($this->getDecryptData($jobKeyHash))
+            ->first();
+    
         $user = Auth::user(); 
-        $userLevels = $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [];
-        foreach ($userLevels as $userLevel) {
-            $emails[] = User::whereHas('franchises', function ($query) use ($userLevel) {
-                $query->where('franchise_id', $userLevel->id);
-            })
-            ->whereNotNull('email') // Ensure the email is registered
-            ->pluck('email')
-            ->toArray(); // Ensure the plucked emails are converted to an array
+        $franchise = $user->getFranchise();
+    
+        $emails = [];
+    
+        if ($franchise) {
+            // 1️⃣ Users who belong to the same franchise
+            $franchiseUserEmails = User::whereHas('franchises', function ($query) use ($franchise) {
+                    $query->where('franchise_id', $franchise->id);
+                })
+                ->whereNotNull('email')
+                ->pluck('email')
+                ->toArray();
+    
+            $emails = array_merge($emails, $franchiseUserEmails);
+    
+            // 2️⃣ Users who belong to schools under the franchise
+            $schoolIds = School::whereHas('franchises', function ($query) use ($franchise) {
+                    $query->where('franchise_id', $franchise->id);
+                })
+                ->pluck('id');
+    
+            if ($schoolIds->isNotEmpty()) {
+                $schoolUserEmails = User::whereHas('schools', function ($query) use ($schoolIds) {
+                        $query->whereIn('school_id', $schoolIds);
+                    })
+                    ->whereNotNull('email')
+                    ->pluck('email')
+                    ->toArray();
+    
+                $emails = array_merge($emails, $schoolUserEmails);
+            }
+    
+            // 3️⃣ Users with 'admin' role (anywhere in the system)
+            $adminEmails = User::role(['Super Admin', 'Admin'])
+                ->whereNotNull('email')
+                ->pluck('email')
+                ->toArray();
+    
+            $emails = array_merge($emails, $adminEmails);
         }
-
+    
+        // 4️⃣ Clean and flatten
+        $emails = collect($emails)
+            ->flatten()
+            ->unique()
+            ->values()
+            ->toArray();
+    
         return view('proofing.franchise.invitations.invitation_single', [
             'expiryDate' => $this->getAccountExpirationDate(),
             'role' => $role,
@@ -129,6 +194,7 @@ class InvitationController extends Controller
             'user' => new UserResource($user)
         ]);
     }
+    
 
     public function inviteMulti($role, $jobKeyHash)
     {
@@ -150,25 +216,26 @@ class InvitationController extends Controller
         $user = Auth::user();
 
         // Get emails for the user's franchise
-        $emails = $user->isFranchiseLevel()
-            ? User::whereHas('franchises', fn($query) => $query->where('franchise_id', $user->getFranchise()->id))
-                ->whereNotNull('email')
-                ->pluck('email')
-                ->toArray()
-            : [];
+        // $emails = $user->isFranchiseLevel()
+        //     ? User::whereHas('franchises', fn($query) => $query->where('franchise_id', $user->getFranchise()->id))
+        //         ->whereNotNull('email')
+        //         ->pluck('email')
+        //         ->toArray()
+        //     : [];
 
         // Process multiple people or a single email
         $peopleArray = $request->people ? json_decode($request->people, true) : [[null, null, $request->email, $request->folder]];
 
+        
         foreach ($peopleArray as $person) {
             $email = $person[2] ?? null;
             $folderKey = $person[3] ?? null;
 
             if($email){
-                if (!in_array($email, $emails)) {
-                    $errorMessages[] = "Email - {$email} does not exist.";
-                    continue;
-                }
+                // if (!in_array($email, $emails)) {
+                //     $errorMessages[] = "Email - {$email} does not exist.";
+                //     continue;
+                // }
 
                 $inviteUser = User::where('email', $email)->select('id')->first();
 

@@ -9,13 +9,15 @@ use App\Services\Proofing\StatusService;
 use App\Services\Proofing\SeasonService;
 use Illuminate\Support\Facades\Session;
 use App\Services\Proofing\JobService;
+use App\Services\Proofing\TimestoneTableService;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Auth;
 
 class ProofHomeController extends Controller
 {
-    public function __construct(JobService $jobService, EncryptDecryptService $encryptDecryptService, StatusService $statusService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService)
+    public function __construct(JobService $jobService, EncryptDecryptService $encryptDecryptService, StatusService $statusService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService, TimestoneTableService $timestoneTableService)
     {
 
         $this->jobService = $jobService;
@@ -24,13 +26,14 @@ class ProofHomeController extends Controller
         $this->statusService = $statusService;
         $this->seasonService = $seasonService;
         $this->proofingChangelogService = $proofingChangelogService;
+        $this->timestoneTableService = $timestoneTableService;
     }
 
     private function getDecryptData($hash){
         return $this->encryptDecryptService->decryptStringMethod($hash);
     }
 
-    public function index()
+    public function index(Request $request)
     {
         // Get the authenticated user
         $user = Auth::user();
@@ -74,6 +77,62 @@ class ProofHomeController extends Controller
             ]);
         }  
     }
+
+    public function viewSeason()
+    {
+        $user = Auth::user();
+
+        $allSeasons = $this->seasonService->getAllSeasonData('ts_season_id', 'code', 'ts_season_key', 'is_default')->orderBy('id', 'desc')->get();
+        return view('proofing.open-season', [
+            'user' => new UserResource($user), // Passing the authenticated user
+            'allSeasons' => $allSeasons
+        ]);
+    }
+
+    public function passSeason(Request $request)
+    {   
+        // Store session data
+        session([
+            'openSeason' => true
+        ]);
+        return redirect()->route('dashboard.openSeason',['selectedSeasonId' => $request->season_key_hash]);
+    }
+
+    public function openSeason(Request $request, $selectedSeason)
+    {
+        $getSeason = $this->getDecryptData($selectedSeason);
+        $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($getSeason)->first();
+    
+        if ($selectedSeason) {
+            session([
+                'selectedSeasonDashboard' => [
+                    'ts_season_id' => $selectedSeason->ts_season_id,
+                    'code' => $selectedSeason->code,
+                ],
+                'job-season-flag' => true,
+                'openSeason' => true
+            ]);
+        }
+        
+        $user = Auth::user();
+
+        $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id)->get();
+    
+        return view('proofing.open-season-job', [
+            'user' => new UserResource($user),
+            'selectedSeason' => $selectedSeason,
+            'tsJobs' => $tsJobs
+        ]);
+    }
+    
+
+    public function closeSeason()
+    {
+        Session::pull('selectedSeasonDashboard');
+        Session::pull('selectedSeason');
+        Session::pull('openSeason');
+        return redirect()->route('proofing');
+    }
     
     public function openJob(Request $request)
     {
@@ -116,11 +175,37 @@ class ProofHomeController extends Controller
     public function closeJob()
     {
         Session::pull('selectedJob');
-        Session::pull('selectedSeason');
         Session::pull('openJob');
         Session::pull('approvedSubjectChangesCount');
         Session::pull('awaitApprovalSubjectChangesCount');
         return redirect()->route('proofing');
+    }
+
+    public function proxySyncJob(Request $request)
+    {
+        $jobKey = $this->getDecryptData($request->input('jobKey'));
+
+        try {
+            // Send POST request to private server (inside your LAN)
+            $response = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/jobs/sync/{$jobKey}");
+
+            // Check if private server returned success
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'data' => $response->json()]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Private server returned non-200 status',
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+            }
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function archive(Request $request)

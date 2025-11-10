@@ -194,20 +194,21 @@
     <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
     <script>
         $('#folder').select2();
-        const emailArrayRaw = @json($emails);
-        const emailArray = emailArrayRaw.flat();
+        const emailArrayRaw = @json($emails ?? []);
+        const emailArray = Array.isArray(emailArrayRaw) ? emailArrayRaw : [];
+
+        console.log("Email Array:", emailArray);
 
         document.addEventListener("DOMContentLoaded", function () {
             const emailInput = document.getElementById("email");
             const feedback = document.getElementById("feedback");
             const submitButton = document.getElementById("submitButton");
 
-            // Check email on keyup event
             emailInput.addEventListener("keyup", function () {
                 const typedEmail = emailInput.value.trim();
 
                 if (typedEmail === "") {
-                    feedback.textContent = ""; // Clear feedback if field is empty
+                    feedback.textContent = "";
                     submitButton.disabled = true;
                     return;
                 }
@@ -216,7 +217,7 @@
                     feedback.textContent = "Email does not exist.";
                     feedback.style.color = "red";
                     submitButton.disabled = true;
-                }else{
+                } else {
                     feedback.textContent = "";
                     submitButton.disabled = false;
                 }

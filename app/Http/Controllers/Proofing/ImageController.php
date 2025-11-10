@@ -43,7 +43,7 @@ class ImageController extends Controller
             $h = $request->query('imgClientSizeH');
             $xPercent = $request->query('mousePosPercentX');
             $yPercent = $request->query('mousePosPercentY');
-            $artifactImage = Crypt::decryptString($request->query('artifactNameCrypt'));
+            $artifactImage = $request->query('artifactNameCrypt');
             
             $image = Image::make(storage_path('app/public/groupImages/'.$artifactImage));
 
@@ -112,8 +112,9 @@ class ImageController extends Controller
             // Return response with proper headers
             return new Response($imageContent, 200, ['Content-Type' => $mimeType]);
         } catch (\Exception $e) {
-            \Log::error('Error processing image: ' . $e->getMessage());
-            return response()->json(['error' => 'Unable to process image'], 500);
+            \Log::error('Error processing image: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

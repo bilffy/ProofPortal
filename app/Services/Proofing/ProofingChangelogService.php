@@ -59,7 +59,15 @@ class ProofingChangelogService
             ['keyvalue', $folderKey],
             ['issue_id', $proofingIssueID],
             ['resolved_status_id', $status]
-        ])->orderBy('change_datetime', 'desc')->value('change_to');
+        ])->orderBy('change_datetime', 'desc')->select('change_to', 'notes')
+        ->first();
+    }
+
+    public function subjectChangedFolderCount($id){
+        return ProofingChangelog::where([
+            ['change_from', 'Folder From: '.$id]
+        ])
+        ->count();
     }
 
     public function approveProofingChangelogById($id)
@@ -112,6 +120,7 @@ class ProofingChangelogService
                 'issues.external_issue_name', 
                 'changelogs.notes', 
                 'changelogs.user_id', 
+                'changelogs.change_from', 
                 'changelogs.change_datetime'
             )
             ->orderBy('changelogs.change_datetime', 'ASC')
@@ -146,6 +155,8 @@ class ProofingChangelogService
             'issues.external_issue_name', 
             'changelogs.id', 
             'changelogs.notes', 
+            'changelogs.change_from',
+            'changelogs.change_to',
             'changelogs.user_id', 
             'changelogs.change_datetime'
         )
@@ -191,7 +202,7 @@ class ProofingChangelogService
     public function getFolderGeneralChangeByJobKey($jobKey){
         return ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
         ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
-        ->whereIn('issues.issue_name', ['FOLDER_NAME_CHANGE', 'GENERAL_ISSUES'])
+        ->whereIn('issues.issue_name', ['FOLDER_NAME_CHANGE', 'GENERAL_ISSUES', 'TEACHER', 'PRINCIPAL', 'DEPUTY'])
         ->where('ts_jobkey', $jobKey)
         ->orderBy('issues.id', 'ASC')
         ->select(
@@ -217,7 +228,7 @@ class ProofingChangelogService
             $query->select('ts_job_id', 'ts_jobkey'); // Select columns from the jobs table
         }])
         ->select('ts_folderkey', 'ts_job_id', 'ts_foldername', 'id')->first(); // Select columns from the folders table
-
+ 
         if (!$folderData || !$folderData->job) {
             return;
         }
@@ -267,7 +278,7 @@ class ProofingChangelogService
             case $constants['TEACHER']:
                 $folder = $this->folderService->findFolderId($folderData->id);
                 if(isset($folder->teacher) && isset($newValue)){
-                    $currentValue = $folder->principal;
+                    $currentValue = $folder->teacher;
                     $replace = ['OLDVALUE' => $currentValue, 'NEWVALUE' => $newValue];
                 }elseif(empty($currentValue) && isset($newValue)){
                    $replace = ['VALUE' => $newValue]; 
@@ -278,6 +289,7 @@ class ProofingChangelogService
                 $keyOrigin =  'Group';
                 break;
             case $constants['PRINCIPAL']:
+                $folder = $this->folderService->findFolderId($folderData->id);
                 if(isset($folder->principal) && isset($newValue)){
                     $currentValue = $folder->principal;
                     $replace = ['OLDVALUE' => $currentValue, 'NEWVALUE' => $newValue];
@@ -285,7 +297,6 @@ class ProofingChangelogService
                    $replace = ['VALUE' => $newValue]; 
                 }
                 $isResolved =  $this->statusService->active;
-                $folder = $this->folderService->findFolderId($folderData->id);
                 $folder->principal = $newValue;
                 $folder->save();
                 $keyOrigin =  'Group';
@@ -318,15 +329,27 @@ class ProofingChangelogService
     public function insertSubjectProofingChangeLog($data)
     {
         $requestData = collect($data);
+        // return $requestData;
 
         $decryptedSubjectKey = $this->getDecryptData($requestData['subject_key_encrypted']);
 
+        $decryptedFolderKey = '';
+        if (!empty($requestData['folder_key_encrypted'])) {
+            $decryptedFolderKey = $this->getDecryptData($requestData['folder_key_encrypted']) ?? '';
+        }
+        
+        $folderData = $this->folderService->getFolderByKey($decryptedFolderKey)->select(
+            'id','ts_foldername','is_edit_salutation', 'show_prefix_suffix_portraits', 'show_prefix_suffix_groups', 'show_salutation_portraits', 'show_salutation_groups', 'ts_folderkey'
+            )->first();
+        
         $subjectData = $this->subjectService->getBySubjectKey(
             $decryptedSubjectKey,
             'firstname',
             'lastname',
             'title',
             'salutation',
+            'prefix',
+            'suffix',
             'ts_subjectkey',
             'ts_job_id',
             'ts_folder_id',
@@ -345,6 +368,9 @@ class ProofingChangelogService
         $currentValue = $newValue = $approvalStatus = $isResolved = $note = $result = '';
         $currentfirstname = $subjectData->firstname;
         $currentlastname = $subjectData->lastname;
+        $currentsalutation = $subjectData->salutation;
+        $currentprefix = $subjectData->prefix;
+        $currentsuffix = $subjectData->suffix;
         $replace = [];
         $responseData = [];
         
@@ -353,6 +379,8 @@ class ProofingChangelogService
                 $issue = 'SUBJECT_ISSUE_SPELLING';
             }elseif ($subjectData->title != $requestData->get('new_title') || $subjectData->salutation != $requestData['new_salutation']) {
                 $issue = 'SUBJECT_ISSUE_JOBTITLE_SALUTATION';
+            }elseif ($subjectData->prefix != $requestData->get('new_prefix') || $subjectData->suffix != $requestData['new_suffix']) {
+                $issue = 'SUBJECT_ISSUE_PREFIX_SUFFIX';
             }
             $proofingDescription = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName($issue, 'issue_description', 'issue_category_id', 'id');
             $issueId = $proofingDescription->id;
@@ -368,6 +396,13 @@ class ProofingChangelogService
         if (!$issue) return;
         
         $subject = $this->subjectService->getSubjectById($subjectData->id);
+        $groupsName = ProofingChangelog::where([
+            ['ts_jobkey', $subjectData->job->ts_jobkey],
+            ['keyvalue', $subjectData->folder->ts_folderkey],
+            ['notes', 'LIKE', 'Traditional Photo People Row Positions for Folder%']
+        ])
+        ->select('change_to','id')
+        ->orderBy('id', 'DESC')->first();
 
         switch ($issue) {
             case 'SUBJECT_ISSUE_SPELLING':
@@ -384,14 +419,6 @@ class ProofingChangelogService
                 ];
                 $subject->firstname = $requestData['new_first_name'];
                 $subject->lastname = $requestData['new_last_name'];
-
-                $groupsName = ProofingChangelog::where([
-                    ['ts_jobkey', $subjectData->job->ts_jobkey],
-                    ['keyvalue', $subjectData->folder->ts_folderkey],
-                    ['notes', 'LIKE', 'Traditional Photo People Row Positions for Folder%']
-                ])
-                ->select('change_to','id')
-                ->orderBy('id', 'DESC')->first();
 
                 if(isset($groupsName)){
                     // Perform the string replacement
@@ -444,7 +471,7 @@ class ProofingChangelogService
                 }
                 break;
             case 'SUBJECT_ISSUE_CLASS':
-                $currentValue = "Folder From: ".$subjectData->folder->id;
+                $currentValue = $decryptedFolderKey ? "Folder From: ".$folderData->id : "Folder From: ".$subjectData->folder->id;
                 $newValue = "Folder To: ".$requestData['folder_issue'];
                 $isResolved = isset($requestData['action']) ? $this->statusService->active : $this->statusService->inactive;
                 $approvalStatus = isset($requestData['action']) ? $this->statusService->approved : $this->statusService->awaitingApproval;
@@ -453,7 +480,7 @@ class ProofingChangelogService
                 $replace = [
                     'FIRSTNAME' => $currentfirstname,
                     'LASTNAME' => $currentlastname,
-                    'CURRENTFOLDER' => $subjectData->folder->ts_foldername,
+                    'CURRENTFOLDER' => $decryptedFolderKey ? $folderData->ts_foldername : $subjectData->folder->ts_foldername,
                     'NEWFOLDER' => $newFolder->ts_foldername ?? ''
                 ];
                 break;
@@ -489,6 +516,17 @@ class ProofingChangelogService
                 if ($requestData->has('new_salutation')) {
                     if ($requestData->get('new_salutation') !== null) {
                         $salutationValue = $requestData->get('new_salutation');
+                        if(isset($groupsName)){
+                            // Perform the string replacement
+                            $updatedChangeTo = str_replace(
+                                [$subjectData->salutation],
+                                [$salutationValue],
+                                $groupsName->change_to
+                            );
+                            // Update the 'change_to' field
+                            $groupsName->change_to = $updatedChangeTo;
+                            $groupsName->save(); // Save the changes to the database
+                        }
                     } else {
                         $salutationValue = '';
                     }
@@ -531,6 +569,17 @@ class ProofingChangelogService
                 if ($requestData->has('new_salutation')) {
                     if ($requestData->get('new_salutation') !== null) {
                         $salutationValue = $requestData->get('new_salutation');
+                        if(isset($groupsName)){
+                            // Perform the string replacement
+                            $updatedChangeTo = str_replace(
+                                [$subjectData->salutation],
+                                [$salutationValue],
+                                $groupsName->change_to
+                            );
+                            // Update the 'change_to' field
+                            $groupsName->change_to = $updatedChangeTo;
+                            $groupsName->save(); // Save the changes to the database
+                        }
                     } else {
                         $salutationValue = '';
                     }
@@ -578,6 +627,79 @@ class ProofingChangelogService
                 $title = $titleValue ?? $subjectData->title;
                 $subject = $this->subjectService->getSubjectById($subjectData->id);
                 $subject->title = $title;
+                try{
+                    $result = $subject->save();
+                } catch (\Exception $e) {
+                    $message = $e->getMessage();
+                    $result = false;
+                }
+                
+                if ($result) {
+                    $htmlUpdates = [
+                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
+                            "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
+                            "alert" => "success"
+                    ];
+                } else {
+                    $htmlUpdates = [
+                            "acknowledge" => __("Corrections could not be saved. Please try again."),
+                            "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
+                            "alert" => "danger"
+                    ];
+                }
+                break;
+            case 'SUBJECT_ISSUE_PREFIX_SUFFIX':
+                $currentValue = "[Prefix: {$subjectData->prefix}] [Suffix: {$subjectData->suffix}]";
+                $newValue = "[Prefix: {$requestData['new_prefix']}] [Suffix: {$requestData['new_suffix']}]";
+                $approvalStatus = $this->statusService->autoApproved;
+                $isResolved = $this->statusService->active;
+                $note = 'SUBJECT_ISSUE_PREFIX_SUFFIX_NOTE';
+                $replace = [
+                    'PREFIXFROM' => $subjectData->prefix,
+                    'SUFFIXFROM' => $subjectData->suffix,
+                    'PREFIXTO' => $requestData['new_prefix'],
+                    'SUFFIXTO' => $requestData['new_suffix']
+                ];
+                if ($requestData->has('new_prefix')) {
+                    if ($requestData->get('new_prefix') !== null) {
+                        $prefixValue = $requestData->get('new_prefix');
+                        if(isset($groupsName)){
+                            // Perform the string replacement
+                            $updatedChangeTo = str_replace(
+                                [$subjectData->prefix],
+                                [$prefixValue],
+                                $groupsName->change_to
+                            );
+                            // Update the 'change_to' field
+                            $groupsName->change_to = $updatedChangeTo;
+                            $groupsName->save(); // Save the changes to the database
+                        }
+                    } else {
+                        $prefixValue = '';
+                    }
+                }
+                if ($requestData->has('new_suffix')) {
+                    if ($requestData->get('new_suffix') !== null) {
+                        $suffixValue = $requestData->get('new_suffix');
+                        if(isset($groupsName)){
+                            // Perform the string replacement
+                            $updatedChangeTo = str_replace(
+                                [$subjectData->suffix],
+                                [$suffixValue],
+                                $groupsName->change_to
+                            );
+                            // Update the 'change_to' field
+                            $groupsName->change_to = $updatedChangeTo;
+                            $groupsName->save(); // Save the changes to the database
+                        }
+                    } else {
+                        $suffixValue = '';
+                    }
+                }
+                $prefix = $prefixValue ?? $subjectData->prefix;
+                $suffix = $suffixValue ?? $subjectData->suffix;
+                $subject->prefix = $prefix;
+                $subject->suffix = $suffix;
                 try{
                     $result = $subject->save();
                 } catch (\Exception $e) {
@@ -698,6 +820,22 @@ class ProofingChangelogService
                 $responseData['salutation'] = '';
             }
         }
+        
+        if ($requestData->has('new_prefix')) {
+            if ($requestData->get('new_prefix') !== null) {
+                $responseData['prefix'] = $requestData->get('new_prefix');
+            } else {
+                $responseData['prefix'] = '';
+            }
+        }
+        
+        if ($requestData->has('new_suffix')) {
+            if ($requestData->get('new_suffix') !== null) {
+                $responseData['suffix'] = $requestData->get('new_suffix');
+            } else {
+                $responseData['suffix'] = '';
+            }
+        }
 
         // Always add 'resolved_status_id'
         if($approvalStatus === $this->statusService->awaitingApproval || $approvalStatus === 0){
@@ -707,21 +845,76 @@ class ProofingChangelogService
         }
         
         // Always add 'first_name', 'last_name', 'oldfirst_name', and 'oldlast_name'
-        $responseData['first_name'] = $requestData['new_first_name'] ?? $currentfirstname;
-        $responseData['last_name'] = $requestData['new_last_name'] ?? $currentlastname;
-        $responseData['oldfirst_name'] = $currentfirstname;
-        $responseData['oldlast_name'] = $currentlastname;
-        $responseData['title_old'] = $subject->title;
-        $responseData['salutation_old'] = $subject->salutation;
-        // Always add 'htmlUpdates'
+        $responseData['first_name'] = trim($requestData['new_first_name'] ?? $currentfirstname ?? '');
+        $responseData['last_name'] = trim($requestData['new_last_name'] ?? $currentlastname ?? '');
+        $responseData['oldfirst_name'] = trim($currentfirstname ?? '');
+        $responseData['oldlast_name'] = trim($currentlastname ?? '');
+        $responseData['title_old'] = trim($subject->title ?? '');
+        $responseData['title'] = trim($requestData['title'] ?? $subjectData->title ?? '');
+        $responseData['salutation'] = trim($requestData['new_salutation'] ?? $currentsalutation ?? '');
+        $responseData['salutation_old'] = trim($currentsalutation ?? '');
+        $responseData['prefix'] = trim($requestData['new_prefix'] ?? $currentprefix ?? '');
+        $responseData['prefix_old'] = trim($currentprefix ?? '');
+        $responseData['suffix'] = trim($requestData['new_suffix'] ?? $currentsuffix ?? '');
+        $responseData['suffix_old'] = trim($currentsuffix ?? '');
         $responseData['htmlUpdates'] = $htmlUpdates;
+
+        // Determine feature usage
+        $useSalutationPortrait = $decryptedFolderKey ? $folderData->show_salutation_portraits : '';
+        $useSalutationGroup = $decryptedFolderKey ? $folderData->show_salutation_groups : '';
+        $usePrefixSuffixGroup = $decryptedFolderKey ? $folderData->show_prefix_suffix_groups : '';
+        $usePrefixSuffixPortrait = $decryptedFolderKey ? $folderData->show_prefix_suffix_portraits : '';
         
+        // Helper arrays for clean concatenation
+        $newPartsPortrait = [];
+        $oldPartsPortrait = [];
+        $newPartsGroup = [];
+        $oldPartsGroup = [];
+
+        // Build NEW full name dynamically
+        if ($useSalutationPortrait && !empty($responseData['salutation'])) $newPartsPortrait[] = $responseData['salutation'];
+        if ($usePrefixSuffixPortrait && !empty($responseData['prefix'])) $newPartsPortrait[] = $responseData['prefix'];
+        if (!empty($responseData['first_name'])) $newPartsPortrait[] = $responseData['first_name'];
+        if (!empty($responseData['last_name'])) $newPartsPortrait[] = $responseData['last_name'];
+        if ($usePrefixSuffixPortrait && !empty($responseData['suffix'])) $newPartsPortrait[] = $responseData['suffix'];
+
+        // Build OLD full name dynamically
+        if ($useSalutationPortrait && !empty($currentsalutation)) $oldPartsPortrait[] = $currentsalutation;
+        if ($usePrefixSuffixPortrait && !empty($currentprefix)) $oldPartsPortrait[] = $currentprefix;
+        if (!empty($currentfirstname)) $oldPartsPortrait[] = $currentfirstname;
+        if (!empty($currentlastname)) $oldPartsPortrait[] = $currentlastname;
+        if ($usePrefixSuffixPortrait && !empty($currentsuffix)) $oldPartsPortrait[] = $currentsuffix;
+
+        // Build NEW full name dynamically
+        if ($useSalutationGroup && !empty($responseData['salutation'])) $newPartsGroup[] = $responseData['salutation'];
+        if ($usePrefixSuffixGroup && !empty($responseData['prefix'])) $newPartsGroup[] = $responseData['prefix'];
+        if (!empty($responseData['first_name'])) $newPartsGroup[] = $responseData['first_name'];
+        if (!empty($responseData['last_name'])) $newPartsGroup[] = $responseData['last_name'];
+        if ($usePrefixSuffixGroup && !empty($responseData['suffix'])) $newPartsGroup[] = $responseData['suffix'];
+
+        // Build OLD full name dynamically
+        if ($useSalutationGroup && !empty($currentsalutation)) $oldPartsGroup[] = $currentsalutation;
+        if ($usePrefixSuffixGroup && !empty($currentprefix)) $oldPartsGroup[] = $currentprefix;
+        if (!empty($currentfirstname)) $oldPartsGroup[] = $currentfirstname;
+        if (!empty($currentlastname)) $oldPartsGroup[] = $currentlastname;
+        if ($usePrefixSuffixGroup && !empty($currentsuffix)) $oldPartsGroup[] = $currentsuffix;
+
+        // Join with single spaces — avoids any double spaces
+        $responseData['fullNamePortrait'] = implode(' ', $newPartsPortrait);
+        $responseData['fullNameOldPortrait'] = implode(' ', $oldPartsPortrait);
+        $responseData['fullNameGroup'] = implode(' ', $newPartsGroup);
+        $responseData['fullNameOldGroup'] = implode(' ', $oldPartsGroup);
+        $responseData['useSalutationPortrait'] = $useSalutationPortrait;
+        $responseData['usePrefixSuffixPortrait'] = $usePrefixSuffixPortrait;
+
         return $responseData;
+
     }
 
     public function insertGroupProofingChangeLog($jobKey, $folderkey, $data) {
         // Retrieve subject IDs and current folder details
         $getData = $this->folderService->getSubjectIDByName($folderkey, $data);
+
         // Decode JSON data
         $jsonData = json_decode($getData['jsonData'], true);
         
@@ -730,7 +923,7 @@ class ProofingChangelogService
             'ts_jobkey' => $jobKey,
             'keyorigin' => 'Folder',
             'keyvalue' => $folderkey,
-            'change_to' => json_encode($data),
+            'change_to' => $getData['jsonformattedResult'],
             'user_id' => Auth::user()->id,
             'notes' => 'Traditional Photo People Row Positions for Folder "'.$folderkey.'" have been created.',
             'issue_id' => $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('TRADITIONAL PHOTO', 'id')->id,

@@ -10,6 +10,7 @@ use App\Http\Controllers\ProofingController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckUserRestriction;
 use App\Http\Middleware\NoCacheHeaders;
+use App\Http\Middleware\SeasonJobFlag;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
@@ -30,7 +31,7 @@ use App\Http\Controllers\Proofing\ConstantsController;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified', NoCacheHeaders::class])->name('dashboard');
 
-Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
+Route::middleware(['auth', NoCacheHeaders::class, SeasonJobFlag::class])->group(function () {
     Route::post('/tokens/create', function (Request $request) {
         $user = Auth::user();
         $token = $user->createToken('api_token');
@@ -74,6 +75,14 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class]], function () {
         //Dashboard
         Route::get('/proofing', [ProofHomeController::class, 'index'])->name('proofing');
+        //Dashboard - open all seasons
+        Route::get('/proofing/open-season', [ProofHomeController::class, 'viewSeason'])->name('dashboard.viewSeason');
+        //Dashboard - pass specific season
+        Route::post('/proofing/passSeason', [ProofHomeController::class, 'passSeason'])->name('dashboard.passSeason');
+        //Dashboard - open specific seasons
+        Route::get('/proofing/open-season/{selectedSeasonId}', [ProofHomeController::class, 'openSeason'])->name('dashboard.openSeason');
+        //Dashboard - close season
+        Route::get('/proofing/closeSeason', [ProofHomeController::class, 'closeSeason'])->name('dashboard.closeSeason');
         //Dashboard - Open Job
         Route::get('/proofing/openJob', [ProofHomeController::class, 'openJob'])->name('dashboard.openJob');
         //Dashboard - Archive Job
@@ -82,6 +91,8 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::post('/proofing/jobs/restore', [ProofHomeController::class, 'restore'])->name('dashboard.restore');
         //Dashboard - Show/Hide Archive Jobs
         Route::get('/proofing/jobs/toggle-archived', [ProofHomeController::class, 'toggleArchived'])->name('dashboard.toggleArchived');
+        //Proxy Sync Job
+        Route::post('/proxy-sync-job', [ProofHomeController::class, 'proxySyncJob'])->name('proxy.syncJob');
 
         //Header - Close Job
         Route::get('/franchise/close-job', [ProofHomeController::class, 'closeJob'])->name('dashboard.closeJob');

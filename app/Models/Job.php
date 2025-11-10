@@ -96,4 +96,8 @@ class Job extends Model
     public function email(){
         return $this->hasMany('App\Models\Email', 'ts_jobkey', 'ts_jobkey');
     }
+    public function users(){
+        return $this->belongsToMany(User::class, 'job_users', 'ts_job_id', 'user_id', 'ts_job_id', 'id');
+    }
+
 }

@@ -450,7 +450,7 @@ $(document).ready(function () {
 
         // Add listener for itemRemoved events
         $(selector).on('itemRemoved', function(event) {
-            console.log(selector);
+            // console.log(selector);
             debouncedCreateJsonData();
         });
     }
@@ -458,62 +458,120 @@ $(document).ready(function () {
     let sources = [];
     let count = 0;
 
+    // function makeTagsSortable(selector) {
+    //     const $tagsInputContainer = $(selector).closest('.tagsSection').find('.bootstrap-tagsinput');
+    
+    //     $tagsInputContainer.sortable({
+    //         items: 'span.tag',
+    //         connectWith: '.tagsSection .bootstrap-tagsinput',
+    //         placeholder: 'sortable-placeholder',
+    //         helper: 'clone',
+    //         start: function (event, ui) {
+    //         },
+
+    //         update: function(event, ui) {
+    //             const sourceInput = $(ui.sender).closest('.tagsSection').find('input[data-role="tagsinput"]');
+    //             const targetInput = $(this).closest('.tagsSection').find('input[data-role="tagsinput"]');
+    //             const tagName = $(ui.item).text().trim();
+    //             const isSameContainer = sourceInput.is(targetInput);    
+    //             let targetInputId = targetInput.attr('id');  
+    //             let sourceInputId = sourceInput.attr('id');
+    
+    //             // If dragged to a new container, remove from source
+    //             if (!isSameContainer) {
+    //                 sourceInput.tagsinput('remove', tagName, { silent: true });
+    //             }
+    
+    //             // Get the target index for the drop position
+    //             const targetIndex = ui.item.index();
+    //             const targetTags = targetInput.tagsinput('items');
+
+    //             // // Avoid duplicates: remove from target if already exists
+    //             const existingIndex = targetTags.indexOf(tagName);
+    //             if (existingIndex > -1) {
+    //                 targetTags.splice(existingIndex, 1);
+    //             }
+    
+    //             // // Insert the tag at the new position
+    //             targetTags.splice(targetIndex, 0, tagName);
+    //             sources.push(sourceInputId);
+    //             if(count === 1){
+    //                 document.getElementById(targetInputId).value = targetTags.toString();
+    //             }
+    //             count += 1;
+    //         },
+    //         over: function(event, ui) {
+    //             var targetField = $(this); // The bootstrap-tagsinput container
+    //             // Insert tag before the input field inside the targetField
+    //             if(targetField.find('span.ui-sortable-handle').length === 0){
+    //                 targetField.find('span.sortable-placeholder').insertBefore(targetField.find('span.twitter-typeahead'));
+    //             }
+    //         },
+    //         stop: function(event, ui) {
+    //             count = 0;
+    //             createJsonData();
+    //         }              
+    //     }).disableSelection();
+    // }  
+     
     function makeTagsSortable(selector) {
-        const $tagsInputContainer = $(selector).closest('.tagsSection').find('.bootstrap-tagsinput');
+        const $tagsInputContainer = $(selector)
+            .closest('.tagsSection')
+            .find('.bootstrap-tagsinput');
     
         $tagsInputContainer.sortable({
             items: 'span.tag',
             connectWith: '.tagsSection .bootstrap-tagsinput',
             placeholder: 'sortable-placeholder',
             helper: 'clone',
-            start: function (event, ui) {
-            },
-
-            update: function(event, ui) {
+            start: function (event, ui) {},
+    
+            update: function (event, ui) {
                 const sourceInput = $(ui.sender).closest('.tagsSection').find('input[data-role="tagsinput"]');
                 const targetInput = $(this).closest('.tagsSection').find('input[data-role="tagsinput"]');
-                const tagName = $(ui.item).text().trim();
-                const isSameContainer = sourceInput.is(targetInput);    
-                let targetInputId = targetInput.attr('id');  
-                let sourceInputId = sourceInput.attr('id');
+                const tagName = $(ui.item).clone().children().remove().end().text().trim();
+                const isSameContainer = sourceInput.is(targetInput);
     
                 // If dragged to a new container, remove from source
-                if (!isSameContainer) {
+                if (!isSameContainer && sourceInput.length) {
                     sourceInput.tagsinput('remove', tagName, { silent: true });
                 }
     
-                // Get the target index for the drop position
-                const targetIndex = ui.item.index();
-                const targetTags = targetInput.tagsinput('items');
-
-                // // Avoid duplicates: remove from target if already exists
-                const existingIndex = targetTags.indexOf(tagName);
-                if (existingIndex > -1) {
-                    targetTags.splice(existingIndex, 1);
-                }
+                // Rebuild tags in the target container based on new DOM order
+                const newTags = [];
+                $(this)
+                    .find('span.tag')
+                    .each(function () {
+                        const cleanText = $(this).clone().children().remove().end().text().trim();
+                        if (cleanText) newTags.push(cleanText);
+                    });
     
-                // // Insert the tag at the new position
-                targetTags.splice(targetIndex, 0, tagName);
-                sources.push(sourceInputId);
-                if(count === 1){
-                    document.getElementById(targetInputId).value = targetTags.toString();
-                }
-                
-                count += 1;
-            },
-            over: function(event, ui) {
-                var targetField = $(this); // The bootstrap-tagsinput container
-                // Insert tag before the input field inside the targetField
-                if(targetField.find('span.ui-sortable-handle').length === 0){
-                    targetField.find('span.sortable-placeholder').insertBefore(targetField.find('span.twitter-typeahead'));
+                // Clear and re-add tags in the correct order
+                targetInput.tagsinput('removeAll');
+                newTags.forEach(tag => targetInput.tagsinput('add', tag));
+    
+                // Update hidden input value for form consistency
+                document.getElementById(targetInput.attr('id')).value = newTags.join(',');
+    
+                // Trigger createJsonData() safely after update
+                if (typeof createJsonData === 'function') {
+                    setTimeout(() => createJsonData(), 50);
                 }
             },
-            stop: function(event, ui) {
+    
+            over: function (event, ui) {
+                const targetField = $(this);
+                if (targetField.find('span.ui-sortable-handle').length === 0) {
+                    targetField.find('span.sortable-placeholder')
+                        .insertBefore(targetField.find('span.twitter-typeahead'));
+                }
+            },
+    
+            stop: function (event, ui) {
                 count = 0;
             }
         }).disableSelection();
-    }  
-         
+    }    
     
     fetchAndUpdateSubjectNames();
 
@@ -575,7 +633,6 @@ $(document).ready(function () {
     });
 
     $('input[data-role="tagsinput"]').on('itemRemoved', function(event) {
-        console.log('removed');
         debouncedCreateJsonData();
     });
 
@@ -597,7 +654,7 @@ $(document).ready(function () {
         var rowCount = parseInt(document.querySelector('input[name="groupCount"]').value);
 
         currentRow.remove();
-        console.log('removed');
+        // console.log('removed');
         debouncedCreateJsonData();
 
         let maxRowNumber = $('[data-row-number]').length;
@@ -778,11 +835,11 @@ $(document).ready(function () {
         }
 
         var subjectNamesjson = $('#allSubjectNames').data('key');
-        var targetUrl = base_url+"/franchise/proofing-change-log/group-change/submit";
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         if(JSON.stringify(subjectNamesjson) !== JSON.stringify(jsonData)){
+            var targetUrl = base_url+"/franchise/proofing-change-log/group-change/submit";
             jsonData['folderHash'] = folderHash;
             jsonData['jobHash'] = jobHash;
             $.ajax({
@@ -799,10 +856,10 @@ $(document).ready(function () {
                 },
                 timeout: 60000,
                 success: function (response) {
-                   // console.log('saved');
+                   console.log(response);
                 },
                 error: function (e) {
-                    // console.log('An error occurred:', e);
+                    console.log('An error occurred:', e);
                 }
             })
         }
@@ -834,16 +891,16 @@ $(document).ready(function () {
 
         var skHash = inputField.data('skhash');
         var skEncrypted = inputField.data('skencrypted');
+        var folderkeyEncrypted = inputField.attr('data-folderkeyencrypted');
         var originalValue = inputField.data('original-value');
         var oldValue = inputField.data('old-value');
         var newValue = inputField.val();
-
         //store values for roll back
         inputField.attr('data-old-value', newValue);
 
         //fire the AJAX change
         if (!suppressChangeEvent) {
-            gridSpellingUpdate(skHash, skEncrypted);
+            gridSpellingUpdate(skHash, skEncrypted, folderkeyEncrypted);
         }
 
         //show the revert button
@@ -864,49 +921,61 @@ $(document).ready(function () {
 
         var skHash = revertButton.data('skhash');
         var skEncrypted = revertButton.data('skencrypted');
+        var folderkeyEncrypted = revertButton.attr('data-folderkeyencrypted');
 
         var inputGridSpellingSalutation = $("#" + skHash + "-grid-spelling-salutation");
         var inputGridSpellingFirstName = $("#" + skHash + "-grid-spelling-first-name");
         var inputGridSpellingLastName = $("#" + skHash + "-grid-spelling-last-name");
         var inputGridSpellingTitle = $("#" + skHash + "-grid-spelling-title");
+        var inputGridSpellingPrefix = $("#" + skHash + "-grid-spelling-prefix");
+        var inputGridSpellingSuffix = $("#" + skHash + "-grid-spelling-suffix");
 
         var originalValueSalutation = inputGridSpellingSalutation.data('original-value');
         var originalValueFirstName = inputGridSpellingFirstName.data('original-value');
         var originalValueLastName = inputGridSpellingLastName.data('original-value');
         var originalValueTitle = inputGridSpellingTitle.data('original-value');
+        var originalValuePrefix = inputGridSpellingPrefix.data('original-value');
+        var originalValueSuffix = inputGridSpellingSuffix.data('original-value');
 
         //roll back the values
         inputGridSpellingSalutation.val(originalValueSalutation);
         inputGridSpellingFirstName.val(originalValueFirstName);
         inputGridSpellingLastName.val(originalValueLastName);
         inputGridSpellingTitle.val(originalValueTitle);
+        inputGridSpellingPrefix.val(originalValuePrefix);
+        inputGridSpellingSuffix.val(originalValueSuffix);
 
         //fire the AJAX change
-        gridSpellingUpdate(skHash, skEncrypted);
+        gridSpellingUpdate(skHash, skEncrypted, folderkeyEncrypted);
 
         //hide the revert button
         $("#" + skHash + "-grid-spelling-revert-button").addClass('d-none')
     });
 
 
-    function gridSpellingUpdate(skHash, skEncrypted) {
+    function gridSpellingUpdate(skHash, skEncrypted, folderkeyEncrypted) {
         var targetUrl = base_url+"/franchise/proofing-change-log/subject-change/submit";
 
         var inputGridSpellingSalutation = $("#" + skHash + "-grid-spelling-salutation");
         var inputGridSpellingFirstName = $("#" + skHash + "-grid-spelling-first-name");
         var inputGridSpellingLastName = $("#" + skHash + "-grid-spelling-last-name");
         var inputGridSpellingTitle = $("#" + skHash + "-grid-spelling-title");
+        var inputGridSpellingPrefix = $("#" + skHash + "-grid-spelling-prefix");
+        var inputGridSpellingSuffix = $("#" + skHash + "-grid-spelling-suffix");
 
-        if(inputGridSpellingSalutation.val() || inputGridSpellingFirstName.val() || inputGridSpellingLastName.val() || inputGridSpellingTitle.val()){
+        if(inputGridSpellingSalutation.val() || inputGridSpellingFirstName.val() || inputGridSpellingLastName.val() || inputGridSpellingTitle.val() || inputGridSpellingPrefix.val() || inputGridSpellingSuffix.val()){
             var formData = new FormData();
             formData.append("issue", 'grid-spelling');
             formData.append("subject_key_hash", skHash);
             formData.append("subject_key_encrypted", skEncrypted);
+            formData.append("folder_key_encrypted", folderkeyEncrypted);
 
             formData.append("new_salutation", inputGridSpellingSalutation.val());
             formData.append("new_first_name", inputGridSpellingFirstName.val());
             formData.append("new_last_name", inputGridSpellingLastName.val());
             formData.append("new_title", inputGridSpellingTitle.val());
+            formData.append("new_prefix", inputGridSpellingPrefix.val());
+            formData.append("new_suffix", inputGridSpellingSuffix.val());
             formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
 
             $.ajax({
@@ -924,8 +993,10 @@ $(document).ready(function () {
                     //console.log(response);
                     var responseData = response.responseData;
 
-                    var fullNameOld = responseData['oldfirst_name'] + " " + responseData['oldlast_name'];
-                    var fullNameNew = responseData['first_name'] + " " + responseData['last_name'];
+                    var fullNamePortraitOld = responseData['fullNameOldPortrait'];
+                    var fullNamePortraitNew = responseData['fullNamePortrait'];
+                    var fullNameGroupOld = responseData['fullNameOldGroup'];
+                    var fullNameGroupNew = responseData['fullNameGroup'];
 
                     var first_name_old = responseData['oldfirst_name'];
                     var first_name = responseData['first_name'];
@@ -939,31 +1010,52 @@ $(document).ready(function () {
                     var salutation_old = responseData['salutation_old'];
                     var salutation = responseData['salutation'];
 
+                    var prefix_old = responseData['prefix_old'];
+                    var prefix = responseData['prefix'];
+
+                    var suffix_old = responseData['suffix_old'];
+                    var suffix = responseData['suffix'];
+
+                    var useSalutationPortrait = responseData['useSalutationPortrait'];
+
+                    var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
+
                     //find and replace names wrapped in specific HTML classes
                     $("." + skHash + "-first-name").text(first_name);
                     $("." + skHash + "-last-name").text(last_name);
                     $("." + skHash + "-title").text(title);
-                    $("." + skHash + "-salutation").text(salutation);
+
+                    if(useSalutationPortrait)
+                    {
+                      $("." + skHash + "-salutation").text(salutation);  
+                    }
+
+                    if(usePrefixSuffixPortrait)
+                    {
+                        $("." + skHash + "-prefix").text(prefix);
+                        $("." + skHash + "-suffix").text(suffix); 
+                    }
 
                     //find and replace names in specific HTML input fields
                     $("." + skHash + "-form-spelling-first-name").val(first_name);
                     $("." + skHash + "-form-spelling-last-name").val(last_name);
                     $("." + skHash + "-form-spelling-title").val(title);
                     $("." + skHash + "-form-spelling-salutation").val(salutation);
+                    $("." + skHash + "-form-spelling-prefix").val(prefix);
+                    $("." + skHash + "-form-spelling-suffix").val(suffix);
 
                     $("." + skHash + "-grid-spelling-first-name").val(first_name);
                     $("." + skHash + "-grid-spelling-last-name").val(last_name);
                     $("." + skHash + "-grid-spelling-title").val(title);
                     $("." + skHash + "-grid-spelling-salutation").val(salutation);
+                    $("." + skHash + "-grid-spelling-prefix").val(prefix);
+                    $("." + skHash + "-grid-spelling-suffix").val(suffix);
 
-                    var addsalutation = salutation ? salutation + '. ' : '';
-                    var fullNameNew = (addsalutation.toLowerCase() + first_name.toLowerCase() + ' ' + last_name.toLowerCase()).trim();
+                    $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
 
-                    $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameNew);
-
-                    if($('#allSubjectNames').val().includes(fullNameOld)){                    
+                    if($('#allSubjectNames').val().includes(fullNameGroupOld)){                    
                         var inputValue = $('#allSubjectNames').val();
-                        var updatedValue = inputValue.replace(fullNameOld, fullNameNew);
+                        var updatedValue = inputValue.replace(fullNameGroupOld, fullNameGroupNew);
                         $('#allSubjectNames').val(updatedValue).trigger('change');
                     }
 
@@ -971,13 +1063,14 @@ $(document).ready(function () {
                     $('.' + skHash + '-find-replace').contents().filter(function () {
                         return this.nodeType === 3;
                     }).replaceWith(function () {
-                        return this.nodeValue.replace(fullNameOld, fullNameNew);
+                        return this.nodeValue.replace(fullNamePortraitOld, fullNamePortraitNew);
+                        createJsonData();
                     });
 
                     //update the JS array with the new name.
-                    findSpanByText(fullNameOld, fullNameNew);
+                    findSpanByText(fullNameGroupOld, fullNameGroupNew);
                     fetchAndUpdateSubjectNames();
-                    createJsonData();
+                    // createJsonData();
 
                     $('#grid-spelling-acknowledge') 
                         .removeClass("text-success")
@@ -998,7 +1091,7 @@ $(document).ready(function () {
                 },
                 error: function (e) {
                     //alert("An error occurred: " + e.responseText.message);
-                //console.log(e);
+                    //console.log(e);
                 }
             })
         }
@@ -1025,6 +1118,7 @@ $(document).ready(function () {
             $("#subject-name-filter-feedback").text("");
         }
     });
+
 
     var linkHide = $(".people-photos-hide");
     var linkShow = $(".people-photos-show");
@@ -1216,11 +1310,15 @@ $(document).ready(function () {
                 var title = $('#'+skHash+'-title').text();
                 var picture = $('#'+skHash+'_picture').text();
                 var folder = $('#'+skHash+'_folder').text();
+                var prefix = $('#'+skHash+'-prefix').text();
+                var suffix = $('#'+skHash+'-suffix').text();
     
                 var templateElement = $(template);
                 var firstNameInput = templateElement.find('input[name="' + skHash + '_new_first_name"]');
                 var lastNameInput = templateElement.find('input[name="' + skHash + '_new_last_name"]');
                 var salutationInput = templateElement.find('input[name="' + skHash + '_new_salutation"]');
+                var prefixInput = templateElement.find('input[name="' + skHash + '_new_prefix"]');
+                var suffixInput = templateElement.find('input[name="' + skHash + '_new_suffix"]');
                 var titleInput = templateElement.find('input[name="' + skHash + '_new_title"]');
                 var pictureInput = templateElement.find('input[name="' + skHash + '_picture_issue"]');
                 var folderInput = templateElement.find('select[name="' + skHash + '_folder_issue"]');
@@ -1236,6 +1334,12 @@ $(document).ready(function () {
                 }
                 if (salutationInput.length > 0) {
                     salutationInput.val(salutation);
+                }
+                if (prefixInput.length > 0) {
+                    prefixInput.val(prefix);
+                }
+                if (suffixInput.length > 0) {
+                    suffixInput.val(suffix);
                 }
                 if (titleInput.length > 0) {
                     titleInput.val(title);
@@ -1262,7 +1366,7 @@ $(document).ready(function () {
             $('#subjects_questions option[value=""]').removeAttr('selected');
             var skHash = $(this).attr('id').replace('_issue_submit','');
             var data = $('#'+skHash+"_form").serialize();
-    
+
             // Remove the prefix from the serialized data
             data = data.replace(new RegExp(skHash + "_", "g"), "");
             $.ajax({
@@ -1273,11 +1377,18 @@ $(document).ready(function () {
                 success: function(response) {
                     if (response && response.responseData) {
                         var responseData = response.responseData;
-    
+                        var fullNamePortraitOld = responseData['fullNameOldPortrait'];
+                        var fullNamePortraitNew = responseData['fullNamePortrait'];
+                        var fullNameGroupOld = responseData['fullNameOldGroup'];
+                        var fullNameGroupNew = responseData['fullNameGroup'];
+                        var useSalutationPortrait = responseData['useSalutationPortrait'];
+                        var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
+
                         $('#spelling_'+ skHash).addClass('d-none');
                         $('#picture_'+ skHash).addClass('d-none');
                         $('#folder_'+ skHash).addClass('d-none');
                         $('#title-salutation_'+ skHash).addClass('d-none');
+                        $('#prefix-suffix_'+ skHash).addClass('d-none');
     
                         $('#'+ skHash +'_acknowledge').removeClass("text-success text-info text-warning text-danger");
                         $('#'+ skHash +'_acknowledge').addClass("text-" + responseData.htmlUpdates.alert);
@@ -1287,47 +1398,60 @@ $(document).ready(function () {
                         $('.'+ skHash +'-first-name').text(responseData.first_name);
                         $('.'+ skHash +'-last-name').text(responseData.last_name);
                         $('.'+ skHash +'-title').text(responseData.title);
-                        $('.'+ skHash +'-salutation').text(responseData.salutation);
                         $('#'+ skHash +'_picture').text(responseData.picture);
                         $('#'+ skHash +'_folder').text(responseData.folder);
+
+                        if(useSalutationPortrait)
+                        {
+                            $("." + skHash + "-salutation").text(responseData.salutation);  
+                        }
+
+                        if(usePrefixSuffixPortrait)
+                        {
+                            $("." + skHash + "-prefix").text(responseData.prefix);
+                            $("." + skHash + "-suffix").text(responseData.suffix); 
+                        }
+                        $("." + skHash + "-form-spelling-first-name").val(responseData.first_name);
+                        $("." + skHash + "-form-spelling-last-name").val(responseData.last_name);
+                        $("." + skHash + "-form-spelling-title").val(responseData.title);
+                        $("." + skHash + "-form-spelling-salutation").val(responseData.salutation);
+                        $("." + skHash + "-form-spelling-prefix").val(responseData.prefix);
+                        $("." + skHash + "-form-spelling-suffix").val(responseData.suffix);
                         
                         $('.'+ skHash +'-grid-spelling-first-name').val(responseData.first_name);
                         $('.'+ skHash +'-grid-spelling-last-name').val(responseData.last_name);
                         $('.'+ skHash +'-grid-spelling-title').val(responseData.title);
                         $('.'+ skHash +'-grid-spelling-salutation').val(responseData.salutation);
+                        $('.'+ skHash +'-grid-spelling-prefix').val(responseData.prefix);
+                        $('.'+ skHash +'-grid-spelling-suffix').val(responseData.suffix);
 
-                        $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none');
+                        $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
 
-                        var addsalutation = responseData.salutation ? responseData.salutation + '. ' : '';
-                        var fullNameNew = (addsalutation.toLowerCase() + responseData.first_name.toLowerCase() + ' ' + responseData.last_name.toLowerCase()).trim();
-    
-                        $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameNew);
+                        $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
     
                         // Define or select the modal element
                         var modal = $('#' + skHash + '_modal'); // Adjust the selector to target the correct modal
                         if (modal.length > 0) {
                             modal.find("#history-box-subject-history-table").html(responseData.htmlUpdates.full_name);
                         }
-
-                        var fullNameOld = responseData.oldfirst_name + ' ' + responseData.oldlast_name;
-                        var fullNameNew = responseData.first_name + ' ' + responseData.last_name;
-    
-                        if ($('#allSubjectNames').val().includes(fullNameOld)) {
+                 
+                        if ($('#allSubjectNames').val().includes(fullNameGroupOld)) {
                             var inputValue = $('#allSubjectNames').val();
-                            var updatedValue = inputValue.replace(fullNameOld, fullNameNew);
+                            var updatedValue = inputValue.replace(fullNameGroupOld, fullNameGroupNew);
                             $('#allSubjectNames').val(updatedValue).trigger('change');
                         }
-    
-                        findSpanByText(fullNameOld, fullNameNew);
-                        fetchAndUpdateSubjectNames();
-                        createJsonData();
                         
                         //find and replace general
                         $('.'+ skHash +'-find-replace').contents().filter(function () {
                             return this.nodeType === 3;
                         }).replaceWith(function () {
-                            return this.nodeValue.replace(fullNameOld, fullNameNew);
+                            return this.nodeValue.replace(fullNamePortraitOld, fullNamePortraitNew);
+                            createJsonData();
                         });
+                        
+                        findSpanByText(fullNameGroupOld, fullNameGroupNew);
+                        fetchAndUpdateSubjectNames();
+                        // createJsonData();
 
                         $('#subjects_questions option[value=""]').attr('selected', 'selected');
     
@@ -1345,11 +1469,9 @@ $(document).ready(function () {
                     }
                     suppressChangeEvent = false;
                 },
-                error: function (xhr, status) {
-                  //  console.log("Sorry, there was a problem!");
-                },
-                complete: function (xhr, status) {
-                   // console.log("Completed");
+                error: function (e) {
+                    //alert("An error occurred: " + e.responseText.message);
+                    console.log(e);
                 }
             });
         });

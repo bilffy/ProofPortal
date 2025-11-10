@@ -44,7 +44,7 @@
             <div class="col-12">
                 <div class="row">
                     <div class="col-6 col-lg-3">
-                        <a href="#">
+                        <a href="{{ route('dashboard.viewSeason') }}">
                             <div class="card">
                                 <div class="card-body p-3 clearfix">
                                     <i class="fa fa-mortar-board bg-secondary bg-inverse p-3 font-2xl mr-3 float-left"></i>

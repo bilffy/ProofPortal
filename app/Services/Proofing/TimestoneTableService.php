@@ -56,4 +56,16 @@ class TimestoneTableService
         ->select(['Images.ImageID', 'Images.ImageKey', 'SubjectFolders.SubjectID'])
         ->orderBy('SubjectFolders.SubjectID', 'asc'); // Format subjects by SubjectKey
     }
+
+    public function getAllTimestoneJobsBySeasonID($tsSeasonId, $tsAccountId)
+    {
+        return DB::connection('timestone')
+        ->table('Jobs')
+        ->join('Accounts', 'Accounts.AccountID', '=', 'Jobs.AccountID')
+        ->join('Seasons', 'Seasons.SeasonID', '=', 'Jobs.SeasonID')
+        ->where('Jobs.SeasonID', $tsSeasonId)
+        ->where('Jobs.AccountID', $tsAccountId)
+        ->select(['Jobs.Name', 'Jobs.JobKey', 'Jobs.JobID'])
+        ->orderBy('Jobs.Name', 'asc'); // Format jobs by Name
+    }
 }

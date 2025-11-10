@@ -112,11 +112,34 @@
             $principal = Config::get('constants.PRINCIPAL');
             $principalExistNote = Config::get('constants.PRINCIPAL_EXIST_NOTE');
             $principalNote = Config::get('constants.PRINCIPAL_NOTE');
-            $subjectNames = $allSubjectsByJob->map(function ($subject) {
-                $salutation = !empty($subject['salutation']) ? $subject['salutation'] . '. ' : '';
-                return trim($salutation . $subject->firstname . ' ' . $subject->lastname);
+
+            $subjectNames = $allSubjectsByJob->map(function ($subject) use ($currentFolder) {
+
+                $useSalutation = $currentFolder->show_salutation_groups;
+                $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
+
+                $salutation = trim($subject->salutation ?? '');
+                $prefix = trim($subject->prefix ?? '');
+                $suffix = trim($subject->suffix ?? '');
+                $firstname = trim($subject->firstname ?? '');
+                $lastname = trim($subject->lastname ?? '');
+
+                // Build name dynamically based on flags
+                $parts = [];
+
+                if ($useSalutation) $parts[] = $salutation;
+                if ($usePrefixSuffix && $prefix !== '') $parts[] = $prefix;
+                $parts[] = $firstname;
+                $parts[] = $lastname;
+                if ($usePrefixSuffix && $suffix !== '') $parts[] = $suffix;
+
+                // Join only non-empty parts with single spaces
+                $fullName = implode(' ', array_filter($parts, fn($v) => $v !== ''));
+
+                return $fullName;
             });
-            
+
+
             if(isset($currentFolder->images)){
                 $artifactNameCrypt = Crypt::encryptString($currentFolder->images->name);
             }
@@ -251,6 +274,59 @@
                 if (event.type === 'change') {
                     sendFolderChanges(location, issue, subjectMissingName, note);
                 }
+            });
+            
+            const groupCommentTextArea = document.getElementById("group_comments");
+
+            groupCommentTextArea.addEventListener('blur', function() {
+                var issue_id = $(this).data('id');
+                var newValue = $(this).val();
+                var currentValue = $('#groupPreviousValue_'+issue_id).val();
+                $.ajax({
+                    dataType: 'json',
+                    type: "GET",
+                    url: base_url + "/franchise/proofing-description/" + issue_id, 
+                    async: true,
+                    cache: false,
+                    success: function (response) {
+                        // Retrieve constants from the server
+                        $.get(base_url + '/constants', function(constants) {
+                            // Function to find constant name by value
+                            function findConstantName(value) {
+                                for (const [key, val] of Object.entries(constants)) {
+                                    if (val === value) {
+                                        return key;
+                                    }
+                                }
+                                return null;
+                            }
+                            // Function to get constant value by name
+                            function getConstantValue(name) {
+                                return constants[name];
+                            }
+                            // Extract description and corresponding constant names
+
+                            const description = response.issue_description;
+                            const constantNameDescription = findConstantName(description);
+                            const constantNameDescriptionNote = constantNameDescription + '_NOTE';
+                            const constantNameDescriptionNoteData = getConstantValue(constantNameDescriptionNote);
+
+                            // Initialize issue and note variables
+                            var issue = description || '';
+                            var note = constantNameDescriptionNoteData || '';
+
+                            // Call function to handle folder changes with the updated issue and note
+                            sendFolderChanges(location, issue, newValue, note);
+                        });
+                    },
+                    error: function (e) {
+                        console.log("An error occurred: " + e.responseText.message);
+                        return false;
+                    },
+                    complete: function (xhr) {
+                        // Do something on complete if necessary
+                    }
+                });
             });
 
             $('#subject_general_issue_text').on('keyup change', function () {

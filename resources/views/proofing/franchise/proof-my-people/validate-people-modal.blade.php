@@ -11,6 +11,7 @@
             @php
                 $skHash = sha1($subject->ts_subjectkey);
                 $skEncrypted = Crypt::encryptString($subject->ts_subjectkey);
+                $folderkeyEncrypted = Crypt::encryptString($currentFolder->ts_folderkey);
                 $spellingTemplateID = 0;
                 $pictureTemplateID = 0; 
                 $wrongclassTemplateID = 0;
@@ -33,6 +34,40 @@
                     // Generate a signed URL for the image
                     // $image_url = route('serve.image', ['filename' => $newimageName]);
                     $image_url = route('serve.image', ['filename' => $skEncrypted]);
+                    if ($currentFolder->show_prefix_suffix_portraits) {
+                        $fullNameWrapped = Helper::wrapSalutationPrefixFirstNameLastNameSuffix(
+                            $subject->salutation,
+                            $subject->prefix,
+                            $subject->firstname,
+                            $subject->lastname,
+                            $subject->suffix,
+                            $skHash
+                        );
+                        $fullNameWrappedText = Helper::wrapSalutationPrefixFirstNameLastNameSuffixAsText(
+                            $subject->salutation,
+                            $subject->prefix,
+                            $subject->firstname,
+                            $subject->lastname,
+                            $subject->suffix
+                        );
+                    } else {
+                        $salutationPortrait = $currentFolder->show_salutation_portraits ? $subject->salutation : '';
+                        $fullNameWrapped = Helper::wrapSalutationPrefixFirstNameLastNameSuffix(
+                            $salutationPortrait,
+                            '',
+                            $subject->first_name ?? $subject->firstname,
+                            $subject->last_name ?? $subject->lastname,
+                            '',
+                            $skHash
+                        );
+                        $fullNameWrappedText = Helper::wrapSalutationPrefixFirstNameLastNameSuffixAsText(
+                            $salutationPortrait,
+                            '',
+                            $subject->first_name ?? $subject->firstname,
+                            $subject->last_name ?? $subject->lastname,
+                            '',
+                        );
+                    }
                 }
             @endphp
 
@@ -42,9 +77,10 @@
                         <form id="{{ $skHash }}_form" action="">
                         @csrf
                             <input type="hidden" name="subject_key_encrypted" value="{{$skEncrypted}}">
+                            <input type="hidden" name="folder_key_encrypted" value="{{$folderkeyEncrypted}}">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="{{ $skHash }}Label">
-                                    Make a correction to {!! Helper::wrapSalutationFirstNameLastName($subject->salutation, $subject->firstname, $subject->lastname, $skHash) !!}
+                                    Make a correction to {!! $fullNameWrapped !!}
                                 </h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
@@ -53,7 +89,7 @@
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-3 col-sm-12">
-                                        <img style="max-width: 100%" class="lazyload mx-auto d-block" src="public_path('proofing-assets/img/subject-image.png')" data-src="{{ $image_url }}" alt="Photo-Image">
+                                        <img style="max-width: 100%" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Photo-Image">
                                     </div>
                                     <div class="col-md-9 col-sm-12">
                                     <select id="subjects_questions" name="subjects_questions" data-id="{{ $skHash }}" class="form-control is_subject_select">
@@ -78,10 +114,12 @@
                                                     $pictureTemplateID = $subject_question->id;
                                                 } elseif ($subject_question->issue_description === Config::get('constants.SUBJECT_ISSUE_CLASS')) {
                                                     $wrongclassTemplateID = $subject_question->id;
+                                                } elseif ($subject_question->issue_description === Config::get('constants.SUBJECT_ISSUE_PREFIX_SUFFIX')) {
+                                                    $prefixsuffixTemplateID = $subject_question->id;
                                                 }
 
                                                 // Replace placeholders with actual names
-                                                $description = str_replace(['FIRSTNAME', 'LASTNAME'], [$subject->firstname, $subject->lastname], $subject_question->issue_description);
+                                                $description = str_replace(['FULLNAME'], [$fullNameWrappedText], $subject_question->issue_description);
 
                                             @endphp
                                             @if ($displayOption)
@@ -122,6 +160,16 @@
                                                             <option value="{{ $folderSelection->id }}">{{ $folderSelection->ts_foldername }}</option>
                                                         @endforeach
                                                     </select>
+                                                </div>
+                                            </template>
+                                            
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$prefixsuffixTemplateID}}_{{ $skHash }}">
+                                                <div id="prefix-suffix_{{ $skHash }}">
+                                                        <label for="{{ $skHash }}-new_prefix" class="mt-3">Prefix</label>
+                                                        <input type="text" name="{{ $skHash }}_new_prefix" id="{{ $skHash }}-new_prefix" class="form-control {{ $skHash }}-form-spelling-prefix" value="{{ $subject->prefix }}">
+
+                                                        <label for="{{ $skHash }}-new_suffix" class="mt-3">Suffix</label>
+                                                        <input type="text" name="{{ $skHash }}_new_suffix" id="{{ $skHash }}-new_suffix" class="form-control {{ $skHash }}-form-spelling-suffix" value="{{ $subject->suffix }}">
                                                 </div>
                                             </template>
 
@@ -224,15 +272,16 @@
                                     @if ($currentFolder->is_edit_salutation)
                                         <th class="idx-salutation" scope="col">Salutation</th>
                                     @endif
-        
+                                    <th class="idx-prefix" scope="col">Prefix</th>
                                     <th class="idx-first-name" scope="col">First Name</th>
                                     <th class="idx-last-name" scope="col">Last Name</th>
+                                    <th class="idx-suffix" scope="col">Suffix</th>
         
                                     @if ($currentFolder->is_edit_job_title)
                                         <th class="idx-job-title" scope="col">Job Title</th>
                                     @endif
         
-                                    <th class="idx-last-name" scope="col">Undo</th>
+                                    <th class="idx-undo" scope="col">Undo</th>
                                 </tr>
                             </thead>
         
@@ -258,16 +307,51 @@
                                                 // Generate a signed URL for the image
                                                 // $image_url = route('serve.image', ['filename' => $newimageName]);
                                                 $image_url = route('serve.image', ['filename' => $skEncrypted]); 
-                                                $salutation = !empty($subject['salutation']) ? $subject['salutation'] . '. ' : '';
+
+                                                $useSalutation = $currentFolder->is_edit_salutation;
+                                                $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
+
+                                                // Trim all parts safely
+                                                $salutation = trim($subject->salutation ?? '');
+                                                $prefix = trim($subject->prefix ?? '');
+                                                $suffix = trim($subject->suffix ?? '');
+                                                $firstname = trim($subject->firstname ?? '');
+                                                $lastname = trim($subject->lastname ?? '');
+
+                                                            // Build display name dynamically using array join to avoid double spaces
+                                                $nameParts = [];
+
+                                                if ($useSalutation && $salutation !== '') {
+                                                    $nameParts[] = $salutation;
+                                                }
+
+                                                if ($usePrefixSuffix && $prefix !== '') {
+                                                    $nameParts[] = $prefix;
+                                                }
+
+                                                if ($firstname !== '') {
+                                                    $nameParts[] = $firstname;
+                                                }
+
+                                                if ($lastname !== '') {
+                                                    $nameParts[] = $lastname;
+                                                }
+
+                                                if ($usePrefixSuffix && $suffix !== '') {
+                                                    $nameParts[] = $suffix;
+                                                }
+
+                                                // Join with single space
+                                                $displayName = implode(' ', $nameParts);
                                             }
                                         @endphp
 
                                         <tr class="person-row {{ $skHash }}"
-                                            data-subject-name="{{ trim(strtolower($salutation . ($subject->firstname ?? '') . ' ' . ($subject->lastname ?? ''))) }}">
+                                            data-subject-name="{{ strtolower($displayName) }}">
 
                                             <td class="idx-artifact text-center pt-2 pb-1">
                                                 <div class="person-pic-wrapper d-inline">
-                                                    <img style="max-height: 100px;" class="lazyload mx-auto d-block" src="public_path('proofing-assets/img/subject-image.png')" data-src="{{ $image_url }}" alt="Subject Image">
+                                                    <img style="max-height: 100px;" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Subject Image">
                                                 </div>
                                             </td>
                                             @if ($currentFolder->is_edit_salutation)
@@ -279,28 +363,48 @@
                                                         data-original-value="{{ $subject->salutation }}"
                                                         data-old-value="{{ $subject->salutation }}"
                                                         data-skhash="{{ $skHash }}"
-                                                        data-skencrypted="{{ $skEncrypted }}">
+                                                        data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
                                                 </td>
                                             @endif
+                                            <td class="idx-prefix p-0">
+                                                <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-prefix"
+                                                    id="{{ $skHash }}-grid-spelling-prefix"
+                                                    name="{{ $skHash }}_grid_spelling_prefix"
+                                                    value="{{ $subject['prefix'] }}"
+                                                    data-original-value="{{ $subject['prefix'] }}"
+                                                    data-old-value="{{ $subject['prefix'] }}"
+                                                    data-skhash="{{ $skHash }}"
+                                                    data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
+                                            </td>
                                             <td class="idx-first-name p-0">
                                                 <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-first-name"
                                                     id="{{ $skHash }}-grid-spelling-first-name"
                                                     name="{{ $skHash }}_grid_spelling_first_name"
-                                                    value="{{ $subject->firstname }}"
-                                                    data-original-value="{{ $subject->firstname }}"
-                                                    data-old-value="{{ $subject->firstname }}"
+                                                    value="{{ $firstname }}"
+                                                    data-original-value="{{ $firstname }}"
+                                                    data-old-value="{{ $firstname }}"
                                                     data-skhash="{{ $skHash }}"
-                                                    data-skencrypted="{{ $skEncrypted }}">
+                                                    data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
                                             </td>
                                             <td class="idx-last-name p-0">
                                                 <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-last-name"
                                                     id="{{ $skHash }}-grid-spelling-last-name"
                                                     name="{{ $skHash }}_grid_spelling_last_name"
-                                                    value="{{ $subject->lastname }}"
-                                                    data-original-value="{{ $subject->lastname }}"
-                                                    data-old-value="{{ $subject->lastname }}"
+                                                    value="{{ $lastname }}"
+                                                    data-original-value="{{ $lastname }}"
+                                                    data-old-value="{{ $lastname }}"
                                                     data-skhash="{{ $skHash }}"
-                                                    data-skencrypted="{{ $skEncrypted }}">
+                                                    data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
+                                            </td>
+                                            <td class="idx-suffix p-0">
+                                                <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-suffix"
+                                                    id="{{ $skHash }}-grid-spelling-suffix"
+                                                    name="{{ $skHash }}_grid_spelling_suffix"
+                                                    value="{{$subject['suffix'] }}"
+                                                    data-original-value="{{ $subject['suffix'] }}"
+                                                    data-old-value="{{ $subject['suffix'] }}"
+                                                    data-skhash="{{ $skHash }}"
+                                                    data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
                                             </td>
                                             @if ($currentFolder->is_edit_job_title)
                                                 <td class="idx-job-title p-0">
@@ -311,12 +415,12 @@
                                                         data-original-value="{{ $subject->title }}"
                                                         data-old-value="{{ $subject->title }}"
                                                         data-skhash="{{ $skHash }}"
-                                                        data-skencrypted="{{ $skEncrypted }}">
+                                                        data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
                                                 </td>
                                             @endif
                                             <td class="idx-last-name p-0 align-middle text-center">
                                                 <span class="d-none pl-3 pr-4 pt-2 pb-2" id="{{ $skHash }}-grid-spelling-revert-button"
-                                                    data-skhash="{{ $skHash }}" data-skencrypted="{{ $skEncrypted }}">
+                                                    data-skhash="{{ $skHash }}" data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
                                                     <a href="#">
                                                         <i class="fa fa-undo fa-lg text-danger"></i>
                                                     </a>
@@ -334,6 +438,31 @@
                 </div>
             </div>
         </div>
-        
     @endif
+
+        <!-- Other modals and content -->
+        <div class="modal fade" id="NotEnablePortrait_Modal" tabindex="-1" role="dialog"
+            aria-labelledby="NotEnablePortrait_ModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="HistoryEditsLabel">
+                            Spelling Corrections
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            To correct the spelling, please activate the portraits option in the configuration settings.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 

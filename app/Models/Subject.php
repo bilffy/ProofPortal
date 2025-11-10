@@ -22,6 +22,8 @@ class Subject extends Model
         'lastname',
         'title',
         'salutation',
+        'prefix',
+        'suffix',
         'ts_subjectkey',
         'ts_job_id',
         'ts_folder_id',

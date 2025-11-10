@@ -2,6 +2,7 @@
 @php
     $selectedJob = session('selectedJob') ?? '[]';
     $selectedSeason = session('selectedSeason') ?? '[]';
+    $selectedSeasonDashboard = session('selectedSeasonDashboard') ?? '[]';
 @endphp
 
 <!DOCTYPE html>
@@ -156,6 +157,19 @@
                                 </span>
                             </div>
                         </div>
+                    @elseif(Session::get('openSeason') === true)
+                        <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
+                            <div class="col-12">
+                                <span class="lead m-0 mr-2">
+                                {!! __("You are currently working in the <strong>:season</strong> Season", ['season' => $selectedSeasonDashboard['code']]) !!}
+                                    <a href="{{route('dashboard.closeSeason')}}">[Close Season]</a>                            
+                                </span>
+                            </div>
+                        </div>
+                        @if(session('job-season-flag'))
+                            <div class="mt-3"></div>
+                            <div class="alert alert-info">Please note that it may take up to 1 minute to Sync down all your Jobs. We will refresh this page automatically.</div>
+                        @endif
                     @endif
                     <div class="container3 p-4">
                         <!-- Breadcrumb -->

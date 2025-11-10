@@ -165,7 +165,7 @@
                                     <td class="text-center pt-2 pb-1">
                                         <div class="person-pic-wrapper d-inline">
                                             {{-- <img src="{{ $image_url }}" class="mx-auto d-block" style="max-width: 100%; max-height: 90px;" alt="Subject Image"> --}}
-                                            <img style="width: 100%" class="lazyload mx-auto d-block" src="public_path('proofing-assets/img/subject-image.png')" data-src="{{ $image_url }}" alt="Subject Image">
+                                            <img style="max-width: 100%; max-height: 90px;" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Subject Image">
                                         </div>
                                         {{ $subjectChange->firstname }} {{ $subjectChange->lastname }}
                                     </td>

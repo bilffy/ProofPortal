@@ -10,6 +10,7 @@
     @php
         use Illuminate\Support\Facades\Crypt;
         use Illuminate\Support\Str;
+        use App\Services\FolderService;
     @endphp
 
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
@@ -73,9 +74,10 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @inject('folderService', 'App\Services\Proofing\FolderService')
                                 @foreach($subjectChanges as $subjectChange)
                                 @php
-                                    $folderKey = implode("-", $attachedFolderNames[$subjectChange->ts_subjectkey]['keys']);
+                                    // $folderKey = implode("-", $attachedFolderNames[$subjectChange->ts_subjectkey]['keys']);
                                     $skHash = sha1($subjectChange->ts_subjectkey);
                                     $hash = Crypt::encryptString($subjectChange->ts_subjectkey);
                                     $rowIdSelector = sha1(json_encode($subjectChange));
@@ -96,12 +98,17 @@
                                         // Generate a signed URL for the image
                                         $image_url = route('serve.image', ['filename' => $newimageName]);
                                     }
+                                    if($subjectChange->external_issue_name === 'Class'){
+                                        $id = str_replace("Folder From: ", "", $subjectChange->change_from);
+                                        $folderFrom = $folderService->findFolderId($id);
+                                    }
                                 @endphp
+                                
                                 <tr id="{{ $rowIdSelector }}">
                                     <td class="text-center pt-2 pb-1">
                                         <div class="person-pic-wrapper d-inline">
                                             {{-- <img src="{{ $image_url }}" class="mx-auto d-block" style="max-width: 100%; max-height: 90px;" alt="Subject Image"> --}}
-                                            <img style="width: 100%" class="lazyload mx-auto d-block" src="public_path('proofing-assets/img/subject-image.png')" data-src="{{ $image_url }}" alt="Subject Image">
+                                            <img style="max-width: 100%; max-height: 90px;" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Subject Image">
                                         </div>
                                         {{ $subjectChange->firstname }} {{ $subjectChange->lastname }}
                                     </td>
@@ -111,7 +118,7 @@
                                     <td>{{ $subjectChange->user->firstname }} {{ $subjectChange->user->lastname }}</td>
                                     <td>
                                         @if($subjectChange->external_issue_name == 'Picture' || $subjectChange->external_issue_name == 'Class')
-                                            <a href="#" data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
+                                            <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class') data-change-from = "{{ Crypt::encryptString($folderFrom->ts_folderkey) }}" @endif data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
                                         @endif
                                             <a href="#" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="approve">Approve</a> | 
                                             <a href="#" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="reject">Reject</a>
@@ -246,14 +253,21 @@
 
                 var picture_issue = '';
                 var folder_issue = '';
+                var formData = new FormData();
 
                 if (issueType === 'Class') {
                     folder_issue = $('#folder_issue').val()
+                    const modifyEl = document.getElementById('modify');
+
+                    if (modifyEl.hasAttribute('data-change-from')) {
+                        const fkEncrypted = modifyEl.getAttribute('data-change-from');
+                        formData.append("folder_key_encrypted", fkEncrypted);
+                    }
+
                 } else if (issueType === 'Picture') {
                     picture_issue = $('#picture_issue').val()
                 }
 
-                var formData = new FormData();
                 formData.append("subject_key_hash", skHash);
                 formData.append("subject_key_encrypted", skEncrypted);
                 formData.append("subject_correction_id", subjectCorrectionID);
@@ -276,7 +290,7 @@
                     processData: false,
                     timeout: 60000,
 
-                    success: function (response) {   
+                    success: function (response) {  
                         let parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
                         if (parsedResponse.success === true) {
                             let acknowledgeMessage = '';
@@ -320,7 +334,7 @@
                     },
                     error: function (e) {
                             //alert("An error occurred: " + e.responseText.message);
-                            //console.log(e);
+                            // console.log(e);
                     }
                 })
             }

@@ -74,56 +74,59 @@ class FolderService
 
     public function getGroupByFolder($folderKey) {
         // Retrieve the issue ID
-        $proofingIssueID = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('TRADITIONAL PHOTO', 'id')->id;
-
-        // Attempt to get the active group positions
-        $groupPositions =  $this->getProofingChangelogService()->getGroupPositionData($folderKey, $proofingIssueID, $this->statusService->active);
-        
-        // If not found, attempt to get inactive group positions
+        $proofingIssueID = $this->proofingDescriptionService
+            ->getAllProofingDescriptionByIssueName('TRADITIONAL PHOTO', 'id')->id;
+    
+        // Attempt to get active group positions
+        $groupPositions = $this->getProofingChangelogService()
+            ->getGroupPositionData($folderKey, $proofingIssueID, $this->statusService->active);
+    
+        // If not found, attempt inactive
         if (empty($groupPositions)) {
-            $groupPositions =  $this->getProofingChangelogService()->getGroupPositionData($folderKey, $proofingIssueID, $this->statusService->inactive);
-        }        
-        $groupValue = $groupPositions;
-
-        if ($groupPositions) {
-            // Decode JSON to PHP array
-            $groupData = json_decode($groupPositions, true);
-    
-            $groupDetails = [];
-            $absentDetails = [];
-    
-            foreach ($groupData as $row => $subjects) {
-                // Check if the key contains "Absent" (case-insensitive)
-                if (stripos($row, 'Absent') !== false) {
-                    $absentDetails[$row] = [];
-                } else {
-                    $groupDetails[$row] = [];
-                }
-                
-                foreach ($subjects as $subjectName) {
-                    if ($subjectName) {
-                        $formattedSubject = $subjectName;
-                        if (stripos($row, 'Absent') !== false) {
-                            $absentDetails[$row][] = $formattedSubject;
-                        } else {
-                            $groupDetails[$row][] = $formattedSubject;
-                        }
-                    }
-                }
-            }
-    
-            // Merge the absent details at the end
-            $groupDetails = array_merge($groupDetails, $absentDetails);
-    
-            return ['groupDetails' => $groupDetails, 'groupValue' => $groupValue];
+            $groupPositions = $this->getProofingChangelogService()
+                ->getGroupPositionData($folderKey, $proofingIssueID, $this->statusService->inactive);
         }
     
-        return [];
-    }
+        if (!$groupPositions || empty($groupPositions->change_to)) {
+            return [];
+        }
+    
+        $groupValue = $groupPositions->change_to;
+        $groupData = json_decode($groupValue, true);
+        $finalGroups = [];
+    
+        foreach ($groupData as $row => $subjects) {
+            if (!is_array($subjects)) continue; // Safety check
+    
+            $isAbsent = stripos($row, 'Absent') !== false;
+            $rowKey = $isAbsent ? 'Absent' : $row;
+    
+            $finalGroups[$rowKey] = [];
+    
+            foreach ($subjects as $subjectName) {
+                if (!empty($subjectName)) {
+                    $finalGroups[$rowKey][] = $subjectName;
+                }
+            }
+        }
+    
+        // Optional: sort so 'Absent' always comes last
+        if (isset($finalGroups['Absent'])) {
+            $absent = $finalGroups['Absent'];
+            unset($finalGroups['Absent']);
+            $finalGroups['Absent'] = $absent;
+        }
+    
+        return [
+            'groupDetails' => $finalGroups,
+            'groupValue' => $groupValue,
+            'groupNotes' => $groupPositions->notes ?? null
+        ];
+    }    
 
     public function getSubjectIDByName($folderKey, $data) {
         // Retrieve folder and job IDs
-        $currentFolder = $this->getFolderByKey($folderKey)->select('ts_folder_id', 'ts_job_id')->first();
+        $currentFolder = $this->getFolderByKey($folderKey)->select('ts_folder_id', 'ts_job_id', 'show_prefix_suffix_groups', 'show_salutation_groups')->first();
     
         // Check if $currentFolder is found
         if (!$currentFolder) {
@@ -131,35 +134,61 @@ class FolderService
         }
     
         // Get subjects
-        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id);
-        $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id);
-        $allSubjects = $attachedSubjects->merge($homedSubjects);
+        // $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id);
+        // $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id);
+        // $allSubjects = $attachedSubjects->merge($homedSubjects);
+        $allSubjects = $this->subjectService->getSubjectByJobId($currentFolder->job->ts_job_id)->get();
+
+        $useSalutation = $currentFolder->show_salutation_groups;
+        $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
     
         // Initialize result array
         $result = [];
+        $formattedResult = [];
         
         // Process each group of names
         foreach ($data as $rowLabel => $names) {
             $result[$rowLabel] = [];
+            $formattedResult[$rowLabel] = [];
             
             // Iterate through each name in the current group
             foreach ($names as $name) {
                 // Find the subject in the merged collection
-                $subject = $allSubjects->filter(function ($item) use ($name) {
-                    return ($item->firstname.' '.$item->lastname === $name);
-                })->first();
-                
-                // If subject is found, add its ID to the result
+
+                $subject = $allSubjects->first(function ($item) use ($name, $useSalutation, $usePrefixSuffix) {
+                    // Build the display name exactly as system uses
+                    $salutation = trim($item->salutation ?? '');
+                    $prefix = trim($item->prefix ?? '');
+                    $suffix = trim($item->suffix ?? '');
+                    $firstname = trim($item->firstname ?? '');
+                    $lastname = trim($item->lastname ?? '');
+    
+                    $parts = [];
+                    if ($useSalutation && $salutation !== '') $parts[] = $salutation;
+                    if ($usePrefixSuffix && $prefix !== '') $parts[] = $prefix;
+                    $parts[] = $firstname;
+                    $parts[] = $lastname;
+                    if ($usePrefixSuffix && $suffix !== '') $parts[] = $suffix;
+    
+                    $fullName = implode(' ', array_filter($parts, fn($v) => $v !== ''));
+
+                    return $fullName === $name;
+                });
+    
+                // Add result
                 if ($subject) {
-                    $result[$rowLabel][] = $subject->ts_subjectkey.':'.$subject->firstname.' '.$subject->lastname;
+                    $result[$rowLabel][] = $subject->ts_subjectkey . ':' . $name;
+                    $formattedResult[$rowLabel][] = "SUBJECTKEY: " . $subject->ts_subjectkey;
                 } else {
-                    $result[$rowLabel][] = '--Not Found--:'.$name;
+                    $result[$rowLabel][] = '--Not Found--:' . $name;
+                    $formattedResult[$rowLabel][] = "NAME: " . $name;
                 }
             }
         }
     
         // Convert result to JSON and handle errors
         $jsonData = json_encode($result);
+        $jsonformattedResult = json_encode($formattedResult);
     
         if (json_last_error() !== JSON_ERROR_NONE) {
             return ['error' => 'JSON encoding error: '.json_last_error_msg()];
@@ -170,6 +199,7 @@ class FolderService
     
         return [
             'jsonData' => $jsonData,
+            'jsonformattedResult' => $jsonformattedResult,
             'jobKey' => $jobKey
         ];
     }

@@ -13,6 +13,7 @@
                     list($width, $height) = getimagesize($imagePath);
                 }
             }
+            
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
@@ -153,10 +154,10 @@
                                     </div>
                                 @endif
                                 <button class="add_row_button btn btn-secondary">Add Row</button>
-                                <p class="mt-3 mb-0"><strong>Spelling Mistake? Click
-                                        <a href="#" data-toggle="modal" data-target="#GridSpellingEdits_Modal">here</a>
-                                        to correct spelling.</strong>
-                                </p>
+                                    <p class="mt-3 mb-0"><strong>Spelling Mistake? Click
+                                            <a href="#" data-toggle="modal" data-target="{{ $currentFolder->is_edit_portraits ? '#GridSpellingEdits_Modal' : '#NotEnablePortrait_Modal' }}">here</a>
+                                            to correct spelling.</strong>
+                                    </p>
                                 <input type="hidden" value="{{$folderhash}}" id="folderHash" name="folderHash">
                                 <input type="hidden" value="{{$hash}}" id="jobHash" name="jobHash">
                                 <input type="hidden" value="{{$groupCount}}" name="groupCount">
@@ -223,18 +224,22 @@
                 <!-- traditional photo named -->
                 <label for="trad_photo_named_{{$group_question->id}}">{!! $group_question->issue_description !!}</label>
                 <input type="hidden" id="groupPreviousValue_{{$group_question->id}}" name="groupPreviousValue_{{$group_question->id}}" @if($groupChange) value="{{$groupChange->change_to}}" @else value="" @endif>
-                <select name="trad_photo_named_{{$group_question->id}}" id="trad_photo_named_{{$group_question->id}}" data-id="{{$group_question->id}}" class="form-control is_group_select" select="form-control">
-                    <option value="" @if($groupChange){{ !$groupChange->change_to ? 'selected' : '' }}@endif>--Please Select--</option>
-                    <option value="1"  @if($groupChange){{ $groupChange->change_to === "1" ? 'selected' : '' }}@endif>Yes</option>
-                    <option value="0"  @if($groupChange){{ $groupChange->change_to === "0" ? 'selected' : '' }}@endif>No</option>
-                </select>
-                <div id="trad_photo_named_yes_{{$group_question->id}}">
-                    <!-- Proceed -->
-                </div>
-                <div id="trad_photo_named_no_{{$group_question->id}}">
-                    <!-- Halt -->
-                    {!! $group_question->issue_error_message !!}
-                </div>
+                @if ($group_question->issue_name === 'GROUP_COMMENTS')
+                    <textarea class="form-control" name="group_comments" id="group_comments"data-id="{{$group_question->id}}" rows="5">{!! $groupChange->change_to ?? '' !!}</textarea>
+                @else
+                    <select name="trad_photo_named_{{$group_question->id}}" id="trad_photo_named_{{$group_question->id}}" data-id="{{$group_question->id}}" class="form-control is_group_select" select="form-control">
+                        <option value="" @if($groupChange){{ !$groupChange->change_to ? 'selected' : '' }}@endif>--Please Select--</option>
+                        <option value="1"  @if($groupChange){{ $groupChange->change_to === "1" ? 'selected' : '' }}@endif>Yes</option>
+                        <option value="0"  @if($groupChange){{ $groupChange->change_to === "0" ? 'selected' : '' }}@endif>No</option>
+                    </select>
+                    <div id="trad_photo_named_yes_{{$group_question->id}}">
+                        <!-- Proceed -->
+                    </div>
+                    <div id="trad_photo_named_no_{{$group_question->id}}">
+                        <!-- Halt -->
+                        {!! $group_question->issue_error_message !!}
+                    </div>
+                @endif
             </div>
             @endforeach
         </div>

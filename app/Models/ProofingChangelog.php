@@ -11,7 +11,7 @@ class ProofingChangelog extends Model
 
     protected $table = "changelogs";
     
-    protected $fillable = ['ts_jobkey', 'keyvalue', 'keyorigin', 'change_from', 'change_to', 'notes', 'resolved_status_id', 'issue_id', 'change_datetime', 'decision_datetime', 'approvalStatus'];
+    protected $fillable = ['ts_jobkey', 'keyvalue', 'keyorigin', 'change_from', 'change_to', 'notes', 'resolved_status_id', 'issue_id', 'change_datetime', 'decision_datetime', 'approvalStatus', 'user_id'];
 
     public function issue(){
         return $this->belongsTo('App\Models\ProofingIssue', 'issue_id', 'id');

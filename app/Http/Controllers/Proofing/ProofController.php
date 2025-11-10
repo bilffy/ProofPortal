@@ -95,6 +95,10 @@ class ProofController extends Controller
                             'ts_job_id', 
                             'is_edit_job_title', 
                             'is_edit_salutation', 
+                            'show_prefix_suffix_portraits', 
+                            'show_prefix_suffix_groups', 
+                            'show_salutation_portraits', 
+                            'show_salutation_groups', 
                             'teacher', 
                             'principal', 
                             'deputy',
@@ -135,6 +139,68 @@ class ProofController extends Controller
 
         $groupDetails = $this->folderService->getGroupByFolder($currentFolder->ts_folderkey);
 
+        $finalGroupDetails = [];
+
+            foreach ($groupDetails['groupDetails'] as $rowKey => $subjects) {
+                $finalGroupDetails[$rowKey] = [];
+            
+                // Ensure $subjects is iterable (handles string/empty cases)
+                if (!is_iterable($subjects)) {
+                    continue;
+                }
+            
+                foreach ($subjects as $subjectStr) {
+                    $subjectStr = trim($subjectStr);
+            
+                    $subject = null;
+            
+                    // Match by ID or NAME
+                    if (str_starts_with($subjectStr, 'SUBJECTKEY:')) {
+                        $subjectKey = trim(str_replace('SUBJECTKEY:', '', $subjectStr));
+                        // $subject = $allSubjects->firstWhere('ts_subjectkey', $subjectKey);
+                        $subject = $allSubjectsByJob->firstWhere('ts_subjectkey', $subjectKey);
+                    } elseif (str_starts_with($subjectStr, 'NAME:')) {
+                        $nameOnly = trim(str_replace('NAME:', '', $subjectStr));
+                        $finalGroupDetails[$rowKey][] = $nameOnly;
+                        continue;
+                    }
+            
+                    // If subject found, build clean name dynamically
+                    if ($subject) {
+                        $useSalutation = $currentFolder->show_salutation_groups;
+                        $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
+            
+                        $salutation = trim($subject->salutation ?? '');
+                        $prefix = trim($subject->prefix ?? '');
+                        $suffix = trim($subject->suffix ?? '');
+                        $first = trim($subject->firstname ?? '');
+                        $last = trim($subject->lastname ?? '');
+            
+                        // Dynamically build name only from non-empty parts
+                        $parts = [];
+            
+                        if ($useSalutation && $salutation !== '') $parts[] = $salutation;
+                        if ($usePrefixSuffix && $prefix !== '') $parts[] = $prefix;
+                        if ($first !== '') $parts[] = $first;
+                        if ($last !== '') $parts[] = $last;
+                        if ($usePrefixSuffix && $suffix !== '') $parts[] = $suffix;
+            
+                        $fullName = implode(' ', $parts);
+            
+                        $finalGroupDetails[$rowKey][] = $fullName;
+                    }
+                }
+            }        
+    
+            // Now create JSON representation
+            $groupValue = json_encode($finalGroupDetails, JSON_UNESCAPED_UNICODE);
+    
+            // For debugging
+            $groupDetails = ([
+                'groupDetails' => $finalGroupDetails,
+                'groupValue' => $groupValue,
+            ]);
+
         $formattedFoldersWithChanges = $this->proofingChangelogService->getAllProofingChangelogFolder($currentFolder->job->ts_jobkey,$currentFolder->ts_folderkey)->get();      
         $folder_questions = $this->fetchProofingQuestions('FOLDER');
         $subject_questions = $this->fetchProofingQuestions('SUBJECT');
@@ -161,7 +227,7 @@ class ProofController extends Controller
     protected function fetchProofingQuestions($type)
     {
         return $this->proofingDescriptionService->getAllProofingDescriptionData(
-            $type, 'id', 'issue_description', 'issue_category_id', 'issue_error_message', 'is_proceed_confirm'
+            $type, 'id', 'issue_name', 'issue_description', 'issue_category_id', 'issue_error_message', 'is_proceed_confirm'
         );
     }
 

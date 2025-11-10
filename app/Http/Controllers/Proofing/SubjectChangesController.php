@@ -97,6 +97,7 @@ class SubjectChangesController extends Controller
     public function submitApproveChangeCoordinator(Request $request, $hash){
         if($request->action == 'modify'){
             $responseData = $this->proofingChangelogService->insertSubjectProofingChangeLog($request->all());
+            // return $responseData;
             $modifyData = $this->proofingChangelogService->modifyProofingChangelogById($request->subject_correction_id);
         }else if($request->action == 'approve'){
             $approveData = $this->proofingChangelogService->approveProofingChangelogById($request->subject_correction_id);

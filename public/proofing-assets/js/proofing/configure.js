@@ -492,6 +492,90 @@
                 //==============================================================
         
         
+                //Is Show Salutation in Portrait
+                $("#set-is-edit-job-show-salutation-portrait-all").click(function () {
+                    $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', true);
+                    processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("#set-is-edit-job-show-salutation-portrait-none").click(function () {
+                    $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', false);
+                    processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("input[id^='is-edit-job-show-salutation-portrait-']").change(function () {
+                    processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    applyEditCapabilities();
+                });
+        
+                //==============================================================
+        
+        
+                //Is Show Salutation in Group
+                $("#set-is-edit-job-show-salutation-group-all").click(function () {
+                    $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', true);
+                    processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("#set-is-edit-job-show-salutation-group-none").click(function () {
+                    $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', false);
+                    processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("input[id^='is-edit-job-show-salutation-group-']").change(function () {
+                    processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    applyEditCapabilities();
+                });
+        
+                //==============================================================
+        
+        
+                //Is Show Prefix Suffix in Portrait
+                $("#set-is-edit-job-prefix-suffix-portrait-all").click(function () {
+                    $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', true);
+                    processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("#set-is-edit-job-prefix-suffix-portrait-none").click(function () {
+                    $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', false);
+                    processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("input[id^='is-edit-job-prefix-suffix-portrait-']").change(function () {
+                    processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+                    applyEditCapabilities();
+                });
+        
+                //==============================================================
+        
+        
+                //Is Show Prefix Suffix in Group
+                $("#set-is-edit-job-prefix-suffix-group-all").click(function () {
+                    $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', true);
+                    processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("#set-is-edit-job-prefix-suffix-group-none").click(function () {
+                    $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', false);
+                    processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+                    applyEditCapabilities();
+                }).css('cursor', 'pointer');
+        
+                $("input[id^='is-edit-job-prefix-suffix-group-']").change(function () {
+                    processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+                    applyEditCapabilities();
+                });
+        
+                //==============================================================
+
+                
                 //Is Visible Portrait
                 $("#set-is-visible-for-portrait-all").click(function () {
                     $("input[id^='is-visible-for-portrait-']").prop('checked', true);
@@ -516,18 +600,18 @@
                 //Is Visible Group
                 $("#set-is-visible-for-group-all").click(function () {
                     $("input[id^='is-visible-for-group-']").prop('checked', true);
-                    processCheckboxes('is-visible-for-group-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-group-','is_visible_for_group');
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-visible-for-group-none").click(function () {
                     $("input[id^='is-visible-for-group-']").prop('checked', false);
-                    processCheckboxes('is-visible-for-group-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-group-','is_visible_for_group');
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-visible-for-group-']").change(function () {
-                    processCheckboxes('is-visible-for-group-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-group-','is_visible_for_group');
                     applyEditCapabilities();
                 });
         

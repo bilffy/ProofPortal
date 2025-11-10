@@ -117,6 +117,18 @@
             $isEditJobTitleList = [];
             $isEditJobTitleCounter = ['true' => 0, 'false' => 0];
 
+            $isEditJobShowSalutationPortraitList = [];
+            $isEditJobShowSalutationPortraitCounter = ['true' => 0, 'false' => 0];
+
+            $isEditJobPrefixSuffixPortraitList = [];
+            $isEditJobPrefixSuffixPortraitCounter = ['true' => 0, 'false' => 0];
+
+            $isEditJobShowSalutationGroup = [];
+            $isEditJobShowSalutationGroupCounter = ['true' => 0, 'false' => 0];
+
+            $isEditJobPrefixSuffixGroupList = [];
+            $isEditJobPrefixSuffixGroupCounter = ['true' => 0, 'false' => 0];  
+
             // Iterate over folder details and update lists and counters
             foreach ($selectedFolders as $folderDetail) {
                 $isVisibleForProofingList[$folderDetail->ts_folder_id] = $folderDetail->is_visible_for_proofing;
@@ -130,6 +142,18 @@
 
                 $isEditJobTitleList[$folderDetail->ts_folder_id] = $folderDetail->is_edit_job_title;
                 $isEditJobTitleCounter[$folderDetail->is_edit_job_title ? 'true' : 'false']++;
+
+                $isEditJobShowSalutationPortraitList[$folderDetail->ts_folder_id] = $folderDetail->show_salutation_portraits;
+                $isEditJobShowSalutationPortraitCounter[$folderDetail->show_salutation_portraits ? 'true' : 'false']++;
+
+                $isEditJobPrefixSuffixPortraitList[$folderDetail->ts_folder_id] = $folderDetail->show_prefix_suffix_portraits;
+                $isEditJobPrefixSuffixPortraitCounter[$folderDetail->show_prefix_suffix_portraits ? 'true' : 'false']++;
+
+                $isEditJobShowSalutationGroupList[$folderDetail->ts_folder_id] = $folderDetail->show_salutation_groups;
+                $isEditJobShowSalutationGroupCounter[$folderDetail->show_salutation_groups ? 'true' : 'false']++;
+
+                $isEditJobPrefixSuffixGroupList[$folderDetail->ts_folder_id] = $folderDetail->show_prefix_suffix_groups;
+                $isEditJobPrefixSuffixGroupCounter[$folderDetail->show_prefix_suffix_groups ? 'true' : 'false']++;
 
                 $isEditSalutationList[$folderDetail->ts_folder_id] = $folderDetail->is_edit_salutation;
                 $isEditSalutationCounter[$folderDetail->is_edit_salutation ? 'true' : 'false']++;

@@ -37,8 +37,29 @@
                                     $image_url = asset('proofing-assets/img/subject-image.png');
                                     $skHash = sha1($subject->ts_subjectkey);
                                     $skEncrypted = Crypt::encryptString($subject->ts_subjectkey);
-                                    $fullName = Helper::compileFullName($subject->salutation, $subject->firstname, $subject->lastname);
-                                    $fullNameWrapped = Helper::wrapSalutationFirstNameLastName($subject->salutation, $subject->firstname, $subject->lastname, $skHash);
+                                    // $fullName = Helper::compileFullName($subject->salutation, $subject->firstname, $subject->lastname);
+
+                                    if ($currentFolder->show_prefix_suffix_portraits) {
+                                        $fullNameWrapped = Helper::wrapSalutationPrefixFirstNameLastNameSuffix(
+                                            $subject->salutation,
+                                            $subject->prefix,
+                                            $subject->firstname,
+                                            $subject->lastname,
+                                            $subject->suffix,
+                                            $skHash
+                                        );
+                                    } else {
+                                        $salutationPortrait = $currentFolder->show_salutation_portraits ? $subject->salutation : '';
+                                        $fullNameWrapped = Helper::wrapSalutationPrefixFirstNameLastNameSuffix(
+                                            $salutationPortrait,
+                                            '',
+                                            $subject->first_name ?? $subject->firstname,
+                                            $subject->last_name ?? $subject->lastname,
+                                            '',
+                                            $skHash
+                                        );
+                                    }
+
                                     $jobTitleWrapped = $currentFolder->is_edit_job_title ? Helper::wrapTitle($subject->title, $skHash) : '';
                                     $hasChanges = $formattedSubjectsWithChanges->has($subject->ts_subjectkey);
                                     $iconColour = $hasChanges ? ($formattedSubjectsWithChanges[$subject->ts_subjectkey]->where('resolved_status_id', $inactive)->count() > 0 ? 'danger' : 'success') : 'success';
@@ -107,7 +128,7 @@
                                             </div>
                                             <div class="card-body">
                                                 <div class="col-12 p-2" style="background-color: #EFEFEF">
-                                                    <img style="width:128px;height:170px;" class="lazyload mx-auto d-block" src="public_path('proofing-assets/img/subject-image.png')" data-src="{{ $image_url }}" alt="Photo-Image">
+                                                    <img style="width:128px;height:170px;" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Photo-Image">
                                                 </div>
 
                                                 {{--                                               

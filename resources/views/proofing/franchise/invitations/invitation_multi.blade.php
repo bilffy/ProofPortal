@@ -132,6 +132,7 @@
                 colWidths: [120, 120, 280, 200],
                 minDimensions: [4, spreadsheetRows],
                 maxDimensions: [4, 40],
+                allowInsertColumn : false,
                 columns: [
                     {type: 'text'},
                     {type: 'text'},

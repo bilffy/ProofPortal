@@ -203,6 +203,50 @@
                                                 id="set-is-edit-job-title-none">None</span>
                                         </p>
                                     </th>
+                                    <th class="text-center">
+                                        Show Salutation in Portraits
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-show-salutation-portrait-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-show-salutation-portrait-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center">
+                                        Show Prefix & Suffix in Portraits
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-prefix-suffix-portrait-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-prefix-suffix-portrait-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center">
+                                        Show Salutation in Groups
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-show-salutation-group-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-show-salutation-group-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center">
+                                        Show Prefix & Suffix in Groups
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-prefix-suffix-group-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-prefix-suffix-group-none">None</span>
+                                        </p>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -226,14 +270,15 @@
                                             <div class="row is-visible-for-proofing is-visible-for-proofing--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        $allowProofingVisible = false;
+                                                        
+                                                        $allowProofingVisible = true;
                                                         $allowProofingVisibleDisabled = false;
-                                        
                                                         if (isset($isVisibleForProofingList[$folder->ts_folder_id])) {
                                                             if ($isVisibleForProofingList[$folder->ts_folder_id] == false) {
-                                                                $allowProofingVisibleDisabled = true;
-                                                            } else {
-                                                                $allowProofingVisible = true;
+                                                                $allowProofingVisible = false;
+                                                            } elseif ($isVisibleForProofingList[$folder->ts_folder_id] == null) {
+                                                                $allowProofingVisible = false;
+                                                                $allowProofingVisibleDisabled = false;
                                                             }
                                                         }
                                                     @endphp
@@ -246,7 +291,8 @@
                                                             data-folder-key="{{ $folderKey }}"
                                                             data-folder-name="{{ $folderName }}"
                                                             data-folder-id="{{ $folder->ts_folder_id }}"
-                                                            {{ $allowProofingVisible ? 'checked' : '' }}>
+                                                            {{ $allowProofingVisible ? 'checked' : '' }}
+                                                            {{ $allowProofingVisibleDisabled ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
                                             </div>
@@ -255,14 +301,14 @@
                                             <div class="row is-edit-portraits is-edit-portraits--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        $isEditPortraits = false;
+                                                        $isEditPortraits = true;
                                                         $isEditPortraitsDisabled = false;
-                                        
                                                         if (isset($isEditPortraitsList[$folder->ts_folder_id])) {
                                                             if ($isEditPortraitsList[$folder->ts_folder_id] == false) {
+                                                                $isEditPortraits = false;
+                                                            } elseif ($isEditPortraitsList[$folder->ts_folder_id] == null) {
+                                                                $isEditPortraits = false;
                                                                 $isEditPortraitsDisabled = true;
-                                                            } else {
-                                                                $isEditPortraits = true;
                                                             }
                                                         }
                                                     @endphp
@@ -279,35 +325,23 @@
                                                             {{ $isEditPortraitsDisabled ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
-                                                <div class="col-12 mt-4 text-center">
-                                                    @if (isset($sortingTypesList[$folderKey]))
-                                                        @if ($sortingTypesList[$folderKey] == 'SpecialSort')
-                                                            TNJ Special Sort
-                                                        @elseif ($sortingTypesList[$folderKey] == 'SortOrder')
-                                                            TNJ Sort Order
-                                                        @elseif ($sortingTypesList[$folderKey] == 'Default')
-                                                            Alphabetical
-                                                        @else
-                                                            {{ $sortingTypesList[$folderKey] }}
-                                                        @endif
-                                                    @else
-                                                        Alphabetical
-                                                    @endif
-                                                </div>
+                                                {{-- <div class="col-12 mt-4 text-center">
+                                                    Alphabetical
+                                                </div> --}}
                                             </div>
                                         </td>
                                         <td>
                                             <div class="row is-edit-group is-edit-group--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        $isEditGroup = false;
+                                                        $isEditGroup = true;
                                                         $isEditGroupDisabled = false;
-                                        
                                                         if (isset($isEditGroupList[$folder->ts_folder_id])) {
                                                             if ($isEditGroupList[$folder->ts_folder_id] == false) {
+                                                                $isEditGroup = false;
+                                                            } elseif ($isEditGroupList[$folder->ts_folder_id] == null) {
+                                                                $isEditGroup = false;
                                                                 $isEditGroupDisabled = true;
-                                                            } else {
-                                                                $isEditGroup = true;
                                                             }
                                                         }
                                                     @endphp
@@ -332,14 +366,14 @@
                                                     <div class="row is-subject-list-allowed is-subject-list-allowed--{{ $folderKey }}">
                                                         <div class="col-12">
                                                             @php
-                                                                $isSubjectListAllowed = false;
+                                                                $isSubjectListAllowed = true;
                                                                 $isSubjectListAllowedDisabled = false;
-                                        
                                                                 if (isset($isSubjectListAllowedList[$folder->ts_folder_id])) {
                                                                     if ($isSubjectListAllowedList[$folder->ts_folder_id] == false) {
+                                                                        $isSubjectListAllowed = false;
+                                                                    } elseif ($isSubjectListAllowedList[$folder->ts_folder_id] == null) {
+                                                                        $isSubjectListAllowed = false;
                                                                         $isSubjectListAllowedDisabled = true;
-                                                                    } else {
-                                                                        $isSubjectListAllowed = true;
                                                                     }
                                                                 }
                                                             @endphp
@@ -433,16 +467,14 @@
                                             <div class="row is-edit-principal is-edit-principal--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        // Default settings
-                                                        $isEditPrincipal = false;
+                                                        $isEditPrincipal = true;
                                                         $isEditPrincipalDisabled = false;
-                                        
-                                                        // Logic for handling the principal flag
                                                         if (isset($isEditPrincipalList[$folder->ts_folder_id])) {
                                                             if ($isEditPrincipalList[$folder->ts_folder_id] == false) {
+                                                                $isEditPrincipal = false;
+                                                            } elseif ($isEditPrincipalList[$folder->ts_folder_id] == null) {
+                                                                $isEditPrincipal = false;
                                                                 $isEditPrincipalDisabled = true;
-                                                            } else {
-                                                                $isEditPrincipal = true;
                                                             }
                                                         }
                                                     @endphp
@@ -466,16 +498,14 @@
                                             <div class="row is-edit-deputy is-edit-deputy--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        // Default settings
-                                                        $isEditDeputy = false;
+                                                        $isEditDeputy = true;
                                                         $isEditDeputyDisabled = false;
-                                        
-                                                        // Logic for handling the deputy flag
                                                         if (isset($isEditDeputyList[$folder->ts_folder_id])) {
                                                             if ($isEditDeputyList[$folder->ts_folder_id] == false) {
+                                                                $isEditDeputy = false;
+                                                            } elseif ($isEditDeputyList[$folder->ts_folder_id] == null) {
+                                                                $isEditDeputy = false;
                                                                 $isEditDeputyDisabled = true;
-                                                            } else {
-                                                                $isEditDeputy = true;
                                                             }
                                                         }
                                                     @endphp
@@ -499,16 +529,14 @@
                                             <div class="row is-edit-teacher is-edit-teacher--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        // Default settings
-                                                        $isEditTeacher = false;
+                                                        $isEditTeacher = true;
                                                         $isEditTeacherDisabled = false;
-                                        
-                                                        // Logic for handling the teacher flag
                                                         if (isset($isEditTeacherList[$folder->ts_folder_id])) {
                                                             if ($isEditTeacherList[$folder->ts_folder_id] == false) {
+                                                                $isEditTeacher = false;
+                                                            } elseif ($isEditTeacherList[$folder->ts_folder_id] == null) {
+                                                                $isEditTeacher = false;
                                                                 $isEditTeacherDisabled = true;
-                                                            } else {
-                                                                $isEditTeacher = true;
                                                             }
                                                         }
                                                     @endphp
@@ -532,16 +560,14 @@
                                             <div class="row is-edit-salutation is-edit-salutation--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        // Default settings
-                                                        $isEditSalutation = false;
+                                                        $isEditSalutation = true;
                                                         $isEditSalutationDisabled = false;
-                                        
-                                                        // Logic for handling the salutation flag
                                                         if (isset($isEditSalutationList[$folder->ts_folder_id])) {
                                                             if ($isEditSalutationList[$folder->ts_folder_id] == false) {
+                                                                $isEditSalutation = false;
+                                                            } elseif ($isEditSalutationList[$folder->ts_folder_id] == null) {
+                                                                $isEditSalutation = false;
                                                                 $isEditSalutationDisabled = true;
-                                                            } else {
-                                                                $isEditSalutation = true;
                                                             }
                                                         }
                                                     @endphp
@@ -565,16 +591,14 @@
                                             <div class="row is-edit-job-title is-edit-job-title--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
-                                                        // Default settings
-                                                        $isEditJobTitle = false;
+                                                        $isEditJobTitle = true;
                                                         $isEditJobTitleDisabled = false;
-                                        
-                                                        // Logic for handling the job-title flag
                                                         if (isset($isEditJobTitleList[$folder->ts_folder_id])) {
                                                             if ($isEditJobTitleList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobTitle = false;
+                                                            } elseif ($isEditJobTitleList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobTitle = false;
                                                                 $isEditJobTitleDisabled = true;
-                                                            } else {
-                                                                $isEditJobTitle = true;
                                                             }
                                                         }
                                                     @endphp
@@ -590,6 +614,142 @@
                                                                data-folder-id="{{ $folder->ts_folder_id }}"
                                                                {{ $isEditJobTitle ? 'checked' : '' }}
                                                                {{ $isEditJobTitleDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
+                                        <td>
+                                            <div class="row is-edit-job-show-salutation-portrait is-edit-job-show-salutation-portrait--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        // Default settings
+                                                        $isEditJobShowSalutationPortrait = true;
+                                                        $isEditJobShowSalutationPortraitDisabled = false;
+                                        
+                                                        // Logic for handling the job-title flag
+                                                        if (isset($isEditJobShowSalutationPortraitList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobShowSalutationPortraitList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobShowSalutationPortrait = false;
+                                                            } elseif ($isEditJobShowSalutationPortraitList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobShowSalutationPortrait = false;
+                                                                $isEditJobShowSalutationPortraitDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-show-salutation-portrait text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-show-salutation-portrait-{{ $folderKey }}"
+                                                               name="is-edit-job-show-salutation-portrait-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobShowSalutationPortrait ? 'checked' : '' }}
+                                                               {{ $isEditJobShowSalutationPortraitDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
+                                        <td>
+                                            <div class="row is-edit-job-prefix-suffix-portrait is-edit-job-prefix-suffix-portrait--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        // Default settings
+                                                        $isEditJobPrefixSuffixPortrait = true;
+                                                        $isEditJobPrefixSuffixPortraitDisabled = false;
+                                        
+                                                        // Logic for handling the job-title flag
+                                                        if (isset($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobPrefixSuffixPortrait = false;
+                                                            } elseif ($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobPrefixSuffixPortrait = false;
+                                                                $isEditJobPrefixSuffixPortraitDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-prefix-suffix-portrait text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-prefix-suffix-portrait-{{ $folderKey }}"
+                                                               name="is-edit-job-prefix-suffix-portrait-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobPrefixSuffixPortrait ? 'checked' : '' }}
+                                                               {{ $isEditJobPrefixSuffixPortraitDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
+                                        <td>
+                                            <div class="row is-edit-job-show-salutation-group is-edit-job-show-salutation-group--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        // Default settings
+                                                        $isEditJobShowSalutationGroup = true;
+                                                        $isEditJobShowSalutationGroupDisabled = false;
+                                        
+                                                        // Logic for handling the job-title flag
+                                                        if (isset($isEditJobShowSalutationGroupList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobShowSalutationGroupList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobShowSalutationGroup = false;
+                                                            } elseif ($isEditJobShowSalutationGroupList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobShowSalutationGroup = false;
+                                                                $isEditJobShowSalutationGroupDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-show-salutation-group text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-show-salutation-group-{{ $folderKey }}"
+                                                               name="is-edit-job-show-salutation-group-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobShowSalutationGroup ? 'checked' : '' }}
+                                                               {{ $isEditJobShowSalutationGroupDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
+                                        <td>
+                                            <div class="row is-edit-job-prefix-suffix-group is-edit-job-prefix-suffix-group--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        // Default settings
+                                                        $isEditJobPrefixSuffixGroup = true;
+                                                        $isEditJobPrefixSuffixGroupDisabled = false;
+                                        
+                                                        // Logic for handling the job-title flag
+                                                        if (isset($isEditJobPrefixSuffixGroupList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobPrefixSuffixGroupList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobPrefixSuffixGroup = false;
+                                                            } elseif ($isEditJobPrefixSuffixGroupList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobPrefixSuffixGroup = false;
+                                                                $isEditJobPrefixSuffixGroupDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-prefix-suffix-group text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-prefix-suffix-group-{{ $folderKey }}"
+                                                               name="is-edit-job-prefix-suffix-group-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobPrefixSuffixGroup ? 'checked' : '' }}
+                                                               {{ $isEditJobPrefixSuffixGroupDisabled ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
                                             </div>
