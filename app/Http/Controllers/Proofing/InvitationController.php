@@ -143,7 +143,7 @@ class InvitationController extends Controller
         $emails = [];
     
         if ($franchise) {
-            // 1️⃣ Users who belong to the same franchise
+            // Users who belong to the same franchise
             $franchiseUserEmails = User::whereHas('franchises', function ($query) use ($franchise) {
                     $query->where('franchise_id', $franchise->id);
                 })
@@ -153,7 +153,7 @@ class InvitationController extends Controller
     
             $emails = array_merge($emails, $franchiseUserEmails);
     
-            // 2️⃣ Users who belong to schools under the franchise
+            // Users who belong to schools under the franchise
             $schoolIds = School::whereHas('franchises', function ($query) use ($franchise) {
                     $query->where('franchise_id', $franchise->id);
                 })
@@ -170,7 +170,7 @@ class InvitationController extends Controller
                 $emails = array_merge($emails, $schoolUserEmails);
             }
     
-            // 3️⃣ Users with 'admin' role (anywhere in the system)
+            // Users with 'admin' role (anywhere in the system)
             $adminEmails = User::role(['Super Admin', 'Admin'])
                 ->whereNotNull('email')
                 ->pluck('email')
@@ -179,10 +179,11 @@ class InvitationController extends Controller
             $emails = array_merge($emails, $adminEmails);
         }
     
-        // 4️⃣ Clean and flatten
+        // Clean and flatten
         $emails = collect($emails)
             ->flatten()
             ->unique()
+            // ->reject(fn ($email) => $email === $user->email) // exclude current user
             ->values()
             ->toArray();
     

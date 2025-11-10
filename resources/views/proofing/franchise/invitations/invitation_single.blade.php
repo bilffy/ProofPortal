@@ -196,9 +196,7 @@
         $('#folder').select2();
         const emailArrayRaw = @json($emails ?? []);
         const emailArray = Array.isArray(emailArrayRaw) ? emailArrayRaw : [];
-
-        console.log("Email Array:", emailArray);
-
+        
         document.addEventListener("DOMContentLoaded", function () {
             const emailInput = document.getElementById("email");
             const feedback = document.getElementById("feedback");

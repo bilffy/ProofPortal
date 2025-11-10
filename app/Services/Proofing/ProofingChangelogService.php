@@ -845,18 +845,36 @@ class ProofingChangelogService
         }
         
         // Always add 'first_name', 'last_name', 'oldfirst_name', and 'oldlast_name'
-        $responseData['first_name'] = trim($requestData['new_first_name'] ?? $currentfirstname ?? '');
-        $responseData['last_name'] = trim($requestData['new_last_name'] ?? $currentlastname ?? '');
         $responseData['oldfirst_name'] = trim($currentfirstname ?? '');
         $responseData['oldlast_name'] = trim($currentlastname ?? '');
-        $responseData['title_old'] = trim($subject->title ?? '');
-        $responseData['title'] = trim($requestData['title'] ?? $subjectData->title ?? '');
-        $responseData['salutation'] = trim($requestData['new_salutation'] ?? $currentsalutation ?? '');
+        $responseData['title_old'] = trim($subjectData->title ?? '');
         $responseData['salutation_old'] = trim($currentsalutation ?? '');
-        $responseData['prefix'] = trim($requestData['new_prefix'] ?? $currentprefix ?? '');
         $responseData['prefix_old'] = trim($currentprefix ?? '');
-        $responseData['suffix'] = trim($requestData['new_suffix'] ?? $currentsuffix ?? '');
         $responseData['suffix_old'] = trim($currentsuffix ?? '');
+        $responseData['first_name'] = trim(
+            $requestData->has('new_first_name') ? $requestData->get('new_first_name') : ($currentfirstname ?? '')
+        );
+        
+        $responseData['last_name'] = trim(
+            $requestData->has('new_last_name') ? $requestData->get('new_last_name') : ($currentlastname ?? '')
+        );
+        
+        $responseData['title'] = trim(
+            $requestData->has('new_title') ? $requestData->get('new_title') : ($subjectData->title ?? '')
+        );
+        
+        $responseData['salutation'] = trim(
+            $requestData->has('new_salutation') ? $requestData->get('new_salutation') : ($currentsalutation ?? '')
+        );
+        
+        $responseData['prefix'] = trim(
+            $requestData->has('new_prefix') ? $requestData->get('new_prefix') : ($currentprefix ?? '')
+        );
+        
+        $responseData['suffix'] = trim(
+            $requestData->has('new_suffix') ? $requestData->get('new_suffix') : ($currentsuffix ?? '')
+        );        
+        
         $responseData['htmlUpdates'] = $htmlUpdates;
 
         // Determine feature usage

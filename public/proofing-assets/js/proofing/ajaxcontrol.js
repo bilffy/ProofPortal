@@ -990,9 +990,8 @@ $(document).ready(function () {
                 timeout: 60000,
 
                 success: function (response) {
-                    //console.log(response);
                     var responseData = response.responseData;
-
+                    // console.log(responseData);
                     var fullNamePortraitOld = responseData['fullNameOldPortrait'];
                     var fullNamePortraitNew = responseData['fullNamePortrait'];
                     var fullNameGroupOld = responseData['fullNameOldGroup'];
@@ -1377,6 +1376,7 @@ $(document).ready(function () {
                 success: function(response) {
                     if (response && response.responseData) {
                         var responseData = response.responseData;
+                        // console.log(responseData);
                         var fullNamePortraitOld = responseData['fullNameOldPortrait'];
                         var fullNamePortraitNew = responseData['fullNamePortrait'];
                         var fullNameGroupOld = responseData['fullNameOldGroup'];
