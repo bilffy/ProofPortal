@@ -201,16 +201,39 @@ class PhotographyController extends Controller
         // get the season code as the year
         $selectedFilters['year'] = $season->code;
         
+//        // check if the image belongs to the school, basically schoolKey should match
+//        foreach ($images as $image) {
+//            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
+//            $imgRecord = Image::where('keyvalue', $key)->first();
+//            if ($imgRecord) {
+//                $job = Job::where('ts_job_id', $imgRecord->ts_job_id)->first();
+//                if ($job && $job->ts_schoolkey !== $schoolKey) {
+//                    return response()->json('Invalid Request', 422);
+//                }
+//            }
+//        }
+
         // check if the image belongs to the school, basically schoolKey should match
-        foreach ($images as $image) {
-            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
-            $imgRecord = Image::where('keyvalue', $key)->first();
-            if ($imgRecord) {
-                $job = Job::where('ts_job_id', $imgRecord->ts_job_id)->first();
-                if ($job && $job->ts_schoolkey !== $schoolKey) {
-                    return response()->json('Invalid Request', 422);
-                }
+        $keys = array_filter(array_map(function($img) {
+            $decoded = preg_replace('/^img_/', '', $img);
+            $firstPass = base64_decode($decoded);
+            return $firstPass === false ? null : base64_decode($firstPass);
+        }, $images ?? []));
+        
+        // if any decoded keys exist, check in a single query joining jobs
+        if (!empty($keys)) {
+            $mismatchExists = Image::select('images.keyvalue')
+                ->join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+                ->whereIn('images.keyvalue', $keys)
+                ->where('jobs.ts_schoolkey', '!=', $schoolKey)
+                ->exists();
+
+            if ($mismatchExists) {
+                return response()->json('Invalid Request', 403);
             }
+        } else {
+            // if no valid decoded keys, return invalid request
+            return response()->json('Invalid Request', 422);
         }
         
         $downloadRequest = DownloadRequested::create([
