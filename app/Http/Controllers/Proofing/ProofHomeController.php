@@ -188,6 +188,7 @@ class ProofHomeController extends Controller
         try {
             // Send POST request to private server (inside your LAN)
             $response = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/jobs/sync/{$jobKey}");
+            $response = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/folders/sync/{$jobKey}");
 
             // Check if private server returned success
             if ($response->successful()) {
