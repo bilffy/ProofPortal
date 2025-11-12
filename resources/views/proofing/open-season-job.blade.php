@@ -169,7 +169,7 @@
                     // console.log("🔵 Sending sync request to proxy:", "{{ route('proxy.syncJob') }}", "with jobKey:", jobKey);
                 },
                 success: function(proxyResponse) {
-                    // console.log("Proxy sync response:", proxyResponse);
+                    console.log("response:", proxyResponse);
 
                     if (proxyResponse.success) {
                         // console.log("Proxy sync successful. Proceeding to open job...");
