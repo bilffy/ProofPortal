@@ -18,6 +18,10 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles, Impersonate, HasApiTokens;
 
+    protected $casts = [
+        'tnc_accepted_at' => 'datetime',
+    ];
+
     public const STATUS_NEW = 'new';
     public const STATUS_INVITED = 'invited';
     public const STATUS_ACTIVE = 'active';

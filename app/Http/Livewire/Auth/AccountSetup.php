@@ -25,6 +25,7 @@ class AccountSetup extends Component
     public $password_confirmation;
     public $firstName;
     public $lastName;
+    public $acceptedTerms = false;
     
     public $oldPassword;
     
@@ -33,6 +34,16 @@ class AccountSetup extends Component
         'firstName' => 'required',
         'lastName' => 'required',
         'password_confirmation' => 'required',
+        'acceptedTerms' => 'accepted',
+    ];
+
+    /**
+     * Custom validation messages.
+     *
+     * @var array
+     */
+    protected $messages = [
+        'acceptedTerms.accepted' => 'You must accept the Terms of Use & Copyright Conditions to setup your account.',
     ];
 
     public function mount($token, $email)
@@ -91,6 +102,7 @@ class AccountSetup extends Component
                     'remember_token' => Str::random(60),
                     'is_setup_complete' => true,
                     'status' => User::STATUS_ACTIVE,
+                    'tnc_accepted_at' => now(),
                 ])->save();
 
                 // Send OTP to the user
