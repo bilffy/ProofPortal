@@ -43,46 +43,54 @@
                     <i class="fa fa-align-justify"></i> {{ __('Please pick a Job to open.') }}
                 </div>
                 <div class="card-body">
-                    <table id="schools-table" class="table table-bordered table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ __('Job Key') }}</th>
-                                <th scope="col">{{ __('Name') }}</th>
-                                <th scope="col">{{ __('Season') }}</th>
-                                <th scope="col">{{ __('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($tsJobs as $tsJob)
-                                @php
-                                    $hash = Crypt::encryptString($tsJob->JobKey);
-                                @endphp
-                                <tr
-                                    id="{{ $tsJob->JobKey }}"
-                                    class="school"
-                                    data-job-key="{{ $tsJob->JobKey }}"
-                                    data-school-name="{{ strtolower(__($tsJob->Name . ' (' . $selectedSeason->code ?? '' . ')')) }}"
-                                >
-                                    <td class="idx-job-key">{{ $tsJob->JobKey }}</td>
-                                    <td class="idx-name">{{ $tsJob->Name }}</td>
-                                    <td class="idx-description">{{ $selectedSeason->code }}</td>
-                                    <td class="actions">
-                                        <form action="#" method="POST" target="syncFrame" class="syncForm">
-                                            @csrf
-                                            <input type="hidden" name="job_key_hash" value="{{ $hash }}">
-                                            <button 
-                                            type="button" 
-                                            class="btn btn-link p-0 openJobBtn" 
-                                            data-job-id="{{ Crypt::encryptString($tsJob->JobID) }}" data-job-key="{{ Crypt::encryptString($tsJob->JobKey) }}">
-                                                {{ __('Open Job') }}
-                                            </button>
-                                        </form>
-                                        <iframe name="syncFrame" style="display:none;"></iframe>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    <div id="jobs-container">
+                        @if (count($tsJobs) > 0)
+                            <table id="schools-table" class="table table-bordered table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('Job Key') }}</th>
+                                        <th scope="col">{{ __('Name') }}</th>
+                                        <th scope="col">{{ __('Season') }}</th>
+                                        <th scope="col">{{ __('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                        @foreach ($tsJobs as $tsJob)
+                                            @php
+                                                $hash = Crypt::encryptString($tsJob->JobKey);
+                                            @endphp
+                                            <tr
+                                                id="{{ $tsJob->JobKey }}"
+                                                class="school"
+                                                data-job-key="{{ $tsJob->JobKey }}"
+                                                data-school-name="{{ strtolower(__($tsJob->Name . ' (' . $selectedSeason->code ?? '' . ')')) }}"
+                                            >
+                                                <td class="idx-job-key">{{ $tsJob->JobKey }}</td>
+                                                <td class="idx-name">{{ $tsJob->Name }}</td>
+                                                <td class="idx-description">{{ $selectedSeason->code }}</td>
+                                                <td class="actions">
+                                                    <form action="#" method="POST" target="syncFrame" class="syncForm">
+                                                        @csrf
+                                                        <input type="hidden" name="job_key_hash" value="{{ $hash }}">
+                                                        <button 
+                                                        type="button" 
+                                                        class="btn btn-link p-0 openJobBtn" 
+                                                        data-job-id="{{ Crypt::encryptString($tsJob->JobID) }}" data-job-key="{{ Crypt::encryptString($tsJob->JobKey) }}">
+                                                            {{ __('Open Job') }}
+                                                        </button>
+                                                    </form>
+                                                    <iframe name="syncFrame" style="display:none;"></iframe>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                </tbody>
+                            </table>
+                        @else
+                            <div class="text-center py-3 text-muted fw-semibold">
+                                {{ __('No Jobs Found...') }}
+                            </div> 
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -94,30 +102,34 @@
 <script>
     $(document).ready(function () {
         // === Auto Refresh ===
-        var targetUrl = "{{ url()->current() }}";
-        var refreshDelay = 4000;
-        var refreshCounter = 1;
-        var refreshLimit = 100;
-        var schoolsContentTimer = setInterval(refreshSchools, refreshDelay);
+        const targetUrl = "{{ url()->current() }}";
+        const refreshDelay = 4000; 
+        let refreshCounter = 1;
+        const refreshLimit = 100;
 
-        function refreshSchools() {
+        const schoolsContentTimer = setInterval(refreshJobs, refreshDelay);
+
+        function refreshJobs() {
             $.ajax({
                 dataType: 'html',
                 type: 'GET',
                 url: targetUrl,
-                success: function (htmlResult) {
-                    htmlResult = '<div>' + htmlResult + '</div>';
-                    var newContent = $(htmlResult).find("#schools-table");
-                    $("#schools-table").replaceWith(newContent);
-                    filterSchoolsTable();
+                success: function(htmlResult) {
+                    htmlResult = $('<div>').html(htmlResult);
+                    const newContent = htmlResult.find("#jobs-container").html();
+                    $("#jobs-container").html(newContent);
+                    if (typeof filterSchoolsTable === "function") {
+                        filterSchoolsTable();
+                    }
+                },
+                error: function() {
+                    console.error("Failed to refresh jobs section.");
                 }
             });
 
-            if (refreshLimit === refreshCounter) {
+            if (refreshCounter++ >= refreshLimit) {
                 clearInterval(schoolsContentTimer);
             }
-
-            refreshCounter++;
         }
 
         // === Filter Jobs ===
@@ -157,7 +169,7 @@
                     // console.log("🔵 Sending sync request to proxy:", "{{ route('proxy.syncJob') }}", "with jobKey:", jobKey);
                 },
                 success: function(proxyResponse) {
-                    console.log("Proxy sync response:", proxyResponse);
+                    // console.log("Proxy sync response:", proxyResponse);
 
                     if (proxyResponse.success) {
                         // console.log("Proxy sync successful. Proceeding to open job...");

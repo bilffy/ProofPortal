@@ -13,6 +13,7 @@ use App\Services\Proofing\TimestoneTableService;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Helpers\SchoolContextHelper;
 use Auth;
 
 class ProofHomeController extends Controller
@@ -116,7 +117,7 @@ class ProofHomeController extends Controller
         
         $user = Auth::user();
 
-        $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id)->get();
+        $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
     
         return view('proofing.open-season-job', [
             'user' => new UserResource($user),
