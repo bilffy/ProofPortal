@@ -101,121 +101,115 @@
 @push('scripts')
 <script>
     $(document).ready(function () {
-        // === Auto Refresh ===
+        // === CSRF Setup ===
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    
+        // === Auto Refresh Configuration ===
         const targetUrl = "{{ url()->current() }}";
-        const refreshDelay = 4000; 
+        const refreshDelay = 4000; // 4 seconds
         let refreshCounter = 1;
         const refreshLimit = 100;
-
-        const schoolsContentTimer = setInterval(refreshJobs, refreshDelay);
-
+        let schoolsContentTimer = setInterval(refreshJobs, refreshDelay);
+    
         function refreshJobs() {
             $.ajax({
                 dataType: 'html',
                 type: 'GET',
                 url: targetUrl,
-                success: function(htmlResult) {
-                    htmlResult = $('<div>').html(htmlResult);
-                    const newContent = htmlResult.find("#jobs-container").html();
-                    $("#jobs-container").html(newContent);
-                    if (typeof filterSchoolsTable === "function") {
-                        filterSchoolsTable();
-                    }
+                success: function (htmlResult) {
+                    const newContent = $('<div>').html(htmlResult).find("#jobs-container").html();
+    
+                    // Smooth transition for content update
+                    $("#jobs-container").fadeOut(150, function () {
+                        $(this).html(newContent).fadeIn(150);
+    
+                        // Reapply filter if text is present
+                        if (typeof filterSchoolsTable === "function") {
+                            filterSchoolsTable();
+                        }
+                    });
                 },
-                error: function() {
-                    console.error("Failed to refresh jobs section.");
+                error: function () {
+                   // console.error("Failed to refresh jobs section.");
                 }
             });
-
+    
             if (refreshCounter++ >= refreshLimit) {
                 clearInterval(schoolsContentTimer);
             }
         }
-
+    
         // === Filter Jobs ===
         $('#school-name-filter').on('keyup', filterSchoolsTable);
-
+    
         function filterSchoolsTable() {
-            var filterByTextOriginal = $('#school-name-filter').val();
-            var filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
+            const filterByTextOriginal = $('#school-name-filter').val();
+            const filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
+    
             if (filterByText.length >= 1) {
                 $(".school").addClass("d-none");
-                var foundSchools = $("[data-school-name*='" + filterByText + "']").removeClass("d-none");
-                var foundCount = foundSchools.length;
-                $("#school-name-filter-feedback").text("Found " + foundCount + " Jobs containing the text '" + filterByTextOriginal + "'.");
+                const foundSchools = $("[data-school-name*='" + filterByText + "']").removeClass("d-none");
+                const foundCount = foundSchools.length;
+                $("#school-name-filter-feedback").text("Found " + foundCount + " Jobs containing '" + filterByTextOriginal + "'.");
             } else {
                 $(".school").removeClass("d-none");
                 $("#school-name-filter-feedback").text("");
             }
         }
-
-        $('.openJobBtn').on('click', function (e) {
-            e.preventDefault(); // prevent any default form or link behavior
-
-            var jobId = $(this).data('job-id');
-            var jobKey = $(this).data('job-key');
-
-            // console.log("🟡 Click detected for job:", { jobId, jobKey });
-
-            // Step 1: Call Laravel proxy route to sync job with private server
+    
+        // === Open Job Button (Delegated Click) ===
+        $(document).on('click', '.openJobBtn', function (e) {
+            e.preventDefault();
+    
+            const jobId = $(this).data('job-id');
+            const jobKey = $(this).data('job-key');
+    
+            // console.log("Syncing job:", jobKey);
+    
+            // Step 1: Proxy sync with private server
             $.ajax({
                 url: "{{ route('proxy.syncJob') }}",
                 type: "POST",
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    jobKey: jobKey
-                },
-                beforeSend: function() {
-                    // console.log("🔵 Sending sync request to proxy:", "{{ route('proxy.syncJob') }}", "with jobKey:", jobKey);
-                },
-                success: function(proxyResponse) {
-                    console.log("response:", proxyResponse);
-
+                data: { jobKey: jobKey },
+                success: function (proxyResponse) {
+                    // console.log("Proxy sync response:", proxyResponse);
+    
                     if (proxyResponse.success) {
-                        // console.log("Proxy sync successful. Proceeding to open job...");
-                        // Step 2: Call your Laravel openJob route to set session
+                        // console.log("Proxy sync successful. Opening job:", jobId);
+    
+                        // Step 2: Open job session
                         $.ajax({
                             url: "{{ route('dashboard.openJob') }}",
                             type: "GET",
                             data: { jobId: jobId },
-                            beforeSend: function() {
-                                // console.log("Sending openJob request for jobId:", jobId);
-                            },
-                            success: function(response) {
-                                // console.log("openJob response:", response);
+                            success: function (response) {
+                                // console.log("OpenJob response:", response);
                                 if (response.success) {
-                                    // console.log("Job opened. Redirecting to /proofing...");
+                                    // Stop refreshing before redirect
+                                    clearInterval(schoolsContentTimer);
                                     window.location.href = "{{ url('/proofing') }}";
                                 } else {
-                                    // console.error("openJob failed:", response);
+                                    // console.error("Failed to open job:", response);
                                 }
                             },
-                            error: function(xhr, status, error) {
-                                // console.error("openJob AJAX error:", {
-                                //     status: status,
-                                //     error: error,
-                                //     responseText: xhr.responseText
-                                // });
+                            error: function (xhr, status, error) {
+                                // console.error("OpenJob AJAX error:", { status, error, responseText: xhr.responseText });
                             }
                         });
                     } else {
                         // console.error("Proxy sync failed:", proxyResponse);
                     }
                 },
-                error: function(xhr, status, error) {
-                    // console.error("Proxy sync AJAX error:", {
-                    //     status: status,
-                    //     error: error,
-                    //     responseText: xhr.responseText
-                    // });
-                },
-                complete: function() {
-                    // console.log("Proxy sync AJAX call completed");
+                error: function (xhr, status, error) {
+                    // console.error("Proxy sync AJAX error:", { status, error, responseText: xhr.responseText });
                 }
             });
         });
-
-
     });
-</script>
+    </script>
+    
 @endpush
