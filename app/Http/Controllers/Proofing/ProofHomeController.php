@@ -186,21 +186,23 @@ class ProofHomeController extends Controller
         $jobKey = $this->getDecryptData($request->input('jobKey'));
 
         try {
-            // Send POST request to private server (inside your LAN)
-            $response = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/jobs/sync/{$jobKey}");
-            $response = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/folders/sync/{$jobKey}");
-
-            // Check if private server returned success
-            if ($response->successful()) {
-                return response()->json(['success' => true, 'data' => $response->json()]);
-            } else {
+            $jobResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/jobs/sync/{$jobKey}");
+            $folderResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/folders/sync/{$jobKey}");
+                
+                if ($jobResponse->successful() && $folderResponse->successful()) {
+                    return response()->json([
+                        'success' => true,
+                        'jobs' => $jobResponse->json(),
+                        'folders' => $folderResponse->json(),
+                    ]);
+                }
+                
                 return response()->json([
                     'success' => false,
-                    'message' => 'Private server returned non-200 status',
-                    'status' => $response->status(),
-                    'body' => $response->body()
+                    'message' => 'One or more sync calls failed',
+                    'job_status' => $jobResponse->status(),
+                    'folder_status' => $folderResponse->status(),
                 ]);
-            }
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
