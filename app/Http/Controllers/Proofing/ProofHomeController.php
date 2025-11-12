@@ -114,7 +114,7 @@ class ProofHomeController extends Controller
                 'openSeason' => true
             ]);
         }
-        
+
         $user = Auth::user();
 
         $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
