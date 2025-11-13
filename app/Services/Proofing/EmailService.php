@@ -148,8 +148,8 @@ class EmailService
     
             $emlContent = $message->toString();
     
-            $filePath = public_path("$field.eml");
-            file_put_contents($filePath, $emlContent);
+            // $filePath = public_path("$field.eml");
+            // file_put_contents($filePath, $emlContent);
     
             // Save email record in the database
             Email::create([
@@ -274,8 +274,8 @@ class EmailService
     
             $emlContent = $message->toString();
     
-            $filePath = public_path("$field.eml");
-            file_put_contents($filePath, $emlContent);
+            // $filePath = public_path("$field.eml");
+            // file_put_contents($filePath, $emlContent);
     
             Email::create([
                 'generated_from_user_id' => $authUser->id,
@@ -375,8 +375,8 @@ class EmailService
 
         $emlContent = $message->toString();
 
-        $filePath = public_path("$field.eml");
-        file_put_contents($filePath, $emlContent);
+        // $filePath = public_path("$field.eml");
+        // file_put_contents($filePath, $emlContent);
 
         Email::create([
             'generated_from_user_id' => $authUser->id,
