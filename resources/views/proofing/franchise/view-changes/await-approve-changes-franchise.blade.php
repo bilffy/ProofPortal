@@ -91,7 +91,7 @@
                                         // $newimageName = Str::replace('\\', '-', $imageName);
                                         // // Generate a signed URL for the image
                                         // $image_url = route('serve.image', ['filename' => $newimageName]);
-                                        $image_url = route('serve.image', ['filename' => $hash]);
+                                        $image_url = route('serve.image', ['filename' => $skEncrypted]);
                                     }
                                 @endphp
                                 <tr id="{{ $folderKey }}">
