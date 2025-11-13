@@ -318,7 +318,7 @@
                                                 $firstname = trim($subject->firstname ?? '');
                                                 $lastname = trim($subject->lastname ?? '');
 
-                                                            // Build display name dynamically using array join to avoid double spaces
+                                                // Build display name dynamically using array join to avoid double spaces
                                                 $nameParts = [];
 
                                                 if ($useSalutation && $salutation !== '') {
