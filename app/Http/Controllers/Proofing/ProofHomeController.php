@@ -185,32 +185,60 @@ class ProofHomeController extends Controller
     public function proxySyncJob(Request $request)
     {
         $jobKey = $this->getDecryptData($request->input('jobKey'));
-
+        $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
+    
         try {
-            $jobResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/jobs/sync/{$jobKey}");
-            $folderResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/folders/sync/{$jobKey}");
-                
-                if ($jobResponse->successful() && $folderResponse->successful()) {
-                    return response()->json([
-                        'success' => true,
-                        'jobs' => $jobResponse->json(),
-                        'folders' => $folderResponse->json(),
-                    ]);
-                }
-                
+            // === Case 1: Job not found locally — sync both job and folder ===
+            if (!$selectedJob) {
+                $jobResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/jobs/sync/{$jobKey}");
+                $folderResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/folders/sync/{$jobKey}");
+            }
+    
+            // === Case 2: Job exists but unsynced/pending — update job + sync only folders ===
+            elseif (
+                $selectedJob->jobsync_status_id === $this->statusService->unsync &&
+                $selectedJob->foldersync_status_id === $this->statusService->pending
+            ) {
+                $this->jobService->updateJobData($jobKey, 'jobsync_status_id', $this->statusService->sync);
+    
+                $folderResponse = Http::withoutVerifying()->get("http://bpsync.msp.local/index.php/folders/sync/{$jobKey}");
+                $jobResponse = null; // Not needed in this case
+            }
+    
+            // === Case 3: Already synced — no need to do anything ===
+            else {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'One or more sync calls failed',
-                    'job_status' => $jobResponse->status(),
-                    'folder_status' => $folderResponse->status(),
+                    'success' => true,
+                    'message' => 'Job already synced.'
                 ]);
+            }
+    
+            // === Evaluate Sync Results ===
+            if (
+                (isset($jobResponse) ? $jobResponse->successful() : true) && 
+                isset($folderResponse) && $folderResponse->successful()
+            ) {
+                return response()->json([
+                    'success' => true,
+                    'jobs' => $jobResponse?->json(),
+                    'folders' => $folderResponse->json(),
+                ]);
+            }
+    
+            // === Handle Sync Failures ===
+            return response()->json([
+                'success' => false,
+                'message' => 'One or more sync calls failed.',
+                'job_status' => $jobResponse?->status(),
+                'folder_status' => $folderResponse?->status(),
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
-    }
+    }    
 
     public function archive(Request $request)
     {

@@ -101,19 +101,12 @@
 @push('scripts')
 <script>
     $(document).ready(function () {
-        // === CSRF Setup ===
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-    
-        // === Auto Refresh Configuration ===
+        // === Auto Refresh ===
         const targetUrl = "{{ url()->current() }}";
-        const refreshDelay = 4000; // 4 seconds
+        const refreshDelay = 4000;
         let refreshCounter = 1;
         const refreshLimit = 100;
-        let schoolsContentTimer = setInterval(refreshJobs, refreshDelay);
+        const refreshTimer = setInterval(refreshJobs, refreshDelay);
     
         function refreshJobs() {
             $.ajax({
@@ -122,90 +115,61 @@
                 url: targetUrl,
                 success: function (htmlResult) {
                     const newContent = $('<div>').html(htmlResult).find("#jobs-container").html();
-    
-                    // Smooth transition for content update
-                    $("#jobs-container").fadeOut(150, function () {
-                        $(this).html(newContent).fadeIn(150);
-    
-                        // Reapply filter if text is present
-                        if (typeof filterSchoolsTable === "function") {
-                            filterSchoolsTable();
-                        }
-                    });
+                    $("#jobs-container").html(newContent);
+                    if (typeof filterSchoolsTable === "function") filterSchoolsTable();
                 },
                 error: function () {
-                   // console.error("Failed to refresh jobs section.");
+                    console.error("Failed to refresh jobs section.");
                 }
             });
     
-            if (refreshCounter++ >= refreshLimit) {
-                clearInterval(schoolsContentTimer);
-            }
+            if (refreshCounter++ >= refreshLimit) clearInterval(refreshTimer);
         }
     
         // === Filter Jobs ===
         $('#school-name-filter').on('keyup', filterSchoolsTable);
     
         function filterSchoolsTable() {
-            const filterByTextOriginal = $('#school-name-filter').val();
-            const filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
-    
-            if (filterByText.length >= 1) {
+            const searchText = $('#school-name-filter').val().toLowerCase().replace("'", "\\'");
+            if (searchText.length > 0) {
                 $(".school").addClass("d-none");
-                const foundSchools = $("[data-school-name*='" + filterByText + "']").removeClass("d-none");
-                const foundCount = foundSchools.length;
-                $("#school-name-filter-feedback").text("Found " + foundCount + " Jobs containing '" + filterByTextOriginal + "'.");
+                const matched = $("[data-school-name*='" + searchText + "']").removeClass("d-none");
+                $("#school-name-filter-feedback").text(`Found ${matched.length} Jobs containing "${searchText}".`);
             } else {
                 $(".school").removeClass("d-none");
                 $("#school-name-filter-feedback").text("");
             }
         }
     
-        // === Open Job Button (Delegated Click) ===
+        // === Open Job Button ===
         $(document).on('click', '.openJobBtn', function (e) {
             e.preventDefault();
     
             const jobId = $(this).data('job-id');
             const jobKey = $(this).data('job-key');
     
-            // console.log("Syncing job:", jobKey);
-    
-            // Step 1: Proxy sync with private server
             $.ajax({
                 url: "{{ route('proxy.syncJob') }}",
                 type: "POST",
-                data: { jobKey: jobKey },
+                data: { _token: '{{ csrf_token() }}', jobKey },
                 success: function (proxyResponse) {
-                    // console.log("Proxy sync response:", proxyResponse);
-    
                     if (proxyResponse.success) {
-                        // console.log("Proxy sync successful. Opening job:", jobId);
-    
-                        // Step 2: Open job session
                         $.ajax({
                             url: "{{ route('dashboard.openJob') }}",
                             type: "GET",
-                            data: { jobId: jobId },
+                            data: { jobId },
                             success: function (response) {
-                                // console.log("OpenJob response:", response);
                                 if (response.success) {
-                                    // Stop refreshing before redirect
-                                    clearInterval(schoolsContentTimer);
                                     window.location.href = "{{ url('/proofing') }}";
-                                } else {
-                                    // console.error("Failed to open job:", response);
                                 }
-                            },
-                            error: function (xhr, status, error) {
-                                // console.error("OpenJob AJAX error:", { status, error, responseText: xhr.responseText });
                             }
                         });
                     } else {
-                        // console.error("Proxy sync failed:", proxyResponse);
+                        console.error("Proxy sync failed:", proxyResponse);
                     }
                 },
-                error: function (xhr, status, error) {
-                    // console.error("Proxy sync AJAX error:", { status, error, responseText: xhr.responseText });
+                error: function () {
+                    console.error("Proxy sync AJAX error.");
                 }
             });
         });

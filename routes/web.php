@@ -117,6 +117,9 @@ Route::middleware(['auth', NoCacheHeaders::class, SeasonJobFlag::class])->group(
         Route::post('/franchise/config-job/upload-file', [ImageController::class, 'groupImageUploadFile'])->name('groupImage.uploadFile');
         //Folder-Image Delete
         Route::post('/franchise/config-job/delete-file', [ImageController::class, 'groupImageDeleteFile'])->name('groupImage.deleteFile');
+        //groupImage Show
+        Route::get('/image/{filename}', [ImageController::class, 'showgroupImage'])->name('image.show');
+
         //TNJ Refresh
         Route::post('/franchise/config-job/{action}/{hash}', [ConfigureController::class, 'handleJobAction'])
             ->name('config-job-action')

@@ -196,6 +196,20 @@ class ImageController extends Controller
         ]);
     }
 
+    public function showgroupImage($filename)
+    {
+        $path = 'groupImages/' . $this->getDecryptData($filename);
+
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        $file = Storage::disk('public')->get($path);
+        $type = Storage::disk('public')->mimeType($path);
+
+        return response($file, Response::HTTP_OK)->header('Content-Type', $type);
+    }
+
     public function groupImageUpload(Request $request)
     {
         // Ensure a file is uploaded

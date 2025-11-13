@@ -9,7 +9,7 @@
             if(isset($artifact) && isset($artifact->name)) {
                 $imagePath = storage_path('app/public/groupImages/'.$artifact->name);
                 if (file_exists($imagePath)) {
-                    $scaledImageUrl = URL::asset('/storage/groupImages/'.$artifact->name);
+                    $scaledImageUrl = route('image.show', Crypt::encryptString($artifact->name));
                     list($width, $height) = getimagesize($imagePath);
                 }
             }

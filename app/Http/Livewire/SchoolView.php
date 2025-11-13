@@ -9,6 +9,7 @@ use Auth;
 use App\Http\Resources\UserResource;
 use App\Models\School;
 use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Facades\Crypt;
 
 class SchoolView extends Component
 {
@@ -18,7 +19,8 @@ class SchoolView extends Component
     {
         $this->checkUserRole();
         // $id = Hashids::decodeHex($hashedId);
-        $this->school = School::findOrFail($hashedId);
+        $id = Crypt::decryptString($hashedId);
+        $this->school = School::findOrFail($id);
         
         // redirect to the manage users page if the user is a franchise level
         if (Auth::user()->isFranchiseLevel()) {

@@ -405,7 +405,7 @@
                                                                         $imageData = $folder->images;
                                                                         
                                                                         if (!empty($imageData) && !empty($imageData->name)) {
-                                                                            $imageUrl = asset('storage/groupImages/' . $imageData->name);
+                                                                            $imageUrl = route('image.show', Crypt::encryptString($imageData->name));
                                                                             $deleteLinkVisible = true;
                                                                         } else {
                                                                             $imageUrl = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');

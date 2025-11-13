@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Facades\Crypt;
 
 class School extends Model
 {
@@ -53,9 +54,10 @@ class School extends Model
      * Get the Hashed ID attribute.
      */
     public function getHashedIdAttribute()
-    {   
+    {    
         // return Hashids::encodeHex("$this->id");
-        return $this->id;
+        return Crypt::encryptString($this->id);
+        // return $this->id;
     }
 
     //Proofing    

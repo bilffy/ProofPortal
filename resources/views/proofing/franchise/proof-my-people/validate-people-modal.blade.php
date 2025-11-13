@@ -89,7 +89,7 @@
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-3 col-sm-12">
-                                        <img style="max-width: 100%" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Photo-Image">
+                                        <img style="max-width: 100%" class="lazyload mx-auto d-block" data-src="{{ $image_url }}" alt="Photo-Image">
                                     </div>
                                     <div class="col-md-9 col-sm-12">
                                     <select id="subjects_questions" name="subjects_questions" data-id="{{ $skHash }}" class="form-control is_subject_select">
@@ -351,7 +351,7 @@
 
                                             <td class="idx-artifact text-center pt-2 pb-1">
                                                 <div class="person-pic-wrapper d-inline">
-                                                    <img style="max-height: 100px;" class="lazyload mx-auto d-block" src="{{ asset('proofing-assets/img/subject-image.png') }}" data-src="{{ $image_url }}" alt="Subject Image">
+                                                    <img style="max-height: 100px;" class="lazyload mx-auto d-block" data-src="{{ $image_url }}" alt="Subject Image">
                                                 </div>
                                             </td>
                                             @if ($currentFolder->is_edit_salutation)
