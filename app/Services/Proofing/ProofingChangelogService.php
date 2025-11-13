@@ -100,6 +100,20 @@ class ProofingChangelogService
         return;
     }
 
+    public function getAllApprovedFolderGroupChangeByJobKey($jobKey)
+    {
+        return ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+            ->where('ts_jobkey', $jobKey)
+            ->where('resolved_status_id', $this->statusService->active)
+            ->whereIn('issues.issue_name', [
+                'FOLDER_NAME_CHANGE',
+                'DEPUTY',
+                'PRINCIPAL',
+                'TEACHER'
+            ])
+            ->count();
+    }
+
     public function getAllApprovedSubjectChangeByJobKey($jobKey)
     {
         $subjectChanges = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')

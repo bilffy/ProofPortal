@@ -162,6 +162,7 @@
                                         $image_url = route('serve.image', ['filename' => $skEncrypted]);
                                     }
                                 @endphp
+                                
                                 <tr class="folder-{{ $folderKey }} folder-filter" data-folder-key="{{ $folderKey }}">
                                     <td>{!! $folderName !!}</td>
                                     <td class="text-center pt-2 pb-1">
