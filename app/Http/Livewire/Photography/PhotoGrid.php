@@ -5,11 +5,15 @@ namespace App\Http\Livewire\Photography;
 use App\Helpers\FilenameFormatHelper;
 use App\Helpers\PhotographyHelper;
 use App\Services\ImageService;
+use App\Services\SchoolService;
+use App\Services\UserService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
+use Auth;
+use Illuminate\Support\Facades\Session;
 
 class PhotoGrid extends Component
 {
@@ -36,6 +40,15 @@ class PhotoGrid extends Component
         $this->category = $category;
         $this->season = $season;
         $this->schoolKey = $schoolKey;
+        
+        $schoolService = new SchoolService();
+
+        $user = Auth::user();
+        $school = $schoolService->getSchoolBySchoolKey($this->schoolKey)->first();
+        
+        if (UserService::isCanAccessImage($user, $school) === false) {
+            abort(403, 'Access denied.');                    
+        }                   
 
         $this->setupFilters($season);
     }
@@ -218,7 +231,7 @@ class PhotoGrid extends Component
     }
 
     public function render()
-    {
+    {   
         $paginatedImages = $this->getImages();
         return view('livewire.photography.photo-grid', ['paginatedImages' => $paginatedImages]);
     }

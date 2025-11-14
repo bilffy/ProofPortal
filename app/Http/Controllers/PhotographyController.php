@@ -23,6 +23,7 @@ use App\Models\ImageOptions;
 use App\Services\ImageService;
 use App\Services\SchoolService;
 use App\Services\Storage\FileStorageService;
+use App\Services\UserService;
 use Auth;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -119,7 +120,15 @@ class PhotographyController extends Controller
     }
     
     public function requestDownloadDetails(Request $request)
-    {
+    {   
+        $school = SchoolContextHelper::getSchool();
+
+        $user = Auth::user();
+        
+        if (UserService::isCanAccessImage($user, $school) === false) {
+            abort(403, 'Access denied.');                    
+        }      
+
         // get the nonce from the request header
         if ($request->header('MSP-Nonce') !== session('download-request-nonce')) {
             return response()->json('Invalid Request', 422);
@@ -127,6 +136,7 @@ class PhotographyController extends Controller
         
         $validator = Validator::make($request->all(), [
             'images' => 'array',
+            'images.*' => ['string', 'not_regex:/\\$/'], // reject any item containing a `$`
             'category' => 'required|integer|in:1,2',
             'filters' => 'required|array',
             'filters.year' => 'required|string',
@@ -143,7 +153,6 @@ class PhotographyController extends Controller
         
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
-        $school = SchoolContextHelper::getSchool();
         $schoolKey = $school->schoolkey ?? '';
         $view = $selectedFilters['view'];
         $class = json_decode($selectedFilters['class']);
@@ -192,6 +201,41 @@ class PhotographyController extends Controller
         // get the season code as the year
         $selectedFilters['year'] = $season->code;
         
+//        // check if the image belongs to the school, basically schoolKey should match
+//        foreach ($images as $image) {
+//            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
+//            $imgRecord = Image::where('keyvalue', $key)->first();
+//            if ($imgRecord) {
+//                $job = Job::where('ts_job_id', $imgRecord->ts_job_id)->first();
+//                if ($job && $job->ts_schoolkey !== $schoolKey) {
+//                    return response()->json('Invalid Request', 422);
+//                }
+//            }
+//        }
+
+        // check if the image belongs to the school, basically schoolKey should match
+        $keys = array_filter(array_map(function($img) {
+            $decoded = preg_replace('/^img_/', '', $img);
+            $firstPass = base64_decode($decoded);
+            return $firstPass === false ? null : base64_decode($firstPass);
+        }, $images ?? []));
+        
+        // if any decoded keys exist, check in a single query joining jobs
+        if (!empty($keys)) {
+            $mismatchExists = Image::select('images.keyvalue')
+                ->join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+                ->whereIn('images.keyvalue', $keys)
+                ->where('jobs.ts_schoolkey', '!=', $schoolKey)
+                ->exists();
+
+            if ($mismatchExists) {
+                return response()->json('Invalid Request', 403);
+            }
+        } else {
+            // if no valid decoded keys, return invalid request
+            return response()->json('Invalid Request', 422);
+        }
+        
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
             'requested_date' => now(),
@@ -206,11 +250,12 @@ class PhotographyController extends Controller
 
             // remove the img_ prefix, then decode the base64 encoded image
             $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
+            
             // Add to logged image keys
             $logImgKeys[] = $key;
             // Query the Image model to get the image data
             $image = Image::where('keyvalue', $key)->first();
-
+            
             if ($image) {
                 $job = Job::where('ts_job_id', $image->ts_job_id)->first();
                 if ($job) {
