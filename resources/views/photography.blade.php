@@ -122,6 +122,9 @@
                 <x-modal.body>
                     <p id="confirm-download-body"></p>
                     <p id="confirm-download-notes" class="text-neutral-600"></p>
+                    <p id="confirm-download-tnc" class="text-neutral-600">
+                        View MSP Photography's <a href="https://www.msp.com.au/terms-of-use" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a>
+                    </p>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
