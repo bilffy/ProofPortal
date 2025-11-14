@@ -39,7 +39,7 @@ return [
     'SUBJECT_ISSUE_PICTURE_NOTEXIST_NOTE' => 'Picture is not of "FIRSTNAME LASTNAME", I\'m not sure who it belongs to.',
     'SUBJECT_ISSUE_CLASS_EXIST_NOTE' => '"FIRSTNAME LASTNAME" does not belong in "CURRENTFOLDER", they may belong in "NEWFOLDER".',
     'SUBJECT_ISSUE_CLASS_NOTEXIST_NOTE' => '"FIRSTNAME LASTNAME" does not belong in "CURRENTFOLDER". I\'m not sure where they belong.',
-    'SUBJECT_ISSUE_LEFT_SCHOOL_NOTE' => '"FIRSTNAME LASTNAME" in class CURRENTFOLDER has left this School.',
+    'SUBJECT_ISSUE_LEFT_SCHOOL_NOTE' => '"FIRSTNAME LASTNAME" in class "CURRENTFOLDER" has left this School.',
     'SUBJECT_ISSUE_JOBTITLE_SALUTATION_NOTE' => 'Change in title/salutation from [Title: "TITLEFROM"] [Salutation: "SALUTATIONFROM"] to [Title: "TITLETO"] [Salutation: "SALUTATIONTO"].',
     'SUBJECT_ISSUE_PREFIX_SUFFIX_NOTE' => 'Change in prefix/suffix from [Prefix: "PREFIXFROM"] [Suffix: "SUFFIXFROM"] to [Prefix: "PREFIXTO"] [Suffix: "SUFFIXTO"].',
     'SUBJECT_ISSUE_SALUTATION_NOTE' => 'Change in salutation from [Salutation: "SALUTATIONFROM"] to [Salutation: "SALUTATIONTO"].',

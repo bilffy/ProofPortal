@@ -191,157 +191,162 @@
 
 @section('js')
 
-<script>
-    $(document).ready(function () {        
-        jQuery.noConflict();
-        var linkHide = $(".people-photos-hide");
-        var linkShow = $(".people-photos-show");
-        var picWrapper = $(".person-pic-wrapper");
+    <script>
+        $(document).ready(function () {        
+            jQuery.noConflict();
+            var linkHide = $(".people-photos-hide");
+            var linkShow = $(".people-photos-show");
+            var picWrapper = $(".person-pic-wrapper");
 
-        linkHide.on('click', function () {
-            linkHide.toggleClass("d-none d-inline");
-            linkShow.toggleClass("d-inline d-none");
-            picWrapper.toggleClass("d-none d-inline");
-        });
+            linkHide.on('click', function () {
+                linkHide.toggleClass("d-none d-inline");
+                linkShow.toggleClass("d-inline d-none");
+                picWrapper.toggleClass("d-none d-inline");
+            });
 
-        linkShow.on('click', function () {
-            linkHide.toggleClass("d-none d-inline");
-            linkShow.toggleClass("d-inline d-none");
-            picWrapper.toggleClass("d-none d-inline");
-        });
+            linkShow.on('click', function () {
+                linkHide.toggleClass("d-none d-inline");
+                linkShow.toggleClass("d-inline d-none");
+                picWrapper.toggleClass("d-none d-inline");
+            });
 
-        $('#ModifyApproval_Modal').on('show.bs.modal', function (event) {
-            var modal = $(this);
-            var button = $(event.relatedTarget);
-            var skHash = button.data('skhash'); // Extract info from data-* attributes
-            var skEncrypted = button.data('skencrypted'); // Extract info from data-* attributes
-            var subjectFullName = button.data('full-name'); // Extract info from data-* attributes
-            var issueType = button.data('issue-type'); // Extract info from data-* attributes
-            var issueID = button.data('issue-id'); // Extract info from data-* attributes
-            var subjectCorrectionID = button.data('correction-id'); // Extract info from data-* attributes
-            var rowSelector = button.data('row-selector'); // Extract info from data-* attributes
-            var approvalAction = button.data('action'); // Extract info from data-* attributes
+            $('#ModifyApproval_Modal').on('hidden.bs.modal', function () {
+                $(this).find('#picture_issue').val('');
+                $(this).find('#folder_issue').prop('selectedIndex', 0);
+            });
 
-            modal.find("#picture-issue-wrapper").addClass('d-none');
-            modal.find("#folder-issue-wrapper").addClass('d-none');
-            modal.find("#approve-issue-wrapper").addClass('d-none');
-            modal.find("#reject-issue-wrapper").addClass('d-none');
+            $('#ModifyApproval_Modal').on('show.bs.modal', function (event) {
+                var modal = $(this);
+                var button = $(event.relatedTarget);
+                var skHash = button.data('skhash'); // Extract info from data-* attributes
+                var skEncrypted = button.data('skencrypted'); // Extract info from data-* attributes
+                var subjectFullName = button.data('full-name'); // Extract info from data-* attributes
+                var issueType = button.data('issue-type'); // Extract info from data-* attributes
+                var issueID = button.data('issue-id'); // Extract info from data-* attributes
+                var subjectCorrectionID = button.data('correction-id'); // Extract info from data-* attributes
+                var rowSelector = button.data('row-selector'); // Extract info from data-* attributes
+                var approvalAction = button.data('action'); // Extract info from data-* attributes
 
-            if (approvalAction === 'modify' && issueType === 'Class') {
-                modal.find("#ModifyApproval_Modal_Title").html("Modify Approval for " + subjectFullName);
-                modal.find("#send-correction").html("Modify & Approve");
-                modal.find("#folder-issue-wrapper").removeClass('d-none');
-            } else if (approvalAction === 'modify' && issueType === 'Picture') {
-                modal.find("#ModifyApproval_Modal_Title").html("Modify Approval for " + subjectFullName);
-                modal.find("#send-correction").html("Modify & Approve");
-                modal.find("#picture-issue-wrapper").removeClass('d-none');
-            } else if (approvalAction === 'approve') {
-                modal.find("#ModifyApproval_Modal_Title").html("Approve Changes to " + subjectFullName);
-                modal.find("#send-correction").html("Approve");
-                modal.find("#approve-issue-wrapper").removeClass('d-none');
-            } else if (approvalAction === 'reject') {
-                modal.find("#ModifyApproval_Modal_Title").html("Reject Changes to " + subjectFullName);
-                modal.find("#send-correction").html("Reject");
-                modal.find("#reject-issue-wrapper").removeClass('d-none');
-            }
+                modal.find("#picture-issue-wrapper").addClass('d-none');
+                modal.find("#folder-issue-wrapper").addClass('d-none');
+                modal.find("#approve-issue-wrapper").addClass('d-none');
+                modal.find("#reject-issue-wrapper").addClass('d-none');
 
-            $('#send-correction').off('click').on('click', function () {
-                send();
-            })
-
-            function send() {
-                var targetUrl = base_url + "/changes-action/" + skEncrypted;
-
-                var picture_issue = '';
-                var folder_issue = '';
-                var formData = new FormData();
-
-                if (issueType === 'Class') {
-                    folder_issue = $('#folder_issue').val()
-                    const modifyEl = document.getElementById('modify');
-
-                    if (modifyEl.hasAttribute('data-change-from')) {
-                        const fkEncrypted = modifyEl.getAttribute('data-change-from');
-                        formData.append("folder_key_encrypted", fkEncrypted);
-                    }
-
-                } else if (issueType === 'Picture') {
-                    picture_issue = $('#picture_issue').val()
+                if (approvalAction === 'modify' && issueType === 'Class') {
+                    modal.find("#ModifyApproval_Modal_Title").html("Modify Approval for " + subjectFullName);
+                    modal.find("#send-correction").html("Modify & Approve");
+                    modal.find("#folder-issue-wrapper").removeClass('d-none');
+                } else if (approvalAction === 'modify' && issueType === 'Picture') {
+                    modal.find("#ModifyApproval_Modal_Title").html("Modify Approval for " + subjectFullName);
+                    modal.find("#send-correction").html("Modify & Approve");
+                    modal.find("#picture-issue-wrapper").removeClass('d-none');
+                } else if (approvalAction === 'approve') {
+                    modal.find("#ModifyApproval_Modal_Title").html("Approve Changes to " + subjectFullName);
+                    modal.find("#send-correction").html("Approve");
+                    modal.find("#approve-issue-wrapper").removeClass('d-none');
+                } else if (approvalAction === 'reject') {
+                    modal.find("#ModifyApproval_Modal_Title").html("Reject Changes to " + subjectFullName);
+                    modal.find("#send-correction").html("Reject");
+                    modal.find("#reject-issue-wrapper").removeClass('d-none');
                 }
 
-                formData.append("subject_key_hash", skHash);
-                formData.append("subject_key_encrypted", skEncrypted);
-                formData.append("subject_correction_id", subjectCorrectionID);
-                if(issueID){
-                    formData.append("subjects_questions", issueID);
-                }
-                formData.append("action", approvalAction);
-                formData.append("picture_issue", picture_issue);
-                formData.append("folder_issue", folder_issue);
-
-                formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
-
-                $.ajax({
-                    type: "POST",
-                    url: targetUrl,
-                    async: true,
-                    data: formData,
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    timeout: 60000,
-
-                    success: function (response) {  
-                        let parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
-                        if (parsedResponse.success === true) {
-                            let acknowledgeMessage = '';
-                            let backgroundColor = '';
-                            let alertClass = '';
-
-                            switch(parsedResponse.action) {
-                                case 'approve':
-                                    backgroundColor = "#83f28f";
-                                    acknowledgeMessage = "The Approval has been noted.";
-                                    alertClass = "bg-success";
-                                    break;
-                                case 'reject':
-                                    backgroundColor = "#FF6865";
-                                    acknowledgeMessage = "The rejection has been noted.";
-                                    alertClass = "bg-danger";
-                                    break;
-                                case 'modify':
-                                    backgroundColor = "#83f28f";
-                                    acknowledgeMessage = "The Modification has been noted.";
-                                    alertClass = "bg-success";
-                                    break;
-                                default:
-                                    backgroundColor = "#ffffff"; // default or neutral color
-                                    acknowledgeMessage = "Unknown action.";
-                                    alertClass = "bg-warning";
-                                    break;
-                            }
-
-                            $('#' + rowSelector).find("td").css("background-color", backgroundColor).fadeOut(1000);
-                            $('#approval-acknowledge')
-                                .removeClass("bg-success bg-info bg-warning bg-danger")
-                                .addClass(alertClass)
-                                .html(acknowledgeMessage).fadeIn(500).delay(3000).fadeOut(500);
-                        } else {
-                            $('#approval-acknowledge')
-                                .removeClass("bg-success bg-info bg-warning bg-danger")
-                                .addClass("bg-danger")
-                                .html("Sorry, something went wrong, please try again.").fadeIn(500).delay(3000).fadeOut(500);
-                        }
-                    },
-                    error: function (e) {
-                            //alert("An error occurred: " + e.responseText.message);
-                            // console.log(e);
-                    }
+                $('#send-correction').off('click').on('click', function () {
+                    send();
                 })
-            }
+
+                function send() {
+                    var targetUrl = base_url + "/changes-action/" + skEncrypted;
+
+                    var picture_issue = '';
+                    var folder_issue = '';
+                    var formData = new FormData();
+
+                    if (issueType === 'Class') {
+                        folder_issue = $('#folder_issue').val()
+                        const modifyEl = document.getElementById('modify');
+
+                        if (modifyEl.hasAttribute('data-change-from')) {
+                            const fkEncrypted = modifyEl.getAttribute('data-change-from');
+                            formData.append("folder_key_encrypted", fkEncrypted);
+                        }
+
+                    } else if (issueType === 'Picture') {
+                        picture_issue = $('#picture_issue').val()
+                    }
+
+                    formData.append("subject_key_hash", skHash);
+                    formData.append("subject_key_encrypted", skEncrypted);
+                    formData.append("subject_correction_id", subjectCorrectionID);
+                    if(issueID){
+                        formData.append("subjects_questions", issueID);
+                    }
+                    formData.append("action", approvalAction);
+                    formData.append("picture_issue", picture_issue);
+                    formData.append("folder_issue", folder_issue);
+
+                    formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+
+                    $.ajax({
+                        type: "POST",
+                        url: targetUrl,
+                        async: true,
+                        data: formData,
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        timeout: 60000,
+
+                        success: function (response) {  
+                            let parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
+                            if (parsedResponse.success === true) {
+                                let acknowledgeMessage = '';
+                                let backgroundColor = '';
+                                let alertClass = '';
+
+                                switch(parsedResponse.action) {
+                                    case 'approve':
+                                        backgroundColor = "#83f28f";
+                                        acknowledgeMessage = "The Approval has been noted.";
+                                        alertClass = "bg-success";
+                                        break;
+                                    case 'reject':
+                                        backgroundColor = "#FF6865";
+                                        acknowledgeMessage = "The rejection has been noted.";
+                                        alertClass = "bg-danger";
+                                        break;
+                                    case 'modify':
+                                        backgroundColor = "#83f28f";
+                                        acknowledgeMessage = "The Modification has been noted.";
+                                        alertClass = "bg-success";
+                                        break;
+                                    default:
+                                        backgroundColor = "#ffffff"; // default or neutral color
+                                        acknowledgeMessage = "Unknown action.";
+                                        alertClass = "bg-warning";
+                                        break;
+                                }
+
+                                $('#' + rowSelector).find("td").css("background-color", backgroundColor).fadeOut(1000);
+                                $('#approval-acknowledge')
+                                    .removeClass("bg-success bg-info bg-warning bg-danger")
+                                    .addClass(alertClass)
+                                    .html(acknowledgeMessage).fadeIn(500).delay(3000).fadeOut(500);
+                            } else {
+                                $('#approval-acknowledge')
+                                    .removeClass("bg-success bg-info bg-warning bg-danger")
+                                    .addClass("bg-danger")
+                                    .html("Sorry, something went wrong, please try again.").fadeIn(500).delay(3000).fadeOut(500);
+                            }
+                        },
+                        error: function (e) {
+                                //alert("An error occurred: " + e.responseText.message);
+                                // console.log(e);
+                        }
+                    })
+                }
+            });
         });
-    });
-</script>
+    </script>
 
 @stop
 
