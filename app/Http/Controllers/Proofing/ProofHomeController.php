@@ -127,7 +127,7 @@ class ProofHomeController extends Controller
         ]);
     }
     
-
+    
     public function closeSeason()
     {
         Session::pull('selectedSeasonDashboard');

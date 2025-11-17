@@ -193,33 +193,52 @@
 @section('js')
     <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
     <script>
-        $('#folder').select2();
-        const emailArrayRaw = @json($emails ?? []);
-        const emailArray = Array.isArray(emailArrayRaw) ? emailArrayRaw : [];
-        
         document.addEventListener("DOMContentLoaded", function () {
             const emailInput = document.getElementById("email");
             const feedback = document.getElementById("feedback");
             const submitButton = document.getElementById("submitButton");
-
+            const role = "{{ $role }}"; // Role passed from blade
+        
             emailInput.addEventListener("keyup", function () {
                 const typedEmail = emailInput.value.trim();
-
+        
                 if (typedEmail === "") {
                     feedback.textContent = "";
                     submitButton.disabled = true;
                     return;
                 }
-
-                if (!emailArray.includes(typedEmail)) {
-                    feedback.textContent = "Email does not exist.";
+        
+                // Call API to check email
+                fetch("{{ route('validate.email') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        email: typedEmail,
+                        role: role
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        feedback.textContent = "";
+                        submitButton.disabled = false;
+                    } else {
+                        feedback.textContent = data.message ?? "Email does not exist.";
+                        feedback.style.color = "red";
+                        submitButton.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error checking email:", error);
+                    feedback.textContent = "Error validating email.";
                     feedback.style.color = "red";
                     submitButton.disabled = true;
-                } else {
-                    feedback.textContent = "";
-                    submitButton.disabled = false;
-                }
+                });
             });
         });
-    </script>
+        </script>
+        
 @stop

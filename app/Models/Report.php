@@ -240,7 +240,7 @@ class Report extends Model
             ->join('job_users as ju_current', 'ju_current.user_id', '=', 'users.id')
             ->join('job_users as ju_logged', 'ju_logged.ts_job_id', '=', 'ju_current.ts_job_id')
             ->where('ju_logged.user_id', $userId)
-            ->where('roles.name', 'PhotoCoordinator')
+            ->where('roles.name', 'Photo Coordinator')
             ->get();
     
         return $query;
@@ -253,14 +253,14 @@ class Report extends Model
 
         $userId = Auth::user()->id; 
     
-        // Fetch users with the role 'PhotoCoordinator' who are associated with the jobs of the current user
+        // Fetch users with the role 'Teacher' who are associated with the jobs of the current user
         $query = User::select('users.id', 'users.firstname', 'users.lastname')
             ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
             ->join('roles', 'roles.role_id', '=', 'model_has_roles.role_id')
             ->join('job_users as ju_current', 'ju_current.user_id', '=', 'users.id')
             ->join('job_users as ju_logged', 'ju_logged.ts_job_id', '=', 'ju_current.ts_job_id')
             ->where('ju_logged.user_id', $userId)
-            ->where('roles.name', 'PhotoCoordinator')
+            ->where('roles.name', 'Teacher')
             ->get();
     
         return $query;

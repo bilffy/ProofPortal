@@ -151,12 +151,12 @@
                                                         @if($usersFolders->isNotEmpty())
                                                             @foreach ($usersFolders as $folder)
                                                                 <li>
-                                                                    {{ $folder->ts_foldername }}
-                                                                    <form id="remove-folder-{{ $teacher->id }}" action="{{ route('user.remove-from-folder', ['userId' => Crypt::encryptString($teacher->id), 'tsFolderId' => Crypt::encryptString($folder->ts_folder_id), 'tsJobId' => Crypt::encryptString($selectedJob->ts_job_id)]) }}" method="POST" style="display:none;">
+                                                                    {{ $folder->ts_foldername }} 
+                                                                    <form id="remove-folder-{{ $teacher->id }}-{{$folder->ts_folder_id}}" action="{{ route('user.remove-from-folder', ['userId' => Crypt::encryptString($teacher->id), 'tsFolderId' => Crypt::encryptString($folder->ts_folder_id), 'tsJobId' => Crypt::encryptString($selectedJob->ts_job_id)]) }}" method="POST" style="display:none;">
                                                                         @csrf
                                                                     </form>
                                                                     
-                                                                    <a href="#" onclick="event.preventDefault(); if(confirm('{{ __('Are you sure you want to remove :name from this Folder?', ['name' => $teacher->name]) }}')) { document.getElementById('remove-folder-{{ $teacher->id }}').submit(); }">
+                                                                    <a href="#" onclick="event.preventDefault(); if(confirm('{{ __('Are you sure you want to remove :name from this Folder?', ['name' => $teacher->name]) }}')) { document.getElementById('remove-folder-{{ $teacher->id }}-{{$folder->ts_folder_id}}').submit(); }">
                                                                         {{ __('Revoke User Access') }}
                                                                     </a>
                                                                 </li>

@@ -17,6 +17,15 @@ class SchoolView extends Component
     
     public function mount($hashedId)
     {
+        Session::forget([
+            'selectedSeasonDashboard',
+            'selectedSeason',
+            'selectedJob',
+            'openSeason',
+            'openJob',
+            'approvedSubjectChangesCount',
+            'awaitApprovalSubjectChangesCount'
+        ]);
         $this->checkUserRole();
         // $id = Hashids::decodeHex($hashedId);
         $id = Crypt::decryptString($hashedId);
@@ -27,8 +36,7 @@ class SchoolView extends Component
             // store a new session to set a reference of school context 
             Session::put('school_context-sid', $this->school->id);
             return redirect()->route('photography.configure');
-        }
-            
+        }     
     }
 
     public function checkUserRole()

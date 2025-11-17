@@ -41,12 +41,14 @@ class InvitationController extends Controller
         $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($hashedJob))->first(); 
         $tsJobId = $selectedJob->ts_job_id;
         // Fetch the users with roles "Teacher" or "Photo Coordinator" for the given ts_job_id
-        $users = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['Teacher', 'Photo Coordinator', 'Franchise']); // Filter roles
-        })
-        ->whereIn('id', function ($query) use ($tsJobId) {
-            $query->select('user_id')
-                ->from('school_app.job_users')
+        $roles = ['Teacher', 'Photo Coordinator', 'Franchise'];
+
+        $users = User::whereHas('roles', fn($q) => 
+            $q->whereIn('name', $roles)
+        )
+        ->whereIn('id', function ($sub) use ($tsJobId) {
+            $sub->select('user_id')
+                ->from('msp_portal.job_users')
                 ->where('ts_job_id', $tsJobId);
         })
         ->get();
@@ -108,94 +110,85 @@ class InvitationController extends Controller
         ]);
     }
 
-    // public function inviteSingle($role, $jobKeyHash)
-    // {
-    //     $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKeyHash))->first();
-    //     $user = Auth::user(); 
-    //     $userLevels = $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [];
-    //     foreach ($userLevels as $userLevel) {
-    //         $emails[] = User::whereHas('franchises', function ($query) use ($userLevel) {
-    //             $query->where('franchise_id', $userLevel->id);
-    //         })
-    //         ->whereNotNull('email') // Ensure the email is registered
-    //         ->pluck('email')
-    //         ->toArray(); // Ensure the plucked emails are converted to an array
-    //     }
-
-    //     return view('proofing.franchise.invitations.invitation_single', [
-    //         'expiryDate' => $this->getAccountExpirationDate(),
-    //         'role' => $role,
-    //         'selectedJob' => $selectedJob,
-    //         'emails' => $emails,
-    //         'user' => new UserResource($user)
-    //     ]);
-    // }
-
     public function inviteSingle($role, $jobKeyHash)
     {
-        $selectedJob = $this->jobService
-            ->getJobByJobKey($this->getDecryptData($jobKeyHash))
-            ->first();
-    
+        $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKeyHash))->first();
         $user = Auth::user(); 
-        $franchise = $user->getFranchise();
-    
-        $emails = [];
-    
-        if ($franchise) {
-            // Users who belong to the same franchise
-            $franchiseUserEmails = User::whereHas('franchises', function ($query) use ($franchise) {
-                    $query->where('franchise_id', $franchise->id);
-                })
-                ->whereNotNull('email')
-                ->pluck('email')
-                ->toArray();
-    
-            $emails = array_merge($emails, $franchiseUserEmails);
-    
-            // Users who belong to schools under the franchise
-            $schoolIds = School::whereHas('franchises', function ($query) use ($franchise) {
-                    $query->where('franchise_id', $franchise->id);
-                })
-                ->pluck('id');
-    
-            if ($schoolIds->isNotEmpty()) {
-                $schoolUserEmails = User::whereHas('schools', function ($query) use ($schoolIds) {
-                        $query->whereIn('school_id', $schoolIds);
-                    })
-                    ->whereNotNull('email')
-                    ->pluck('email')
-                    ->toArray();
-    
-                $emails = array_merge($emails, $schoolUserEmails);
-            }
-    
-            // Users with 'admin' role (anywhere in the system)
-            $adminEmails = User::role(['Super Admin', 'Admin'])
-                ->whereNotNull('email')
-                ->pluck('email')
-                ->toArray();
-    
-            $emails = array_merge($emails, $adminEmails);
-        }
-    
-        // Clean and flatten
-        $emails = collect($emails)
-            ->flatten()
-            ->unique()
-            // ->reject(fn ($email) => $email === $user->email) // exclude current user
-            ->values()
-            ->toArray();
-    
         return view('proofing.franchise.invitations.invitation_single', [
             'expiryDate' => $this->getAccountExpirationDate(),
             'role' => $role,
             'selectedJob' => $selectedJob,
-            'emails' => $emails,
             'user' => new UserResource($user)
         ]);
     }
+
+    public function validateEmail(Request $request)
+    {
+        $email = $request->email;
+        $role  = $request->role;   // e.g., "Photo Coordinator"
+        $user  = Auth::user();
     
+        if (!$email || !$role) {
+            return response()->json([
+                'exists' => false,
+                'message' => 'Invalid request'
+            ]);
+        }
+    
+        // Base query
+        $query = User::query()
+            ->join('model_has_roles', function ($join) {
+                $join->on('users.id', '=', 'model_has_roles.model_id')
+                    ->where('model_has_roles.model_type', '=', User::class);
+            })
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
+            ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
+            ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
+            ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
+            ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
+            ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
+            ->where('users.email', $email);
+    
+        //Step 1: Check if email exists at all
+        if (!$query->exists()) {
+            return response()->json([
+                'exists' => false,
+                'message' => "Email not found. Please add the user for the role {$role}."
+            ]);
+        }
+    
+        //Step 2: If logged-in user is school-level → filter by school
+        if ($user->isSchoolLevel()) {
+            $school = $user->getSchool();
+            $query->where('schools.id', $school->id);
+    
+            if (!$query->exists()) {
+                return response()->json([
+                    'exists' => false,
+                    'message' => "Email not associated with the respective school."
+                ]);
+            }
+        }
+    
+        $normalizedRole = strtolower(str_replace(' ', '', $role));
+        //Step 3: Check role association
+        $roleCheckQuery = clone $query;   // prevent modifying original
+        $roleCheckQuery->whereRaw(
+            "REPLACE(LOWER(roles.name), ' ', '') = ?",
+            [$normalizedRole]
+        );
+    
+        if (!$roleCheckQuery->exists()) {
+            return response()->json([
+                'exists' => false,
+                'message' => "Email not associated with the role {$role}. Please add the user for the role {$role}."
+            ]);
+        }
+    
+        // All checks passed
+        return response()->json(['exists' => true]);
+    }      
 
     public function inviteMulti($role, $jobKeyHash)
     {
@@ -216,56 +209,95 @@ class InvitationController extends Controller
         $inviteUsers = [];
         $user = Auth::user();
 
-        // Get emails for the user's franchise
-        // $emails = $user->isFranchiseLevel()
-        //     ? User::whereHas('franchises', fn($query) => $query->where('franchise_id', $user->getFranchise()->id))
-        //         ->whereNotNull('email')
-        //         ->pluck('email')
-        //         ->toArray()
-        //     : [];
+        $peopleArray = $request->people
+            ? json_decode($request->people, true)
+            : [[null, null, $request->email, $request->folder]];
 
-        // Process multiple people or a single email
-        $peopleArray = $request->people ? json_decode($request->people, true) : [[null, null, $request->email, $request->folder]];
+        // Normalize role ("Photo Coordinator" => "photocoordinator")
+        $normalizedRole = strtolower(str_replace(' ', '', $request->role));
 
-        
         foreach ($peopleArray as $person) {
+
             $email = $person[2] ?? null;
             $folderKey = $person[3] ?? null;
 
-            if($email){
-                // if (!in_array($email, $emails)) {
-                //     $errorMessages[] = "Email - {$email} does not exist.";
-                //     continue;
-                // }
+            if (!$email) {
+                continue;
+            }
 
-                $inviteUser = User::where('email', $email)->select('id')->first();
+            // --- 1. CHECK EMAIL EXISTS ---
+            $baseQuery = User::query()
+                ->join('model_has_roles', function ($join) {
+                    $join->on('users.id', '=', 'model_has_roles.model_id')
+                        ->where('model_has_roles.model_type', '=', User::class);
+                })
+                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
+                ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
+                ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
+                ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
+                ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
+                ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
+                ->where('users.email', $email);
 
-                $folders = $folderKey === '*'
-                    ? Folder::whereHas('job', fn($query) => $query->where('ts_jobkey', $request->job_key))
-                        ->select('ts_folder_id','ts_job_id')
-                        ->get()
-                    : Folder::whereHas('job', fn($query) => $query->where('ts_jobkey', $request->job_key))
-                        ->where('ts_folderkey', $folderKey)
-                        ->select('ts_folder_id','ts_job_id')
-                        ->get();
+            if (!$baseQuery->exists()) {
+                $errorMessages[] = "Email {$email} does not exist. Please add the user for the role {$request->role}.";
+                continue;
+            }
 
-                foreach ($folders as $folder) {
-                    $this->saveFolderUser($folder->ts_job_id, $folder->ts_folder_id, $inviteUser->id, $inviteUsers);
+            // --- 2. CHECK SCHOOL/FRANCHISE CONTEXT ---
+            if ($user->isSchoolLevel()) {
+                $school = $user->getSchool();
+                $contextQuery = (clone $baseQuery)->where('schools.id', $school->id);
+
+                if (!$contextQuery->exists()) {
+                    $errorMessages[] = "Email {$email} is not associated with your school.";
+                    continue;
                 }
+            }
+
+            // --- 3. CHECK ROLE MATCH (CASE INSENSITIVE, SPACE-INSENSITIVE) ---
+            $roleCheckQuery = clone $baseQuery;
+            $roleCheckQuery->whereRaw(
+                "REPLACE(LOWER(roles.name), ' ', '') = ?",
+                [$normalizedRole]
+            );
+
+            if (!$roleCheckQuery->exists()) {
+                $errorMessages[] =
+                    "Email {$email} is not associated with the role {$request->role}. Please add the user for this role.";
+                continue;
+            }
+
+            // At this point → email is valid, belongs to correct role, and correct school/franchise.
+
+            // Fetch the user ID
+            $inviteUser = User::where('email', $email)->select('id')->first();
+
+            // --- 4. FOLDER ASSIGNMENT ---
+            $folders = $folderKey === '*'
+                ? Folder::whereHas('job', fn($q) => $q->where('ts_jobkey', $request->job_key))
+                    ->select('ts_folder_id', 'ts_job_id')->get()
+                : Folder::whereHas('job', fn($q) => $q->where('ts_jobkey', $request->job_key))
+                    ->where('ts_folderkey', $folderKey)
+                    ->select('ts_folder_id', 'ts_job_id')->get();
+
+            foreach ($folders as $folder) {
+                $this->saveFolderUser($folder->ts_job_id, $folder->ts_folder_id, $inviteUser->id, $inviteUsers);
             }
         }
 
-        // Save email folder content for unique users
+        // --- 5. SAVE INVITATION CONTENT FOR UNIQUE USERS ---
         foreach (array_unique($inviteUsers) as $inviteUserId) {
             $this->emailService->saveInvitationContent(
                 $request->role,
                 $inviteUserId,
-                Carbon::now(),
+                now(),
                 $request->job_key
             );
         }
 
-        // Flash error or success messages
+        // --- 6. FLASH MESSAGES ---
         if ($errorMessages) {
             session()->flash('errors', array_unique($errorMessages));
         } else {
@@ -274,6 +306,71 @@ class InvitationController extends Controller
 
         return redirect()->back();
     }
+
+    // public function inviteSend(Request $request)
+    // {
+    //     $errorMessages = [];
+    //     $inviteUsers = [];
+    //     $user = Auth::user();
+
+    //     // Get emails for the user's franchise
+    //     // $emails = $user->isFranchiseLevel()
+    //     //     ? User::whereHas('franchises', fn($query) => $query->where('franchise_id', $user->getFranchise()->id))
+    //     //         ->whereNotNull('email')
+    //     //         ->pluck('email')
+    //     //         ->toArray()
+    //     //     : [];
+
+    //     // Process multiple people or a single email
+    //     $peopleArray = $request->people ? json_decode($request->people, true) : [[null, null, $request->email, $request->folder]];
+
+        
+    //     foreach ($peopleArray as $person) {
+    //         $email = $person[2] ?? null;
+    //         $folderKey = $person[3] ?? null;
+
+    //         if($email){
+    //             // if (!in_array($email, $emails)) {
+    //             //     $errorMessages[] = "Email - {$email} does not exist.";
+    //             //     continue;
+    //             // }
+
+    //             $inviteUser = User::where('email', $email)->select('id')->first();
+
+    //             $folders = $folderKey === '*'
+    //                 ? Folder::whereHas('job', fn($query) => $query->where('ts_jobkey', $request->job_key))
+    //                     ->select('ts_folder_id','ts_job_id')
+    //                     ->get()
+    //                 : Folder::whereHas('job', fn($query) => $query->where('ts_jobkey', $request->job_key))
+    //                     ->where('ts_folderkey', $folderKey)
+    //                     ->select('ts_folder_id','ts_job_id')
+    //                     ->get();
+
+    //             foreach ($folders as $folder) {
+    //                 $this->saveFolderUser($folder->ts_job_id, $folder->ts_folder_id, $inviteUser->id, $inviteUsers);
+    //             }
+    //         }
+    //     }
+
+    //     // Save email folder content for unique users
+    //     foreach (array_unique($inviteUsers) as $inviteUserId) {
+    //         $this->emailService->saveInvitationContent(
+    //             $request->role,
+    //             $inviteUserId,
+    //             Carbon::now(),
+    //             $request->job_key
+    //         );
+    //     }
+
+    //     // Flash error or success messages
+    //     if ($errorMessages) {
+    //         session()->flash('errors', array_unique($errorMessages));
+    //     } else {
+    //         session()->flash('success', 'Invitations sent successfully.');
+    //     }
+
+    //     return redirect()->back();
+    // }
 
     /**
      * Save user-folder association without duplication.
@@ -322,7 +419,7 @@ class InvitationController extends Controller
         $user = Crypt::decryptString($userId);
         $folder = Crypt::decryptString($tsFolderId);
         $job = Crypt::decryptString($tsJobId);
-    
+  
         // Delete FolderUser record using decrypted values and check job ID using 'whereHas'
         FolderUser::where([['ts_folder_id', $folder], ['user_id', $user]])
             ->whereHas('folder.job', function ($query) use ($job) {

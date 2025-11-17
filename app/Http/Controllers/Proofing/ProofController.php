@@ -139,16 +139,18 @@ class ProofController extends Controller
 
         $groupDetails = $this->folderService->getGroupByFolder($currentFolder->ts_folderkey);
 
-        $finalGroupDetails = [];
+        $rawGroupDetails = $groupDetails['groupDetails'] ?? [];
 
-            foreach ($groupDetails['groupDetails'] as $rowKey => $subjects) {
+        $finalGroupDetails = [];
+                
+            foreach ($rawGroupDetails as $rowKey => $subjects) {
+
                 $finalGroupDetails[$rowKey] = [];
             
-                // Ensure $subjects is iterable (handles string/empty cases)
                 if (!is_iterable($subjects)) {
                     continue;
-                }
-            
+                }        
+                
                 foreach ($subjects as $subjectStr) {
                     $subjectStr = trim($subjectStr);
             

@@ -141,6 +141,8 @@ Route::middleware(['auth', NoCacheHeaders::class, SeasonJobFlag::class])->group(
         Route::post('/proofing/folder/revoke/{userId}/{tsFolderId}/{tsJobId}', [InvitationController::class, 'revokeFolderUser'])->name('user.remove-from-folder');
         //Revoke - Job Access
         Route::post('/proofing/job/revoke/{userId}/{tsJobId}', [InvitationController::class, 'revokeJobUser'])->name('user.remove-from-job');
+        //email-validation
+        Route::post('/validate-email', [InvitationController::class, 'validateEmail'])->name('validate.email');
 
         //View Approved Changes
         Route::get('/proofing/subject-changes/approved/{hash}', [SubjectChangesController::class, 'approveChange'])->name('subject-change.approveChange')->middleware('signed'); 

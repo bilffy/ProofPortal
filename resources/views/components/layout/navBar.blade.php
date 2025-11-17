@@ -60,10 +60,12 @@
     @endcan
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
-        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem> 
         @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
             {{-- Reports are not yet implemented, hide for now until the blueprint implemented into the system--}}
-            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>
+            @if(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true)
+                <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('reports') }}">Reports</x-layout.navItem>
+            @endif
         @endcan
     @endcan
     {{-- <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolHome" navIcon="home" href="{{ route('test2') }}">For Testing</x-layout.navItem> --}}
