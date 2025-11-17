@@ -31,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $versionFile = base_path('VERSION');
+        $version = file_exists($versionFile) ? trim(file_get_contents($versionFile)) : (@exec('git describe --tags --abbrev=0 2>/dev/null') ?: 'dev');
+        config(['app.version' => $version]);
+        
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
