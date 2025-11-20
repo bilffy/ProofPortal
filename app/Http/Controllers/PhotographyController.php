@@ -22,7 +22,7 @@ use App\Models\Subject;
 use App\Models\ImageOptions;
 use App\Services\ImageService;
 use App\Services\SchoolService;
-use App\Services\Storage\FileStorageService;
+use App\Services\Storage\StorageServiceInterface;
 use App\Services\UserService;
 use Auth;
 use App\Http\Resources\UserResource;
@@ -35,20 +35,23 @@ use Symfony\Component\Process\Process;
 class PhotographyController extends Controller
 {
     protected $schoolService;
-    protected $fileStorageService;
+    protected StorageServiceInterface $storageService;
     
     /**
      * @var ImageService $imageService
      * @var SchoolService $schoolService
-     * @var FileStorageService $fileStorageService
+     * @var StorageServiceInterface $storageService
      */
     private ImageService $imageService;
     
-    public function __construct(ImageService $imageService, SchoolService $schoolService, FileStorageService $fileStorageService)
-    {
+    public function __construct(
+        ImageService $imageService, 
+        SchoolService $schoolService,
+        StorageServiceInterface $storageService
+    ) {
         $this->imageService = $imageService;
         $this->schoolService = $schoolService;
-        $this->fileStorageService = $fileStorageService;
+        $this->storageService = $storageService;
     }
 
     public function index()
@@ -373,7 +376,7 @@ class PhotographyController extends Controller
                     $existingPath = $metadata['path'] ?? null;
                     // Remove the existing image file from storage
                     if (!empty($existingPath)) {
-                        $this->fileStorageService->delete($existingPath);
+                        $this->storageService->delete($existingPath);
                         // Update $existingImage record remove path in metadata
                         $metadata['path'] = ''; // No path means file is deleted
                         $existingImage->update([
@@ -384,7 +387,7 @@ class PhotographyController extends Controller
             }
             $filename = $key . '.' . $img->getClientOriginalExtension();
             
-            $path = $this->fileStorageService->store(env('FILE_IMAGE_UPLOAD_PATH', ''), $img, $filename);
+            $path = $this->storageService->store(env('FILE_IMAGE_UPLOAD_PATH', ''), $img, $filename);
             $newImage = SchoolPhotoUpload::create([
                 'subject_id' => $subject ? $subject->id : null,
                 'folder_id' => $folder ? $folder->id : null,
@@ -456,7 +459,7 @@ class PhotographyController extends Controller
         $deleted = false;
         $metadata = $image->metadata;
         if (isset($metadata['path'])) {
-            $deleted = $this->fileStorageService->delete($metadata['path']);
+            $deleted = $this->storageService->delete($metadata['path']);
             if ($deleted) {
                 $metadata['path'] = ''; // No path means file is deleted
                 $image->update([

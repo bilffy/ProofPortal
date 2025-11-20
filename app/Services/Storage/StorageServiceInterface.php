@@ -2,7 +2,7 @@
 
 namespace App\Services\Storage;
 
-interface FileStorageInterface
+interface StorageServiceInterface
 {
     public function store(string $path, mixed $file, string $filename = null, array $options = []): string;
 

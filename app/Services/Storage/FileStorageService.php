@@ -5,7 +5,7 @@ namespace App\Services\Storage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class FileStorageService implements FileStorageInterface
+class FileStorageService implements StorageServiceInterface
 {
     protected string $driver;
 
