@@ -15,6 +15,8 @@ use App\Helpers\UiSettingHelper;
 use App\Helpers\AppSettingsHelper;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Storage\StorageServiceInterface;
+use App\Services\Storage\StorageFactory;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +25,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind the storage implementation
+        $this->app->singleton(StorageServiceInterface::class, function ($app) {
+            return StorageFactory::make();
+        });
     }
 
     /**
