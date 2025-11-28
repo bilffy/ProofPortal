@@ -12,9 +12,11 @@ class SchoolPhotoUpload extends Model
         'folder_id',
         'image_id',
         'metadata',
+        'deleted_at',
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'deleted_at' => 'datetime',
     ];
 }

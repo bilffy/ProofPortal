@@ -357,14 +357,14 @@ class PhotographyController extends Controller
             $subject = Subject::where('ts_subjectkey', $key)->first();
             if ($subject) {
                 $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
-                $existingImages = SchoolPhotoUpload::where('subject_id', $subject->id)->get();
+                $existingImages = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->get();
                 $origin = 'subject';
             } else {
                 $folder = Folder::where('ts_folderkey', $key)->first();
                 if (!$folder) {
                     return response()->json(['success' => false, 'message' => 'Origin not found.'], 404);
                 }
-                $existingImages = SchoolPhotoUpload::where('folder_id', $folder->id)->get();
+                $existingImages = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->get();
                 $origin = 'folder';
             }
             $image = Image::where('keyvalue', $key)
@@ -434,7 +434,7 @@ class PhotographyController extends Controller
         if ($subject) {
             $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
             $image = SchoolPhotoUpload::where('subject_id', $subject->id)
-                ->where('folder_id', $folder->id);
+                ->where('folder_id', $folder->id)->whereNull('deleted_at');
             $origin = 'subject';
         } else {
             $folder = Folder::where('ts_folderkey', $key)->first();
@@ -442,7 +442,7 @@ class PhotographyController extends Controller
                 return response()->json(['success' => false, 'message' => 'Origin not found.', 'key' => $key], 404);
             }
             $image = SchoolPhotoUpload::where('folder_id', $folder->id)
-                ->where('subject_id', null);
+                ->where('subject_id', null)->whereNull('deleted_at');
             $origin = 'folder';
         }
 
@@ -464,6 +464,7 @@ class PhotographyController extends Controller
                 $metadata['path'] = ''; // No path means file is deleted
                 $image->update([
                     'metadata' => $metadata,
+                    'deleted_at' => now(),
                 ]);
             }
         }

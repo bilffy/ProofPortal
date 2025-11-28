@@ -21,7 +21,8 @@ RUN apt-get install -y  \
     libzip-dev \
     libxslt1-dev \
     libonig-dev \
-    wget
+    wget \
+    cron
 
 
 RUN docker-php-ext-configure gd --with-freetype

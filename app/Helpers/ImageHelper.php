@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ImageHelper
 {
+    public const FLAG_STRICT_PATTERN = 0;
+    public const FLAG_SOFT_PATTERN = 1;
     public const IMAGE_EXTENSIONS = [
         'jpg', 'jpeg', 'png', 'bmp',
         // 'tiff', 'heic'
@@ -13,9 +15,17 @@ class ImageHelper
 
     public const NOT_FOUND_IMG = '/not_found.jpg';
 
-    public static function getImagePath($path, $base = ''): string
+    public static function getImagePath($path, $base = '', $patternLeniency = self::FLAG_SOFT_PATTERN): string
     {
-        $pathMatches = self::findImageFiles($path, $base);
+        switch ($patternLeniency) {
+            case self::FLAG_STRICT_PATTERN:
+                $pathMatches = self::findImageFilesStrict($path, $base);
+                break;
+            case self::FLAG_SOFT_PATTERN:
+            default:
+                $pathMatches = self::findImageFiles($path, $base);
+                break;
+        }
         if (!empty($pathMatches)) {
             $basePath = self::getStorageBasePath($base);
             $path = str_replace($basePath, "", $pathMatches[0]);
@@ -45,6 +55,17 @@ class ImageHelper
         
         // Remove duplicates and return
         return array_unique($allFiles);
+    }
+
+    public static function findImageFilesStrict($path, $base = ''): array
+    {
+        $basePath = self::getStorageBasePath($base);
+        // Define common image extensions
+        $imageExtensions = self::getValidImageExtensions(false);
+        $extensions = implode(',', $imageExtensions);
+        $files = glob($basePath . $path . '.{' . $extensions . '}', GLOB_BRACE) ?: [];
+        // Remove duplicates and return
+        return array_unique($files);
     }
 
     public static function getStorageBasePath($basePath = ''): string
