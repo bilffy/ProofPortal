@@ -95,7 +95,7 @@ services:
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
       # Mount the crontab file from the repo into the container
       - ./docker/php/cron/msp-cron:/etc/cron.d/msp_cron:ro
-    command: /bin/sh -c "chmod 0644 /etc/cron.d/msp_cron && cron -f"
+    command: /bin/sh -c "cron -f"
     depends_on:
       - php
     networks:

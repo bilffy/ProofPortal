@@ -12,8 +12,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command(CleanUploadedImagesCommand::class)
-    // ->timezone(env('APP_TIMEZONE', 'UTC'))
-    // ->at('1:00')
-    ->everyMinute()
+    ->timezone(env('APP_TIMEZONE', 'UTC'))
+    ->at('1:00')
     ->runInBackground()
     ->appendOutputTo($logsPath);

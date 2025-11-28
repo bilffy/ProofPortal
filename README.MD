@@ -130,7 +130,8 @@ Setup the system cron job then add scheduled commands in the Kernel app.
     Update the job with the correct path
 
 2. Dockerized cron service using docker compose:
-   A containerized cron service is added from the docker compose file. It mounts `docker/php/cron/msp-cron` to `/etc/cron.d/msp_cron` and runs `cron -f` in the `cron` service.
+   The cron service is added to the docker compose file.
+   It mounts `docker/php/cron msp-cron` to `/etc/cron.d/msp_cron` and runs `cron -f` in the `cron` service.
 
    Usage:
    ```
