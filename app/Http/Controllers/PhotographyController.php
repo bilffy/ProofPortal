@@ -233,7 +233,11 @@ class PhotographyController extends Controller
 
             if ($mismatchExists) {
                 return response()->json('Invalid Request', 403);
+            } else {
+                return response()->json('Debugging...Invalid Request', 422);
             }
+            
+            
         } else {
             // if no valid decoded keys, return invalid request
             return response()->json('Invalid Request', 422);
