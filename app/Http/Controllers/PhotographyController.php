@@ -236,8 +236,8 @@ class PhotographyController extends Controller
                 ->whereIn('images.keyvalue', $keys)
                 ->where('jobs.ts_schoolkey', '=', $schoolKey)
                 ->count();
-
-            if ($imageCount !== count($keys)) {
+            
+            if ($imageCount != count($keys)) {
                 return response()->json('Invalid Request-1', 403);
             }
             
@@ -299,6 +299,11 @@ class PhotographyController extends Controller
                     $object = Subject::where('ts_subjectkey', $key)->first();
                     break;
             }
+            
+            if (!$object) {
+                return response()->json(['success' => false, 'message' => 'Image not found.'], 404);
+            }
+            
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
             
