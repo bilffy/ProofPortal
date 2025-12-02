@@ -219,6 +219,17 @@ class UserController extends Controller
             }
         }
 
+        $nonce = Str::random(40);
+        session([$editTokenName => $nonce]);
+
+        if ($isApiRequest) {
+            $data = [
+                'user' => new UserResource($user),
+                'nonce' => $nonce
+            ];
+            return response()->json($data, 200);
+        }
+
         $franchiseList = $user->isAdmin() ? Franchise::orderBy('name')->get()
             : ( $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [] );
         $schoolList = $user->isAdmin() ? School::orderBy('name')->get()
@@ -233,9 +244,6 @@ class UserController extends Controller
             $schoolList = School::orderBy('name')->where('id', '=', $schoolContext->id)->get();
         }
 
-        $nonce = Str::random(40);
-        session([$editTokenName => $nonce]);
-
         $data = [
             'user' => new UserResource($user),
             'targetUser' => new UserResource($isApiRequest ? $user : $editUser),
@@ -244,10 +252,6 @@ class UserController extends Controller
             'schools' => $schoolList,
             'nonce' => $nonce
         ];
-
-        if ($isApiRequest) {
-            return response()->json($data, 200);
-        }
 
         return view('editUser', $data);
     }
@@ -272,9 +276,8 @@ class UserController extends Controller
                 // redirect to users list with error
                 return redirect()->route('users')->with('error', 'Unable to process your request');
             }
-        } else {
-            
         }
+        
         if (!$user) {
             return response()->json('User not found', 404);
         }
@@ -426,10 +429,20 @@ class UserController extends Controller
             return response()->json(['errors' => $e->getMessage(), 'nonce' => $nonce], 422);
         }
 
-        session()->forget($editTokenName); // Remove token after use
+        $reponseData = [];
         $message = 'User successfully updated.';
-        $url = redirect()->route('users')->with('success', $message)->getTargetUrl();
-        return response()->json(['message' => $message, 'redirect_url' => $url], 200);
+        $reponseData['message'] = $message;
+        
+        if ($isEditUserForm) {
+            $reponseData['redirect_url'] = redirect()->route('users')->with('success', $message)->getTargetUrl();
+            session()->forget($editTokenName); // Remove token after use
+        } else {
+            $nonce = Str::random(40);
+            session([$editTokenName => $nonce]);
+            $reponseData['nonce'] = $nonce;
+        }
+        
+        return response()->json($reponseData, 200);
     }
 
     /**

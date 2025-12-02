@@ -1,3 +1,7 @@
+@php
+    $toastSuccessHtml = View::make('components.toast-success', ['message' => 'Profile successfully updated.'])->render();
+@endphp
+
 <div>
     <form id="edit-profile-form" method="PATCH" action="{{ route('api.profile.update') }}">
         @csrf
@@ -49,10 +53,16 @@
     </form>
 </div>
 
+<!-- Toast container (Alpine) -->
+<div x-data="{ html: '' }" x-init="window.addEventListener('show-toast', e => { html = e.detail.html })">
+    <div x-html="html"></div>
+</div>
+
 @push('scripts')
 <script type="module">
     import { decryptData, encryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}";
     import { createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}";
+    const TOAST_SUCCESS_HTML = @json($toastSuccessHtml);
     document.addEventListener('DOMContentLoaded', function () {
         $('#firstname, #lastname').on('input', function() {
             const sanitized = sanitizeText(this.value);
@@ -63,6 +73,8 @@
 
         $('#edit-profile-form').on('submit', async function(event) {
             event.preventDefault(); // Prevent the default form submission
+            $("#edit-profile-btn").attr('disabled', 'disabled');
+            $("#edit-profile-btn").text('Saving...');
             let formData = $(this).serializeArray();
             let encryptedData = {};
 
@@ -98,13 +110,15 @@
                     'Authorization': `Bearer ${token}`
                 },
                 success: function(response) {
-                    // close modal
                     removeErrorMessages();
                     // refresh authenticated page
                     const fname = encryptedData['firstname'][0];
                     const lname = encryptedData['lastname'][0];
                     $('#user-initials span').text(`${fname}${lname}`.toUpperCase());
-                    $('#edit-profile-btn-cls').click();
+                    if (response.hasOwnProperty('nonce')) {
+                        $('#edit-user-nonce').val(response.nonce);
+                    }
+                    showToastMessage();
                 },
                 error: async function(response) {
                     if (response.status === 401) {
@@ -125,7 +139,7 @@
                                 const fname = encryptedData['firstname'][0];
                                 const lname = encryptedData['lastname'][0];
                                 $('#user-initials span').text(`${fname}${lname}`.toUpperCase());
-                                $('#edit-profile-btn-cls').click();
+                                showToastMessage();
                             },
                             error: function(retryResponse) {
                                 handleErrorResponse(retryResponse);
@@ -136,11 +150,19 @@
                     handleErrorResponse(response);
                 },
                 complete: function() {
-                    // fix button states
+                    $("#edit-profile-btn").removeAttr('disabled');
+                    $("#edit-profile-btn").text('Save');
                 }
             });
         });
     });
+
+    function showToastMessage() {
+        // show toast via Alpine x-html
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { html: TOAST_SUCCESS_HTML } }));
+        // auto-hide after 4s
+        setTimeout(() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { html: '' } })), 4000);
+    }
 
     function sanitizeText(value) {
         const textWithoutEmojis = removeEmojis(value);
