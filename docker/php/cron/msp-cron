@@ -1,0 +1,6 @@
+# Crontab for MSP scheduler
+# Run the scheduler every minute as the web user (www-data)
+# Adjust user if your php-fpm runs under a different user in container
+* * * * * www-data /usr/local/bin/php /var/www/artisan schedule:run > /dev/null 2>&1
+
+# NOTE: ensure this file is mounted to /etc/cron.d/msp_cron and has a trailing newline

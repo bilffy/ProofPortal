@@ -491,7 +491,7 @@ class ImageService
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
                 if ($subject) {
-                    $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->exists();
+                    $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
                 } else {
                     $uploaded = false;
@@ -499,7 +499,7 @@ class ImageService
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->first();
                 if ($folder) {
-                    $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->exists();
+                    $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
                 } else {
                     $uploaded = false;

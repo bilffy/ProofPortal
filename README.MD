@@ -112,3 +112,37 @@ In your php container, run the following commands:
 $ apt-get install -y  python3-pip --fix-missing
  
 $ apt-get install -y python3-pillow
+```
+### Scheduled commands:
+Setup the system cron job then add scheduled commands in the Kernel app.
+
+1. For regular cron setup:
+    This will execute the app's internal scheduler every minute.
+    
+    Open crontab:
+    ```
+    $ crontab -e
+    ```
+    Add the system cron job with the correct path:
+    ```
+    * * * * * cd /path/to/SchoolPortal && php artisan schedule:run >> /dev/null 2>&1
+    ```
+    Update the job with the correct path
+
+2. Dockerized cron service using docker compose:
+   The cron service is added to the docker compose file.
+   It mounts `docker/php/cron msp-cron` to `/etc/cron.d/msp_cron` and runs `cron -f` in the `cron` service.
+
+   Usage:
+   ```
+   $ docker compose -f <compose yml file> build cron
+   $ docker compose -f <compose yml file> up -d cron
+   ```
+
+   Check if cron is correctly set up:
+   - View crontab: `docker compose -f <compose yml file> exec cron cat /etc/cron.d/msp_cron`
+
+   Notes:
+   - Ensure `storage/` and `bootstrap/cache` are writable by the cron user (e.g. `www-data`).
+   - For production (dockerized), consider baking cron and the crontab into the image and run only one cron instance.
+
