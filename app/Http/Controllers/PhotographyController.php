@@ -220,23 +220,36 @@ class PhotographyController extends Controller
         $keys = array_filter(array_map(function($img) {
             $decoded = preg_replace('/^img_/', '', $img);
             $firstPass = base64_decode($decoded);
-            return $firstPass === false ? null : base64_decode($firstPass);
+            return $firstPass === false ? '_notfound_' : base64_decode($firstPass);
         }, $images ?? []));
         
         // if any decoded keys exist, check in a single query joining jobs
         if (!empty($keys)) {
-            $mismatchExists = Image::select('images.keyvalue')
+            /*$mismatchExists = Image::select('images.keyvalue')
                 ->join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
                 ->whereIn('images.keyvalue', $keys)
                 ->where('jobs.ts_schoolkey', '!=', $schoolKey)
-                ->exists();
-
-            if ($mismatchExists) {
+                ->exists();*/
+            
+            // Check if all keys exist and belong to the school
+            $imageCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+                ->whereIn('images.keyvalue', $keys)
+                ->where('jobs.ts_schoolkey', '=', $schoolKey)
+                ->count();
+            
+            if ($imageCount != count($keys)) {
                 return response()->json('Invalid Request', 403);
             }
-        } else {
-            // if no valid decoded keys, return invalid request
-            return response()->json('Invalid Request', 422);
+            
+            // Check if any keys belong to other schools, to make sure all keys are valid and belongs to the school
+            $foundCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+                ->whereIn('images.keyvalue', $keys)
+                ->where('jobs.ts_schoolkey', '!=', $schoolKey)
+                ->count();
+        
+            if ($foundCount) {
+                return response()->json('Invalid Request', 403);
+            } 
         }
         
         $downloadRequest = DownloadRequested::create([
@@ -286,6 +299,11 @@ class PhotographyController extends Controller
                     $object = Subject::where('ts_subjectkey', $key)->first();
                     break;
             }
+            
+            if (!$object) {
+                return response()->json(['success' => false, 'message' => 'Image not found.'], 404);
+            }
+            
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
             
