@@ -238,7 +238,7 @@ class PhotographyController extends Controller
                 ->count();
             
             if ($imageCount != count($keys)) {
-                return response()->json('Invalid Request-1', 403);
+                return response()->json('Invalid Request', 403);
             }
             
             // Check if any keys belong to other schools, to make sure all keys are valid and belongs to the school
@@ -248,7 +248,7 @@ class PhotographyController extends Controller
                 ->count();
         
             if ($foundCount) {
-                return response()->json('Invalid Request-2', 403);
+                return response()->json('Invalid Request', 403);
             } 
         }
         
