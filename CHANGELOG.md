@@ -10,6 +10,18 @@ The version pattern being used is: `vMAJOR.MINOR.SPRINT_NUMBER.PATCH`.
 
 - N/A
 
+## [1.1.30.1] - 2025-12-04
+### Added
+- Remove lowercase validation for email in Login form
+- Refactor file storage management: Introduce storage abstraction and support multiple drivers
+- Add command for cleaning up school-uploaded images
+- Setup scheduled commands (via laravel scheduler and cron)
+- Improve Edit Profile feature for better user experience
+
+### Fixed
+- Update Dockerfile to address newer build issues
+- Improve error-handling for image download request feature
+
 ## [1.1.30.0] - 2025-11-17
 ### Added
 - Initial versioned release.
