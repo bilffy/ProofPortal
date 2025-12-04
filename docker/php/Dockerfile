@@ -2,7 +2,7 @@ FROM php:8.2-fpm
 
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y  \
-    software-properties-common \
+    # software-properties-common \
     jpegoptim \
     imagemagick \
     gnupg \
@@ -53,7 +53,7 @@ RUN mkdir -p /root/.composer
 
 # Install system Python, pip, and venv support
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip python3-venv python3-distutils
+    apt-get install -y python3 python3-pip python3-venv python3-setuptools
 
 # Create a virtualenv for Python packages
 RUN python3 -m venv /opt/pyenv && \
