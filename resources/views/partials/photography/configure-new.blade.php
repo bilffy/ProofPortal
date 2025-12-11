@@ -77,6 +77,17 @@
         $folderTypes['special_group'] = 'Speciality';
     }
     $imageTypes = ImageHelper::getExtensionsAsString('.');
+
+    $schoolAddress = [];
+    if (!empty($selectedSchool->address)) {
+        $schoolAddress[] = $selectedSchool->address;
+    }
+    if (!empty($selectedSchool->suburb)) {
+        $schoolAddress[] = $selectedSchool->suburb;
+    }
+    if (!empty($selectedSchool->postcode)) {
+        $schoolAddress[] = $selectedSchool->postcode;
+    }
 @endphp
 <div class="relative">
     <h3 class="mb-4 text-black">School Settings</h3>
@@ -106,7 +117,7 @@
             </div>
             <div>
                 <p class="mb-2"><strong>{{ $selectedSchool->name }}</strong></p>
-                <p class="mb-0">{{ "$selectedSchool->address, $selectedSchool->suburb, $selectedSchool->postcode" }}</p>
+                <p class="mb-0">{{ implode(', ', $schoolAddress) }}</p>
             </div>
         </div>
         <div class="w-full p-4">

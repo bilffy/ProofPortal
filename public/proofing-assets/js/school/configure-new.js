@@ -370,17 +370,22 @@ jQuery(document).ready(function($) {
             $('#folder_config tbody .no-row').remove();
         
             // Check if any rows are visible after filtering
-            const visibleRows = $('#folder_config tr.folder-row:visible').length;
-            if (visibleRows === 0) {
-                // If no rows are visible, add the "No folders available" message
-                $('#folder_config tbody').append('<tr class="no-row"><td></td><td class="flex justify-center">No folders available</td><td></td></tr>');
-            }else{
-                $('#folder_config tbody .no-row').remove();
-            }
+            const checkVisibleRows = () => {
+                const visibleRows = $('#folder_config tr.folder-row:visible').length;
+                if (visibleRows === 0) {
+                    // If no rows are visible, add the "No folders available" message
+                    $('#folder_config tbody').append('<tr class="no-row"><td></td><td class="flex justify-center">No folders available</td><td></td></tr>');
+                }else{
+                    $('#folder_config tbody .no-row').remove();
+                }
+            };
+            // Add 500ms delay to ensure DOM is updated before checking
+            setTimeout(checkVisibleRows, 500);
         }
 
     function handleSelectColumnAction(checkboxId, checkboxClass) {
         const inputCheckbox = document.getElementById(checkboxId);
+        if (!inputCheckbox) return;
         inputCheckbox.addEventListener('change', function() {
             const isChecked = this.checked;
             const selectedJobType = document.getElementById('select_job_access_image').value;
