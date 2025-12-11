@@ -254,8 +254,8 @@ class ConfigureController extends Controller
         $schoolData = json_decode($school->digital_download_permission_notification, true);
         // Prepare the matrix for digital_download_notification and digital_download_permission
         $notificationsMatrix = [
-            'digital_download_permission' => array_replace_recursive($schoolData['digital_download_permission'], $this->convertStringToBoolean($digital_download_permission)),
-            'digital_download_notification' => array_replace_recursive($schoolData['digital_download_notification'], $this->convertStringToBoolean($digital_download_notification))
+            'digital_download_permission' => array_replace_recursive($schoolData['digital_download_permission'] ?? [], $this->convertStringToBoolean($digital_download_permission)),
+            'digital_download_notification' => array_replace_recursive($schoolData['digital_download_notification'] ?? [], $this->convertStringToBoolean($digital_download_notification))
             // 'digital_download_permission' => $this->processDigitalDownload($digital_download_permission),
             // 'digital_download_notification' => $this->processDigitalDownload($digital_download_notification)
         ];
