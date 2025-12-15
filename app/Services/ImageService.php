@@ -446,9 +446,8 @@ class ImageService
             });
         }
 
-        if($externalSubjectId) {
-            $query->where('subjects.external_subject_id', $externalSubjectId);
-        }
+        $query->whereNotNull('subjects.external_subject_id')
+            ->where('subjects.external_subject_id', $externalSubjectId);
         
         return $query
             ->select('subjects.firstname', 

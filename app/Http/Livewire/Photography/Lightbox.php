@@ -42,8 +42,7 @@ class Lightbox extends Component
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
             default:
-                $s = explode(' ', $this->subject);
-                $images = $imageService->getSubjectImages($this->schoolKey, $s[0], $s[1], $this->externalSubjectId);
+                $images = $imageService->getSubjectImages($this->schoolKey, '', '',$this->externalSubjectId);
         }
         
         $imageCount = $images->count();
