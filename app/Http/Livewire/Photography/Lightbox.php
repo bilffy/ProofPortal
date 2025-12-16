@@ -13,6 +13,7 @@ class Lightbox extends Component
     public $schoolKey = "";
     public $category = PhotographyHelper::TAB_PORTRAITS;
     public $externalSubjectId = "";
+    public $subjectKey = "";
 
     protected $listeners = [
         PhotographyHelper::EV_SELECT_IMAGE => 'updateSubject',
@@ -23,11 +24,12 @@ class Lightbox extends Component
         $this->schoolKey = $schoolKey;
     }
 
-    public function updateSubject($subject, $category, $externalSubjectId)
+    public function updateSubject($subject, $category, $externalSubjectId, $subjectKey)
     {
         $this->subject = $subject;
         $this->category = $category;
         $this->externalSubjectId = $externalSubjectId;
+        $this->subjectKey = $subjectKey;
     }
 
     private function getImages()
@@ -38,11 +40,20 @@ class Lightbox extends Component
             case PhotographyHelper::TAB_GROUPS:
             case PhotographyHelper::TAB_OTHERS:
                 $g = explode('-', $this->subject);
-                $images = $imageService->getGroupImages($this->schoolKey, trim($g[0]));
+                $images = $imageService->getGroupImages(
+                    $this->schoolKey, 
+                    trim($g[0])
+                );
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
             default:
-                $images = $imageService->getSubjectImages($this->schoolKey, '', '',$this->externalSubjectId);
+                $images = $imageService->getSubjectImages(
+                    $this->schoolKey, 
+                    '', 
+                    '', 
+                    $this->decodeKey($this->subjectKey), 
+                    $this->externalSubjectId
+                );
         }
         
         $imageCount = $images->count();
@@ -69,5 +80,14 @@ class Lightbox extends Component
     {
         $this->images = empty($this->subject) ? [] : $this->getImages();
         return view('livewire.photography.lightbox', ['images' => $this->images]);
+    }
+
+    private function decodeKey($encodedKey)
+    {
+        $parts = explode('_', $encodedKey);
+        if (count($parts) === 2) {
+            return base64_decode(base64_decode($parts[1]));
+        }
+        return null;
     }
 }

@@ -362,7 +362,6 @@ class ImageService
      *
      * @param string $schoolKey
      * @param string $searchTerm
-     * @param string $searchTerm2
      * @return Collection
      */
     public function getGroupImages($schoolKey, $searchTerm): Collection
@@ -391,7 +390,7 @@ class ImageService
         });
 
         if($searchTerm) {
-            $query->where('folders.ts_foldername', 'like', "%$searchTerm%");
+            $query->where('folders.ts_foldername', 'like', "$searchTerm%");
         }
 
         return $query
@@ -406,10 +405,11 @@ class ImageService
      * @param string $schoolKey
      * @param string $searchTerm
      * @param string $searchTerm2
+     * @param string $subjectKey
      * @param string $externalSubjectId
      * @return Collection
      */
-    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2, $externalSubjectId = null): Collection
+    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2, $subjectKey, $externalSubjectId = null): Collection
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
@@ -446,8 +446,12 @@ class ImageService
             });
         }
 
-        $query->whereNotNull('subjects.external_subject_id')
-            ->where('subjects.external_subject_id', $externalSubjectId);
+        if ($externalSubjectId) {
+            $query->whereNotNull('subjects.external_subject_id')
+                ->where('subjects.external_subject_id', $externalSubjectId);
+        } else {
+            $query->where('subjects.ts_subjectkey', $subjectKey);
+        }
         
         return $query
             ->select('subjects.firstname', 

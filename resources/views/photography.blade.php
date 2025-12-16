@@ -734,7 +734,8 @@
         Livewire.dispatch('EV_SELECT_IMAGE', { 
             subject: name, 
             category: localStorage.getItem('photographyCategory'),
-            externalSubjectId: externalSubjectId
+            externalSubjectId: externalSubjectId,
+            subjectKey: subjectKey
         });
         document.querySelector('#lightbox-modal').querySelector('#modal-title').textContent = name;
         updateDownloadSection(0, true);
