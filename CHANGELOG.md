@@ -8,7 +8,20 @@ The version pattern being used is: `vMAJOR.MINOR.SPRINT_NUMBER.PATCH`.
 
 ## [Unreleased]
 
-- N/A
+- New feature for the Photography page 'Others'
+
+## [1.1.30.2] - 2025-12-18
+### Added
+- Improve lightbox query for subject images to use only external_subject_id value and prevent null values from showing unrelated images
+- Update groups query for lightbox feature to match results with only those that start with the given search term
+- Update PermissionSeeder's list of permissions to include newly-added values
+
+### Fixed
+- Remove unnecessary commas from missing school address details
+- Prevent encountering a JS error after selecting job in folders section when groups tab is disabled
+- Remove the 'No folders available' message if there are rows visible
+- Digital Images Permissions' checkboxes now account for null initial values
+- Remove deleted file import references from vite config that cause build errors
 
 ## [1.1.30.1] - 2025-12-04
 ### Added
