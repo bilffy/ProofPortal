@@ -39,9 +39,6 @@ class RolePermission extends Component
         if ($value === true) {
             $permission->assignRole($role);
         } else {
-            
-            
-            
             $permission->removeRole($role);
         }
         //$permission->save();

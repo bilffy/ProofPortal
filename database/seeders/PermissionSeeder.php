@@ -23,6 +23,7 @@ class PermissionSeeder extends Seeder
             UserAbilitiesHelper::getDefaultUserDisablePermissions(),
             UserAbilitiesHelper::getDefaultUserRevokePermissions(),
             UserAbilitiesHelper::getDefaultUserImpersonationPermissions(),
+            UserAbilitiesHelper::getDefaultEditPermissions(),
         );
 
         // Create Permissions

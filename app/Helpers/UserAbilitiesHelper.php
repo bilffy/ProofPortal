@@ -46,6 +46,7 @@ class UserAbilitiesHelper
     public static function getDefaultUserRevokePermissions()
     {
         return [
+            PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_ADMIN),
             PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_FRANCHISE),
             PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_SCHOOL_ADMIN),
             PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_PHOTO_COORDINATOR),
@@ -56,6 +57,7 @@ class UserAbilitiesHelper
     public static function getDefaultUserImpersonationPermissions()
     {
         return [
+            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_ADMIN),
             PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_FRANCHISE),
             PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_SCHOOL_ADMIN),
             PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_PHOTO_COORDINATOR),
@@ -67,5 +69,17 @@ class UserAbilitiesHelper
     {
         $role = Role::findByName($roleName);
         $role->revokePermissionTo($permissionString);
+    }
+
+    public static function getDefaultEditPermissions()
+    {
+        return [
+            PH::toPermission(PH::ACT_EDIT, RoleHelper::ROLE_SUPER_ADMIN),
+            PH::toPermission(PH::ACT_EDIT, RoleHelper::ROLE_ADMIN),
+            PH::toPermission(PH::ACT_EDIT, RoleHelper::ROLE_FRANCHISE),
+            PH::toPermission(PH::ACT_EDIT, RoleHelper::ROLE_SCHOOL_ADMIN),
+            PH::toPermission(PH::ACT_EDIT, RoleHelper::ROLE_PHOTO_COORDINATOR),
+            PH::toPermission(PH::ACT_EDIT, RoleHelper::ROLE_TEACHER),
+        ];
     }
 }

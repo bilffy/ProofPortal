@@ -16,6 +16,7 @@ class PermissionHelper
     public const ACT_IMPERSONATE = 'impersonate';
     public const ACT_INVITE = 'invite';
     public const ACT_REVOKE = 'revoke';
+    public const ACT_EDIT = 'edit';
 
     // Roles
     public const SUB_USER = 'user';
