@@ -473,7 +473,8 @@ $('#schoolLogoBtn').click(function (event) {
 document.getElementById('schoolLogo').addEventListener('change', function(event) {
     const file = event.target.files[0];
     const preview = document.getElementById('schoolLogoPreview');
-    const deleteLink = document.getElementById('deleteSchoolLogo');
+    // Remove delete link since it does not match the current flow as of v1.1.30.2
+    // const deleteLink = document.getElementById('deleteSchoolLogo');
     const schoolKey = $('#schoolHash').val();
 
     // Check if a file is selected and validate file type
@@ -501,7 +502,7 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
                 reader.onload = function(e) {
                     preview.src = e.target.result;
                     preview.style.display = 'block';
-                    deleteLink.classList.remove('d-none');
+                    // deleteLink.classList.remove('d-none');
                 };
                 reader.readAsDataURL(file); // Convert the file to a data URL
             },
@@ -512,9 +513,10 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
     } else {
         // Display an error message or reset the preview
         alert(`Please upload a valid image file (${validExtensionsUpper.join(', ')}).`);
-        preview.src = ''; // Clear the preview image
-        preview.style.display = 'none'; // Hide the preview
-        deleteLink.style.display = 'none'; // Hide the delete link
+        // Remove resetting preview since it does not match the current flow as of v1.1.30.2
+        // preview.src = ''; // Clear the preview image
+        // preview.style.display = 'none'; // Hide the preview
+        // deleteLink.style.display = 'none'; // Hide the delete link
         event.target.value = ''; // Reset the file input
     }
 });
