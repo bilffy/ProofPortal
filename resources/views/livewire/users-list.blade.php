@@ -36,6 +36,12 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- Add hidden buttons to avoid missing data attributes issue in flowbite initialization --}}
+                <div class="hidden">
+                    <button data-modal-target="inviteModal"></button>
+                    <button data-modal-target="impersonateModal"></button>
+                    <button data-modal-target="disableModal"></button>
+                </div>
                 @forelse ($users as $user)
                     <tr>
                         @php

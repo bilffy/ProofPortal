@@ -512,7 +512,8 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
         });
     } else {
         // Display an error message or reset the preview
-        alert(`Please upload a valid image file (${validExtensionsUpper.join(', ')}).`);
+        const msg = `Please upload a valid image file (${validExtensionsUpper.join(', ')}).`;
+        window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'error', message: msg } }));
         // Remove resetting preview since it does not match the current flow as of v1.1.30.2
         // preview.src = ''; // Clear the preview image
         // preview.style.display = 'none'; // Hide the preview
