@@ -9,6 +9,7 @@
         "brainfoolong/js-aes-php": "^1.0",
         "guzzlehttp/guzzle": "^7.8",
         "inertiajs/inertia-laravel": "^1.0",
+        "intervention/image": "2.7",
         "lab404/laravel-impersonate": "^1.7",
         "laravel/framework": "^11.44.1",
         "laravel/sanctum": "^4.0",

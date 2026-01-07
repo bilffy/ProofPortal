@@ -119,14 +119,14 @@ START: Override CoreUI Styles to align with MSP Branding
     fill: #ED2124;
 }
 
-body {
+/* body {
     font-family: Montserrat,sans-serif!important;
     font-size: 1rem;
     color: #595b5d;
     line-height: 1.5rem;
     text-rendering: optimizeLegibility;
     background-color: #F5F7FA;
-}
+} */
 
 .app-header {
     font-size: 16px;

@@ -157,7 +157,7 @@ body {
     line-height: 1.5;
     color: #151b1e;
     text-align: left;
-    background-color: #e4e5e6;
+    /* background-color: #e4e5e6; */
 }
 
 [tabindex="-1"]:focus {
@@ -373,7 +373,9 @@ button,
 html [type="button"],
 [type="reset"],
 [type="submit"] {
-    -webkit-appearance: button;
+-webkit-appearance: button; /* Chrome, Safari, Edge */
+-moz-appearance: button; /* Firefox */
+appearance: button;
 }
 
 button::-moz-focus-inner,
@@ -394,7 +396,9 @@ input[type="date"],
 input[type="time"],
 input[type="datetime-local"],
 input[type="month"] {
-    -webkit-appearance: listbox;
+-webkit-appearance: listbox; /* Chrome, Safari, Edge */
+-moz-appearance: listbox; /* Firefox */
+appearance: listbox;
 }
 
 textarea {
@@ -432,17 +436,23 @@ progress {
 
 [type="search"] {
     outline-offset: -2px;
-    -webkit-appearance: none;
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    -moz-appearance: none; /* Firefox */
+    appearance: none;
 }
 
 [type="search"]::-webkit-search-cancel-button,
 [type="search"]::-webkit-search-decoration {
-    -webkit-appearance: none;
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    -moz-appearance: none; /* Firefox */
+    appearance: none;
 }
 
 ::-webkit-file-upload-button {
     font: inherit;
-    -webkit-appearance: button;
+    -webkit-appearance: button; /* Chrome, Safari, Edge */
+    -moz-appearance: button; /* Firefox */
+    appearance: button;
 }
 
 output {
@@ -3510,8 +3520,8 @@ tbody.collapse.show {
     background-size: 8px 10px;
     border: 1px solid #c2cfd6;
     border-radius: 0;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    -moz-appearance: none; /* Firefox */
     appearance: none;
 }
 
@@ -5052,7 +5062,9 @@ button.close {
     padding: 0;
     background: transparent;
     border: 0;
-    -webkit-appearance: none;
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    -moz-appearance: none; /* Firefox */
+    appearance: none;
 }
 
 .modal-open {
@@ -8962,7 +8974,9 @@ body {
 .aside-menu .tab-content::-webkit-scrollbar {
     width: 10px;
     margin-left: -10px;
-    -webkit-appearance: none;
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    -moz-appearance: none; /* Firefox */
+    appearance: none;
 }
 
 .aside-menu .tab-content::-webkit-scrollbar-track {
@@ -11223,7 +11237,9 @@ base-chart.chart {
     position: absolute;
     width: 10px;
     margin-left: -10px;
-    -webkit-appearance: none;
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    -moz-appearance: none; /* Firefox */
+    appearance: none;
 }
 
 .sidebar .sidebar-nav::-webkit-scrollbar-track {
@@ -13411,3 +13427,29 @@ hr.transparent {
 *[dir="rtl"] .callout-default {
     border-right-color: #536c79;
 }
+
+img.lazyload {
+    transform: scale(1.05);
+    opacity: 0.8;
+    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+}
+
+img.lazyload.loaded {
+    transform: scale(1);
+    opacity: 1;
+}
+
+  /* Example layout styling */
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .image-grid img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }

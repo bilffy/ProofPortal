@@ -9,12 +9,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Folder;
 use App\Models\Job;
 use App\Models\School;
-use App\Services\EncryptDecryptService;
-use App\Services\JobService;
-use App\Services\FolderService;
+use App\Services\Proofing\EncryptDecryptService;
+use App\Services\Proofing\JobService;
+use App\Services\Proofing\FolderService;
+use App\Services\Proofing\SeasonService;
+use App\Services\Proofing\SchoolService;
+use App\Services\Proofing\ConfigureService;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
-use App\Services\SeasonService;
-use App\Services\SchoolService;
 use App\Http\Resources\UserResource;
 use Auth;
 use Carbon\Carbon;
@@ -31,17 +33,180 @@ class ConfigureController extends Controller
     protected $seasonService;
     protected $schoolService;
 
-    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, SeasonService $seasonService, SchoolService $schoolService)
+    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ConfigureService $configureService, SeasonService $seasonService, SchoolService $schoolService)
     {
         $this->encryptDecryptService = $encryptDecryptService;
         $this->jobService = $jobService;
         $this->folderService = $folderService;
+        $this->configureService = $configureService;
         $this->seasonService = $seasonService;
         $this->schoolService = $schoolService;
     }
 
     private function getDecryptData($hash){
         return $this->encryptDecryptService->decryptStringMethod($hash);
+    }
+
+    public function index($hash){
+        $decryptedJobKey = $this->getDecryptData($hash);
+        $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
+
+        // $subjectKeys = $selectedJob->folders->flatMap(function ($folder) {
+        //     return $folder->subjects->pluck('ts_subjectkey');
+        // });
+
+        $compiledFolderDuplicates = $this->getDuplicateFolder($selectedJob);
+        $compiledSubjectDuplicates = $this->getDuplicateSubject($selectedJob);
+
+        $imageCount = $this->configureService->peopleImageCount($selectedJob->ts_job_id);
+
+        if(!Session::has('selectedJob') && !Session::has('selectedSeason')){
+            $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first(); // Store session data
+            session([
+                'selectedJob' => $selectedJob,
+                'selectedSeason' => $selectedSeason,
+                'openJob' => false
+            ]);
+        }
+
+        $selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->with('images')->orderBy('ts_foldername', 'asc')->get();
+        $user = Auth::user();
+        
+        return view('proofing.franchise.configure.configure-job',[
+            'selectedJob' => $selectedJob,
+            'hash' =>$hash, 
+            'selectedFolders' => $selectedFolders, 
+            'compiledFolderDuplicates' => $compiledFolderDuplicates, 
+            'compiledSubjectDuplicates' => $compiledSubjectDuplicates ,
+            'imageCount' => $imageCount,
+            'user' => new UserResource($user)
+        ]);
+    }
+
+    private function getDuplicateFolder($selectedJob)
+    {
+        $folderKeys = $selectedJob->folders->pluck('ts_folderkey');
+        return $folderKeys->duplicates();
+    }
+
+    private function getDuplicateSubject($selectedJob)
+    {
+        $subjectKeys = $selectedJob->subjects->pluck('ts_subjectkey');
+        return $subjectKeys->duplicates();
+    }
+
+    public function proofingTimelineInsert(Request $request){
+        $proofingTimeline = $this->configureService->insertProofingTimeline($request->all());
+    }
+
+    public function proofingTimelineEmailSend(Request $request){
+        $this->configureService->sendEmailDates($request->all());
+    }
+
+    public function notificationEnable(Request $request)
+    {
+        $emailNotificationEnable = $request->input('isReviewDateEnabled') === 'true' ? 1 : 0;
+        $this->updateJobData($request->input('jobHash'), 'notifications_enabled', $emailNotificationEnable);
+    }
+
+    public function notificationMatrixInsert(Request $request)
+    {
+        // Process the schools array
+        $schools = $request->input('schools', []);
+        $folders = $request->input('folders', []);
+
+        // Prepare the matrix for schools and folders
+        $notificationsMatrix = [
+            'schools' => $this->processNotifications($schools),
+            'folders' => $this->processNotifications($folders)
+        ];
+
+        $this->updateJobData($request->input('jobHash'), 'notifications_matrix', json_encode($notificationsMatrix));
+    }
+
+    protected function processNotifications($input)
+    {
+        $result = [];
+        foreach ($input as $field => $values) {
+            $result[$field] = [
+                'franchise' => in_array('franchise', $values),
+                'photocoordinator' => in_array('photocoordinator', $values),
+                'teacher' => in_array('teacher', $values),
+            ];
+        }
+        return $result;
+    }
+
+    public function updateJobData($hashedJob, $column, $value)
+    {
+        $decryptedJobKey = $this->getDecryptData($hashedJob);
+        $this->jobService->updateJobData($decryptedJobKey, $column, $value);
+    }
+
+    public function folderConfigAll(Request $request){
+        if ($request->has(['field', 'active_ids', 'inactive_ids'])) {
+            $field = $request->input('field');
+            $activeIds = json_decode($request->input('active_ids'), true);
+            $inactiveIds = json_decode($request->input('inactive_ids'), true);
+
+            $activeIds = empty($activeIds) ? [0] : $activeIds;
+            $inactiveIds = empty($inactiveIds) ? [0] : $inactiveIds;
+
+            $isActiveCount = $this->folderService->updateFolderData($activeIds, $field, true);
+            $isInactiveCount = $this->folderService->updateFolderData($inactiveIds, $field, false);
+
+            return response()->json([$isActiveCount, $isInactiveCount]);
+        }else{
+            return response()->json(false);
+        }
+    }
+
+
+    // tnj Refresh Config - Merge Duplicate Folders, Subjects, Update Associations, and People Images
+    public function handleJobAction($action, $hashedJob)
+    {
+        $decryptedJobId = $this->getDecryptData($hashedJob);
+        $selectedJob = $this->jobService->getJobById($decryptedJobId);
+
+        // Check if proofing has started
+        if ($this->hasProofingStarted($selectedJob)) {
+            return redirect()->back()->with('error', 'Unable to update for "'.$selectedJob->ts_jobname.'"! Proofing already started.');
+        }
+
+        switch ($action) {
+            case 'merge-duplicate-folders':
+                $count = $this->getDuplicateFolder($selectedJob)->count();
+                $this->configureService->mergeDuplicateFolders($decryptedJobId);
+                $message = "Merged $count duplicate Folders in \"$selectedJob->ts_jobname\".";
+                break;
+
+            case 'merge-duplicate-subjects':
+                $count = $this->getDuplicateSubject($selectedJob)->count();
+                $this->configureService->mergeDuplicateSubjects($decryptedJobId);
+                $message = "Merged $count duplicate People in \"$selectedJob->ts_jobname\".";
+                break;
+
+            case 'update-subject-associations':
+                $this->configureService->updateSubjectAssociations($decryptedJobId);
+                $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
+                break;
+
+            case 'update-people-images':
+                $this->configureService->updatePeopleImage($decryptedJobId);
+                $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
+                break;
+
+            default:
+                return redirect()->back()->with('error', 'Invalid action.');
+        }
+
+        return redirect()->back()->with('message', 'Success! ' . $message);
+    }
+
+    // Check if proofing has started
+    private function hasProofingStarted($selectedJob)
+    {
+        return Carbon::today()->gt(Carbon::parse($selectedJob->proof_start));
     }
 
     //////////////////////////////////-------------------------------Config School------------------------------------///////////////////////////////////////////

@@ -195,6 +195,22 @@ class User extends Authenticatable
         return $this->schools()->first();
     }
 
+    public function getAllSchools()
+    {
+        $user = Auth::user();
+        
+        $schools = User::query()
+            ->leftJoin('school_users', 'users.id', '=', 'school_users.user_id')
+            ->leftJoin('schools', 'school_users.school_id', '=', 'schools.id')
+            ->leftJoin('school_franchises', 'schools.id', '=', 'school_franchises.school_id')
+            ->leftJoin('franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
+            ->select('schools.*', 'franchises.name as franchise_name')
+            ->where('users.id', $user->id)
+            ->orderBy('schools.name', 'ASC');
+        
+        return $schools->get();
+    }
+
     public function getSchoolOrFranchise($withAdmin = false)
     {
         return $this->isAdmin()
@@ -220,6 +236,22 @@ class User extends Authenticatable
             return Franchise::getMSP();
         }
         return $this->getFranchise();
+    }
+
+    public function getSchoolOrFranchiseDetail()
+    {
+        if ($this->isAdmin()) {
+            return ""; // Admin users do not need an alphacode
+        }
+    
+        // Check if the user is at the franchise level
+        if ($this->isFranchiseLevel()) {
+            return $this->getFranchise();
+        }
+    
+        // For school-level users, retrieve the associated franchise's alphacode
+        $school = $this->getSchool();
+        return $school?->franchises->first();
     }
 
     public function getInvitableRoles()
@@ -264,6 +296,16 @@ class User extends Authenticatable
     {
         // return Hashids::encodeHex("$this->id");
         return $this->id;
+    }
+
+    public function getCryptedIdAttribute()
+    {    
+        return Crypt::encryptString($this->id);
+    }
+
+    public function jobs()
+    {
+        return $this->belongsToMany(Job::class, 'job_users', 'user_id', 'ts_job_id', 'id', 'ts_job_id');
     }
 
     /**

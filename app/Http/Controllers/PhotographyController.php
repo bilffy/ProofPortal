@@ -21,7 +21,7 @@ use App\Models\Status;
 use App\Models\Subject;
 use App\Models\ImageOptions;
 use App\Services\ImageService;
-use App\Services\SchoolService;
+use App\Services\Proofing\SchoolService;
 use App\Services\Storage\StorageServiceInterface;
 use App\Services\UserService;
 use Auth;

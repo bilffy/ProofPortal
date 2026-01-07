@@ -55,4 +55,9 @@ class Subject extends Model
         ];
         return FilenameFormatHelper::applyFormat($format, $options);
     }
+    
+    //Proofing
+    public function proofingChangelogs(){
+        return $this->hasMany('App\Models\ProofingChangelog', 'keyvalue', 'ts_subjectkey'); 
+    }
 }

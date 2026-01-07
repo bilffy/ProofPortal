@@ -26,16 +26,15 @@
     use Carbon\Carbon;
     use App\Helpers\ImageHelper;
     use App\Helpers\SchoolContextHelper;
-    use App\Services\SchoolService;
-    use App\Services\JobService;
-    use App\Services\SeasonService;
-    use App\Services\StatusService;
+    use App\Services\Proofing\SchoolService;
+    use App\Services\Proofing\SeasonService;
+    use App\Services\Proofing\StatusService;
     use Illuminate\Support\Facades\Crypt;
 
     $defaultDate = Carbon::now();
     $schoolService = new SchoolService();
     $statusService = new StatusService();
-    $jobService = new JobService($statusService);
+    $jobService = app(\App\Services\Proofing\JobService::class);
     $seasonService = new SeasonService();
     
     $selectOptionsEmailTo = [

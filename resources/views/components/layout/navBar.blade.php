@@ -50,7 +50,7 @@
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
             {{--Proofing are not yet implemented, hide for now until the blueprint implemented into the system--}}
-            {{--<x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>--}}
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
         @endunlessrole
     @endcan
 

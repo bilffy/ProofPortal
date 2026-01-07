@@ -5,7 +5,7 @@ namespace App\Http\Livewire\Photography;
 use App\Helpers\FilenameFormatHelper;
 use App\Helpers\PhotographyHelper;
 use App\Services\ImageService;
-use App\Services\SchoolService;
+use App\Services\Proofing\SchoolService;
 use App\Services\UserService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;

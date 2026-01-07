@@ -80,4 +80,23 @@ class Job extends Model
     public function franchises(){
         return $this->belongsTo('App\Models\Franchise', 'ts_account_id','ts_account_id');
     }
+    //JobUser Table
+    public function jobUsers(){
+        return $this->hasMany('App\Models\JobUser', 'ts_job_id', 'ts_job_id');
+    }
+    //Groupposition Table
+    public function groupPositions(){
+        return $this->hasMany('App\Models\GroupPosition', 'ts_jobkey', 'ts_jobkey');
+    }
+    //Proofing Changelogs Table
+    public function proofingChangelogs(){
+        return $this->hasMany('App\Models\ProofingChangelog', 'ts_jobkey', 'ts_jobkey'); 
+    }
+    //Email Table
+    public function email(){
+        return $this->hasMany('App\Models\Email', 'ts_jobkey', 'ts_jobkey');
+    }
+    public function users(){
+        return $this->belongsToMany(User::class, 'job_users', 'ts_job_id', 'user_id', 'ts_job_id', 'id');
+    }
 }

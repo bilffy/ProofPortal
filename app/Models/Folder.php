@@ -64,7 +64,7 @@ class Folder extends Model
     }
 
     public function images(){
-        return $this->hasMany('App\Models\Image', 'keyvalue', 'ts_folderkey');
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_folderkey');
     }
 
     public function folderTags(){
@@ -78,5 +78,17 @@ class Folder extends Model
             'seasons' => $this->job()->first()->seasons()->first()->id,
         ];
         return FilenameFormatHelper::applyFormat($format, $options);
+    }
+
+    public function proofingChangelogs(){
+        return $this->hasMany('App\Models\ProofingChangelog', 'keyvalue', 'ts_folderkey'); 
+    }
+
+    public function reviewStatuses(){
+        return $this->belongsTo('App\Models\Status', 'status_id', 'id');
+    }
+
+    public function folderUsers(){
+        return $this->hasMany('App\Models\FolderUser', 'ts_folder_id', 'ts_folder_id');
     }
 }

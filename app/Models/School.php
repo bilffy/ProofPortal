@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Facades\Crypt;
 
 class School extends Model
 {
@@ -56,6 +57,19 @@ class School extends Model
     {   
         // return Hashids::encodeHex("$this->id");
         return $this->id;
+    }   
+
+    public function getCryptedIdAttribute()
+    {    
+        return Crypt::encryptString($this->id);
+    }
+
+    //Proofing    
+    public function scopeWithFranchise($query, $franchiseCode){
+        return $query->join('school_franchises', 'school_franchises.school_id', '=', 'schools.id')
+        ->join('franchises', 'franchises.id', '=', 'school_franchises.franchise_id')
+        ->select('schools.name', 'schools.schoolkey', 'schools.id', 'schools.address', 'schools.postcode', 'schools.suburb', 'schools.country')
+        ->where('franchises.alphacode', $franchiseCode);
     }
     
 }

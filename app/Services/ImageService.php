@@ -540,25 +540,76 @@ class ImageService
      * @param string $key
      * @return string|null
      */
+    // public function getImageContent($key)
+    // {
+    //     $path = ImageHelper::getImagePath($key);
+    //     $fileContent = Storage::disk('local')->get(empty($path) ? ImageHelper::NOT_FOUND_IMG : $path);
+    //     return $fileContent;
+    // }
+
+    // /**
+    //  * Check if image is found based on $key value
+    //  * @param string $key
+    //  * @return boolean
+    //  */
+    // public function getIsImageFound($key)
+    // {
+    //     $path = ImageHelper::getImagePath($key);
+    //     if ($path === '') {
+    //         return false;
+    //     }
+    //     return Storage::disk('local')->exists($path);
+    // }
+
     public function getImageContent($key)
     {
-        $path = ImageHelper::getImagePath($key);
-        $fileContent = Storage::disk('local')->get(empty($path) ? ImageHelper::NOT_FOUND_IMG : $path);
-        return $fileContent;
+        $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+        $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+    
+        // List of possible image paths
+        $imagePaths = [
+            "{$baseImagePath}_800.jpg",
+            "{$baseImagePath}_1600.jpg",
+            "{$baseGroupPath}_800.jpg",
+            "{$baseGroupPath}_1600.jpg",
+        ];
+    
+        // Iterate over possible paths and return the first readable file
+        foreach ($imagePaths as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                return file_get_contents($path);
+            }
+        }
+    
+        // Return fallback image if no valid image is found
+        try {
+            return Storage::disk('local')->get('not_found.jpg');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
-    /**
-     * Check if image is found based on $key value
-     * @param string $key
-     * @return boolean
-     */
     public function getIsImageFound($key)
     {
-        $path = ImageHelper::getImagePath($key);
-        if ($path === '') {
-            return false;
+        $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+        $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+
+        // Possible image file paths
+        $imagePaths = [
+            "{$baseImagePath}_800.jpg",
+            "{$baseImagePath}_1600.jpg",
+            "{$baseGroupPath}_800.jpg",
+            "{$baseGroupPath}_1600.jpg",
+        ];
+
+        // Check if any file exists and is readable
+        foreach ($imagePaths as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                return true;
+            }
         }
-        return Storage::disk('local')->exists($path);
+
+        return false;
     }
 
     /**
