@@ -30,10 +30,16 @@ class PhotoGrid extends Component
     public $viewOptions = ['ALL' => 'All'];
 
     protected $listeners = [
+        'gotoPage' => 'setPage',
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
         PhotographyHelper::EV_CHANGE_TAB => 'updateActiveCategory',
     ];
+
+    public function setPage($page)
+    {
+        $this->page = $page;
+    }
 
     public function mount($category = 'portraits', $season = 1, $schoolKey = '')
     {
@@ -188,17 +194,28 @@ class PhotoGrid extends Component
             'folderKeys' => $keys,
             'searchTerm' => $this->search,
         ];
-        $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
+        //code by Chromedia
+        // $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
 
-        $this->updateHasImages($filteredImages, $imageService);
+        // $this->updateHasImages($filteredImages, $imageService);
         
-        $paginated = $imageService->paginate(
-            $filteredImages,
-            30,
-            null,
-            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        // $paginated = $imageService->paginate(
+        //     $filteredImages,
+        //     30,
+        //     null,
+        //     ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        // );
+        //code by Chromedia
+        //code by IT
+        $paginated = $imageService->getFilteredPhotographyImages(
+            $options,
+            $this->category,
+            30,       // images per page
+            $this->page // current page from Livewire													  
         );
-        
+
+        $this->updateHasImages($paginated->getCollection(), $imageService);
+        //code by IT
         // Modify the paginated items
         $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection(), $this->category);
         $paginated->setCollection($modifiedItems);

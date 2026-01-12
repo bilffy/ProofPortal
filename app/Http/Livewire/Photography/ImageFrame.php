@@ -70,8 +70,9 @@ class ImageFrame extends Component
     {
         $imageService = new ImageService();
         $key = base64_decode(base64_decode($this->imageId));
-        $imageContent = $imageService->getImageContent($key);
-        $this->image = base64_encode($imageContent);
+        $imageContent = $imageService->getImageContent($key); //code by IT
+        // $this->image = base64_encode($imageContent); //code by Chromedia
+        $this->image = ($imageContent);
 
         return view('livewire.photography.image-frame');
     }

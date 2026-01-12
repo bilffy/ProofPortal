@@ -107,7 +107,7 @@ class ImageController extends Controller
 
             // Get MIME type
             $mimeType = $image->mime();
-            \Log::info('MIME Type: ' . $mimeType);
+            // \Log::info('MIME Type: ' . $mimeType);
 
             // Return response with proper headers
             return new Response($imageContent, 200, ['Content-Type' => $mimeType]);

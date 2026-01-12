@@ -24,6 +24,7 @@
                     No images found
                 @else
                     {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }}
+                    {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}}
                 @endif
             </div>
         </div>

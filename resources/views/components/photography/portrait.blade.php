@@ -28,7 +28,8 @@
 >
     <div class="relative h-[229px] overflow-hidden rounded group transition-all">
         <div class="absolute flex w-full justify-end pr-2 pt-2 z-10 {{ $hasImage ? "img-checkbox" . ($isLightbox ? "" : " hidden") : 'hidden' }}">
-            <div class="{{ $hasImage ? "portrait-img-checkbox" : "img-not-found"}} group transition-all 
+            {{-- <div class="{{ $hasImage ? "portrait-img-checkbox" : "img-not-found"}} group transition-all  --}} {{--code by Chromedia--}}
+            <div class="{{ $hasImage ? "portrait-img-checkbox" : "img-not-found"}} {{ $isLightbox ? "hidden" : ""}} group transition-all {{--code by IT--}}
                         w-[24px] h-[24px] p-1 pt-[3px] border-white border-2
                         flex align-middle justify-center rounded-full 
                         hover:bg-primary-100">
@@ -74,11 +75,27 @@
                             $imageInfo = getimagesizefromstring($imageData);
                             $mimeType = $imageInfo['mime'] ?? 'image/jpeg';
                         @endphp
-                        <img 
-                            src="data:{{$mimeType}};base64,{{$img}}"
-                            alt=""
-                            class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                        />
+                        @if ($img)
+                            <img
+                                src="data:image/jpeg;base64,{{ $img }}"
+                                alt=""
+                                loading="lazy"
+                                class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                            />
+                        @else
+                            <img
+                                src="{{ asset('images/not_found.jpg') }}"
+                                loading="lazy"
+                                class="w-full max-w-none"
+                            />
+                        @endif
+
+                        {{-- <img 
+                        src="data:{{$mimeType}};base64,{{$img}}"
+                        alt=""
+                        class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                        /> --}}
+
                     </div>
                 </template>
             @endif

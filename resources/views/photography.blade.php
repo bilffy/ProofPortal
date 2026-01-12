@@ -229,6 +229,11 @@
     function updateDownloadSection(selectedCount, isLightbox) {
         const downloadBtn = document.querySelector(isLightbox ? '#btn-lb-download' : '#btn-download');
         const clearDownloadBtn = document.querySelector(isLightbox ? '#btn-lb-download-clear' : '#btn-download-clear');
+        //code by IT
+        if (!clearDownloadBtn || !downloadBtn) {
+            return;
+        }
+        //code by IT
 
         if (selectedCount > 0) {
             clearDownloadBtn.classList.remove('hidden');

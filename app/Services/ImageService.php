@@ -277,7 +277,8 @@ class ImageService
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
-            ->distinct()
+            // ->distinct() //code by Chromedia
+            ->distinct('subjects.ts_subjectkey')
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
     }
@@ -326,6 +327,7 @@ class ImageService
         
         return $query
             ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
+            ->distinct('folders.ts_folderkey') //code by IT
             ->orderBy('folders.ts_foldername');
     }
 
@@ -336,7 +338,8 @@ class ImageService
      * @param string $tab
      * @return Collection
      */
-    public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS): Collection
+    // public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS): Collection
+    public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS, $perPage = 30, $page = 1)
     {
         $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
@@ -354,8 +357,10 @@ class ImageService
                 break;
         }
 
-        return $images->get();
+        // return $images->get();
+        return $images->paginate($perPage, ['*'], 'page', $page);
     }
+
 
     /**
      * Get group/folder images from database using options given
@@ -509,8 +514,16 @@ class ImageService
                 }
             }
             $fileContent = $this->getImageContent($imgKey);
-            
-            $dimensions = getimagesizefromstring($fileContent);
+            //code by IT
+            if ($fileContent) {
+                $binaryImage = base64_decode($fileContent);
+                $dimensions = getimagesizefromstring($binaryImage);
+                $isPortrait =  $dimensions[0] <= $dimensions[1];
+            } else {
+                $isPortrait = true; // default
+            }
+            //code by IT
+            // $dimensions = getimagesizefromstring($fileContent); //code by Chromedia
 
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
@@ -523,7 +536,8 @@ class ImageService
                 'id' => base64_encode(base64_encode($image->$key)),
                 'firstname' => $isSubject ? $image->firstname : '',
                 'lastname' => $isSubject ? $image->lastname : '',
-                'isPortrait' => $dimensions[0] <= $dimensions[1],
+                // 'isPortrait' => $dimensions[0] <= $dimensions[1], //code by Chromedia
+                'isPortrait' => $isPortrait,
                 'classGroup' => $classGroup,
                 'year' => $image->year ?? 0,
                 'category' => $category,
@@ -534,12 +548,72 @@ class ImageService
 
         return $images->map($toData);
     }
+    //code by IT
+    public function getImageContent(string $key): ?string
+    {
+        $urls = $this->getImageUrls($key);
+    
+        foreach ($urls as $url) {
+            if ($this->urlExists($url)) {
+                $binary = @file_get_contents($url);
+    
+                if ($binary !== false) {
+                    return base64_encode($binary); // ✅ REAL base64
+                }
+            }
+        }
+    
+        return null;
+    }    
+    
+    /**
+     * Check if at least one image exists for the key
+     */
+    public function getIsImageFound(string $key): bool
+    {
+        $urls = $this->getImageUrls($key);
+
+        foreach ($urls as $url) {
+            if ($this->urlExists($url)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Generate possible URLs for a key
+     */
+    private function getImageUrls(string $key): array
+    {
+        $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
+        $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
+
+        return [
+            "{$baseImage}_800.jpg",
+            "{$baseImage}_1600.jpg",
+            "{$baseGroup}_800.jpg",
+            "{$baseGroup}_1600.jpg",
+        ];
+    }
+
+    /**
+     * Check if URL exists (HTTP 200)
+     */
+    private function urlExists(string $url): bool
+    {
+        $headers = @get_headers($url);
+        return $headers && strpos($headers[0], '200') !== false;
+    }
+    //code by IT
 
     /**
      * Get File Content based on $key value
      * @param string $key
      * @return string|null
      */
+    //code by Chromedia
     // public function getImageContent($key)
     // {
     //     $path = ImageHelper::getImagePath($key);
@@ -560,58 +634,59 @@ class ImageService
     //     }
     //     return Storage::disk('local')->exists($path);
     // }
-
-    public function getImageContent($key)
-    {
-        $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
-        $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+    //code by Chromedia
+    //code by IT
+    // public function getImageContent($key)
+    // {
+    //     $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+    //     $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
     
-        // List of possible image paths
-        $imagePaths = [
-            "{$baseImagePath}_800.jpg",
-            "{$baseImagePath}_1600.jpg",
-            "{$baseGroupPath}_800.jpg",
-            "{$baseGroupPath}_1600.jpg",
-        ];
+    //     // List of possible image paths
+    //     $imagePaths = [
+    //         "{$baseImagePath}_800.jpg",
+    //         "{$baseImagePath}_1600.jpg",
+    //         "{$baseGroupPath}_800.jpg",
+    //         "{$baseGroupPath}_1600.jpg",
+    //     ];
     
-        // Iterate over possible paths and return the first readable file
-        foreach ($imagePaths as $path) {
-            if (file_exists($path) && is_readable($path)) {
-                return file_get_contents($path);
-            }
-        }
+    //     // Iterate over possible paths and return the first readable file
+    //     foreach ($imagePaths as $path) {
+    //         if (file_exists($path) && is_readable($path)) {
+    //             return file_get_contents($path);
+    //         }
+    //     }
     
-        // Return fallback image if no valid image is found
-        try {
-            return Storage::disk('local')->get('not_found.jpg');
-        } catch (\Exception $e) {
-            return null;
-        }
-    }
+    //     // Return fallback image if no valid image is found
+    //     try {
+    //         return Storage::disk('local')->get('not_found.jpg');
+    //     } catch (\Exception $e) {
+    //         return null;
+    //     }
+    // }
 
-    public function getIsImageFound($key)
-    {
-        $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
-        $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+    // public function getIsImageFound($key)
+    // {
+    //     $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
+    //     $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
 
-        // Possible image file paths
-        $imagePaths = [
-            "{$baseImagePath}_800.jpg",
-            "{$baseImagePath}_1600.jpg",
-            "{$baseGroupPath}_800.jpg",
-            "{$baseGroupPath}_1600.jpg",
-        ];
+    //     // Possible image file paths
+    //     $imagePaths = [
+    //         "{$baseImagePath}_800.jpg",
+    //         "{$baseImagePath}_1600.jpg",
+    //         "{$baseGroupPath}_800.jpg",
+    //         "{$baseGroupPath}_1600.jpg",
+    //     ];
 
-        // Check if any file exists and is readable
-        foreach ($imagePaths as $path) {
-            if (file_exists($path) && is_readable($path)) {
-                return true;
-            }
-        }
+    //     // Check if any file exists and is readable
+    //     foreach ($imagePaths as $path) {
+    //         if (file_exists($path) && is_readable($path)) {
+    //             return true;
+    //         }
+    //     }
 
-        return false;
-    }
-
+    //     return false;
+    // }
+    //code by IT
     /**
      * This method is used to get the path of the image.
      * The directory is defined in the .env file.

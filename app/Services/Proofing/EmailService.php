@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Spatie\Permission\Models\Role;
-use Swift_Mime_ContentEncoder_Base64ContentEncoder;
+// use Swift_Mime_ContentEncoder_Base64ContentEncoder;
 use App\Models\EmailCategory;
 use App\Models\FolderUser;
 use App\Models\Template;
@@ -15,7 +15,12 @@ use App\Models\Email;
 use App\Models\User;
 use App\Models\Job;
 use Carbon\Carbon;
-use Swift_Message;
+// use Swift_Message; //composer require swiftmailer/swiftmailer
+use Symfony\Component\Mime\Email as SymfonyEmail;
+use Symfony\Component\Mime\MessageConverter;
+use Symfony\Component\Mime\Address;
+use Illuminate\Support\Str;
+use Symfony\Component\Mime\Part\TextPart;
 use Auth;
 use DB;
 
@@ -107,7 +112,7 @@ class EmailService
                     throw new \Exception("Template file not found at {$templatePath}");
                 }
                 $templateContent = File::get($templatePath);
-        
+                $statusModel = $status ? Status::find($status) : null;
                 // Replace variables in the template
                 $data = [
                     'INVITEE_FIRST_NAME' => $user->firstname ?? '',
@@ -124,7 +129,8 @@ class EmailService
                     'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
                     'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
                     'APP_URL' => Config::get('app.url'),
-                    'JOB_STATUS_NAME' => Status::find($status)->status_external_name ?? '',
+                    // 'JOB_STATUS_NAME' => Status::find($status)->status_external_name ?? '',
+                    'JOB_STATUS_NAME' => $statusModel->status_external_name ?? '',
                 ];
         
                 $processedContent = $this->replaceTemplateVariables($templateContent, $data);
@@ -137,23 +143,45 @@ class EmailService
                     $templateSubject = str_replace('JOB_NAME', $jobName, $templateSubject);
                 }
 
-                $message = new Swift_Message();
-                $message->setFrom([$authUser->email => $authUser->name])
-                        ->setTo([$user->email => $user->name])
-                        ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
+                // $message = new Swift_Message();
+                // $message->setFrom([$authUser->email => $authUser->name])
+                //         ->setTo([$user->email => $user->name])
+                //         ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
 
-                $message->setBody($processedContent, 'text/html'); // Set the body content
-                $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
+                // $message->setBody($processedContent, 'text/html'); // Set the body content
+                // $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
         
-                $emlContent = $message->toString();
+                // $emlContent = $message->toString();
+
+                $htmlPart = new TextPart(
+                    $processedContent,   // body
+                    'utf-8',             // charset
+                    'html',              // subtype
+                    'base64'             // encoding ✅ Swift equivalent
+                );
+
+                $email = (new SymfonyEmail())
+                    ->from(new Address($authUser->email, $authUser->name))
+                    ->to(new Address($user->email, $user->name))
+                    ->subject($templateSubject)
+                    ->setBody($htmlPart);
+
+                // Add valid Message-ID (REQUIRED)
+                $email->getHeaders()->addIdHeader(
+                    'Message-ID',
+                    Str::uuid()->toString() . '@localhost'
+                );
+
+                // Convert to RFC822 .eml
+                $emlContent = MessageConverter::toEmail($email)->toString();
         
-                // $filePath = public_path("$field.eml");
-                // file_put_contents($filePath, $emlContent);
+                $filePath = public_path("$field.eml");
+                file_put_contents($filePath, $emlContent);
         
                 // Save email record in the database
                 Email::create([
                     'generated_from_user_id' => $authUser->id,
-                    'alphacode' => $selectedJob->franchises->alphacode,
+                    'alphacode' => $selectedJob->franchises->alphacode ?? null,
                     'ts_jobkey' => $tsJobKey,
                     'ts_schoolkey' => $selectedJob->ts_schoolkey,
                     'sentdate' => $date,
@@ -264,15 +292,37 @@ class EmailService
                 $templateSubject = str_replace('FOLDER_NAME', $folderName, $templateSubject);
             }
 
-            $message = new Swift_Message();
-            $message->setFrom([$authUser->email => $authUser->name])
-                    ->setTo([$user->email => $user->name])
-                    ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
+            // $message = new Swift_Message();
+            // $message->setFrom([$authUser->email => $authUser->name])
+            //         ->setTo([$user->email => $user->name])
+            //         ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
 
-            $message->setBody($processedContent, 'text/html'); // Set the body content
-            $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
+            // $message->setBody($processedContent, 'text/html'); // Set the body content
+            // $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
     
-            $emlContent = $message->toString();
+            // $emlContent = $message->toString();
+
+            $htmlPart = new TextPart(
+                $processedContent,   // body
+                'utf-8',             // charset
+                'html',              // subtype
+                'base64'             // encoding ✅ Swift equivalent
+            );
+
+            $email = (new SymfonyEmail())
+                ->from(new Address($authUser->email, $authUser->name))
+                ->to(new Address($user->email, $user->name))
+                ->subject($templateSubject)
+                ->setBody($htmlPart);
+
+            // Add valid Message-ID (REQUIRED)
+            $email->getHeaders()->addIdHeader(
+                'Message-ID',
+                Str::uuid()->toString() . '@localhost'
+            );
+
+            // Convert to RFC822 .eml
+            $emlContent = MessageConverter::toEmail($email)->toString();
     
             // $filePath = public_path("$field.eml");
             // file_put_contents($filePath, $emlContent);
@@ -365,15 +415,37 @@ class EmailService
             $templateSubject = str_replace('INVITEE_LAST_NAME', $inviteUser->lastname, $templateSubject);
         }
 
-        $message = new Swift_Message();
-        $message->setFrom([$authUser->email => $authUser->name])
-                ->setTo([$inviteUser->email => $inviteUser->name])
-                ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
+        // $message = new Swift_Message();
+        // $message->setFrom([$authUser->email => $authUser->name])
+        //         ->setTo([$inviteUser->email => $inviteUser->name])
+        //         ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
 
-        $message->setBody($processedContent, 'text/html'); // Set the body content
-        $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
+        // $message->setBody($processedContent, 'text/html'); // Set the body content
+        // $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
 
-        $emlContent = $message->toString();
+        // $emlContent = $message->toString();
+
+        $htmlPart = new TextPart(
+            $processedContent,   // body
+            'utf-8',             // charset
+            'html',              // subtype
+            'base64'             // encoding ✅ Swift equivalent
+        );
+
+        $email = (new SymfonyEmail())
+            ->from(new Address($authUser->email, $authUser->name))
+            ->to(new Address($user->email, $user->name))
+            ->subject($templateSubject)
+            ->setBody($htmlPart);
+
+        // Add valid Message-ID (REQUIRED)
+        $email->getHeaders()->addIdHeader(
+            'Message-ID',
+            Str::uuid()->toString() . '@localhost'
+        );
+
+        // Convert to RFC822 .eml
+        $emlContent = MessageConverter::toEmail($email)->toString();
 
         // $filePath = public_path("$field.eml");
         // file_put_contents($filePath, $emlContent);
