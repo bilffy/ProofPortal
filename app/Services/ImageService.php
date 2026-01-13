@@ -501,8 +501,10 @@ class ImageService
                 if ($subject) {
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null); //code by IT
                 } else {
                     $uploaded = false;
+                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null); //code by IT
                 }
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->first();
@@ -523,14 +525,17 @@ class ImageService
                 $isPortrait = true; // default
             }
             //code by IT
-            // $dimensions = getimagesizefromstring($fileContent); //code by Chromedia
 
-            if ($isSubject) {
-                $subject = Subject::where('ts_subjectkey', $image->$key)->first();
-                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null);
-            } else {
-                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
-            }
+            //code by Chromedia
+            // $dimensions = getimagesizefromstring($fileContent); 
+
+            // if ($isSubject) {
+            //     $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null);
+            // } else {
+            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
+            // }
+            //code by Chromedia
 
             return [
                 'id' => base64_encode(base64_encode($image->$key)),

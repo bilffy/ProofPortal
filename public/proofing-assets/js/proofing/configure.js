@@ -26,7 +26,7 @@
                   },
                   timeout: 60000,
                   success: function (response) {
-                    console.log('saved');
+                    // console.log('saved');
                   },
                   error: function (e) {
                     // console.log('An error occurred:', e);
@@ -66,7 +66,7 @@
                     },
                     timeout: 60000,
                     success: function (response) {
-                        console.log('saved');
+                        // console.log('saved');
                     },
                     error: function (e) {
                         // console.log('An error occurred:', e);
@@ -124,6 +124,7 @@
 
                 var formData = new FormData($('#notification_email_form')[0]);
                 formData.append("jobHash", jobHash); // Append the jobHash to the form data
+                formData.append("fieldTag", fieldTag);
 
                 $.ajax({
                     type: "POST",
@@ -140,7 +141,7 @@
                         //console.log(response);
                     },
                     error: function (e) {
-                         //alert("An error occurred: " + e.responseText.message);
+                        //alert("An error occurred: " + e.responseText.message);
                         //
                     }
                 });

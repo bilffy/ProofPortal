@@ -34,86 +34,261 @@ class EmailService
     {
         //
     }
+    
+    public function updateEmailSend($field, $decryptedJobKey)
+    {
+        $authUser = Auth::user();
+    
+        $template = Template::where('template_name', $field)->firstOrFail();
+    
+        $columnsToSelect = [
+            'id',
+            'notifications_matrix',
+            'ts_schoolkey',
+            'ts_account_id',
+            'ts_job_id',
+            'ts_jobname',
+            'proof_due',
+            'job_status_id'
+        ];
+    
+        if (Schema::hasColumn('jobs', $field)) {
+            $columnsToSelect[] = $field;
+        }
+    
+        $selectedJob = Job::with(['franchises', 'folders'])
+            ->where('ts_jobkey', $decryptedJobKey)
+            ->select($columnsToSelect)
+            ->firstOrFail();
+    
+        $sentDate = $selectedJob->$field;
+    
+        if (empty($sentDate)) {
+            return;
+        }
+    
+        $sentDateCarbon = Carbon::parse($sentDate);
+    
+        $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
+        $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true) ?? [];
+    
+        /**
+         * --------------------------------------------
+         * Roles with email enabled
+         * --------------------------------------------
+         */
+        $rolesWithEmailEnabled = [];
+    
+        if (!empty($notificationsMatrix['schools'][$field])) {
+            foreach ($notificationsMatrix['schools'][$field] as $role => $enabled) {
+                if ($enabled === true) {
+                    $rolesWithEmailEnabled[] = $role;
+                }
+            }
+        }
+    
+        if (empty($rolesWithEmailEnabled)) {
+            $isDelete = Email::where('template_id', $template->id)
+            ->where('ts_jobkey', $decryptedJobKey)
+            ->whereDate('sentdate', $sentDateCarbon)
+            ->where('email_from', $authUser->email)
+            ->delete();
+
+            return;
+        }
+    
+        $roleNames = array_unique(array_map(fn ($role) =>
+            str_replace(
+                ['franchise', 'photocoordinator', 'teacher'],
+                ['Franchise', 'Photo Coordinator', 'Teacher'],
+                $role
+            ),
+            $rolesWithEmailEnabled
+        ));
+    
+        $roleIds = Role::whereIn('name', $roleNames)->pluck('id')->toArray();
+    
+        if (empty($roleIds)) {
+            return;
+        }
+    
+        /**
+         * --------------------------------------------
+         * Fetch users
+         * --------------------------------------------
+         */
+        $users = User::whereHas('roles', fn ($q) => $q->whereIn('id', $roleIds))
+            ->where(function ($query) use ($selectedJob) {
+                $query->whereHas('schools', fn ($q) =>
+                    $q->where('schoolkey', $selectedJob->ts_schoolkey)
+                )->orWhereHas('franchises', fn ($q) =>
+                    $q->where('ts_account_id', $selectedJob->ts_account_id)
+                );
+            })
+            ->select('id', 'name', 'email', 'firstname', 'lastname')
+            ->get();
+    
+        /**
+         * --------------------------------------------
+         * DELETE stale emails (ONCE)
+         * --------------------------------------------
+         */
+        $validEmails = $users->pluck('email')->toArray();
+
+        $isDelete = Email::where('template_id', $template->id)
+            ->where('ts_jobkey', $decryptedJobKey)
+            ->whereDate('sentdate', $sentDateCarbon)
+            ->where('email_from', $authUser->email)
+            ->whereNotIn('email_to', $validEmails)
+            ->delete();
+    
+        /**
+         * --------------------------------------------
+         * INSERT missing emails
+         * --------------------------------------------
+         */
+        foreach ($users as $user) {
+            $alreadyExists = Email::where('template_id', $template->id)
+                ->where('ts_jobkey', $decryptedJobKey)
+                ->whereDate('sentdate', $sentDateCarbon)
+                ->where('email_from', $authUser->email)
+                ->where('email_to', $user->email)
+                ->exists();
+
+            if ($alreadyExists) {
+                continue;
+            }
+
+            $userFolders = $selectedJob->folders
+                ->filter(fn ($folder) =>
+                    DB::table('folder_users')
+                        ->where('ts_folder_id', $folder->ts_folder_id)
+                        ->where('user_id', $user->id)
+                        ->exists()
+                )
+                ->pluck('ts_foldername')
+                ->toArray();
+    
+            $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
+    
+            if (!File::exists($templatePath)) {
+                throw new \Exception("Email template not found: {$templatePath}");
+            }
+    
+            $templateContent = File::get($templatePath);
+            $statusModel = Status::find($selectedJob->job_status_id);
+    
+            $data = [
+                'INVITEE_FIRST_NAME' => $user->firstname ?? '',
+                'FOLDERS' => $userFolders,
+                'ALLFOLDERS' => $allJobFolders,
+                'JOB_NAME' => $selectedJob->ts_jobname ?? '',
+                'REVIEW_DUE' => $selectedJob->proof_due
+                    ? Carbon::parse($selectedJob->proof_due)->format('l j F, Y')
+                    : '',
+                'FRANCHISE_NAME' => $user->getSchoolOrFranchiseDetail()->name ?? '',
+                'FRANCHISE_PHONE' => $user->getSchoolOrFranchiseDetail()->phone ?? '',
+                'FRANCHISE_EMAIL' => $user->getSchoolOrFranchiseDetail()->email ?? '',
+                'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
+                'FRANCHISE_ADDRESS1' => $user->getSchoolOrFranchiseDetail()->address ?? '',
+                'FRANCHISE_SUBURB' => $user->getSchoolOrFranchiseDetail()->suburb ?? '',
+                'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
+                'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
+                'APP_URL' => Config::get('app.url'),
+                'JOB_STATUS_NAME' => $statusModel->status_external_name ?? '',
+            ];
+    
+            $processedContent = $this->replaceTemplateVariables($templateContent, $data);
+    
+            $htmlPart = new TextPart($processedContent, 'utf-8', 'html', 'base64');
+    
+            $emailMessage = (new SymfonyEmail())
+                ->from(new Address($authUser->email, $authUser->name))
+                ->to(new Address($user->email, $user->name))
+                ->subject($template->template_subject)
+                ->setBody($htmlPart);
+    
+            $emailMessage->getHeaders()->addIdHeader(
+                'Message-ID',
+                Str::uuid() . '@localhost'
+            );
+    
+            Email::create([
+                'generated_from_user_id' => $authUser->id,
+                'alphacode' => $selectedJob->franchises->alphacode ?? null,
+                'ts_jobkey' => $decryptedJobKey,
+                'ts_schoolkey' => $selectedJob->ts_schoolkey,
+                'sentdate' => $sentDate,
+                'email_from' => $authUser->email,
+                'email_to' => $user->email,
+                'email_content' => MessageConverter::toEmail($emailMessage)->toString(),
+                'template_id' => $template->id
+            ]);
+        }
+    }
+    
 
     public function saveEmailContent($tsJobKey, $field, $date, $status = null)
     {
         $authUser = Auth::user();
     
         // Fetch the template
-        $template = Template::where('template_name', $field)->first();
-        if (!$template) {
-            throw new \Exception('Template not found');
-        }
+        $template = Template::where('template_name', $field)->firstOrFail();
     
-        // Check if the dynamic column exists in the `jobs` table
-        $columnsToSelect = ['id', 'notifications_matrix', 'ts_schoolkey', 'ts_account_id', 'ts_job_id', 'ts_jobname', 'proof_due'];
+        // Fetch the job data
+        $columnsToSelect = ['id', 'notifications_matrix', 'notifications_enabled', 'ts_schoolkey', 'ts_account_id', 'ts_job_id', 'ts_jobname', 'proof_due'];
         if (Schema::hasColumn('jobs', $field)) {
             $columnsToSelect[] = $field;
         }
     
-        // Fetch the job data
         $selectedJob = Job::with(['franchises','folders'])
             ->where('ts_jobkey', $tsJobKey)
-            ->whereNotNull('notifications_matrix')
-            ->when(Schema::hasColumn('jobs', $field), function ($query) use ($field) {
-                return $query->whereNotNull($field);
-            })
             ->select($columnsToSelect)
-            ->first();
+            ->firstOrFail();
     
-        if ($selectedJob) {
+        $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
+        $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true);
+    
+        $rolesWithFieldTrue = $notificationsMatrix['schools'][$field] ?? [];
+        $rolesWithFieldTrue = array_keys(array_filter($rolesWithFieldTrue, fn($v) => $v === true));
+   
+        // Prepare template content
+        $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
+        $templateContent = File::exists($templatePath) ? File::get($templatePath) : '';
+        $statusModel = $status ? Status::find($status) : null;
+    
+        if (!empty($rolesWithFieldTrue) && $selectedJob->notifications_enabled === 1) {
 
-            $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
-            // Decode notifications matrix and filter roles
-            $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true);
-            $rolesWithFieldTrue = isset($notificationsMatrix['schools'][$field])
-                ? array_keys(array_filter($notificationsMatrix['schools'][$field], fn($value) => $value === true))
-                : [];
-        
-            if (empty($rolesWithFieldTrue)) {
-                throw new \Exception("No roles found for field {$field} in notifications matrix.");
-            }
-        
-            // Map role names and fetch corresponding user IDs
             $roleNames = array_map(fn($role) => str_replace(
                 ['franchise', 'photocoordinator', 'teacher'],
                 ['Franchise', 'Photo Coordinator', 'Teacher'],
-                $role
-            ), (array)$rolesWithFieldTrue);
-        
+                $role // <-- only the single role
+            ), $rolesWithFieldTrue);
+            
+    
             $roleIds = Role::whereIn('name', $roleNames)->pluck('id');
-        
+    
             $userIds = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
-            ->where(function ($query) use ($selectedJob) {
-                $query->whereHas('schools', fn($q) => $q->where('schoolkey', $selectedJob->ts_schoolkey))
-                    ->orWhereHas('franchises', fn($q) => $q->where('ts_account_id', $selectedJob->ts_account_id));
-            })
-            ->pluck('id');
-        
-        
-            // Fetch user details
-            $users = User::whereIn('id', $userIds)->select('id', 'name', 'email', 'firstname', 'lastname')->get();
-        
-            if ($users->isEmpty()) {
-                throw new \Exception('No users found to send the email.');
-            }
-        
+                ->where(function ($query) use ($selectedJob) {
+                    $query->whereHas('schools', fn($q) => $q->where('schoolkey', $selectedJob->ts_schoolkey))
+                          ->orWhereHas('franchises', fn($q) => $q->where('ts_account_id', $selectedJob->ts_account_id));
+                })
+                ->pluck('id');
+    
+            $users = User::whereIn('id', $userIds)->select('id','name','email','firstname','lastname')->get();
+    
             foreach ($users as $user) {
-                // Fetch folders associated with the job and user
-                $userFolders = DB::table('jobs')
-                    ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-                    ->join('folder_users', 'folder_users.ts_folder_id', '=', 'folders.ts_folder_id')
-                    ->where([['folder_users.user_id', $user->id], ['jobs.ts_jobkey', $tsJobKey]])
-                    ->pluck('ts_foldername')->toArray();  // Get the results
+                $userFolders = $selectedJob->folders
+                    ->filter(fn($f) => DB::table('folder_users')->where('ts_folder_id', $f->ts_folder_id)->where('user_id', $user->id)->exists())
+                    ->pluck('ts_foldername')
+                    ->toArray();
 
-                // Load template content
                 $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
                 if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {
-                    throw new \Exception("Template file not found at {$templatePath}");
+                        throw new \Exception("Template file not found at {$templatePath}");
                 }
                 $templateContent = File::get($templatePath);
-                $statusModel = $status ? Status::find($status) : null;
-                // Replace variables in the template
+    
                 $data = [
                     'INVITEE_FIRST_NAME' => $user->firstname ?? '',
                     'FOLDERS' => $userFolders,
@@ -129,72 +304,63 @@ class EmailService
                     'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
                     'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
                     'APP_URL' => Config::get('app.url'),
-                    // 'JOB_STATUS_NAME' => Status::find($status)->status_external_name ?? '',
                     'JOB_STATUS_NAME' => $statusModel->status_external_name ?? '',
                 ];
-        
+    
                 $processedContent = $this->replaceTemplateVariables($templateContent, $data);
-
                 $templateSubject = $template->template_subject;
-        
-                // Safely replace JOB_NAME
-                if (strpos($templateSubject, 'JOB_NAME') !== false) {
-                    $jobName = $selectedJob->ts_jobname ?? 'Unknown Job'; // Fallback if job name is null
-                    $templateSubject = str_replace('JOB_NAME', $jobName, $templateSubject);
-                }
-
-                // $message = new Swift_Message();
-                // $message->setFrom([$authUser->email => $authUser->name])
-                //         ->setTo([$user->email => $user->name])
-                //         ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
-
-                // $message->setBody($processedContent, 'text/html'); // Set the body content
-                // $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
-        
-                // $emlContent = $message->toString();
-
                 $htmlPart = new TextPart(
                     $processedContent,   // body
                     'utf-8',             // charset
                     'html',              // subtype
                     'base64'             // encoding ✅ Swift equivalent
-                );
-
+                    );
+    
                 $email = (new SymfonyEmail())
-                    ->from(new Address($authUser->email, $authUser->name))
-                    ->to(new Address($user->email, $user->name))
-                    ->subject($templateSubject)
-                    ->setBody($htmlPart);
-
-                // Add valid Message-ID (REQUIRED)
+                        ->from(new Address($authUser->email, $authUser->name))
+                        ->to(new Address($user->email, $user->name))
+                        ->subject($templateSubject)
+                        ->setBody($htmlPart);
+    
                 $email->getHeaders()->addIdHeader(
                     'Message-ID',
                     Str::uuid()->toString() . '@localhost'
                 );
-
-                // Convert to RFC822 .eml
+    
                 $emlContent = MessageConverter::toEmail($email)->toString();
-        
-                $filePath = public_path("$field.eml");
-                file_put_contents($filePath, $emlContent);
-        
-                // Save email record in the database
-                Email::create([
+    
+                // Save email record per user
+                $emailRecord = Email::where([
                     'generated_from_user_id' => $authUser->id,
                     'alphacode' => $selectedJob->franchises->alphacode ?? null,
                     'ts_jobkey' => $tsJobKey,
                     'ts_schoolkey' => $selectedJob->ts_schoolkey,
-                    'sentdate' => $date,
                     'email_from' => $authUser->email,
                     'email_to' => $user->email,
-                    'email_content' => $emlContent,
                     'template_id' => $template->id
-                ]);
-            }
-        }
-    }
+                ])->first();
     
-
+                if ($emailRecord) {
+                    // Update existing
+                    $emailRecord->update(['sentdate' => $date]);
+                } else {
+                    // Insert new
+                    Email::create([
+                        'generated_from_user_id' => $authUser->id,
+                        'alphacode' => $selectedJob->franchises->alphacode ?? null,
+                        'ts_jobkey' => $tsJobKey,
+                        'ts_schoolkey' => $selectedJob->ts_schoolkey,
+                        'sentdate' => $date,
+                        'email_from' => $authUser->email,
+                        'email_to' => $user->email,
+                        'email_content' => $emlContent,
+                        'template_id' => $template->id
+                    ]);
+                }
+            }
+        } 
+    }    
+    
     public function saveEmailFolderContent($tsFolderIds, $field, $date, $status = null)
     {
         $authUser = Auth::user();
@@ -434,7 +600,7 @@ class EmailService
 
         $email = (new SymfonyEmail())
             ->from(new Address($authUser->email, $authUser->name))
-            ->to(new Address($user->email, $user->name))
+            ->to(new Address($inviteUser->email, $inviteUser->name))
             ->subject($templateSubject)
             ->setBody($htmlPart);
 
@@ -447,8 +613,8 @@ class EmailService
         // Convert to RFC822 .eml
         $emlContent = MessageConverter::toEmail($email)->toString();
 
-        // $filePath = public_path("$field.eml");
-        // file_put_contents($filePath, $emlContent);
+        $filePath = public_path("$field.eml");
+        file_put_contents($filePath, $emlContent);
 
         Email::create([
             'generated_from_user_id' => $authUser->id,

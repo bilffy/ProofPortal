@@ -20,4 +20,8 @@ class Template extends Model
         'template_format',
         'email_category_id',
     ];
+
+    public function emailCategory(){
+        return $this->belongsTo('App\Models\EmailCategory', 'email_category_id');
+    }
 }

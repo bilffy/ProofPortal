@@ -112,16 +112,27 @@ class InvitationController extends Controller
 
     public function inviteSingle($role, $jobKeyHash)
     {
-        $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKeyHash))->first();
+        $jobId = $this->getDecryptData($jobKeyHash);
+        $selectedJob = $this->jobService->getJobByJobKey($jobId)->first();
+        
         $user = Auth::user(); 
+    
         $users = User::query()
-                ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
-                ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
-                ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
-                ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
-                ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
-                ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
-                ->select('firstname','lastname','users.email')->get();
+            ->whereHas('roles', function($q) use ($role) {
+                // Removes spaces and converts to lowercase for a truly fuzzy match
+                $q->whereRaw("LOWER(REPLACE(name, ' ', '')) = ?", [strtolower($role)]);
+            })
+            ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
+            ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
+            ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
+            ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
+            ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
+            ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
+            // Prefixing with 'users.' prevents ambiguity and 'distinct()' prevents duplicates
+            ->select('users.firstname', 'users.lastname', 'users.email')
+            ->distinct() 
+            ->get();
+    
         return view('proofing.franchise.invitations.invitation_single', [
             'expiryDate' => $this->getAccountExpirationDate(),
             'role' => $role,
@@ -197,17 +208,27 @@ class InvitationController extends Controller
 
     public function inviteMulti($role, $jobKeyHash)
     {
-        $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKeyHash))->first(); 
-        $user = Auth::user();
+        $jobId = $this->getDecryptData($jobKeyHash);
+        $selectedJob = $this->jobService->getJobByJobKey($jobId)->first();
+        
+        $user = Auth::user(); 
+    
         $users = User::query()
-                ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
-                ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
-                ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
-                ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
-                ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
-                ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
-                ->select('firstname','lastname','users.email')->get();
-
+            ->whereHas('roles', function($q) use ($role) {
+                // Removes spaces and converts to lowercase for a truly fuzzy match
+                $q->whereRaw("LOWER(REPLACE(name, ' ', '')) = ?", [strtolower($role)]);
+            })
+            ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
+            ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
+            ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
+            ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
+            ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
+            ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
+            // Prefixing with 'users.' prevents ambiguity and 'distinct()' prevents duplicates
+            ->select('users.firstname', 'users.lastname', 'users.email')
+            ->distinct() 
+            ->get();
+    
         return view('proofing.franchise.invitations.invitation_multi', [
             'expiryDate' => $this->getAccountExpirationDate(),
             'role' => $role,

@@ -21,6 +21,7 @@
     @php      
         use Illuminate\Support\Facades\URL;
         use Illuminate\Support\Facades\Crypt;
+        use Carbon\Carbon;
         $activeText = '<span class="text-success"><i class="fa fa-check fa-lg"></i></span> School is marked for Active Syncing. Data is updated from Timestone every hour.';
         $inactiveText = '<span class="text-warning"><i class="fa fa-exclamation-triangle fa-lg"></i></span> School is not marked for Active Syncing.';
     @endphp
@@ -56,6 +57,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         @inject('proofingChangelogService', 'App\Services\Proofing\ProofingChangelogService')
+                                        @inject('emailService', 'App\Services\Proofing\emailService')
                                         @if ($selectedFolders->count() > 0)
                                         @foreach ($selectedFolders as $folder)
                                             <div class="col-6 col-lg-3">
@@ -76,6 +78,16 @@
                                                         $none_modified = 1;
                                                         $status = $reviewStatusesColours->firstWhere('id', $modifiedStatus);
                                                         $completedText = '<p class="small mt-1">(' . $status->status_external_name . ')</p>';
+                                                        if($selectedJob->job_status_id === $noneStatus) {
+                                                                $selectedJob->update([
+                                                                    'job_status_id' => $modifiedStatus,
+                                                                ]);
+                                                                $folder->update([
+                                                                    'status_id' => $modifiedStatus,
+                                                                ]);
+                                                            $emailService->saveEmailContent($folder->job->ts_jobkey, 'job_status_modified', Carbon::now(), $modifiedStatus);
+                                                            $emailService->saveEmailFolderContent($folder->ts_folder_id, 'folder_status_modified', Carbon::now(), $modifiedStatus);                                                        
+                                                        }
                                                     } elseif ($folder->status_id === $noneStatus && !$hasChanges) {
                                                         $none_modified = 0;
                                                         $completedText = '';

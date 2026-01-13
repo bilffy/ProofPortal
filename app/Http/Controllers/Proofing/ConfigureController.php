@@ -9,11 +9,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Folder;
 use App\Models\Job;
 use App\Models\School;
+use App\Models\Template;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\JobService;
 use App\Services\Proofing\FolderService;
 use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\SchoolService;
+use App\Services\Proofing\EmailService;
 use App\Services\Proofing\ConfigureService;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
@@ -32,8 +34,9 @@ class ConfigureController extends Controller
     protected $folderService;
     protected $seasonService;
     protected $schoolService;
+    protected $emailService;
 
-    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ConfigureService $configureService, SeasonService $seasonService, SchoolService $schoolService)
+    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ConfigureService $configureService, SeasonService $seasonService, SchoolService $schoolService, EmailService $emailService)
     {
         $this->encryptDecryptService = $encryptDecryptService;
         $this->jobService = $jobService;
@@ -41,6 +44,7 @@ class ConfigureController extends Controller
         $this->configureService = $configureService;
         $this->seasonService = $seasonService;
         $this->schoolService = $schoolService;
+        $this->emailService = $emailService;
     }
 
     private function getDecryptData($hash){
@@ -120,8 +124,17 @@ class ConfigureController extends Controller
             'schools' => $this->processNotifications($schools),
             'folders' => $this->processNotifications($folders)
         ];
+        $decryptedJobKey = $this->getDecryptData($request->input('jobHash'));
 
         $this->updateJobData($request->input('jobHash'), 'notifications_matrix', json_encode($notificationsMatrix));
+
+        $template = Template::with('emailCategory')
+            ->where('template_name', $request->input('fieldTag'))
+            ->first();
+        
+        if ($template && $template->emailCategory && $template->emailCategory->email_category_name === 'Proofing') {
+            $this->emailService->updateEmailSend($request->input('fieldTag'), $decryptedJobKey);
+        } 
     }
 
     protected function processNotifications($input)

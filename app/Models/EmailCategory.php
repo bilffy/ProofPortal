@@ -17,4 +17,8 @@ class EmailCategory extends Model
     protected $fillable = [
         'email_category_name',
     ];
+
+    public function templates(){
+        return $this->hasMany('App\Models\Template', 'email_category_id');
+    }
 }
