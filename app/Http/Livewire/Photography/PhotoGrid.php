@@ -30,17 +30,17 @@ class PhotoGrid extends Component
     public $viewOptions = ['ALL' => 'All'];
 
     protected $listeners = [
-        'gotoPage' => 'setPage',
+        'gotoPage' => 'setPage', //code by IT
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
         PhotographyHelper::EV_CHANGE_TAB => 'updateActiveCategory',
     ];
-
+    //code by IT
     public function setPage($page)
     {
         $this->page = $page;
     }
-
+    //code by IT
     public function mount($category = 'portraits', $season = 1, $schoolKey = '')
     {
         $this->category = $category;

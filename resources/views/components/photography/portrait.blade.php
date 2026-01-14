@@ -75,7 +75,8 @@
                             $imageInfo = getimagesizefromstring($imageData);
                             $mimeType = $imageInfo['mime'] ?? 'image/jpeg';
                         @endphp
-                        @if ($img)
+                        {{--code by IT--}}
+                        {{-- @if ($img)
                             <img
                                 src="data:image/jpeg;base64,{{ $img }}"
                                 alt=""
@@ -84,18 +85,20 @@
                             />
                         @else
                             <img
-                                src="{{ asset('images/not_found.jpg') }}"
+                                src="{{ asset('msp/images/not_found.jpg') }}"
                                 loading="lazy"
                                 class="w-full max-w-none"
                             />
-                        @endif
+                        @endif --}}
+                        {{--code by IT--}}
 
-                        {{-- <img 
+                        {{--code by Chromedia--}}
+                        <img 
                         src="data:{{$mimeType}};base64,{{$img}}"
                         alt=""
                         class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                        /> --}}
-
+                        /> 
+                        {{--code by Chromedia--}}
                     </div>
                 </template>
             @endif

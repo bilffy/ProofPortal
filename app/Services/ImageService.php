@@ -278,7 +278,7 @@ class ImageService
                 'subjects.external_subject_id'
             )
             // ->distinct() //code by Chromedia
-            ->distinct('subjects.ts_subjectkey')
+            ->distinct('subjects.ts_subjectkey') //code by IT
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
     }
@@ -338,8 +338,8 @@ class ImageService
      * @param string $tab
      * @return Collection
      */
-    // public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS): Collection
-    public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS, $perPage = 30, $page = 1)
+    // public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS): Collection  //code by Chromedia
+    public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS, $perPage = 30, $page = 1)  //code by IT
     {
         $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
@@ -357,7 +357,7 @@ class ImageService
                 break;
         }
 
-        // return $images->get();
+        // return $images->get();   //code by IT
         return $images->paginate($perPage, ['*'], 'page', $page);
     }
 
@@ -561,15 +561,22 @@ class ImageService
         foreach ($urls as $url) {
             if ($this->urlExists($url)) {
                 $binary = @file_get_contents($url);
-    
                 if ($binary !== false) {
-                    return base64_encode($binary); // ✅ REAL base64
+                    return base64_encode($binary); // ✅ real base64
                 }
             }
         }
     
-        return null;
-    }    
+        // If no remote image is found, use default "not found" image from storage
+        $notFoundPath = ImageHelper::NOT_FOUND_IMG; // e.g., 'images/not_found.jpg'
+        if (Storage::disk('local')->exists($notFoundPath)) {
+            $binary = Storage::disk('local')->get($notFoundPath);
+            return base64_encode($binary);
+        }
+    
+        return null; // fallback in case even default image is missing
+    }
+     
     
     /**
      * Check if at least one image exists for the key
@@ -632,7 +639,7 @@ class ImageService
     //  * @return boolean
     //  */
     // public function getIsImageFound($key)
-    // {
+    // {♠
     //     $path = ImageHelper::getImagePath($key);
     //     if ($path === '') {
     //         return false;

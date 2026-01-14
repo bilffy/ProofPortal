@@ -23,8 +23,8 @@
                 @if (count($paginatedImages) == 0)
                     No images found
                 @else
-                    {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }}
-                    {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}}
+                    {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }} {{-- code by IT --}}
+                    {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}} {{-- code by chromedia --}}
                 @endif
             </div>
         </div>
