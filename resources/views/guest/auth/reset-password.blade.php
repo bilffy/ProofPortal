@@ -9,16 +9,16 @@
 
     <form wire:submit.prevent="submit" x-data="{ password: @entangle('password'), password_confirmation: @entangle('password_confirmation') }">
         <div class="hidden">
-            <input type="email" wire:model="email" required autofocus autocomplete="username" />
-            <input type="password" wire:model="token" required autofocus autocomplete="username" />
+            <input type="email" wire:model.blur="email" required autofocus autocomplete="username" />
+            <input type="password" wire:model.blur="token" required autofocus autocomplete="username" />
         </div>
         <div class="flex flex-col mb-4">
-            <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />
+            <input class="border rounded-md p-2 border-neutral" type="password" wire:model.blur="password" required placeholder="Password" autocomplete="new-password" />
             @error('password') <span class="error">{{ $message }}</span> @enderror
         </div>
 
         <div class="flex flex-col mb-4">
-            <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password_confirmation" required placeholder="Repeat Password" autocomplete="new-password" />
+            <input class="border rounded-md p-2 border-neutral" type="password" wire:model.blur="password_confirmation" required placeholder="Repeat Password" autocomplete="new-password" />
             @error('password_confirmation') <span class="error">{{ $message }}</span> @enderror
         </div>
 
