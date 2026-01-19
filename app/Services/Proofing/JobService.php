@@ -66,9 +66,10 @@ class JobService
         $selectedSchoolkey = $this->schoolService->getSchoolById(Session::get('school_context-sid'))->select('schoolkey')->first() ?? Auth::user()->getSchool();
         
         $tnjNotFound = $this->statusService->tnjNotFound;
+        $deleted = $this->statusService->deleted;
         return $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
-            ->whereNotIn('jobs.job_status_id', [$tnjNotFound])
+            ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
             ->orderBy('id', 'asc')
             ->get();
     }
@@ -199,9 +200,10 @@ class JobService
         $job = Job::where('ts_job_id', $tsJobId)->firstOrFail();
 
         $job->update([
-            'jobsync_status_id' => $this->statusService->unsync,
+            'jobsync_status_id' => $this->statusService->sync,
             'foldersync_status_id' => $this->statusService->pending,
-            'job_status_id' => $this->statusService->none,
+            'job_status_id' => $this->statusService->deleted,
+            'imagesync_status_id' => $this->statusService->unsync,
             'proof_start' => null,
             'proof_warning' => null,
             'proof_due' => null,

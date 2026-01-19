@@ -291,7 +291,7 @@ class ConfigureService
         $tsSubjectImages = $this->timestoneTableService->getAllTimestoneHomeSubjectsImageByJobID($tsJobId); // Format subjects by SubjectId
 
         // Blueprint
-        $bpSubjectImages = $this->subjectService->getAllHomedSubjectsImageByJobId($tsJobId)->get();
+        $bpSubjectImages = $this->subjectService->getAllHomedSubjectsImageByJobId($tsJobId);
 
         $this->updateImage($tsSubjectImages, $bpSubjectImages);
 

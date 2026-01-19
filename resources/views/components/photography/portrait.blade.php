@@ -93,11 +93,13 @@
                         {{--code by IT--}}
 
                         {{--code by Chromedia--}}
-                        <img 
-                        src="data:{{$mimeType}};base64,{{$img}}"
-                        alt=""
-                        class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                        /> 
+                        @if ($img)
+                            <img 
+                            src="data:{{$mimeType}};base64,{{$img}}"
+                            alt=""
+                            class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                            />
+                        @endif 
                         {{--code by Chromedia--}}
                     </div>
                 </template>

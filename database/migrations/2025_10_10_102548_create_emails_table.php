@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('smtp_message', 25)->nullable();
             $table->char('email_token', 36)->nullable();
             $table->unsignedBigInteger('template_id')->nullable();
+            $table->integer('status_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
             $table->foreign('generated_from_user_id')->references('id')->on('users')->onDelete('cascade');

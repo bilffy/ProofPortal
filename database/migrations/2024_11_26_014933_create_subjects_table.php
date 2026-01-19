@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('ts_job_id')->nullable();
             $table->integer('ts_folder_id')->nullable();
             $table->integer('ts_subject_id')->nullable();
+            $table->integer('ExportStatus')->nullable();
             $table->tinyInteger('is_locked')->nullable();
             $table->timestamps();
         });

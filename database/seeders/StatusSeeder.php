@@ -34,8 +34,8 @@ class StatusSeeder extends Seeder
                 'created_at' => Carbon::now(),
             ],
             [
-                'status_internal_name' => 'DISABLED',
-                'status_external_name' => 'Disabled',
+                'status_internal_name' => 'DELETED',
+                'status_external_name' => 'Deleted',
                 'colour_code' => '',
                 'created_at' => Carbon::now(),
             ],
