@@ -2984,8 +2984,8 @@ var methods = {
         $.each(variables, function (k, v) {
             i = $(main).jexcel('getColumnNameFromId', $(v).prop('id'));
             v = $(main).jexcel('getValue', $(v));
-            console.log(v);
-            console.log(Number(v));
+            // console.log(v);
+            // console.log(Number(v));
             if (v == Number(v)) {
                 window[i] = Number(v);
             } else {

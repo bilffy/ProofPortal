@@ -357,16 +357,18 @@ class UserController extends Controller
                         switch ($roleName)
                         {
                             case RoleHelper::ROLE_FRANCHISE:
-                                FranchiseUser::get([
-                                    'user_id' => $user->id,
-                                ])->first()->delete();
+                                // FranchiseUser::get([
+                                //     'user_id' => $user->id,
+                                // ])->first()->delete(); //code by chromedia
+                                FranchiseUser::where('user_id', $user->id)->first()?->delete(); //code by IT
                                 break;
                             case RoleHelper::ROLE_SCHOOL_ADMIN:
                             case RoleHelper::ROLE_PHOTO_COORDINATOR:
                             case RoleHelper::ROLE_TEACHER:
-                                SchoolUser::get([
-                                    'user_id' => $user->id,
-                                ])->first()->delete();
+                                // SchoolUser::get([
+                                //     'user_id' => $user->id,
+                                // ])->first()->delete(); //code by chromedia
+                                SchoolUser::where('user_id', $user->id)->first()?->delete(); //code by IT
                                 break;
                         }
                         $user->removeRole($roleName);

@@ -316,7 +316,7 @@
                         });
                     },
                     error: function (e) {
-                        console.log("An error occurred: " + e.responseText.message);
+                        // console.log("An error occurred: " + e.responseText.message);
                         return false;
                     },
                     complete: function (xhr) {
@@ -431,7 +431,7 @@
                         });
                     },
                     error: function (e) {
-                        console.log("An error occurred: " + e.responseText.message);
+                        // console.log("An error occurred: " + e.responseText.message);
                         return false;
                     },
                     complete: function (xhr) {
@@ -485,7 +485,7 @@
                         });
                     },
                     error: function (e) {
-                        console.log("An error occurred: " + e.responseText.message);
+                        // console.log("An error occurred: " + e.responseText.message);
                         return false;
                     },
                     complete: function (xhr) {

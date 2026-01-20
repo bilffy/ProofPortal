@@ -856,10 +856,10 @@ $(document).ready(function () {
                 },
                 timeout: 60000,
                 success: function (response) {
-                   console.log(response);
+                    //  console.log(response);
                 },
                 error: function (e) {
-                    console.log('An error occurred:', e);
+                    // console.log('An error occurred:', e);
                 }
             })
         }
@@ -975,7 +975,7 @@ $(document).ready(function () {
     $('#subject-name-filter').on('input', function () {
         currentPage = 1;
         currentSearch = $(this).val().trim();
-        console.log(currentSearch);
+        // console.log(currentSearch);
         loadGridSubjects(currentSearch);
     });
     
