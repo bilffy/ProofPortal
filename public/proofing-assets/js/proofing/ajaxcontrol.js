@@ -21,7 +21,7 @@
                 });
             }, {
                 // Start loading when 500px away to make it feel "instant"
-                rootMargin: "1000px 0px",
+                rootMargin: "500px 0px",
                 threshold: 0.01
             });
     
