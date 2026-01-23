@@ -33,8 +33,7 @@
                     $newimageName = str_replace('\\', '-', $imageName);
                     $newimageName = Str::replace('\\', '-', $imageName);
                     // Generate a signed URL for the image
-                    // $image_url = route('serve.image', ['filename' => $newimageName]);
-                    $image_url = route('serve.image', ['filename' => $skEncrypted]);
+                    $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                     $salutation = '';
                     $prefix     = '';
                     $suffix     = '';

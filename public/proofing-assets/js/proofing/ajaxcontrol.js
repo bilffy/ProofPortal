@@ -1,38 +1,61 @@
     document.addEventListener("DOMContentLoaded", function() {
 
-        const lazyImages = [].slice.call(document.querySelectorAll("img.lazyload"));
+        const lazyImages = document.querySelectorAll("img.lazyload");
 
         if ("IntersectionObserver" in window) {
-          const lazyImageObserver = new IntersectionObserver(function(entries, observer) {
-            entries.forEach(function(entry) {
-              if (entry.isIntersecting) {
-                const lazyImage = entry.target;
-                lazyImage.src = lazyImage.dataset.src;
-  
-                lazyImage.onload = function() {
-                  lazyImage.classList.add("loaded");
-                };
-  
-                lazyImageObserver.unobserve(lazyImage);
-              }
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        
+                        // 1. Determine priority
+                        // If it's in a modal, we want it to jump the network queue
+                        const priority = img.dataset.priority === 'high' ? 'high' : 'low';
+    
+                        // 2. Trigger the load
+                        loadImage(img, priority);
+    
+                        // 3. Stop observing once loading starts
+                        observer.unobserve(img);
+                    }
+                });
+            }, {
+                // Start loading when 500px away to make it feel "instant"
+                rootMargin: "1000px 0px",
+                threshold: 0.01
             });
-          }, {
-            rootMargin: "300px 0px", // preload 300px before viewport
-            threshold: 0.1
-          });
-  
-          lazyImages.forEach(function(lazyImage) {
-            lazyImageObserver.observe(lazyImage);
-          });
-  
+    
+            lazyImages.forEach(img => imageObserver.observe(img));
         } else {
-          // --- Fallback for older browsers ---
-          lazyImages.forEach(function(lazyImage) {
-            lazyImage.src = lazyImage.dataset.src;
-            lazyImage.onload = function() {
-              lazyImage.classList.add("loaded");
-            };
-          });
+            // Fallback for very old browsers
+            lazyImages.forEach(img => loadImage(img, 'low'));
+        }
+    
+        function loadImage(img, priority) {
+            const src = img.dataset.src;
+            if (!src) return;
+    
+            // Create a temporary image object to pre-decode
+            const tempImage = new Image();
+            
+            // Set fetch priority (Modern browsers support this to manage the queue)
+            if (priority === 'high') {
+                tempImage.fetchPriority = "high";
+                img.style.zIndex = "1000"; // Visual hint for browser layering
+            } else {
+                tempImage.fetchPriority = "low";
+            }
+    
+            tempImage.src = src;
+    
+            // Use .decode() to ensure the browser doesn't "freeze" while rendering
+            tempImage.decode().then(() => {
+                img.src = src;
+                img.classList.add("loaded");
+            }).catch(err => {
+                // Fallback if decode fails (e.g. broken image)
+                img.src = src;
+            });
         }
         
 

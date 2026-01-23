@@ -11,7 +11,7 @@
         </div>
     @endif
     <form wire:submit.prevent="submit">
-        <input type="hidden" wire:model.blur="nonce">
+        <input type="hidden" wire:model="nonce">
         @error('email')
             <div class="mb-4 font-medium text-sm text-red-600 text-[#FF0000]">        
                 {{ $message }}
@@ -23,7 +23,7 @@
                         class="border rounded-md p-2 border-neutral"
                         id="msp-email"
                         type="email"
-                        wire:model.blur="email"
+                        wire:model="email"
                         required
                         autofocus
                         autocomplete="username"

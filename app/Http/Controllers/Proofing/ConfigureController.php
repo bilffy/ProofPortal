@@ -32,6 +32,7 @@ class ConfigureController extends Controller
     protected $encryptDecryptService;
     protected $jobService;
     protected $folderService;
+    protected $configureService;
     protected $seasonService;
     protected $schoolService;
     protected $emailService;
@@ -54,6 +55,10 @@ class ConfigureController extends Controller
     public function index($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
 
         // $subjectKeys = $selectedJob->folders->flatMap(function ($folder) {
         //     return $folder->subjects->pluck('ts_subjectkey');
@@ -180,6 +185,10 @@ class ConfigureController extends Controller
     {
         $decryptedJobId = $this->getDecryptData($hashedJob);
         $selectedJob = $this->jobService->getJobById($decryptedJobId);
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
 
         // Check if proofing has started
         if ($this->hasProofingStarted($selectedJob)) {

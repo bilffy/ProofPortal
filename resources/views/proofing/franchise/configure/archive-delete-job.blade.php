@@ -57,7 +57,7 @@
                                     @php
                                         $confirmMsg = __('Are you sure you want to delete :school? This action is irreversible!', ['school' => $selectedJob->ts_jobname]);
                                     @endphp
-                                    <form method="POST" action="{{ route('dashboard.deleteJob', ['hash' => $hash]) }}">
+                                    <form method="POST" action="{{ URL::signedRoute('dashboard.deleteJob', ['hash' => $hash]) }}">
                                         @csrf
                                         <input type='hidden' value='{{$jobIdHash}}' name='job'>
                                         <button type="submit" id="math-question-button-delete" class="btn btn-danger float-right pl-4 pr-4 disabled"

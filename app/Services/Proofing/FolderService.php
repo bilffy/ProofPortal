@@ -13,6 +13,9 @@ class FolderService
 {
     protected $encryptDecryptService;
     protected $statusService;
+    protected $subjectService;             
+    protected $proofingDescriptionService; 
+    protected $emailService;
 
     protected function getJobService()
     {

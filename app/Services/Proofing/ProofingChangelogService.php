@@ -20,6 +20,7 @@ class ProofingChangelogService
     protected $proofingDescriptionService;
     protected $encryptDecryptService;
     protected $statusService;
+    protected $folderSubjectService;
 
     protected function getGroupPositionService()
     {

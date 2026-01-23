@@ -36,10 +36,11 @@ class JobService
     {
         $selectedSchoolkey = $this->schoolService->getSchoolById(Session::get('school_context-sid'))->select('schoolkey')->first() ?? Auth::user()->getSchool();
         $tnjNotFound = $this->statusService->tnjNotFound;
+        $deleted = $this->statusService->deleted;
         $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode);
         $statuses = $this->statusService->getAllStatusData('id', 'status_internal_name', 'status_external_name')->get();
         $completedStatus = $this->statusService->completed;
-        $totalSchoolCount = $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound])->count();
+        $totalSchoolCount = $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])->count();
         $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
         
@@ -77,9 +78,10 @@ class JobService
     public function getActiveSyncJobsBySchoolkey($schoolkey)
     {
         $tnjNotFound = $this->statusService->tnjNotFound;
+        $deleted = $this->statusService->deleted;
         return $this->queryJobs(null,$schoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
-            ->whereNotIn('jobs.job_status_id', [$tnjNotFound])
+            ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
             ->orderBy('id', 'asc')
             ->get();
     }
@@ -105,14 +107,16 @@ class JobService
     {
         return Job::with(['folders.subjects.images','folders.folderTag','folders.images'])->where('ts_job_id', $TSJobID)->first();
     }
-
-    public function toggleArchivedJobs($franchiseCode, $includeArchived)
+    
+    public function toggleArchivedJobs($franchiseCode, $schoolKey, $includeArchived)
     {   
         $archiveStatus = $this->statusService->archived;
         $tnjNotFound = $this->statusService->tnjNotFound;
+        $deleted = $this->statusService->deleted;
         if ($includeArchived) {
             return $this->queryJobs($franchiseCode,null)
                 ->where('jobs.job_status_id', $this->statusService->archived)
+                ->where('jobs.ts_schoolkey', $schoolKey)
                 ->get()
                 ->map(function ($job) {
                     $job->hash = Crypt::encryptString($job->ts_job_id);
@@ -125,8 +129,9 @@ class JobService
                 });
         }else{
             return $this->queryJobs($franchiseCode,null)
-            ->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound])
+            ->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound, $deleted])
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
+            ->where('jobs.ts_schoolkey', $schoolKey)
             ->get()
             ->map(function ($job) {
                 $job->hash = Crypt::encryptString($job->ts_job_id);
@@ -229,7 +234,7 @@ class JobService
         // Delete group positions, changelogs, emails associated with the job via ts_jobkey
         $job->groupPositions()->delete(); // Delete group positions associated with the job
         $job->proofingChangelogs()->delete(); // Delete changelogs associated with the job
-        $job->email()->delete(); // Delete emails associated with the job  
+        // $job->email()->delete(); // Delete emails associated with the job  - (2026 Dec Enhancement)
     }
 
     protected function queryJobs($franchiseCode = null, $schoolkey = null)

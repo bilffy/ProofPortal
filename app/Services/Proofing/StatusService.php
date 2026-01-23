@@ -1,94 +1,71 @@
 <?php
 
 namespace App\Services\Proofing;
+
 use App\Models\Status;
 
 class StatusService
 {
+    // 1. Declare properties to avoid the "Dynamic Property" warning
+    public $new, $invited, $active, $deleted, $inactive, $disabled, $sync, $unsync;
+    public $review, $success, $duplicate, $error, $pending, $none, $completed;
+    public $archived, $modified, $viewed, $hold, $locked, $unlocked, $rejected;
+    public $incomplete, $autoApproved, $awaitingApproval, $approved, $tnjNotFound, $expired, $emailSent;
+
     /**
      * Create a new class instance.
      */
     public function __construct()
     {
-        $new = Status::where('status_internal_name','NEW')->select('id')->first();
-        $invited = Status::where('status_internal_name','INVITED')->select('id')->first();
-        $active = Status::where('status_internal_name','ACTIVE')->select('id')->first();
-        $deleted =  Status::where('status_internal_name','DELETED')->select('id')->first();
-        $inactive =  Status::where('status_internal_name','INACTIVE')->select('id')->first();
-        $disabled =  Status::where('status_internal_name','DISABLED')->select('id')->first();
-        $sync =  Status::where('status_internal_name','SYNC')->select('id')->first();
-        $unsync =  Status::where('status_internal_name','UNSYNC')->select('id')->first();
-        $review =  Status::where('status_internal_name','REVIEW')->select('id')->first();
-        $success =  Status::where('status_internal_name','SUCCESS')->select('id')->first();
-        $duplicate =  Status::where('status_internal_name','DUPLICATE')->select('id')->first();
-        $error =  Status::where('status_internal_name','ERROR')->select('id')->first();
-        $pending =  Status::where('status_internal_name','PENDING')->select('id')->first();
-        $none = Status::where('status_internal_name','NONE')->select('id')->first();
-        $completed =  Status::where('status_internal_name','COMPLETED')->select('id')->first();
-        $archived = Status::where('status_internal_name','ARCHIVED')->select('id')->first();
-        $modified = Status::where('status_internal_name','MODIFIED')->select('id')->first();
-        $viewed = Status::where('status_internal_name','VIEWED')->select('id')->first();
-        $hold = Status::where('status_internal_name','HOLD')->select('id')->first();
-        $locked = Status::where('status_internal_name','LOCKED')->select('id')->first();
-        $unlocked = Status::where('status_internal_name','UNLOCKED')->select('id')->first();
-        $rejected = Status::where('status_internal_name','REJECTED')->select('id')->first();
-        $incomplete = Status::where('status_internal_name','INCOMPLETE')->select('id')->first();
-        $autoApproved = Status::where('status_internal_name','AUTO APPROVED')->select('id')->first();
-        $awaitingApproval = Status::where('status_internal_name','AWAITING APPROVAL')->select('id')->first();
-        $approved = Status::where('status_internal_name','APPROVED')->select('id')->first();
-        $tnjNotFound = Status::where('status_internal_name','TNJ NOT FOUND')->select('id')->first();
-        $expired = Status::where('status_internal_name','EXPIRED')->select('id')->first();
+        // 2. OPTIMIZATION: Get all statuses in ONE single query instead of 28
+        $statuses = Status::all()->pluck('id', 'status_internal_name');
 
-
-        if($new){$this->new = $new->id;}
-        if($invited){$this->invited = $invited->id;}
-        if($active){$this->active = $active->id;}
-        if($deleted){$this->deleted = $deleted->id;}
-        if($inactive){$this->inactive = $inactive->id;}
-        if($disabled){$this->disabled = $disabled->id;}
-        if($sync){$this->sync = $sync->id;}
-        if($unsync){$this->unsync = $unsync->id;}
-        if($review){$this->review = $review->id;}
-        if($success){$this->success = $success->id;}
-        if($duplicate){$this->duplicate = $duplicate->id;}
-        if($error){$this->error = $error->id;}
-        if($pending){$this->pending = $pending->id;}
-        if($none){$this->none = $none->id;}
-        if($completed){$this->completed = $completed->id;}
-        if($archived){$this->archived = $archived->id;}
-        if($modified){$this->modified = $modified->id;}
-        if($viewed){$this->viewed = $viewed->id;}
-        if($hold){$this->hold = $hold->id;}
-        if($locked){$this->locked = $locked->id;}
-        if($unlocked){$this->unlocked = $unlocked->id;}
-        if($rejected){$this->rejected = $rejected->id;}
-        if($incomplete){$this->incomplete = $incomplete->id;}
-        if($autoApproved){$this->autoApproved = $autoApproved->id;}
-        if($awaitingApproval){$this->awaitingApproval = $awaitingApproval->id;}
-        if($approved){$this->approved = $approved->id;}
-        if($tnjNotFound){$this->tnjNotFound = $tnjNotFound->id;}
-        if($expired){$this->expired = $expired->id;}
+        // 3. Map the database results to class properties
+        $this->new              = $statuses->get('NEW');
+        $this->invited          = $statuses->get('INVITED');
+        $this->active           = $statuses->get('ACTIVE');
+        $this->deleted          = $statuses->get('DELETED');
+        $this->inactive         = $statuses->get('INACTIVE');
+        $this->disabled         = $statuses->get('DISABLED');
+        $this->sync             = $statuses->get('SYNC');
+        $this->unsync           = $statuses->get('UNSYNC');
+        $this->review           = $statuses->get('REVIEW');
+        $this->success          = $statuses->get('SUCCESS');
+        $this->duplicate        = $statuses->get('DUPLICATE');
+        $this->error            = $statuses->get('ERROR');
+        $this->pending          = $statuses->get('PENDING');
+        $this->none             = $statuses->get('NONE');
+        $this->completed        = $statuses->get('COMPLETED');
+        $this->archived         = $statuses->get('ARCHIVED');
+        $this->modified         = $statuses->get('MODIFIED');
+        $this->viewed           = $statuses->get('VIEWED');
+        $this->hold             = $statuses->get('HOLD');
+        $this->locked           = $statuses->get('LOCKED');
+        $this->unlocked         = $statuses->get('UNLOCKED');
+        $this->rejected         = $statuses->get('REJECTED');
+        $this->incomplete       = $statuses->get('INCOMPLETE');
+        $this->autoApproved     = $statuses->get('AUTO APPROVED');
+        $this->awaitingApproval = $statuses->get('AWAITING APPROVAL');
+        $this->approved         = $statuses->get('APPROVED');
+        $this->tnjNotFound      = $statuses->get('TNJ NOT FOUND');
+        $this->expired          = $statuses->get('EXPIRED');
+        $this->emailSent          = $statuses->get('EMAIL SENT');
     }
 
-    public function InsertStatus($status_name){
-        $data = [
-            'status_internal_name' => ucfirst($status_name)
-        ];
-        $bpStatusTable = Status::where('status_internal_name', $data['name'])->firstOrNew($data);
+    public function InsertStatus($status_name)
+    {
+        // Logic cleanup: Ensure you use the right key names
+        $internalName = strtoupper($status_name); 
+        
+        $status = Status::firstOrCreate(
+            ['status_internal_name' => $internalName]
+        );
 
-        if(!$bpStatusTable->exists){
-            $status = new Status;
-            $status->status_internal_name = $data['name'];
-            $status->save();
-            return response()->json([
-            'message' => 'Status added successfully',
-            ], 200);
-        }else{
-            return response()->json([
-            'message' => 'Status already exists',
-            ], 500); 
-
+        if ($status->wasRecentlyCreated) {
+            return response()->json(['message' => 'Status added successfully'], 200);
         }
+
+        return response()->json(['message' => 'Status already exists'], 500);
     }
 
     public function getAllStatusData(...$selectedValues)
@@ -96,8 +73,8 @@ class StatusService
         return Status::select($selectedValues);
     }
 
-    public function getDataById($IdValues){
+    public function getDataById($IdValues)
+    {
         return Status::whereIn('id', $IdValues);
     }
-
 }

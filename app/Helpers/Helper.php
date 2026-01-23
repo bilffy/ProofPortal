@@ -28,13 +28,14 @@ class Helper
         return $returnText;
     }
 
-    public static function wrapSalutationPrefixFirstNameLastNameSuffixAsText($salutation, $prefix, $first_name, $last_name, $suffix)
+	public static function wrapSalutationPrefixFirstNameLastNameSuffixAsText($salutation, $prefix, $first_name, $last_name, $suffix)
     {
-        $uSalutation = trim($salutation) ? sprintf("%s", $salutation) : '';
-        $uPrefix     = trim($prefix) ? sprintf("%s", $prefix) : '';
-        $uFirst      = trim($first_name) ? sprintf("%s", $first_name) : '';
-        $uLast       = trim($last_name) ? sprintf("%s", $last_name) : '';
-        $uSuffix     = trim($suffix) ? sprintf("%s", $suffix) : '';
+        // Use ?? '' to ensure trim() never receives null
+        $uSalutation = trim($salutation ?? '') ? sprintf("%s", $salutation) : '';
+        $uPrefix     = trim($prefix ?? '')     ? sprintf("%s", $prefix)     : '';
+        $uFirst      = trim($first_name ?? '') ? sprintf("%s", $first_name) : '';
+        $uLast       = trim($last_name ?? '')  ? sprintf("%s", $last_name)  : '';
+        $uSuffix     = trim($suffix ?? '')     ? sprintf("%s", $suffix)     : '';
     
         // Combine only non-empty parts with a space
         $returnText = trim(implode(' ', array_filter([$uSalutation, $uPrefix, $uFirst, $uLast, $uSuffix])));
@@ -69,7 +70,8 @@ class Helper
 
     public static function compileFullName($salutation = "", $first_name = "", $last_name = "")
     {
-        $returnText = $salutation . " " . $first_name . " " . $last_name;
+        // Ensure values are strings before concatenation to avoid potential issues
+        $returnText = ($salutation ?? '') . " " . ($first_name ?? '') . " " . ($last_name ?? '');
         $returnText = trim(str_replace("  ", " ", $returnText));
 
         return $returnText;

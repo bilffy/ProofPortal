@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Helpers\FilenameFormatHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToFranchise;
 
 class Folder extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToFranchise;
 
     protected $table = 'folders';
     

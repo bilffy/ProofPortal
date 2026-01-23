@@ -19,6 +19,15 @@ use Auth;
 
 class ProofHomeController extends Controller
 {
+    protected $jobService;
+    protected $franchiseCode;
+    protected $encryptDecryptService;
+    protected $schoolService;
+    protected $statusService;
+    protected $seasonService;
+    protected $proofingChangelogService;
+    protected $timestoneTableService;
+
     public function __construct(JobService $jobService, SchoolService $schoolService, EncryptDecryptService $encryptDecryptService, StatusService $statusService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService, TimestoneTableService $timestoneTableService)
     {
 
@@ -42,6 +51,11 @@ class ProofHomeController extends Controller
         $user = Auth::user();
         if(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true) {
             $selectedJob = session('selectedJob') ?? '[]';
+            
+            if (!$selectedJob) {
+                abort(404); 
+            }
+
             $approvedSubjectChanges = $this->proofingChangelogService->getAllApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
             $approvedFolderGroupChangesCount = $this->proofingChangelogService->getAllApprovedFolderGroupChangeByJobKey($selectedJob->ts_jobkey);
             $awaitApprovalSubjectChanges = $this->proofingChangelogService->getAllAwaitApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
@@ -167,6 +181,10 @@ class ProofHomeController extends Controller
             }
         }
 
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
     
         // Store session data
@@ -201,6 +219,7 @@ class ProofHomeController extends Controller
             'approvedSubjectChangesCount',
             'awaitApprovalSubjectChangesCount'
         ]);
+        Session::save();
         return redirect()->route('proofing');
     }
 
@@ -266,6 +285,10 @@ class ProofHomeController extends Controller
     {
         $jobKey = $this->getDecryptData($request->input('jobKey'));
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
     
         $baseUrl = 'http://bpsync.msp.local/index.php';
     
@@ -274,6 +297,11 @@ class ProofHomeController extends Controller
     
             $jobResponse = null;
             $folderResponse = null;
+            $restrictedStatuses = [
+                $this->statusService->deleted,
+                $this->statusService->tnjNotFound,
+                $this->statusService->archiveStatus
+            ];
     
             // Case 1: Job does NOT exist → Job + Folder sync
             if (!$selectedJob) {
@@ -282,9 +310,16 @@ class ProofHomeController extends Controller
             } 
             // Case 2: Job exists → Folder sync only (Force Sync)
             else {
-                if ($selectedJob->job_status_id !== $this->statusService->deleted) {
-                    $this->jobService->updateJobData($jobKey, 'force_sync', 1);
+                
+                // If the job is in any of these statuses, stop here.
+                if (in_array($selectedJob->job_status_id, $restrictedStatuses)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot sync a job that is deleted, not found, or archived.'
+                    ], 403);
                 }
+
+                $this->jobService->updateJobData($jobKey, 'force_sync', 1);
                 $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
             }
@@ -325,6 +360,11 @@ class ProofHomeController extends Controller
     public function archive(Request $request)
     {
         $selectedJob = $this->jobService->getJobById($this->getDecryptData($request->input('job'))); 
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $result = $this->jobService->updateJobStatus($selectedJob->ts_job_id, $this->statusService->archived);
 
         if(Session::has('selectedJob') && Session::has('selectedSeason')){
@@ -339,6 +379,11 @@ class ProofHomeController extends Controller
     public function restore(Request $request)
     {
         $selectedJob = $this->jobService->getJobById($this->getDecryptData($request->input('job'))); 
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $result = $this->jobService->updateJobStatus($selectedJob->ts_job_id, $this->statusService->none);
         return response()->json([
             'message' => 'The Job "' . $selectedJob->ts_jobname . '" has been restored.'
@@ -348,13 +393,19 @@ class ProofHomeController extends Controller
     public function toggleArchived(Request $request)
     {
         $includeArchived = filter_var($request->get('includeArchived'), FILTER_VALIDATE_BOOLEAN);
-        $activeSyncJobs = $this->jobService->toggleArchivedJobs($this->franchiseCode, $includeArchived);
+        $schoolKey = SchoolContextHelper::getSchool()->schoolkey;
+        $activeSyncJobs = $this->jobService->toggleArchivedJobs($this->franchiseCode, $schoolKey, $includeArchived);
         return response()->json(['data' => $activeSyncJobs]);
     }
     
     public function deleteJob(Request $request)
     {
         $selectedJob = $this->jobService->getJobById($this->getDecryptData($request->input('job'))); 
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
+        
         $this->jobService->deleteJob($selectedJob->ts_job_id);
         if(Session::has('selectedJob') && Session::has('selectedSeason')){
             return redirect()->route('dashboard.closeJob');

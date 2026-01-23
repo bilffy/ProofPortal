@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\DB;
 class ConfigureService
 {
     protected $encryptDecryptService;
+    protected $jobService;
+    protected $folderService;
+    protected $subjectService;
+    protected $imageService;
+    protected $proofingChangelogService;
+    protected $timestoneTableService;
+    protected $folderSubjectService;
+    protected $emailService;
 
     public function __construct(
         EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ProofingChangelogService $proofingChangelogService,

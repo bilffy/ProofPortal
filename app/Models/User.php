@@ -297,12 +297,12 @@ class User extends Authenticatable
         // return Hashids::encodeHex("$this->id");
         return $this->id;
     }
-
+    //code by IT
     public function getCryptedIdAttribute()
     {    
         return Crypt::encryptString($this->id);
     }
-
+    //code by IT
     public function jobs()
     {
         return $this->belongsToMany(Job::class, 'job_users', 'user_id', 'ts_job_id', 'id', 'ts_job_id');

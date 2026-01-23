@@ -7,6 +7,7 @@ use Carbon\Carbon;
 
 class ImageService
 {
+    protected $folderService;
     /**
      * Create a new class instance.
      */

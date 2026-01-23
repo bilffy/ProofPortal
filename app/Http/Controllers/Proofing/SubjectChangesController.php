@@ -40,6 +40,11 @@ class SubjectChangesController extends Controller
     public function approveChange($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first(); 
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $allFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->orderBy('ts_foldername', 'asc')->get();
         $subjectData = $this->proofingChangelogService->getAllApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
         $folderChanges = $this->proofingChangelogService->getFolderGeneralChangeByJobKey($selectedJob->ts_jobkey);
@@ -58,6 +63,11 @@ class SubjectChangesController extends Controller
     public function awaitApproveChangeFranchise($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $allFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->get();
         $subjectData = $this->proofingChangelogService->getAllAwaitApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
         $folderChanges = $this->proofingChangelogService->getFolderGeneralChangeByJobKey($selectedJob->ts_jobkey);
@@ -75,6 +85,11 @@ class SubjectChangesController extends Controller
     public function awaitApproveChangeCoordinator($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+        
         $subQuerySubjects = $this->subjectService->getByJobId($selectedJob->ts_job_id, 'ts_folder_id')->distinct()->pluck('ts_folder_id')->toArray();
         $allFolders = $this->folderService->getHomeFolders($subQuerySubjects, 'folders.id', 'folders.ts_foldername')->get();
         $subjectData = $this->proofingChangelogService->getAllAwaitApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);

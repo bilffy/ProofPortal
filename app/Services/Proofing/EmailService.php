@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Spatie\Permission\Models\Role;
-// use Swift_Mime_ContentEncoder_Base64ContentEncoder;
+use App\Services\Proofing\StatusService;
 use App\Models\EmailCategory;
 use App\Models\FolderUser;
 use App\Models\Template;
@@ -15,7 +15,6 @@ use App\Models\Email;
 use App\Models\User;
 use App\Models\Job;
 use Carbon\Carbon;
-// use Swift_Message; //composer require swiftmailer/swiftmailer
 use Symfony\Component\Mime\Email as SymfonyEmail;
 use Symfony\Component\Mime\MessageConverter;
 use Symfony\Component\Mime\Address;
@@ -30,9 +29,12 @@ class EmailService
     /**
      * Create a new class instance.
      */
-    public function __construct()
+    protected $statusService;
+
+    public function __construct(StatusService $statusService)
     {
-        //
+        // 
+        $this->statusService = $statusService;
     }
     
     public function updateEmailSend($field, $decryptedJobKey)
@@ -60,6 +62,10 @@ class EmailService
             ->where('ts_jobkey', $decryptedJobKey)
             ->select($columnsToSelect)
             ->firstOrFail();
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
     
         $sentDate = $selectedJob->$field;
     
@@ -90,9 +96,13 @@ class EmailService
         if (empty($rolesWithEmailEnabled)) {
             $isDelete = Email::where('template_id', $template->id)
             ->where('ts_jobkey', $decryptedJobKey)
+            ->where('status_id', $this->statusService->pending)
             ->whereDate('sentdate', $sentDateCarbon)
             ->where('email_from', $authUser->email)
-            ->delete();
+            ->update([
+                'status_id' => $this->statusService->expired, // Sets status to Expired
+                'deleted_at' => now()
+            ]);
 
             return;
         }
@@ -137,10 +147,14 @@ class EmailService
 
         $isDelete = Email::where('template_id', $template->id)
             ->where('ts_jobkey', $decryptedJobKey)
+            ->where('status_id', $this->statusService->pending)
             ->whereDate('sentdate', $sentDateCarbon)
             ->where('email_from', $authUser->email)
             ->whereNotIn('email_to', $validEmails)
-            ->delete();
+            ->update([
+                'status_id' => $this->statusService->expired, // Sets status to Expired
+                'deleted_at' => now()
+            ]);
     
         /**
          * --------------------------------------------
@@ -150,6 +164,7 @@ class EmailService
         foreach ($users as $user) {
             $alreadyExists = Email::where('template_id', $template->id)
                 ->where('ts_jobkey', $decryptedJobKey)
+                ->where('status_id', $this->statusService->pending)
                 ->whereDate('sentdate', $sentDateCarbon)
                 ->where('email_from', $authUser->email)
                 ->where('email_to', $user->email)
@@ -222,7 +237,8 @@ class EmailService
                 'email_from' => $authUser->email,
                 'email_to' => $user->email,
                 'email_content' => MessageConverter::toEmail($emailMessage)->toString(),
-                'template_id' => $template->id
+                'template_id' => $template->id,
+                'status_id' => $this->statusService->pending
             ]);
         }
     }
@@ -245,6 +261,10 @@ class EmailService
             ->where('ts_jobkey', $tsJobKey)
             ->select($columnsToSelect)
             ->firstOrFail();
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
     
         $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true);
@@ -337,7 +357,8 @@ class EmailService
                     'ts_schoolkey' => $selectedJob->ts_schoolkey,
                     'email_from' => $authUser->email,
                     'email_to' => $user->email,
-                    'template_id' => $template->id
+                    'template_id' => $template->id,
+                    'status_id' => $this->statusService->pending
                 ])->first();
     
                 if ($emailRecord) {
@@ -354,7 +375,8 @@ class EmailService
                         'email_from' => $authUser->email,
                         'email_to' => $user->email,
                         'email_content' => $emlContent,
-                        'template_id' => $template->id
+                        'template_id' => $template->id,
+                        'status_id' => $this->statusService->pending
                     ]);
                 }
             }
@@ -502,7 +524,8 @@ class EmailService
                 'email_from' => $authUser->email,
                 'email_to' => $user->email,
                 'email_content' => $emlContent,
-                'template_id' => $template->id
+                'template_id' => $template->id,
+                'status_id' => $this->statusService->pending
             ]);
         }
     }   
@@ -625,7 +648,8 @@ class EmailService
             'email_from' => $authUser->email,
             'email_to' => $inviteUser->email,
             'email_content' => $emlContent,
-            'template_id' => $template->id
+            'template_id' => $template->id,
+            'status_id' => $this->statusService->pending
         ]);
     }    
 

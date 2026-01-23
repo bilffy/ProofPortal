@@ -140,7 +140,8 @@
                                         <li>
                                             <div class="flex items-center ps-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
                                                 <label for="checkbox-item-11" class="w-full py-2 ms-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">
-                                                    <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
+                                                    {{-- <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}"> code by chromedia --}}
+                                                    <a href="{{ route('school.view', ['hashedId' => $school->getCryptedIdAttribute()]) }}"> {{-- code by IT --}}
                                                         {{ $school['name'] }} 
                                                     </a>
                                                 </label>
@@ -454,6 +455,28 @@
                     }
                 });
             }
+
+            // Bootstrap 5 jQuery Compatibility Bridge
+                if (typeof jQuery !== 'undefined') {
+                    const $ = jQuery;
+                    const bootstrap = window.bootstrap; // Assuming bootstrap is loaded globally
+
+                    $.fn.modal = function(option) {
+                        return this.each(function() {
+                            const instance = bootstrap.Modal.getOrCreateInstance(this);
+                            if (typeof option === 'string') {
+                                instance[option]();
+                            }
+                        });
+                    };
+                    
+                    // Repeat for tooltips or popovers if you use them
+                    $.fn.tooltip = function() {
+                        return this.each(function() {
+                            new bootstrap.Tooltip(this);
+                        });
+                    };
+                }
         </script>
         
         {{-- Bootstrap and necessary plugins --}}

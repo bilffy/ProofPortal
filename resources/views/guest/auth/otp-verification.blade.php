@@ -10,12 +10,12 @@
     
     <form wire:submit.prevent="submit">
         <div class="hidden">
-            <input type="text" wire:model.blur="email" required autocomplete="email" autofocus />
+            <input type="text" wire:model="email" required autocomplete="email" autofocus />
             @error('email') <span class="error">{{ $message }}</span> @enderror
         </div>
         <div>
             <div class="flex flex-col mb-4">
-                <input name="otp" placeholder="Enter your code" class="border rounded-md p-2 border-neutral" type="text" wire:model.blur="otp" required autocomplete="one-time-code" autofocus />
+                <input name="otp" placeholder="Enter your code" class="border rounded-md p-2 border-neutral" type="text" wire:model="otp" required autocomplete="one-time-code" autofocus />
             </div>
         </div>
         

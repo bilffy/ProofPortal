@@ -16,6 +16,8 @@ class ReviewStatusController extends Controller
      
     protected $encryptDecryptService;
     protected $jobService;
+    protected $statusService;
+    protected $folderService;
 
     public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, StatusService $statusService, FolderService $folderService){
         $this->encryptDecryptService = $encryptDecryptService;
@@ -31,6 +33,11 @@ class ReviewStatusController extends Controller
     public function changeStatus($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->with('reviewStatuses')->first();
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+        
         $reviewStatusesNewList = $this->statusService->getDataById([$this->statusService->unlocked, $this->statusService->completed])->pluck('status_external_name', 'id')
             ->sortByDesc(function ($statusExternalName, $statusId) {
                 return $statusExternalName;

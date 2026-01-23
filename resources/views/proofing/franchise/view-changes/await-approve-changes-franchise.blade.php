@@ -76,22 +76,7 @@
                                     $folderKey = implode("-", $attachedFolderNames[$subjectChange->ts_subjectkey]['keys']);
                                     $skEncrypted = Crypt::encryptString($subjectChange->ts_subjectkey);
                                     if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '') {
-                                        // $combined_key = $subjectChange->ts_subjectkey . $selectedJob->ts_jobkey;
-                                        // $encryptImageKey = sprintf("%08x", crc32($combined_key));
-                                        // $hashed_key = hash('sha256', $combined_key);
-                                        // $sub_dirs = [];
-
-                                        // for ($i = 0; $i < strlen($hashed_key); $i += 5) {
-                                        //     $sub_dirs[] = substr($hashed_key, $i, 3);
-                                        // }
-
-                                        // // Generate the directory structure and filename using DIRECTORY_SEPARATOR
-                                        // $full_path = implode(DIRECTORY_SEPARATOR, $sub_dirs);
-                                        // $imageName = DIRECTORY_SEPARATOR . $full_path . DIRECTORY_SEPARATOR . $encryptImageKey . '.jpg';
-                                        // $newimageName = Str::replace('\\', '-', $imageName);
-                                        // // Generate a signed URL for the image
-                                        // $image_url = route('serve.image', ['filename' => $newimageName]);
-                                        $image_url = route('serve.image', ['filename' => $skEncrypted]);
+                                        $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                                     }
                                 @endphp
                                 <tr id="{{ $folderKey }}">

@@ -82,22 +82,7 @@
                                     $hash = Crypt::encryptString($subjectChange->ts_subjectkey);
                                     $rowIdSelector = sha1(json_encode($subjectChange));
                                     if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '') {
-                                        // $combined_key = $subjectChange->ts_subjectkey . $selectedJob->ts_jobkey;
-                                        // $encryptImageKey = sprintf("%08x", crc32($combined_key));
-                                        // $hashed_key = hash('sha256', $combined_key);
-                                        // $sub_dirs = [];
-
-                                        // for ($i = 0; $i < strlen($hashed_key); $i += 5) {
-                                        //     $sub_dirs[] = substr($hashed_key, $i, 3);
-                                        // }
-
-                                        // // Generate the directory structure and filename using DIRECTORY_SEPARATOR
-                                        // $full_path = implode(DIRECTORY_SEPARATOR, $sub_dirs);
-                                        // $imageName = DIRECTORY_SEPARATOR . $full_path . DIRECTORY_SEPARATOR . $encryptImageKey . '.jpg';
-                                        // $newimageName = Str::replace('\\', '-', $imageName);
-                                        // // Generate a signed URL for the image
-                                        // $image_url = route('serve.image', ['filename' => $newimageName]);
-                                        $image_url = route('serve.image', ['filename' => $hash]);
+                                        $image_url = route('serve.image', ['filename' => $hash, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                                     }
                                     if($subjectChange->external_issue_name === 'Class'){
                                         $id = str_replace("Folder From: ", "", $subjectChange->change_from);
@@ -119,10 +104,10 @@
                                     <td>{{ $subjectChange->user->firstname }} {{ $subjectChange->user->lastname }}</td>
                                     <td>
                                         @if($subjectChange->external_issue_name == 'Picture' || $subjectChange->external_issue_name == 'Class')
-                                            <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class') data-change-from = "{{ Crypt::encryptString($folderFrom->ts_folderkey) }}" @endif data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
+                                            <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class') data-change-from = "{{ Crypt::encryptString($folderFrom->ts_folderkey) }}" @endif data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
                                         @endif
-                                            <a href="#" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="approve">Approve</a> | 
-                                            <a href="#" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="reject">Reject</a>
+                                            <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="approve">Approve</a> | 
+                                            <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="reject">Reject</a>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -215,9 +200,12 @@
                 $(this).find('#folder_issue').prop('selectedIndex', 0);
             });
 
+            var currentSignedUrl = ''; // Global variable within $(document).ready scope
             $('#ModifyApproval_Modal').on('show.bs.modal', function (event) {
+
                 var modal = $(this);
                 var button = $(event.relatedTarget);
+                var currentSignedUrl = button.data('signed-url'); // Grab the pre-generated signed URL
                 var skHash = button.data('skhash'); // Extract info from data-* attributes
                 var skEncrypted = button.data('skencrypted'); // Extract info from data-* attributes
                 var subjectFullName = button.data('full-name'); // Extract info from data-* attributes
@@ -255,7 +243,7 @@
                 })
 
                 function send() {
-                    var targetUrl = base_url + "/changes-action/" + skEncrypted;
+                    var targetUrl = currentSignedUrl;
 
                     var picture_issue = '';
                     var folder_issue = '';

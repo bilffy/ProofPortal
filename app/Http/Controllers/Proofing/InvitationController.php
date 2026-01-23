@@ -24,6 +24,11 @@ use Auth;
 
 class InvitationController extends Controller
 {
+    protected $encryptDecryptService;
+    protected $jobService;
+    protected $emailService;
+    protected $statusService;
+
     public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, StatusService $statusService, EmailService $emailService)
     {
         $this->encryptDecryptService = $encryptDecryptService;
@@ -39,6 +44,11 @@ class InvitationController extends Controller
     public function manageStaffs($hashedJob)
     {
         $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($hashedJob))->first(); 
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $tsJobId = $selectedJob->ts_job_id;
         // Fetch the users with roles "Teacher" or "Photo Coordinator" for the given ts_job_id
         $roles = ['Teacher', 'Photo Coordinator', 'Franchise'];
@@ -84,6 +94,11 @@ class InvitationController extends Controller
     public function index($role = null)
     { 
         $selectedJob = Session::get('selectedJob');
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $selectedSeason = Session::get('selectedSeason');
         $user = Auth::user();
         $myActiveReviewSchoolsCount = JobUser::where('user_id',$user->id)
@@ -114,6 +129,10 @@ class InvitationController extends Controller
     {
         $jobId = $this->getDecryptData($jobKeyHash);
         $selectedJob = $this->jobService->getJobByJobKey($jobId)->first();
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
         
         $user = Auth::user(); 
     
@@ -210,6 +229,10 @@ class InvitationController extends Controller
     {
         $jobId = $this->getDecryptData($jobKeyHash);
         $selectedJob = $this->jobService->getJobByJobKey($jobId)->first();
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
         
         $user = Auth::user(); 
     

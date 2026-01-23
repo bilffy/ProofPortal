@@ -26,7 +26,7 @@
             @php
                 $confirmMsg = __('Are you sure you want to update People Images of :school? This should only be done if you have uploaded new images in the TNJ.', ['school' => $selectedJob->ts_jobname]);
             @endphp
-            <form action="{{ route('config-job-action', ['action' => 'update-people-images', 'hash' => $jobIdHash]) }}" method="POST">
+            <form action="{{ URL::signedRoute('config-job-action', ['action' => 'update-people-images', 'hash' => $jobIdHash]) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-primary float-right pl-4 pr-4" onclick="return confirm('{{ $confirmMsg }}')">
                     {{ __('Update Images of People') }}
@@ -50,7 +50,7 @@
             @php
                 $confirmMsg = __('Are you sure you want to update how People are linked to Folders for :school? This should only be done if you have moved People between Folders in the TNJ.', ['school' => $selectedJob->ts_jobname]);
             @endphp
-            <form action="{{ route('config-job-action', ['action' => 'update-subject-associations', 'hash' => $jobIdHash]) }}" method="POST">
+            <form action="{{ URL::signedRoute('config-job-action', ['action' => 'update-subject-associations', 'hash' => $jobIdHash]) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-primary float-right pl-4 pr-4" onclick="return confirm('{{ $confirmMsg }}')">
                     {{ __('Update Person Folder Attachments') }}
@@ -78,7 +78,7 @@
                 @php
                     $confirmMsg = __('Please check that duplicate Folders have been removed after merging.');
                 @endphp
-                <form action="{{ route('config-job-action', ['action' => 'merge-duplicate-folders', 'hash' => $jobIdHash]) }}" method="POST">
+                <form action="{{ URL::signedRoute('config-job-action', ['action' => 'merge-duplicate-folders', 'hash' => $jobIdHash]) }}" method="POST">
                     @csrf
                     <button type="submit" class="btn btn-primary float-right pl-4 pr-4" onclick="return confirm('{{ $confirmMsg }}')">
                         {{ __('Merge Duplicate Folders') }}
@@ -107,7 +107,7 @@
                 @php
                     $confirmMsg = __('Please check that duplicate People have been removed after merging.');
                 @endphp
-                <form action="{{ route('config-job-action', ['action' => 'merge-duplicate-subjects', 'hash' => $jobIdHash]) }}" method="POST">
+                <form action="{{ URL::signedRoute('config-job-action', ['action' => 'merge-duplicate-subjects', 'hash' => $jobIdHash]) }}" method="POST">
                     @csrf
                     <button type="submit" class="btn btn-primary float-right pl-4 pr-4" onclick="return confirm('{{ $confirmMsg }}')">
                         {{ __('Merge Duplicate People') }}

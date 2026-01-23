@@ -138,10 +138,12 @@
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <a href="{{ route('invitations.inviteSingle', ['jobHash' => $jobKeyHash, 'role' => $role]) }}" class="btn btn-sm btn-primary btn-block">Single</a>
+                                                            <a href="{{ URL::signedRoute('invitations.inviteSingle', ['hash' => $jobKeyHash, 'role' => $role]) }}" 
+                                                               class="btn btn-sm btn-primary btn-block">Single</a>
                                                         </td>
                                                         <td>
-                                                            <a href="{{ route('invitations.inviteMulti', ['jobHash' => $jobKeyHash, 'role' => $role]) }}" class="btn btn-sm btn-primary btn-block">Multi</a>
+                                                            <a href="{{ URL::signedRoute('invitations.inviteMulti', ['hash' => $jobKeyHash, 'role' => $role]) }}" 
+                                                               class="btn btn-sm btn-primary btn-block">Multi</a>
                                                         </td>
                                                     </tr>
                                             </tbody>

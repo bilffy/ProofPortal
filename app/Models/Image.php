@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToFranchise;
 
 class Image extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToFranchise;
 
     protected $table = 'images';
     

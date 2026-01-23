@@ -18,8 +18,7 @@
         $imageName = DIRECTORY_SEPARATOR . $full_path . DIRECTORY_SEPARATOR . $encryptImageKey . '.jpg';
         $newimageName = Str::replace('\\', '-', $imageName);
         // Generate a signed URL for the image
-        // $image_url = route('serve.image', ['filename' => $newimageName]);
-        $image_url = route('serve.image', ['filename' => $skEncrypted]); 
+        $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
 
         $useSalutation = $currentFolder->is_edit_salutation;
         $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
@@ -64,7 +63,7 @@
 
     <td class="idx-artifact text-center pt-2 pb-1">
         <div class="person-pic-wrapper d-inline">
-            <img class="lazyloadgrid" data-src="{{ route('serve.image', ['filename' => Crypt::encryptString($subject->ts_subjectkey)]) }}" width="100" height="100">
+            <img class="lazyloadgrid" data-src="{{ $image_url }}" width="100" height="100">
         </div>
     </td>
     @if ($currentFolder->is_edit_salutation)

@@ -32,5 +32,7 @@ class Email extends Model
         'smtp_message',
         'email_token',
         'template_id',
+        'status_id', 
+        'deleted_at'
     ];
 }

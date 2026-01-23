@@ -58,12 +58,12 @@ class School extends Model
         // return Hashids::encodeHex("$this->id");
         return $this->id;
     }   
-
+    //code by IT
     public function getCryptedIdAttribute()
     {    
         return Crypt::encryptString($this->id);
     }
-
+    //code by IT
     //Proofing    
     public function scopeWithFranchise($query, $franchiseCode){
         return $query->join('school_franchises', 'school_franchises.school_id', '=', 'schools.id')

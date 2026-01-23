@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToFranchise;
 
 class GroupPosition extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToFranchise;
     protected $table = "group_positions";
     protected $fillable = ['ts_jobkey', 'ts_folderkey', 'ts_subjectkey', 'subject_full_name', 'row_description', 'row_number', 'row_position'];
     public $timestamps = false;

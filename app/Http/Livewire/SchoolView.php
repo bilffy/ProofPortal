@@ -9,6 +9,7 @@ use Auth;
 use App\Http\Resources\UserResource;
 use App\Models\School;
 use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Facades\Crypt; 
 
 class SchoolView extends Component
 {
@@ -16,9 +17,18 @@ class SchoolView extends Component
     
     public function mount($hashedId)
     {
+        Session::forget([
+            'selectedJob',
+            'selectedSeason',
+            'openJob',
+            'approvedSubjectChangesCount',
+            'awaitApprovalSubjectChangesCount',
+        ]);//code by IT
         $this->checkUserRole();
+        $id = Crypt::decryptString($hashedId);//code byIT
+        $this->school = School::findOrFail($id);//code byIT
         // $id = Hashids::decodeHex($hashedId);
-        $this->school = School::findOrFail($hashedId);
+        // $this->school = School::findOrFail($hashedId);//code by chromedia
         
         // redirect to the manage users page if the user is a franchise level
         if (Auth::user()->isFranchiseLevel()) {

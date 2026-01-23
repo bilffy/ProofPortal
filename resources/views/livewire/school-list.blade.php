@@ -38,7 +38,8 @@
                                 {{ $school->schoolkey }}
                             </a>
                         @else
-                            <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
+                            {{-- <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}"> code by chromedia --}}
+                            <a href="{{ route('school.view', ['hashedId' => $school->getCryptedIdAttribute()]) }}"> {{-- code by IT --}}
                                 {{ $school->schoolkey }}
                             </a>
                         @endif    
@@ -49,7 +50,8 @@
                                 {{ $school->name }}
                             </a>
                         @else    
-                            <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}">
+                            {{-- <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}"> code by chromedia --}}
+                            <a href="{{ route('school.view', ['hashedId' => $school->getCryptedIdAttribute()]) }}"> {{-- code by IT --}}
                                 {{ $school->name }}
                             </a>
                         @endif    

@@ -10,19 +10,23 @@ class SubjectService
      * Create a new class instance.
      */
 
-    public function __construct(FolderSubjectService $folderSubjectService)
-    {
-        $this->folderSubjectService = $folderSubjectService;
-    }
+     protected $folderSubjectService;
+
+     /**
+      * Create a new class instance.
+      */
+     public function __construct(FolderSubjectService $folderSubjectService)
+     {
+         $this->folderSubjectService = $folderSubjectService;
+     }
 
     public function getAllHomedSubjectsByFolderID($folderId)
     {
         // Eager load images for subjects
-        $homedSubjects = Subject::with(['images:id,keyvalue,ts_imagekey'])
+        return Subject::with(['images:id,keyvalue,ts_imagekey'])
         ->where('ts_folder_id', $folderId)
-        ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'prefix', 'suffix', 'ts_subject_id')->get();
-
-        return $homedSubjects;
+        ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'prefix', 'suffix', 'ts_subject_id')
+        ->get();
     }
 
     public function getAllAttachedSubjectsByFolderID($folderId)

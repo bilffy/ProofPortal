@@ -38,7 +38,15 @@ class SchoolContextHelper
     
     public static function removeSchoolContext(): void
     {
-        Session::forget('school_context-sid');
+        // Session::forget('school_context-sid'); //code by chromedia
+        Session::forget([
+            'school_context-sid',
+            'selectedJob',
+            'selectedSeason',
+            'openJob',
+            'approvedSubjectChangesCount',
+            'awaitApprovalSubjectChangesCount'
+        ]);//code by IT
     }
 
     /**

@@ -20,7 +20,7 @@
             <input
                 class="border rounded-md p-2 border-neutral"
                 type="email"
-                wire:model.blur="email"
+                wire:model="email"
                 required
                 autofocus
                 autocomplete="off"
@@ -34,7 +34,7 @@
             <input
                 class="border rounded-md p-2 border-neutral"
                 type="password"
-                wire:model.blur="password"
+                wire:model="password"
                 required
                 autocomplete="current-password"
                 placeholder="Password"

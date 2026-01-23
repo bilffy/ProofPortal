@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\proofing;
+namespace App\Http\Controllers\Proofing;
 
 use App\Http\Controllers\Controller;
-
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Crypt;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\ImageService;
 use Intervention\Image\Facades\Image;
 use App\Services\Proofing\JobService;
-use Illuminate\Support\Facades\Crypt; 
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
@@ -24,6 +24,8 @@ class ImageController extends Controller
 {
     
     protected $encryptDecryptService;
+    protected $jobService;
+    protected $imageService;
 
     public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, ImageService $imageService)
     {
@@ -118,61 +120,67 @@ class ImageController extends Controller
         }
     }
 
-    public function serveImage($filename)
+    public function serveImage($filename,$jobKey)
     {
         try {
+            // 1. Decrypt the filename
             $deCryptfilename = Crypt::decryptString($filename);
-    
+            $deCryptjobKey = Crypt::decryptString($jobKey);
+
+            // Basic validation for the decrypted string
             if (empty($deCryptfilename) || strlen($deCryptfilename) < 2) {
-                Log::error("Invalid filename: " . json_encode($deCryptfilename));
-                abort(404, 'Invalid image name');
+                Log::error("Invalid decrypted filename: " . json_encode($deCryptfilename));
+                return $this->serveFallback();
             }
-    
-            $networkPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$deCryptfilename[0]}\\{$deCryptfilename[1]}\\{$deCryptfilename}_800.jpg";
-            $fallbackPath = public_path('proofing-assets/img/subject-image.png');
-    
-            $finalPath = file_exists($networkPath) ? $networkPath : $fallbackPath;
-    
-            // Return as response with headers (streamed, not loaded fully into memory)
-            return response()->file($finalPath, [
-                'Content-Type' => 'image/jpeg',
-                'Cache-Control' => 'public, max-age=86400' // cache for 1 day
-            ]);
-    
+
+            // 2. Construct the URL 
+            $char1 = $deCryptfilename[0];
+            $char2 = $deCryptfilename[1];
+            
+            $imageUrl = env('EXPORTIMAGELOCATION')."{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
+
+            // 3. Fetch the image while bypassing SSL verification
+            $response = Http::timeout(15)
+                ->withoutVerifying() // FIXES: cURL error 60
+                ->get($imageUrl);
+
+            // 4. If successful, stream the image back
+            if ($response->successful()) {
+                return response($response->body(), 200)
+                    ->header('Content-Type', $response->header('Content-Type', 'image/jpeg'))
+                    ->header('Cache-Control', 'public, max-age=86400');
+            }
+            return $this->serveFallback();
+
         } catch (\Exception $e) {
-            Log::error("Error serving image: " . $e->getMessage());
-            abort(404, 'Unable to serve image');
+            Log::error("Error serving image via proxy: " . $e->getMessage());
+            return $this->serveFallback();
         }
     }
-    
-    // public function serveImage($filename)
-    // {
-    //     try {
-    //         $filename = str_replace('-', '\\', $filename);
 
-    //         $networkPath = '\\\\hades\\ITDept\\Bilffy\\Chrome Media\\ChromeMediaImages1' . $filename;
-    
-    //         if (!file_exists($networkPath) || empty($filename)) {
-    //             Log::error("File not found: " . $networkPath);
-    //             $networkPath = public_path('proofing-assets/img/subject-image.png');
-    //         }
-    
-    //         $response = response()->file($networkPath, [
-    //             'Content-Type' => mime_content_type($networkPath)
-    //         ]);
-    
-    //         $response->headers->set('Access-Control-Allow-Origin', '*');
-    
-    //         return $response;
-    //     } catch (\Exception $e) {
-    //         Log::error("Error serving image: " . $e->getMessage());
-    //         abort(404, 'Invalid image URL');
-    //     }
-    // }
+    private function serveFallback()
+    {
+        $path = public_path('proofing-assets/img/subject-image.png');
+
+        if (!file_exists($path)) {
+            Log::error("Fallback image missing at: " . $path);
+            return response()->json(['error' => 'Image not found'], 404);
+        }
+
+        return response()->file($path, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=86400'
+        ]);
+    }
 
     public function bulkUploadImage($jobHash, $step = null)
     {
         $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobHash))->first();
+        
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $sessionFiles = '';
         $uploadSession = $uploadSession ?? sha1(Crypt::encryptString(Str::random(2048)));
 

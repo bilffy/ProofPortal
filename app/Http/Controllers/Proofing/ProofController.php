@@ -30,6 +30,7 @@ class ProofController extends Controller
     protected $proofingDescriptionService;
     protected $proofingChangelogService;
     protected $encryptDecryptService;
+    protected $emailService;
 
     public function __construct(StatusService $statusService, SeasonService $seasonService, JobService $jobService, FolderService $folderService, 
                                 SubjectService $subjectService, ProofingDescriptionService $proofingDescriptionService, 
@@ -47,7 +48,9 @@ class ProofController extends Controller
         $this->emailService = $emailService;
     }
 
-    private function getDecryptData($hash){
+    private function getDecryptData($hash) {
+        // Safe check for null before passing to the service
+        if (!$hash) return null;
         return $this->encryptDecryptService->decryptStringMethod($hash);
     }
 
@@ -55,6 +58,11 @@ class ProofController extends Controller
     {
         $decryptedJobKey = $this->getDecryptData($hash);
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->with(['seasons'])->first();
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $selectedSeason = $selectedJob->seasons;
         return $this->renderFolderProofingView($selectedJob, $selectedSeason, $selectedJob->ts_job_id);
     }
@@ -81,9 +89,11 @@ class ProofController extends Controller
 
     public function MyFoldersValidate($folderKey = null)
     {
-        // exec('php artisan view:clear');
-        // exec('php artisan view:cache');
         $decryptedFolderKey = $this->getDecryptData($folderKey);
+        // Safety check: if decryption fails or folderKey is missing
+        if (!$decryptedFolderKey) {
+            return redirect()->route('proofing')->with('error', 'Invalid Folder Key');
+        }
         $currentFolder = $this->folderService->getFolderByKey($decryptedFolderKey)
                         ->with(['job.seasons', 'job.subjects', 'subjects', 'subjects.images'])
                         ->select(
@@ -107,6 +117,7 @@ class ProofController extends Controller
                             'is_edit_principal',
                             'is_edit_deputy',
                             'is_edit_teacher')->first();
+        if (!$currentFolder) abort(404);
           
         $subQuerySubjects = $this->subjectService->getByJobId($currentFolder->ts_job_id, 'ts_folder_id')->distinct()
                             ->pluck('ts_folder_id');
@@ -116,6 +127,11 @@ class ProofController extends Controller
                             ->get();
 
         $selectedJob = $this->jobService->getJobById($currentFolder->ts_job_id);
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
+
         $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
 
         $homedSubjects = $this->subjectService
@@ -163,8 +179,7 @@ class ProofController extends Controller
                 }        
                 
                 foreach ($subjects as $subjectStr) {
-                    $subjectStr = trim($subjectStr);
-            
+                    $subjectStr = trim($subjectStr ?? '');
                     $subject = null;
             
                     // Match by ID or NAME
@@ -241,14 +256,26 @@ class ProofController extends Controller
 
     public function gridSubjects(Request $request)
     {
-        $jobId = Crypt::decryptString($request->job);
-        $folderKey = Crypt::decryptString($request->folder);
+        if (!$request->job || !$request->folder) {
+            return response()->json(['error' => 'Missing encrypted data'], 400);
+        }
+        // 4. FIXED: Wrap Crypt in try-catch to prevent crash if data is null/malformed
+        try {
+            $jobId = Crypt::decryptString($request->job);
+            $folderKey = Crypt::decryptString($request->folder);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid parameters'], 400);
+        }
     
         $currentFolder = $this->folderService->getFolderByKey($folderKey)
             ->with(['job.seasons', 'job.subjects', 'subjects', 'subjects.images'])
             ->first();
     
         $selectedJob = $this->jobService->getJobById($currentFolder->ts_job_id);
+
+        if (!$selectedJob) {
+            abort(404); 
+        }
     
         $search = $request->input('search', '');
         $perPage = 20;
@@ -357,6 +384,11 @@ class ProofController extends Controller
         // Retrieve folder with related job in a single query
         $folder = $this->folderService->getFolderByKey($decryptedFolderKey)
                 ->select('status_id', 'is_locked', 'ts_folder_id', 'ts_job_id', 'id')->first(); // Ensure the folder is found
+
+        // FIX 1: Ensure folder and job exist before proceeding
+        if (!$folder || !$folder->job || !$folder->job->ts_jobkey) {
+            return response()->json(['status' => false, 'message' => 'Job data missing'], 422);
+        }
     
         $hash = Crypt::encryptString($folder->job->ts_jobkey);
         $location = URL::signedRoute('my-folders-list', ['hash' => $hash]);
