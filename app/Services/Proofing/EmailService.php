@@ -349,6 +349,9 @@ class EmailService
     
                 $emlContent = MessageConverter::toEmail($email)->toString();
     
+                // $filePath = public_path("$field.eml");
+                // file_put_contents($filePath, $emlContent);
+    
                 // Save email record per user
                 $emailRecord = Email::where([
                     'generated_from_user_id' => $authUser->id,

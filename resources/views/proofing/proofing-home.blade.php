@@ -158,10 +158,12 @@
                                                         $proofStart = $activeSyncJob->proof_start ? Carbon::parse($activeSyncJob->proof_start) : null;
                                                         $proofWarning = $activeSyncJob->proof_warning ? Carbon::parse($activeSyncJob->proof_warning) : null;
                                                         $proofDue = $activeSyncJob->proof_due ? Carbon::parse($activeSyncJob->proof_due) : null;
+                                                        $statuses = collect($data['statuses']);
+                                                        $completedId = $statuses->firstWhere('status_internal_name', 'COMPLETED')['id'] ?? null;
                                                     @endphp
                                                 
                                                     @if(optional($activeSyncJob->reviewStatuses)->status_external_name != 'Archived')
-                                                        <tr id="row-number-{{ $jobKeyHash }}" class="@if($activeSyncJob->job_status_id === $data['statuses']) bg-success-light @endif">
+                                                        <tr id="row-number-{{ $jobKeyHash }}" class="@if($activeSyncJob->job_status_id === $completedId) bg-success-light @endif">
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>{{ $activeSyncJob->ts_jobkey }}</td>
                                                             <td>{{ $activeSyncJob->ts_jobname }}</td>

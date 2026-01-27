@@ -348,8 +348,6 @@ hr.style10 {
     background-color: rgba(237, 33, 36, 0.21) !important;
 }
 
-
-
 .text-warning {
     color: #fda900 !important;
 }
@@ -357,3 +355,13 @@ hr.style10 {
 a.text-warning:focus, a.text-warning:hover {
     color: #ca9800 !important;
 }
+
+/* Ensure the row background color wins over DataTables default cell styles */
+table.dataTable tbody tr.bg-success-light td {
+    background-color: rgba(7, 168, 143, 0.10) !important;
+}
+
+table.dataTable tbody tr.bg-primary-light td {
+    background-color: rgba(0, 179, 223, 0.21) !important;
+}
+
