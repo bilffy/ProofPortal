@@ -223,6 +223,7 @@ class JobService
             $folder->subjects()->each(function ($subject) {
                 $subject->images()->delete(); // Delete images associated with the subject
             });
+            $folder->folderUsers()->delete(); // Delete users associated with the folder
             $folder->images()->delete(); // Delete images associated with the folder
             $folder->subjects()->delete(); // Delete subjects associated with the folder
             $folder->attachedsubjects()->delete(); // Delete attached subjects from folder_subject table

@@ -102,8 +102,6 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::post('/proofing/jobs/restore', [ProofHomeController::class, 'restore'])->name('dashboard.restore');
         //Dashboard - Show/Hide Archive Jobs
         Route::get('/proofing/jobs/toggle-archived', [ProofHomeController::class, 'toggleArchived'])->name('dashboard.toggleArchived');
-        //Proxy Sync Job
-        Route::post('/proxy-sync-job', [ProofHomeController::class, 'proxySyncJob'])->name('proxy.syncJob');
 
         //Header - Close Job
         Route::get('/franchise/close-job', [ProofHomeController::class, 'closeJob'])->name('dashboard.closeJob');
@@ -168,6 +166,10 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         //Fetch Constants
         Route::get('/constants', [ConstantsController::class, 'getConstants']);
     });
+    //sync Job & associations
+
+    //Proxy Sync Job
+    Route::post('/proxy-sync-job', [ProofHomeController::class, 'proxySyncJob'])->name('proxy.syncJob');
     
     // Schools routes
     Route::get('/school', SchoolList::class)->name('school.list');

@@ -13,6 +13,9 @@ use App\Services\Proofing\JobService;
 use App\Services\Proofing\TimestoneTableService;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
+use App\Models\FranchiseUser;
+use App\Models\JobUser;
+use App\Models\FolderUser;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\SchoolContextHelper;
 use Auth;
@@ -285,11 +288,6 @@ class ProofHomeController extends Controller
     {
         $jobKey = $this->getDecryptData($request->input('jobKey'));
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
-        
-        if (!$selectedJob) {
-            abort(404); 
-        }
-    
         $baseUrl = 'http://bpsync.msp.local/index.php';
     
         try {
@@ -297,29 +295,18 @@ class ProofHomeController extends Controller
     
             $jobResponse = null;
             $folderResponse = null;
-            $restrictedStatuses = [
-                $this->statusService->deleted,
-                $this->statusService->tnjNotFound,
-                $this->statusService->archiveStatus
-            ];
     
             // Case 1: Job does NOT exist → Job + Folder sync
             if (!$selectedJob) {
                 $jobResponse = $client->get("{$baseUrl}/jobs/sync/{$jobKey}");
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
+                $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
             } 
             // Case 2: Job exists → Folder sync only (Force Sync)
             else {
-                
-                // If the job is in any of these statuses, stop here.
-                if (in_array($selectedJob->job_status_id, $restrictedStatuses)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Cannot sync a job that is deleted, not found, or archived.'
-                    ], 403);
+                if ($selectedJob->job_status_id !== $this->statusService->deleted) {
+                    $this->jobService->updateJobData($jobKey, 'force_sync', 1);
                 }
-
-                $this->jobService->updateJobData($jobKey, 'force_sync', 1);
                 $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
             }
@@ -328,7 +315,28 @@ class ProofHomeController extends Controller
             $jobSuccess = is_null($jobResponse) || $jobResponse->successful();
             $folderSuccess = $folderResponse && $folderResponse->successful();
     
-            if ($jobSuccess && $folderSuccess) {
+            if ($jobSuccess && $folderSuccess && $selectedJob) {
+                $franchise = $selectedJob->franchises;
+    
+                if ($franchise) {
+                    $franchiseUserIds = FranchiseUser::where('franchise_id', $franchise->id)->pluck('user_id');
+                    $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
+    
+                    foreach ($franchiseUserIds as $userId) {
+                        JobUser::firstOrCreate([
+                            'user_id'   => $userId,
+                            'ts_job_id' => $selectedJob->ts_job_id
+                        ]);
+    
+                        foreach ($folderIds as $folderId) {
+                            FolderUser::firstOrCreate([
+                                'user_id'      => $userId,
+                                'ts_folder_id' => $folderId
+                            ]);
+                        }
+                    }
+                }
+    
                 return response()->json([
                     'success' => true,
                     'jobs'    => $jobResponse?->json(),
