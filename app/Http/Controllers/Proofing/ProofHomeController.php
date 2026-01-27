@@ -392,7 +392,7 @@ class ProofHomeController extends Controller
             abort(404); 
         }
 
-        $result = $this->jobService->updateJobStatus($selectedJob->ts_job_id, $this->statusService->none);
+        $result = $this->jobService->updateJobStatus($selectedJob->ts_job_id, $this->statusService->active);
         return response()->json([
             'message' => 'The Job "' . $selectedJob->ts_jobname . '" has been restored.'
         ]);
