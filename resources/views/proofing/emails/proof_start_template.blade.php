@@ -92,10 +92,11 @@
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="750" class="container">
                 <tr>
                     <td bgcolor="#ffffff">
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%">
+                        <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0"
+                                align="center" width="100%">
                             <tr>
                                 <td colspan="2">
-                                    <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_header.png" alt="Header">
+                                    <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_header.png">
                                 </td>
                             </tr>
                             <tr>

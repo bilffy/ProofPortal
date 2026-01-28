@@ -36,6 +36,41 @@ class EmailService
         // 
         $this->statusService = $statusService;
     }
+
+    protected function generateEmail($authUser, $recipient, $subject, $content, $sentDate): SymfonyEmail
+    {
+        $htmlPart = new TextPart($content, 'utf-8', 'html', 'base64');
+        $dateTime = Carbon::parse($sentDate);
+        $email = (new SymfonyEmail())
+            // ->from(new Address($authUser->email, $authUser->name))
+            ->from(new Address('noreply@msp.com.au', 'MSP Photography Blueprint - Do Not Reply'))
+            ->to(new Address($recipient->email, $recipient->name))
+            ->subject($subject)
+            ->setBody($htmlPart)
+            ->date($dateTime);
+
+        // DO NOT manually set Message-ID here. 
+        // Symfony Mailer will generate a valid one automatically.
+        
+        return $email;
+    }
+    
+    protected function storeEmailRecord($authUser, $selectedJob, $recipient, $template, $date, $emlContent, $tsJobKey)
+    {
+        return Email::create([
+            'generated_from_user_id' => $authUser->id,
+            'alphacode' => $selectedJob->franchises->alphacode ?? null,
+            'ts_jobkey' => $tsJobKey,
+            'ts_schoolkey' => $selectedJob->ts_schoolkey,
+            'sentdate' => $date,
+            'email_from' => $authUser->email,
+            'email_to' => $recipient->email,
+            'email_content' => $emlContent,
+            'template_id' => $template->id,
+            'status_id' => $this->statusService->pending
+        ]);
+      
+    }
     
     public function updateEmailSend($field, $decryptedJobKey)
     {
@@ -215,31 +250,11 @@ class EmailService
     
             $processedContent = $this->replaceTemplateVariables($templateContent, $data);
     
-            $htmlPart = new TextPart($processedContent, 'utf-8', 'html', 'base64');
+            $emailMessage = $this->generateEmail($authUser, $user, $template->template_subject, $processedContent, $sentDate);
+
+            $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-            $emailMessage = (new SymfonyEmail())
-                ->from(new Address($authUser->email, $authUser->name))
-                ->to(new Address($user->email, $user->name))
-                ->subject($template->template_subject)
-                ->setBody($htmlPart);
-    
-            $emailMessage->getHeaders()->addIdHeader(
-                'Message-ID',
-                Str::uuid() . '@localhost'
-            );
-    
-            Email::create([
-                'generated_from_user_id' => $authUser->id,
-                'alphacode' => $selectedJob->franchises->alphacode ?? null,
-                'ts_jobkey' => $decryptedJobKey,
-                'ts_schoolkey' => $selectedJob->ts_schoolkey,
-                'sentdate' => $sentDate,
-                'email_from' => $authUser->email,
-                'email_to' => $user->email,
-                'email_content' => MessageConverter::toEmail($emailMessage)->toString(),
-                'template_id' => $template->id,
-                'status_id' => $this->statusService->pending
-            ]);
+            $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $decryptedJobKey);
         }
     }
     
@@ -328,28 +343,11 @@ class EmailService
                 ];
     
                 $processedContent = $this->replaceTemplateVariables($templateContent, $data);
-                $templateSubject = $template->template_subject;
-                $htmlPart = new TextPart(
-                    $processedContent,   // body
-                    'utf-8',             // charset
-                    'html',              // subtype
-                    'base64'             // encoding ✅ Swift equivalent
-                    );
+                $emailMessage = $this->generateEmail($authUser, $user, $template->template_subject, $processedContent, $date);
     
-                $email = (new SymfonyEmail())
-                        ->from(new Address($authUser->email, $authUser->name))
-                        ->to(new Address($user->email, $user->name))
-                        ->subject($templateSubject)
-                        ->setBody($htmlPart);
+                $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-                $email->getHeaders()->addIdHeader(
-                    'Message-ID',
-                    Str::uuid()->toString() . '@localhost'
-                );
-    
-                $emlContent = MessageConverter::toEmail($email)->toString();
-    
-                // $filePath = public_path("$field.eml");
+                // $filePath = public_path("$field.$key.eml");
                 // file_put_contents($filePath, $emlContent);
     
                 // Save email record per user
@@ -366,21 +364,13 @@ class EmailService
     
                 if ($emailRecord) {
                     // Update existing
-                    $emailRecord->update(['sentdate' => $date]);
+                    $emailRecord->update([
+                        'sentdate' => $date,
+                        'email_content' => $emlContent
+                    ]);
                 } else {
                     // Insert new
-                    Email::create([
-                        'generated_from_user_id' => $authUser->id,
-                        'alphacode' => $selectedJob->franchises->alphacode ?? null,
-                        'ts_jobkey' => $tsJobKey,
-                        'ts_schoolkey' => $selectedJob->ts_schoolkey,
-                        'sentdate' => $date,
-                        'email_from' => $authUser->email,
-                        'email_to' => $user->email,
-                        'email_content' => $emlContent,
-                        'template_id' => $template->id,
-                        'status_id' => $this->statusService->pending
-                    ]);
+                    $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $date, $emlContent, $tsJobKey);
                 }
             }
         } 
@@ -451,7 +441,7 @@ class EmailService
             'APP_URL' => Config::get('app.url'),
             'FRANCHISE_WEB_ADDRESS' => 'www.msp.com.au',
         ];
-    
+
         foreach ($users as $user) {
             $schoolOrFranchise = $user->getSchoolOrFranchiseDetail();
             $userData = [
@@ -483,57 +473,16 @@ class EmailService
                 $templateSubject = str_replace('FOLDER_NAME', $folderName, $templateSubject);
             }
 
-            // $message = new Swift_Message();
-            // $message->setFrom([$authUser->email => $authUser->name])
-            //         ->setTo([$user->email => $user->name])
-            //         ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
-
-            // $message->setBody($processedContent, 'text/html'); // Set the body content
-            // $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
+            $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $date);
+            $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-            // $emlContent = $message->toString();
-
-            $htmlPart = new TextPart(
-                $processedContent,   // body
-                'utf-8',             // charset
-                'html',              // subtype
-                'base64'             // encoding ✅ Swift equivalent
-            );
-
-            $email = (new SymfonyEmail())
-                ->from(new Address($authUser->email, $authUser->name))
-                ->to(new Address($user->email, $user->name))
-                ->subject($templateSubject)
-                ->setBody($htmlPart);
-
-            // Add valid Message-ID (REQUIRED)
-            $email->getHeaders()->addIdHeader(
-                'Message-ID',
-                Str::uuid()->toString() . '@localhost'
-            );
-
-            // Convert to RFC822 .eml
-            $emlContent = MessageConverter::toEmail($email)->toString();
-    
-            // $filePath = public_path("$field.eml");
+            // $filePath = public_path("$field.$key.eml");
             // file_put_contents($filePath, $emlContent);
-    
-            Email::create([
-                'generated_from_user_id' => $authUser->id,
-                'alphacode' => $selectedFolder->job->franchises->alphacode ?? null,
-                'ts_jobkey' => $selectedFolder->job->ts_jobkey,
-                'ts_schoolkey' => $selectedFolder->job->ts_schoolkey,
-                'sentdate' => $date,
-                'email_from' => $authUser->email,
-                'email_to' => $user->email,
-                'email_content' => $emlContent,
-                'template_id' => $template->id,
-                'status_id' => $this->statusService->pending
-            ]);
+
+            $this->storeEmailRecord($authUser, $selectedFolder->job, $user, $template, $date, $emlContent, $selectedFolder->job->ts_jobkey);
         }
     }   
-    
-    
+
     public function saveInvitationContent($role, $user, $date, $jobkey)
     {
         $authUser = Auth::user();
@@ -577,7 +526,7 @@ class EmailService
         }
         $templateContent = File::get($templatePath);
 
-        $processedContent = $this->replaceTemplateVariables($templateContent, $data);
+        $beforeProcessedContent = $this->replaceTemplateVariables($templateContent, $data);
 
         if ($authUser->getSchoolOrFranchiseDetail()->name === 'Sydney West') {
             $downloadInstructions = '
@@ -594,7 +543,7 @@ class EmailService
             $downloadInstructions = '';
         }  
         
-        $processedContent = str_replace("{DOWNLOAD_INSTRUCTIONS}", $downloadInstructions, $processedContent); 
+        $processedContent = str_replace("{DOWNLOAD_INSTRUCTIONS}", $downloadInstructions, $beforeProcessedContent); 
 
         $templateSubject = $template->template_subject;
 
@@ -607,53 +556,15 @@ class EmailService
             $templateSubject = str_replace('INVITEE_LAST_NAME', $inviteUser->lastname, $templateSubject);
         }
 
-        // $message = new Swift_Message();
-        // $message->setFrom([$authUser->email => $authUser->name])
-        //         ->setTo([$inviteUser->email => $inviteUser->name])
-        //         ->setSubject('=?UTF-8?B?' . base64_encode($templateSubject) . '?=');
-
-        // $message->setBody($processedContent, 'text/html'); // Set the body content
-        // $message->setEncoder(new Swift_Mime_ContentEncoder_Base64ContentEncoder()); // Set base64 encoding  
-
-        // $emlContent = $message->toString();
-
-        $htmlPart = new TextPart(
-            $processedContent,   // body
-            'utf-8',             // charset
-            'html',              // subtype
-            'base64'             // encoding ✅ Swift equivalent
-        );
-
-        $email = (new SymfonyEmail())
-            ->from(new Address($authUser->email, $authUser->name))
-            ->to(new Address($inviteUser->email, $inviteUser->name))
-            ->subject($templateSubject)
-            ->setBody($htmlPart);
-
-        // Add valid Message-ID (REQUIRED)
-        $email->getHeaders()->addIdHeader(
-            'Message-ID',
-            Str::uuid()->toString() . '@localhost'
-        );
+        $emailMessage = $this->generateEmail($authUser, $inviteUser, $templateSubject, $processedContent, $date);
 
         // Convert to RFC822 .eml
-        $emlContent = MessageConverter::toEmail($email)->toString();
+        $emlContent = MessageConverter::toEmail($emailMessage)->toString();
 
         // $filePath = public_path("$field.eml");
         // file_put_contents($filePath, $emlContent);
 
-        Email::create([
-            'generated_from_user_id' => $authUser->id,
-            'alphacode' => $folderUsers->first()->folder->job->franchises->alphacode ?? null,
-            'ts_jobkey' => $jobkey,
-            'ts_schoolkey' => $folderUsers->first()->folder->job->ts_schoolkey,
-            'sentdate' => $date,
-            'email_from' => $authUser->email,
-            'email_to' => $inviteUser->email,
-            'email_content' => $emlContent,
-            'template_id' => $template->id,
-            'status_id' => $this->statusService->pending
-        ]);
+        $this->storeEmailRecord($authUser, $folderUsers->first()->folder->job, $inviteUser, $template, $date, $emlContent, $jobkey);
     }    
 
     protected function replaceTemplateVariables(string $content, array $data): string

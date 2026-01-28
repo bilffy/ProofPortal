@@ -201,8 +201,77 @@ class JobService
         return Job::where('ts_jobkey',$jobkey)->update([$column => $value]);
     }
 
-    public function deleteJob($tsJobId){
+    // public function deleteJob($tsJobId){
+    //     $job = Job::where('ts_job_id', $tsJobId)->firstOrFail();
+
+    //     $job->update([
+    //         'jobsync_status_id' => $this->statusService->sync,
+    //         'foldersync_status_id' => $this->statusService->pending,
+    //         'job_status_id' => $this->statusService->deleted,
+    //         'imagesync_status_id' => $this->statusService->unsync,
+    //         'proof_start' => null,
+    //         'proof_warning' => null,
+    //         'proof_due' => null,
+    //         'proof_catchup' => null,
+    //         'force_sync' => null,
+    //         'notifications_enabled' => null,
+    //         'notifications_matrix' => null
+    //     ]);
+
+    //     $job->folders()->each(function ($folder) {
+    //         // Delete associated subjects, images in folders
+    //         $folder->subjects()->each(function ($subject) {
+    //             $subject->images()->delete(); // Delete images associated with the subject
+    //         });
+    //         $folder->folderUsers()->delete(); // Delete users associated with the folder
+    //         $folder->images()->delete(); // Delete images associated with the folder
+    //         $folder->subjects()->delete(); // Delete subjects associated with the folder
+    //         $folder->attachedsubjects()->delete(); // Delete attached subjects from folder_subject table
+    //     });
+
+    //     $job->folders()->delete(); // Delete folders associated with the job
+    //     $job->jobUsers()->delete(); // Delete job users associated with the job
+    
+    //     // Delete group positions, changelogs, emails associated with the job via ts_jobkey
+    //     $job->groupPositions()->delete(); // Delete group positions associated with the job
+    //     $job->proofingChangelogs()->delete(); // Delete changelogs associated with the job
+    //     // $job->email()->delete(); // Delete emails associated with the job  - (2026 Dec Enhancement)
+    // }
+
+    public function deleteJob($tsJobId)
+    {                    
         $job = Job::where('ts_job_id', $tsJobId)->firstOrFail();
+        $tsJobKey = $job->ts_jobkey;
+                                                    
+        $tsFolderIds = $job->folders()->pluck('ts_folder_id')->toArray();                                                                
+                                                                    
+        if (!empty($tsFolderIds)) {
+                            
+            \DB::table('subjects')
+                ->whereIn('ts_folder_id', $tsFolderIds)
+                ->delete();
+                                                        
+            \DB::table('folder_users')
+                ->whereIn('ts_folder_id', $tsFolderIds)
+                ->delete();
+
+            \DB::table('folder_subjects')
+                ->whereIn('ts_folder_id', $tsFolderIds)
+                ->delete();
+                
+            \DB::table('images')
+                ->where('ts_job_id', $tsJobId) 
+                ->delete();
+
+            \DB::table('changelogs')
+                ->where('ts_jobkey', $tsJobKey)
+                ->delete();
+        }
+
+        $job->folders()->delete();
+        $job->jobUsers()->delete();
+        $job->groupPositions()->delete(); 
+        // \DB::table('emails')->where('ts_jobkey', $tsJobKey)->delete(); //2026 Dec Enhancement
 
         $job->update([
             'jobsync_status_id' => $this->statusService->sync,
@@ -217,25 +286,6 @@ class JobService
             'notifications_enabled' => null,
             'notifications_matrix' => null
         ]);
-
-        $job->folders()->each(function ($folder) {
-            // Delete associated subjects, images in folders
-            $folder->subjects()->each(function ($subject) {
-                $subject->images()->delete(); // Delete images associated with the subject
-            });
-            $folder->folderUsers()->delete(); // Delete users associated with the folder
-            $folder->images()->delete(); // Delete images associated with the folder
-            $folder->subjects()->delete(); // Delete subjects associated with the folder
-            $folder->attachedsubjects()->delete(); // Delete attached subjects from folder_subject table
-        });
-
-        $job->folders()->delete(); // Delete folders associated with the job
-        $job->jobUsers()->delete(); // Delete job users associated with the job
-    
-        // Delete group positions, changelogs, emails associated with the job via ts_jobkey
-        $job->groupPositions()->delete(); // Delete group positions associated with the job
-        $job->proofingChangelogs()->delete(); // Delete changelogs associated with the job
-        // $job->email()->delete(); // Delete emails associated with the job  - (2026 Dec Enhancement)
     }
 
     protected function queryJobs($franchiseCode = null, $schoolkey = null)
