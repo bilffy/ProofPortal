@@ -21,7 +21,10 @@
                     $isLightbox = true;
                     $isUploaded = $image['isUploaded'] ?? false;
                 @endphp
-                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded :key="$key" lazy="on-load"/>
+                {{-- <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded :key="$key" lazy="on-load"/> --}} {{--code by chromedia--}}
+                {{--code by IT--}}
+                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded wire:key="lb-{{ $imageId }}"  lazy="on-load"/>
+                {{--code by IT--}}
             @endforeach
         </div>
     </div>

@@ -15,7 +15,10 @@
                     $isUploaded = $image['isUploaded'] ?? false;
                     $externalSubjectId = !$isFolder ? $image['externalSubjectId'] : null;
                 @endphp
-                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId :key="$key" lazy="on-load"/>
+                {{-- <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId :key="$key" lazy="on-load"/> --}} {{-- code by chromedia--}}
+                {{-- code by IT--}}
+                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId wire:key="grid-{{ $imageId }}" lazy="on-load"/>
+                {{-- code by IT--}}
             @endforeach
         </div>
         <div class="mt-4 mb-4 flex justify-center">
