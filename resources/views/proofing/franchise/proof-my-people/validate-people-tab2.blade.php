@@ -5,7 +5,7 @@
     use App\Models\Status;
     use Illuminate\Support\Facades\URL;
     use Illuminate\Support\Str;
-    $inactive = Status::where('status_external_name','Inactive')->value('id');
+    $awaitingApproval = Status::where('status_external_name','Awaiting Approval')->value('id');
 @endphp
 
 <fieldset id="ValidateStep2">
@@ -30,7 +30,7 @@
                         @endif
                         <div class="row" id="subject_thumbnails">
                             @php
-                                $formattedSubjectsWithChanges = ProofingChangelog::where([['ts_jobkey', $selectedJob->ts_jobkey]])->get()->keyBy('keyvalue'); // Eager load and key by keyvalue for efficient lookup
+                                $formattedSubjectsWithChanges = ProofingChangelog::where([['ts_jobkey', $selectedJob->ts_jobkey]])->get()->groupBy('keyvalue'); // Eager load and key by keyvalue for efficient lookup
                             @endphp
                             @foreach($allSubjects as $subject)
                                 @php
@@ -72,8 +72,16 @@
                                     );
 
                                     $jobTitleWrapped = $currentFolder->is_edit_job_title ? Helper::wrapTitle($subject->title, $skHash) : '';
-                                    $hasChanges = $formattedSubjectsWithChanges->has($subject->ts_subjectkey);
-                                    $iconColour = $hasChanges ? ($formattedSubjectsWithChanges[$subject->ts_subjectkey]->where('resolved_status_id', $inactive)->count() > 0 ? 'danger' : 'success') : 'success';
+                                    $subjectKey = $subject->ts_subjectkey;
+                                    $subjectChanges = $formattedSubjectsWithChanges->get($subjectKey); 
+                                    $hasChanges = !empty($subjectChanges);
+                                    if (!$hasChanges) {
+                                        $iconColour = 'success';
+                                    } else {
+                                        $hasawaitingApproval = $subjectChanges->contains('approvalStatus', $awaitingApproval);
+                                        $iconColour = $hasawaitingApproval ? 'danger' : 'success';
+                                    }
+
                                     $historyEditsCss = $hasChanges ? 'd-inline-block' : 'd-none';
                                     $location = URL::signedRoute('my-subject-change', ['hash' => $skEncrypted]);
 

@@ -66,13 +66,20 @@
                                                     $completedText = '';
 
                                                     $folderSubjectKeys = $folder->subjects?->pluck('ts_subjectkey') ?? collect();
+                                                    /* $folderAttachedSubjectIds = $folder->attachedsubjects?->pluck('ts_subject_id') ?? collect();
+                                                    $attachedSubjectKeys = App\Models\Subject::whereIn('ts_subject_id', $folderAttachedSubjectIds)
+                                                        ->pluck('ts_subjectkey'); */
 
                                                     $hasChanges =
                                                         ($getChangelog->where('keyvalue', $folder->ts_folderkey)->count() > 0) ||
                                                         ($proofingChangelogService->subjectChangedFolderCount($folder->id) > 0) ||
                                                         ($folderSubjectKeys->filter(function ($subjectKey) use ($getChangelog) {
                                                             return $getChangelog->where('keyvalue', $subjectKey)->count() > 0;
-                                                        })->count() > 0);
+                                                        })->count() > 0); 
+                                                        /* ||
+                                                        ($attachedSubjectKeys->filter(function ($subjectKey) use ($getChangelog) {
+                                                            return $getChangelog->where('keyvalue', $subjectKey)->count() > 0;
+                                                        })->count() > 0); */
 
                                                     if ($folder->status_id === $noneStatus && $hasChanges) {
                                                         $none_modified = 1;

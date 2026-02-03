@@ -110,7 +110,7 @@
                                     </div>
 
                                     {{-- Activation Date --}}
-                                    <div class="form-group row datetime">
+                                    <div class="form-group row datetime d-none">
                                         <label class="{{ $labelClass }}">Activation Date</label>
 
                                         <div class="col-md-auto">
@@ -145,7 +145,7 @@
                                     </div>
 
                                     {{-- Expiration Date --}}
-                                    <div class="form-group row datetime">
+                                    <div class="form-group row datetime d-none">
                                         <label class="{{ $labelClass }}">Expiration Date</label>
 
                                         <div class="col-md-auto">

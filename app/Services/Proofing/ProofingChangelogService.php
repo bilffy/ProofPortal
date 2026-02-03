@@ -506,7 +506,7 @@ class ProofingChangelogService
                 $replace = [
                     'FIRSTNAME' => $currentfirstname,
                     'LASTNAME' => $currentlastname,
-                    'CURRENTFOLDER' => $subjectData->folder->ts_foldername
+                    'CURRENTFOLDER' => $decryptedFolderKey ? $folderData->ts_foldername : $subjectData->folder->ts_foldername,
                 ];
                 break;
             case 'SUBJECT_ISSUE_JOBTITLE_SALUTATION':
@@ -743,7 +743,7 @@ class ProofingChangelogService
                 $replace = [
                     'FIRSTNAME' => $currentfirstname,
                     'LASTNAME' => $currentlastname,
-                    'FOLDER' => $subjectData->folder->ts_foldername,
+                    'FOLDER' => $decryptedFolderKey ? $folderData->ts_foldername : $subjectData->folder->ts_foldername,
                 ];
                 break;
             case 'SUBJECT_ABSENT':
@@ -753,7 +753,7 @@ class ProofingChangelogService
                 $replace = [
                     'FIRSTNAME' => $currentfirstname,
                     'LASTNAME' => $currentlastname,
-                    'FOLDER' => $subjectData->folder->ts_foldername,
+                    'FOLDER' => $decryptedFolderKey ? $folderData->ts_foldername : $subjectData->folder->ts_foldername,
                 ];
                 break;
             default:

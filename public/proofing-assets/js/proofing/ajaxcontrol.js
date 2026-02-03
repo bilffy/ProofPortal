@@ -431,7 +431,7 @@ $(document).ready(function () {
             queryTokenizer: Bloodhound.tokenizers.whitespace,
             local: subjectNames
         });
-    
+
         // Re-initialize the input field with updated typeahead and tagsinput
         $(selector).tagsinput({
             trimValue: true,
@@ -899,10 +899,21 @@ $(document).ready(function () {
     function loadGridSubjects(searchQuery = "") {
         if (loading) return;
         loading = true;
+
+        const $tbody = $("#spelling-subjects-tbody");
+        const $btn = $("#loadMoreSubjects");
     
         // Reset tbody if first page
+        // if (currentPage === 1) {
+        //     $("#spelling-subjects-tbody").empty();
+        // }
+
+        // Show spinner if it's the first page
         if (currentPage === 1) {
-            $("#spelling-subjects-tbody").empty();
+            $tbody.html('<tr><td colspan="10" class="text-center"><div class="spinner-container"><div class="table-spinner"></div></div></td></tr>');
+        } else {
+            // Just show loading on the button for "Load More"
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Loading...');
         }
     
         $.get(window.GridConfig.subjectsGridUrl, {
@@ -912,14 +923,24 @@ $(document).ready(function () {
             search: searchQuery
         }, function(res) {
             // Append the returned rows
-            $("#spelling-subjects-tbody").append(res.html);
+            // $("#spelling-subjects-tbody").append(res.html);
     
-            // Show or hide "Load More" button
-            if (res.hasMore) {
-                $("#loadMoreSubjects").removeClass("d-none");
-            } else {
-                $("#loadMoreSubjects").addClass("d-none");
-            }
+            // // Show or hide "Load More" button
+            // if (res.hasMore) {
+            //     $("#loadMoreSubjects").removeClass("d-none");
+            // } else {
+            //     $("#loadMoreSubjects").addClass("d-none");
+            // }
+
+            if (currentPage === 1) $tbody.empty(); // Remove spinner before appending
+
+            $tbody.append(res.html);
+            
+            // Reset Button
+            $btn.prop('disabled', false).text('Load more');
+            
+            if (res.hasMore) { $btn.removeClass("d-none"); } 
+            else { $btn.addClass("d-none"); }
     
             // Lazy load images
             initLazyImages(document.getElementById("GridSpellingEdits_Modal"));
@@ -1114,22 +1135,22 @@ $(document).ready(function () {
                     var fullNameGroupNew = responseData['fullNameGroup'];
 
                     var first_name_old = responseData['oldfirst_name'];
-                    var first_name = responseData['first_name'];
+                    var first_name = responseData['first_name'] || "";
 
                     var last_name_old = responseData['oldlast_name'];
-                    var last_name = responseData['last_name'];
+                    var last_name = responseData['last_name'] || "";
 
                     var title_old = responseData['title_old'];
-                    var title = responseData['title'];
+                    var title = responseData['title'] || "";
 
                     var salutation_old = responseData['salutation_old'];
-                    var salutation = responseData['salutation'];
+                    var salutation = responseData['salutation'] || "";
 
                     var prefix_old = responseData['prefix_old'];
-                    var prefix = responseData['prefix'];
+                    var prefix = responseData['prefix'] || "";
 
                     var suffix_old = responseData['suffix_old'];
-                    var suffix = responseData['suffix'];
+                    var suffix = responseData['suffix'] || "";
 
                     var useSalutationPortrait = responseData['useSalutationPortrait'];
 
@@ -1142,6 +1163,7 @@ $(document).ready(function () {
                     $("." + skHash + "-salutation").text(salutation);
                     $("." + skHash + "-prefix").text(prefix);
                     $("." + skHash + "-suffix").text(suffix); 
+
                     $("." + skHash + "-salutation").addClass('d-none');
                     $("." + skHash + "-prefix").addClass('d-none');
                     $("." + skHash + "-suffix").addClass('d-none');  
@@ -1175,12 +1197,54 @@ $(document).ready(function () {
                     $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
 
                     //find and replace general
-                    $('.' + skHash + '-find-replace').contents().filter(function () {
+                    $('.'+ skHash +'-find-replace').contents().filter(function () {
                         return this.nodeType === 3;
                     }).replaceWith(function () {
-                        return this.nodeValue.replace(fullNamePortraitOld, fullNamePortraitNew);
-                        createJsonData();
+                        // Ensure we are replacing with a string, even if empty
+                        let newName = fullNamePortraitNew || "";
+                        return this.nodeValue.replace(fullNamePortraitOld, newName);
                     });
+                    
+                    var $subjectNamesInput = $('#allSubjectNames');
+
+                    if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
+                        try {
+                            // 1. Parse the JSON strings from the value and the data attribute
+                            var mainArray = JSON.parse($subjectNamesInput.val());
+                            var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
+                    
+                            // 2. Helper function to update names in an array
+                            var updateArray = function(arr, oldName, newName) {
+                                return arr.map(function(name) {
+                                    return name === oldName ? newName : name;
+                                });
+                            };
+                    
+                            // 3. Update the main array
+                            mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
+                    
+                            // 4. Update the data-key object (Row_0, Row_1, etc.)
+                            if (keyData) {
+                                Object.keys(keyData).forEach(function(row) {
+                                    keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
+                                });
+                            }
+                    
+                            // 5. Save back to the element
+                            // Update the value attribute
+                            $subjectNamesInput.val(JSON.stringify(mainArray));
+                            
+                            // Update the internal jQuery data object AND the actual DOM attribute
+                            $subjectNamesInput.data('key', keyData);
+                            $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
+                    
+                            // 6. Trigger change for other listeners
+                            $subjectNamesInput.trigger('change');
+                        } catch (e) {
+                            // console.error("Error parsing allSubjectNames JSON:", e);
+                        }
+                    }
+                    
 
                     //update the JS array with the new name.
                     findSpanByText(fullNameGroupOld, fullNameGroupNew);
@@ -1201,12 +1265,6 @@ $(document).ready(function () {
                         $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-success');
                     } else {
                         $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-danger');
-                    }
-
-                    if($('#allSubjectNames').val().includes(fullNameGroupOld)){                    
-                        var inputValue = $('#allSubjectNames').val();
-                        var updatedValue = inputValue.replace(fullNameGroupOld, fullNameGroupNew);
-                        $('#allSubjectNames').val(updatedValue).trigger('change');
                     }
                 },
                 error: function (e) {
@@ -1240,37 +1298,51 @@ $(document).ready(function () {
     // });
 
 
-    var linkHide = $(".people-photos-hide");
-    var linkShow = $(".people-photos-show");
-    var picWrapper = $(".person-pic-wrapper");
+    // var linkHide = $(".people-photos-hide");
+    // var linkShow = $(".people-photos-show");
+    // var picWrapper = $(".person-pic-wrapper");
 
-    linkHide.on('click', function () {
-        linkHide.addClass("d-none");
-        linkHide.removeClass("d-inline");
+    // linkHide.on('click', function () {console.log('testing hide');
+    //     linkHide.addClass("d-none");
+    //     linkHide.removeClass("d-inline");
 
-        linkShow.addClass("d-inline");
-        linkShow.removeClass("d-none");
+    //     linkShow.addClass("d-inline");
+    //     linkShow.removeClass("d-none");
 
-        picWrapper.addClass("d-none");
-        picWrapper.removeClass("d-inline");
+    //     picWrapper.addClass("d-none");
+    //     picWrapper.removeClass("d-inline");
+    // });
+
+    // linkShow.on('click', function () {console.log('testing show');
+    //     linkHide.addClass("d-inline");
+    //     linkHide.removeClass("d-none");
+
+    //     linkShow.addClass("d-none");
+    //     linkShow.removeClass("d-inline");
+
+    //     picWrapper.addClass("d-inline");
+    //     picWrapper.removeClass("d-none");
+    // });
+
+    $(document).on('click', '.people-photos-hide', function (e) {
+        e.preventDefault(); // Prevent page jump
+        $(".people-photos-hide").addClass("d-none").removeClass("d-inline");
+        $(".people-photos-show").addClass("d-inline").removeClass("d-none");
+        $(".person-pic-wrapper").addClass("d-none").removeClass("d-inline");
     });
-
-    linkShow.on('click', function () {
-        linkHide.addClass("d-inline");
-        linkHide.removeClass("d-none");
-
-        linkShow.addClass("d-none");
-        linkShow.removeClass("d-inline");
-
-        picWrapper.addClass("d-inline");
-        picWrapper.removeClass("d-none");
+    
+    $(document).on('click', '.people-photos-show', function (e) {
+        e.preventDefault(); // Prevent page jump
+        $(".people-photos-hide").addClass("d-inline").removeClass("d-none");
+        $(".people-photos-show").addClass("d-none").removeClass("d-inline");
+        $(".person-pic-wrapper").addClass("d-inline").removeClass("d-none");
     });
 
     /****************************************************************************************** GridSpellingModal - Groups *****************************************************************************************************************/
 
     function findSpanByText(fullNameOld, fullNameNew) {
         // Get all <span> elements on the page with the old text
-        const spans = document.querySelectorAll('span');
+        const spans = document.querySelectorAll('span.tag');
         const matchingSpans = Array.from(spans).filter(span => span.textContent.trim() === fullNameOld);
     
         if (matchingSpans.length > 0) {
@@ -1285,8 +1357,6 @@ $(document).ready(function () {
                         const oldValue = inputField.value;
                         const newValue = oldValue.replace(new RegExp(fullNameOld, 'g'), fullNameNew); // Use global regex to replace all occurrences
                         inputField.value = newValue;
-                    } else {
-                        //console.log('Input field not found.');
                     }
                 }
                 // Update the span's inner HTML with the new text and edit icon
@@ -1424,14 +1494,14 @@ $(document).ready(function () {
             var template = $('#' + templateId).html();
     
             if (template) {
-                var firstName  = $('#'+skHash+'-first-name').text().trim();
-                var lastName   = $('#'+skHash+'-last-name').text().trim();
-                var salutation = $('#'+skHash+'-salutation').text().trim();
-                var title      = $('#'+skHash+'-title').text().trim();
-                var picture    = $('#'+skHash+'_picture').text().trim();
-                var folder     = $('#'+skHash+'_folder').text().trim();
-                var prefix     = $('#'+skHash+'-prefix').text().trim();
-                var suffix     = $('#'+skHash+'-suffix').text().trim();
+                var firstName  = $('#'+skHash+'-first-name').text();
+                var lastName   = $('#'+skHash+'-last-name').text();
+                var salutation = $('#'+skHash+'-salutation').text();
+                var title      = $('#'+skHash+'-title').text();
+                var picture    = $('#'+skHash+'_picture').text();
+                var folder     = $('#'+skHash+'_folder').text();
+                var prefix     = $('#'+skHash+'-prefix').text();
+                var suffix     = $('#'+skHash+'-suffix').text();
                 
                 var templateElement = $(template);
                 
@@ -1445,30 +1515,14 @@ $(document).ready(function () {
                 var folderInput     = templateElement.find('select[name="' + skHash + '_folder_issue"]');
                 
                 /* ✅ SET ONLY IF VALUE EXISTS */
-                if (firstName && firstNameInput.length) {
-                    firstNameInput.val(firstName);
-                }
-                if (lastName && lastNameInput.length) {
-                    lastNameInput.val(lastName);
-                }
-                if (salutation && salutationInput.length) {
-                    salutationInput.val(salutation);
-                }
-                if (prefix && prefixInput.length) {
-                    prefixInput.val(prefix);
-                }
-                if (suffix && suffixInput.length) {
-                    suffixInput.val(suffix);
-                }
-                if (title && titleInput.length) {
-                    titleInput.val(title);
-                }
-                if (picture && pictureInput.length) {
-                    pictureInput.val(picture);
-                }
-                if (folder && folderInput.length) {
-                    folderInput.val(folder);
-                }
+                if (firstNameInput.length)  firstNameInput.val(firstName);
+                if (lastNameInput.length)   lastNameInput.val(lastName);
+                if (salutationInput.length) salutationInput.val(salutation);
+                if (prefixInput.length)     prefixInput.val(prefix);
+                if (suffixInput.length)     suffixInput.val(suffix);
+                if (titleInput.length)      titleInput.val(title);
+                if (pictureInput.length)    pictureInput.val(picture);
+                if (folderInput.length)     folderInput.val(folder);
                 
                 inputFieldsContainer.append(templateElement);
             }
@@ -1505,6 +1559,16 @@ $(document).ready(function () {
                         var useSalutationPortrait = responseData['useSalutationPortrait'];
                         var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
 
+                        // Use the Logical OR operator (|| "") to ensure nulls become empty strings
+                        var firstName = responseData.first_name || "";
+                        var lastName  = responseData.last_name || "";
+                        var title     = responseData.title || "";
+                        var salutation = responseData.salutation || "";
+                        var prefix    = responseData.prefix || "";
+                        var suffix    = responseData.suffix || "";
+                        var picture    = responseData.picture || "";
+                        var folder    = responseData.folder || "";
+
                         $('#spelling_'+ skHash).addClass('d-none');
                         $('#picture_'+ skHash).addClass('d-none');
                         $('#folder_'+ skHash).addClass('d-none');
@@ -1516,14 +1580,15 @@ $(document).ready(function () {
                         $('#'+ skHash +'_acknowledge').html(responseData.htmlUpdates.acknowledge).fadeIn(500).delay(4000).fadeOut(1000);
     
                         //find and replace names wrapped in specific HTML classes
-                        $('.'+ skHash +'-first-name').text(responseData.first_name);
-                        $('.'+ skHash +'-last-name').text(responseData.last_name);
-                        $('.'+ skHash +'-title').text(responseData.title);
-                        $('#'+ skHash +'_picture').text(responseData.picture);
-                        $('#'+ skHash +'_folder').text(responseData.folder);
-                        $("." + skHash + "-salutation").text(responseData.salutation);
-                        $("." + skHash + "-prefix").text(responseData.prefix);
-                        $("." + skHash + "-suffix").text(responseData.suffix); 
+                        $('.'+ skHash +'-first-name').text(firstName);
+                        $('.'+ skHash +'-last-name').text(lastName);
+                        $('.'+ skHash +'-title').text(title);
+                        $('#'+ skHash +'_picture').text(picture);
+                        $('#'+ skHash +'_folder').text(folder);
+                        $("." + skHash + "-salutation").text(salutation);
+                        $("." + skHash + "-prefix").text(prefix);
+                        $("." + skHash + "-suffix").text(suffix); 
+
                         $("." + skHash + "-salutation").addClass('d-none');
                         $("." + skHash + "-prefix").addClass('d-none');
                         $("." + skHash + "-suffix").addClass('d-none');  
@@ -1538,19 +1603,21 @@ $(document).ready(function () {
                             $("." + skHash + "-prefix").removeClass('d-none');
                             $("." + skHash + "-suffix").removeClass('d-none');
                         }
-                        $("." + skHash + "-form-spelling-first-name").val(responseData.first_name);
-                        $("." + skHash + "-form-spelling-last-name").val(responseData.last_name);
-                        $("." + skHash + "-form-spelling-title").val(responseData.title);
-                        $("." + skHash + "-form-spelling-salutation").val(responseData.salutation);
-                        $("." + skHash + "-form-spelling-prefix").val(responseData.prefix);
-                        $("." + skHash + "-form-spelling-suffix").val(responseData.suffix);
+
+                        // Now update the fields using these safe variables
+                        $("." + skHash + "-form-spelling-first-name").val(firstName);
+                        $("." + skHash + "-form-spelling-last-name").val(lastName);
+                        $("." + skHash + "-form-spelling-title").val(title);
+                        $("." + skHash + "-form-spelling-salutation").val(salutation);
+                        $("." + skHash + "-form-spelling-prefix").val(prefix);
+                        $("." + skHash + "-form-spelling-suffix").val(suffix);
                         
-                        $('.'+ skHash +'-grid-spelling-first-name').val(responseData.first_name);
-                        $('.'+ skHash +'-grid-spelling-last-name').val(responseData.last_name);
-                        $('.'+ skHash +'-grid-spelling-title').val(responseData.title);
-                        $('.'+ skHash +'-grid-spelling-salutation').val(responseData.salutation);
-                        $('.'+ skHash +'-grid-spelling-prefix').val(responseData.prefix);
-                        $('.'+ skHash +'-grid-spelling-suffix').val(responseData.suffix);
+                        $('.'+ skHash +'-grid-spelling-first-name').val(firstName);
+                        $('.'+ skHash +'-grid-spelling-last-name').val(lastName);
+                        $('.'+ skHash +'-grid-spelling-title').val(title);
+                        $('.'+ skHash +'-grid-spelling-salutation').val(salutation);
+                        $('.'+ skHash +'-grid-spelling-prefix').val(prefix);
+                        $('.'+ skHash +'-grid-spelling-suffix').val(suffix);
 
                         $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
 
@@ -1566,12 +1633,54 @@ $(document).ready(function () {
                         $('.'+ skHash +'-find-replace').contents().filter(function () {
                             return this.nodeType === 3;
                         }).replaceWith(function () {
-                            return this.nodeValue.replace(fullNamePortraitOld, fullNamePortraitNew);
-                            createJsonData();
+                            // Ensure we are replacing with a string, even if empty
+                            let newName = fullNamePortraitNew || "";
+                            return this.nodeValue.replace(fullNamePortraitOld, newName);
                         });
+
+                        //updation for the names to select from dropdown in tagsinput
+                        var $subjectNamesInput = $('#allSubjectNames');
+
+                        if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
+                            try {
+                                // 1. Parse the JSON strings from the value and the data attribute
+                                var mainArray = JSON.parse($subjectNamesInput.val());
+                                var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
                         
-                        findSpanByText(fullNameGroupOld, fullNameGroupNew);
-                        fetchAndUpdateSubjectNames();
+                                // 2. Helper function to update names in an array
+                                var updateArray = function(arr, oldName, newName) {
+                                    return arr.map(function(name) {
+                                        return name === oldName ? newName : name;
+                                    });
+                                };
+                        
+                                // 3. Update the main array
+                                mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
+                        
+                                // 4. Update the data-key object (Row_0, Row_1, etc.)
+                                if (keyData) {
+                                    Object.keys(keyData).forEach(function(row) {
+                                        keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
+                                    });
+                                }
+                        
+                                // 5. Save back to the element
+                                // Update the value attribute
+                                $subjectNamesInput.val(JSON.stringify(mainArray));
+                                
+                                // Update the internal jQuery data object AND the actual DOM attribute
+                                $subjectNamesInput.data('key', keyData);
+                                $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
+                        
+                                // 6. Trigger change for other listeners
+                                $subjectNamesInput.trigger('change');
+                            } catch (e) {
+                                // console.error("Error parsing allSubjectNames JSON:", e);
+                            }
+                        }
+                        
+                        findSpanByText(fullNameGroupOld, fullNameGroupNew); //data-role = 'tagsinput'
+                        fetchAndUpdateSubjectNames(); //typeahead
                         // createJsonData();
 
                         $('#subjects_questions option[value=""]').attr('selected', 'selected');
@@ -1584,12 +1693,7 @@ $(document).ready(function () {
                         } else {
                             $('#'+ skHash +'_history_edits_button').find("i.fa-history").addClass('text-danger');
                         }
-                 
-                        if ($('#allSubjectNames').val().includes(fullNameGroupOld)) {
-                            var inputValue = $('#allSubjectNames').val();
-                            var updatedValue = inputValue.replace(fullNameGroupOld, fullNameGroupNew);
-                            $('#allSubjectNames').val(updatedValue).trigger('change');
-                        }
+
                        // console.log("Completed");
                     } else {
                       // console.log("Error: Invalid response structure.");
@@ -1597,8 +1701,8 @@ $(document).ready(function () {
                     suppressChangeEvent = false;
                 },
                 error: function (e) {
-                    //alert("An error occurred: " + e.responseText.message);
-                    console.log(e);
+                    // alert("An error occurred: " + e.responseText.message);
+                    // console.log(e);
                 }
             });
         });
@@ -1610,7 +1714,12 @@ $(document).ready(function () {
             var button = $(event.relatedTarget); // Button that triggered the modal
             var skHash = button.data('skhash'); // Extract info from data-* attributes
             var titleHtml = $("#" + skHash + "_history_edits_name_populate").html();
-            var spinningHtml = '<i class="fa fa-spinner fa-3x fa-spin" aria-hidden="true"></i>';
+            // var spinningHtml = '<i class="fa fa-spinner fa-3x fa-spin" aria-hidden="true"></i>';
+            var spinningHtml = `
+            <div class="spinner-container">
+                <div class="table-spinner"></div>
+                <div class="ml-2 mt-2 text-muted">Retrieving history...</div>
+            </div>`;
     
             modal.find("#history-box-subject-name").html(titleHtml);
             modal.find("#history-box-subject-history-table").html(spinningHtml)

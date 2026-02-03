@@ -69,7 +69,14 @@ class ProofController extends Controller
 
     protected function renderFolderProofingView($selectedJob, $selectedSeason, $tsJobId)
     {
-        $selectedFolders = $this->folderService->getFolderByJobId($tsJobId)->with('images')->where('is_visible_for_proofing', 1)->orderBy('ts_foldername', 'asc')->get();
+        $selectedFolders = $this->folderService->getFolderByJobId($tsJobId)
+            ->with('images')
+            ->where('is_visible_for_proofing', 1)
+            ->whereHas('folderUsers', function($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->orderBy('ts_foldername', 'asc')
+            ->get();
         $reviewStatusesColours = $this->statusService->getAllStatusData('id', 'status_external_name', 'colour_code')->get();
         $getChangelog = $this->proofingChangelogService->getAllChangelogsByJobkeyExceptTraditional($selectedJob->ts_jobkey)->select('keyvalue')->get();
         return view('proofing.franchise.proof-my-people.folder-proofing', [
@@ -339,7 +346,7 @@ class ProofController extends Controller
         $autoApproved = $this->statusService->autoApproved;
         $rejected = $this->statusService->rejected;
         $approved = $this->statusService->approved;
-        $subjectChanges = $this->proofingChangelogService->getAllProofingChangelogBySubjectkey($subjectkey)->orderByDesc('id')->get();
+        $subjectChanges = $this->proofingChangelogService->getAllProofingChangelogBySubjectkey($subjectkey)->orderBy('id', 'asc')->get();
         return view('proofing.franchise.proof-my-people.html', [
             'subjectChanges' => $subjectChanges,
             'autoApproved' => $autoApproved,

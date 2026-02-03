@@ -92,13 +92,20 @@
     <body class="font-sans antialiased">
         <div id="toast-wrapper"></div>
         @if(session('success'))
-            <x-toast-success message="{{  session('success') }}" />
+            <x-toast-success message="{!! session('success') !!}" />
         @elseif(session('error'))
-            <x-toast-error message="{{  session('error') }}" />
+            <x-toast-error message="{!!  session('error') !!}" />
         @endif
-    
-        <div class="alert alert-success d-none"></div>
 
+        <div id="flash-container">
+            @if ($msg = session()->pull('message'))
+                @include('proofing.franchise.flash-success', ['message' => $msg])
+            @endif
+        
+            @if ($err = session()->pull('error'))
+                @include('proofing.franchise.flash-error', ['message' => $err])
+            @endif
+        </div>
         <div class="flex flex-row">
             <x-layout.navBar />
             <div class="flex flex-col w-full h-screen">
@@ -259,13 +266,14 @@
                     ]) }}">
                         
                         {{-- Job Open Notification --}}
-                        @if(session()->get('openJob') === true && session()->has('selectedJob') && session()->has('selectedSeason'))
+                        {{-- @if(session()->get('openJob') === true && session()->has('selectedJob') && session()->has('selectedSeason')) --}}
+                        @if(session()->get('openJob') === true && !empty($selectedJob['ts_jobname']) && !empty($selectedSeason['code']))
                             <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
                                 <div class="col-12">
                                     <span class="lead m-0 mr-2">
                                         {!! __("You are currently working on <strong>:job</strong> in the <strong>:season</strong> Season", [
-                                            'job' => $selectedJob['ts_jobname'] ?? 'N/A',
-                                            'season' => $selectedSeason['code'] ?? 'N/A'
+                                            'job' => $selectedJob['ts_jobname'],
+                                            'season' => $selectedSeason['code']
                                         ]) !!}
                                         <a href="{{ route('dashboard.closeJob') }}">[Close Job]</a>                            
                                     </span>
@@ -273,12 +281,12 @@
                             </div>
                     
                         {{-- Season Open Notification --}}
-                        @elseif(session()->get('openSeason') === true)
+                        @elseif(session()->get('openSeason') === true && !empty($selectedSeasonDashboard['code']))
                             <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
                                 <div class="col-12">
                                     <span class="lead m-0 mr-2">
                                         {!! __("You are currently working in the <strong>:season</strong> Season", [
-                                            'season' => $selectedSeasonDashboard['code'] ?? 'N/A'
+                                            'season' => $selectedSeasonDashboard['code']
                                         ]) !!}
                                         <a href="{{ route('dashboard.closeSeason') }}">[Close Season]</a>                            
                                     </span>
@@ -399,6 +407,14 @@
             function showEditProfile() {
                 editProfileModal.show();
             }
+
+            $(document).ready(function() {
+                setTimeout(function() {
+                    $(".alert-dismissible").fadeOut(500, function(){
+                        $(this).remove();
+                    });
+                }, 5000); // Auto-hide after 5 seconds
+            });
             
             document.addEventListener('DOMContentLoaded', (event) => {
                 window.showEditProfile = showEditProfile;

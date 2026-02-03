@@ -347,8 +347,8 @@ class EmailService
     
                 $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-                // $filePath = public_path("$field.$key.eml");
-                // file_put_contents($filePath, $emlContent);
+                $filePath = public_path("$field.$key.eml");
+                file_put_contents($filePath, $emlContent);
     
                 // Save email record per user
                 $emailRecord = Email::where([
@@ -476,8 +476,8 @@ class EmailService
             $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $date);
             $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-            // $filePath = public_path("$field.$key.eml");
-            // file_put_contents($filePath, $emlContent);
+            $filePath = public_path("$field.$key.eml");
+            file_put_contents($filePath, $emlContent);
 
             $this->storeEmailRecord($authUser, $selectedFolder->job, $user, $template, $date, $emlContent, $selectedFolder->job->ts_jobkey);
         }

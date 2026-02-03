@@ -218,12 +218,6 @@
             ];
         @endphp
 
-        @if (Session::has('message'))
-            @include('proofing.franchise.flash-success', ['message' => Session::get('message')])
-        @elseif (Session::has('error'))
-            @include('proofing.franchise.flash-error', ['message' => Session::get('error')])
-        @endif
-
         <div class="row">
             <div class="col-lg-12">
                 <h1 class="page-header">

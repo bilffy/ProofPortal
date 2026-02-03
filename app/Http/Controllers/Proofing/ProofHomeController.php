@@ -215,6 +215,8 @@ class ProofHomeController extends Controller
     
     public function closeJob()
     {
+        $message = session()->pull('message');
+
         Session::forget([
             'selectedJob',
             'selectedSeason',
@@ -223,9 +225,22 @@ class ProofHomeController extends Controller
             'awaitApprovalSubjectChangesCount'
         ]);
         Session::save();
+
+        // \Log::info('Session cleared for Job closure:', [
+        //     'selectedJob' => session('selectedJob'),
+        //     'selectedSeason' => session('selectedSeason'),
+        //     'openJob' => session('openJob'),
+        //     'approvedCount' => session('approvedSubjectChangesCount'),
+        //     'pendingCount' => session('awaitApprovalSubjectChangesCount'),
+        // ]);
+
+        if ($message) {
+            session()->flash('message', $message);
+        }
+
         return redirect()->route('proofing');
     }
-
+    
     // public function proxySyncJob(Request $request)
     // {
     //     $jobKey = $this->getDecryptData($request->input('jobKey'));
@@ -363,7 +378,6 @@ class ProofHomeController extends Controller
             ], 500);
         }
     }
-    
 
     public function archive(Request $request)
     {
@@ -416,7 +430,8 @@ class ProofHomeController extends Controller
         
         $this->jobService->deleteJob($selectedJob->ts_job_id);
         if(Session::has('selectedJob') && Session::has('selectedSeason')){
-            return redirect()->route('dashboard.closeJob');
+            return redirect()->route('dashboard.closeJob')
+                         ->with('message', 'The Job "' . $selectedJob->ts_jobname . '" has been deleted.');
         }
         return response()->json('Job Deleted');
     }
