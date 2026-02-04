@@ -187,7 +187,7 @@ class ImageController extends Controller
         if($step === 'match'){
             if(Session::has('upload_session')){
                 $uploadSession = session('upload_session');
-                $sessionFiles = Storage::disk('public')->files('groupImages/'.$uploadSession);
+                $sessionFiles = Storage::disk('public')->files($uploadSession);
             }else{
                 return redirect()->back()->with('error', 'Please upload some images.');
             }
@@ -237,7 +237,7 @@ class ImageController extends Controller
             $filename = $originalFilename . '.' . $file->getClientOriginalExtension();
         
             // Store the file in the 'public/groupImages' directory
-            $path = $file->storeAs('groupImages/'.$request->input('upload_session'), $filename, 'public');
+            $path = $file->storeAs($request->input('upload_session'), $filename, 'public');
                 
             // Store session data
             session([
@@ -256,13 +256,10 @@ class ImageController extends Controller
         // Get the upload session from the request
         $uploadSession = $request->input('upload_session');
     
-        // Define the path to the folder
-        $folderPath = 'groupImages/' . $uploadSession;
-    
         // Check if the folder exists
-        if (Storage::disk('public')->exists($folderPath)) {
+        if (Storage::disk('public')->exists($uploadSession)) {
             // Delete the folder and its contents
-            Storage::disk('public')->deleteDirectory($folderPath);
+            Storage::disk('public')->deleteDirectory($uploadSession);
         }
     
         // Redirect to the franchise dashboard
@@ -279,7 +276,7 @@ class ImageController extends Controller
     
         // Decode the JSON data from the artifact-to-folder-map
         $artifactToFolderMap = json_decode($request->input('artifact-to-folder-map'), true);
-        $folderPath = 'groupImages/' . session('upload_session');
+        $folderPath = session('upload_session');
     
         // Now you can process this mapping as needed
         foreach ($artifactToFolderMap as $artifact => $folderKey) {
@@ -327,11 +324,12 @@ class ImageController extends Controller
         // Store the file in the 'groupImages' folder in the public disk
             $filePath = $file->storeAs('groupImages', $fileName, 'public');
             $this->imageService->createGroupImage($folderKey, $extension);
+            $encryptedFilename = Crypt::encryptString($fileName);
             
         // Respond with success and the full URL of the uploaded file
             return response()->json([
                 'message' => 'Image uploaded successfully',
-                'full_url' => asset('/storage/'.$filePath),  // This generates the public URL
+                'full_url' => route('image.show', ['filename' => $encryptedFilename]),
             ]);
     }
 

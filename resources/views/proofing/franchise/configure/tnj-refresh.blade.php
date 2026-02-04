@@ -9,11 +9,28 @@
     <div class="col-9 m-auto">
         <p class="lead mb-0"><strong>{{ __('Update Images of People') }}</strong></p>
         <ul>
-            @if ($imageCount['totalTSSubjectImages'] != $imageCount['totalBPSubjectImages'])
+            @if($imageCount['totalTSSubjectImages'] != $imageCount['totalBPSubjectImages'])
                 <li>
                     <span class="text-danger">
-                        {{ __('There are :tnjCount Thumbnails in the TNJ and :subjectCount thumbnails in Blueprint. It might be a good idea to Update Images of People. ', ['tnjCount' => $imageCount['totalTSSubjectImages'], 'subjectCount' => $imageCount['totalBPSubjectImages']]) }}
-                    </span>
+                        {{ __('There are :tnj thumbnails in the TNJ and :bp thumbnails in Blueprint. It might be a good idea to Update Images of People.', [
+                            'tnj' => $imageCount['totalTSSubjectImages'], 
+                            'bp' => $imageCount['totalBPSubjectImages']
+                        ]) }}
+                    </span> 
+                </li>
+            @else
+                @php
+                    $missingMessage = ($imageCount['bpSubjectCount'] > $imageCount['totalTSSubjectImages']) 
+                        ? __(' (missing :count thumbnails in the TNJ)', ['count' => $imageCount['bpSubjectCount'] - $imageCount['totalTSSubjectImages']]) 
+                        : "";
+                @endphp
+                
+                <li>
+                    {{ __('There are :tnj Thumbnails in the TNJ and :sub Subjects in the School:missing.', [
+                        'tnj' => $imageCount['totalTSSubjectImages'],
+                        'sub' => $imageCount['bpSubjectCount'],
+                        'missing' => $missingMessage
+                    ]) }}
                 </li>
             @endif
             <li>{{ __('This will refresh all People Images for this School.') }}</li>

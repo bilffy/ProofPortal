@@ -374,6 +374,7 @@ class ConfigureService
         $totalTSSubjectImages = $tsHomedSubjectImagesCount + $tsAttachedSubjectImagesCount;
 
         // Blueprint
+        $bpSubjectCount = $this->subjectService->getSubjectByJobId($tsJobId)->count();
         $bpHomedSubjectImages = $this->subjectService->getAllHomedSubjectsImageByJobId($tsJobId);
         $bpHomedSubjectImagesCount = $bpHomedSubjectImages->count();
         $bpHomedSubjectIds =  $bpHomedSubjectImages->pluck('ts_subject_id')->toArray();
@@ -387,6 +388,7 @@ class ConfigureService
         return [
             'totalTSSubjectImages' => $totalTSSubjectImages,
             'totalBPSubjectImages' => $totalBPSubjectImages,
+            'bpSubjectCount' => $bpSubjectCount
         ];
     }
 }
