@@ -10,6 +10,9 @@ use App\Models\Folder;
 use App\Models\Job;
 use App\Models\School;
 use App\Models\Template;
+use App\Models\FranchiseUser;
+use App\Models\JobUser;
+use App\Models\FolderUser;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\JobService;
 use App\Services\Proofing\FolderService;
@@ -17,6 +20,7 @@ use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\SchoolService;
 use App\Services\Proofing\EmailService;
 use App\Services\Proofing\ConfigureService;
+use App\Services\Proofing\StatusService;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use App\Http\Resources\UserResource;
@@ -25,6 +29,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\SchoolContextHelper;
+use Illuminate\Support\Facades\Http;
 
 
 class ConfigureController extends Controller
@@ -36,8 +41,9 @@ class ConfigureController extends Controller
     protected $seasonService;
     protected $schoolService;
     protected $emailService;
+    protected $statusService;
 
-    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ConfigureService $configureService, SeasonService $seasonService, SchoolService $schoolService, EmailService $emailService)
+    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ConfigureService $configureService, SeasonService $seasonService, SchoolService $schoolService, EmailService $emailService, StatusService $statusService)
     {
         $this->encryptDecryptService = $encryptDecryptService;
         $this->jobService = $jobService;
@@ -46,6 +52,7 @@ class ConfigureController extends Controller
         $this->seasonService = $seasonService;
         $this->schoolService = $schoolService;
         $this->emailService = $emailService;
+        $this->statusService = $statusService;
     }
 
     private function getDecryptData($hash){
@@ -184,7 +191,7 @@ class ConfigureController extends Controller
     public function handleJobAction($action, $hashedJob)
     {
         $decryptedJobId = $this->getDecryptData($hashedJob);
-        $selectedJob = $this->jobService->getJobById($decryptedJobId);
+        $selectedJob = $this->jobService->getJobByJobKey($decryptedJobId)->first();
         
         if (!$selectedJob) {
             abort(404); 
@@ -209,8 +216,37 @@ class ConfigureController extends Controller
                 break;
 
             case 'update-subject-associations':
-                $this->configureService->updateSubjectAssociations($decryptedJobId);
+                // $this->configureService->updateSubjectAssociations($decryptedJobId);
+                $client = Http::withoutVerifying()->timeout(30);
+                $baseUrl = 'http://bpsync.msp.local/index.php';
+                $jobKey = $selectedJob->ts_jobkey;
+                $this->jobService->updateJobData($jobKey, 'force_sync', 1);
+                $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
                 $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
+                
+                $folderSuccess = $folderResponse && $folderResponse->successful();
+                if ($folderSuccess && $selectedJob) {
+                    $franchise = $selectedJob->franchises;
+        
+                    if ($franchise) {
+                        $franchiseUserIds = FranchiseUser::where('franchise_id', $franchise->id)->pluck('user_id');
+                        $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
+        
+                        foreach ($franchiseUserIds as $userId) {
+                            JobUser::firstOrCreate([
+                                'user_id'   => $userId,
+                                'ts_job_id' => $selectedJob->ts_job_id
+                            ]);
+        
+                            foreach ($folderIds as $folderId) {
+                                FolderUser::firstOrCreate([
+                                    'user_id'      => $userId,
+                                    'ts_folder_id' => $folderId
+                                ]);
+                            }
+                        }
+                    }
+                }
                 break;
 
             case 'update-people-images':

@@ -92,6 +92,7 @@
         @php
 
             $defaultDate = Carbon::now()->format('d/m/Y g:i A');
+            $jobKeyHash = Crypt::encryptString($selectedJob->ts_jobkey);
             $jobIdHash = Crypt::encryptString($selectedJob->ts_job_id);
 
             if ($selectedJob->proof_start) {
@@ -249,7 +250,7 @@
                         {{-- Email Notifiction --}}
                         <hr>
                         {{-- TNJ Data Refresh --}}
-                            @include('proofing.franchise.configure.tnj-refresh',['jobIdHash' => $jobIdHash])
+                            @include('proofing.franchise.configure.tnj-refresh',['jobKeyHash' => $jobKeyHash])
                         {{-- TNJ Data Refresh --}}
                     </div>
                 </div>

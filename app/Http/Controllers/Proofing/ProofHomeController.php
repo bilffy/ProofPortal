@@ -319,10 +319,6 @@ class ProofHomeController extends Controller
             } 
             // Case 2: Job exists → Folder sync only (Force Sync)
             else {
-                // if ($selectedJob->job_status_id !== $this->statusService->deleted) {
-                //     $this->jobService->updateJobData($jobKey, 'force_sync', 1);
-                // }
-                $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
             }
     
@@ -384,7 +380,7 @@ class ProofHomeController extends Controller
         $selectedJob = $this->jobService->getJobById($this->getDecryptData($request->input('job'))); 
         
         if (!$selectedJob) {
-            abort(404); 
+            abort(404);  
         }
 
         $result = $this->jobService->updateJobStatus($selectedJob->ts_job_id, $this->statusService->archived);

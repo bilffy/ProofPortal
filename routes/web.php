@@ -96,6 +96,8 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/proofing/closeSeason', [ProofHomeController::class, 'closeSeason'])->name('dashboard.closeSeason');
         //Dashboard - Open Job
         Route::get('/proofing/openJob', [ProofHomeController::class, 'openJob'])->name('dashboard.openJob');
+        //Delete Job - Used in Configure
+        Route::post('/franchise/delete-job/{hash}', [ProofHomeController::class, 'deleteJob'])->name('dashboard.deleteJob'); 
         //Dashboard - Archive Job
         Route::post('/proofing/jobs/archive', [ProofHomeController::class, 'archive'])->name('dashboard.archive');
         //Dashboard - Restore Job
@@ -226,8 +228,6 @@ Route::middleware(['auth', NoCacheHeaders::class, CheckJobSession::class])->grou
         // Proofing
         $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
         Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class]], function () {
-            //Delete Job - Used in Configure
-            Route::post('/franchise/delete-job/{hash}', [ProofHomeController::class, 'deleteJob'])->name('dashboard.deleteJob')->middleware('signed'); 
             //Configure Job
             Route::get('/proofing/config-job/{hash}', [ConfigureController::class, 'index'])->name('config-job')
             // ->middleware(SetTimezone::class)
