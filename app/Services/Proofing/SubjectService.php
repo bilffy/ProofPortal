@@ -41,17 +41,18 @@ class SubjectService
 
     public function getAllHomedSubjectsImageByJobId($tsJobId)
     {
-        // return Subject::where('ts_job_id', $tsJobId)
-        //     ->with(['images' => function ($query) {
-        //         // Select specific fields from the images table and order them
-        //         $query->select('id', 'ts_image_id', 'ts_imagekey', 'keyvalue', 'ts_job_id')
-        //             ->orderBy('ts_imagekey', 'asc');
-        //     }]);
-
         return Subject::where('ts_job_id', $tsJobId)
-        ->select('id', 'ts_subject_id', 'ts_job_id') // Select only required columns from 'subjects' table
+        ->select('id', 'ts_subject_id', 'ts_job_id', 'ts_subjectkey') // Select only required columns from 'subjects' table
         ->with(['images:id,ts_image_id,ts_imagekey,keyvalue,ts_job_id']) // Load only necessary fields from 'images' table
         ->whereHas('images') // Ensure that the subject has images
+        ->get();
+    }
+
+    public function getAllTimestoneHomeSubjectsByJobID($tsJobId)
+    {
+        return Subject::where('ts_job_id', $tsJobId)
+        ->select('id', 'ts_subject_id', 'ts_job_id', 'ts_subjectkey') // Select only required columns from 'subjects' table
+        ->with(['images:id,ts_image_id,ts_imagekey,keyvalue,ts_job_id']) // Load only necessary fields from 'images' table
         ->get();
     }
 

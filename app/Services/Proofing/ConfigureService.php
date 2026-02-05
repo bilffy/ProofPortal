@@ -299,11 +299,11 @@ class ConfigureService
         $tsSubjectImages = $this->timestoneTableService->getAllTimestoneHomeSubjectsImageByJobID($tsJobId); // Format subjects by SubjectId
 
         // Blueprint
-        $bpSubjectImages = $this->subjectService->getAllHomedSubjectsImageByJobId($tsJobId);
+        $bpSubjectImages = $this->subjectService->getAllTimestoneHomeSubjectsByJobID($tsJobId);
 
         $this->updateImage($tsSubjectImages, $bpSubjectImages);
 
-        $this->updateAttachedPeopleImage($tsJobId);
+        // $this->updateAttachedPeopleImage($tsJobId);
     }
 
     private function updateAttachedPeopleImage($tsJobId)
@@ -325,13 +325,13 @@ class ConfigureService
 
         foreach ($bpSubjectImages as $bpSubjectImage) 
         {
-            $tsSubjectKey = $bpSubjectImage->ts_subjectkey;
+            $tsSubjectId = $bpSubjectImage->ts_subject_id;
 
-                if (isset($tsSubjectImages[$tsSubjectKey])) {
+                if (isset($tsSubjectImages[$tsSubjectId])) {
                     //fetching timestone imagekey and imageid of subject
-                    $imageKey = $tsSubjectImages[$tsSubjectKey]->ImageKey;
-                    $imageID = $tsSubjectImages[$tsSubjectKey]->ImageID;
-
+                    $imageKey = $tsSubjectImages[$tsSubjectId]->ImageKey;
+                    $imageID = $tsSubjectImages[$tsSubjectId]->ImageID;
+                    
                     if (isset($bpSubjectImage['images']) )
                     {
                         // Check if we have a result and if ts_image_id or ts_imagekey is different
@@ -353,12 +353,14 @@ class ConfigureService
                         $this->imageService->updateOrCreateImageRecord($bpSubjectImage);
                         $bpSubjectImageUpdated[] = $bpSubjectImage;
                     }
-                } else {
-                        if (isset($bpSubjectImage['images']))
-                        {
-                            $this->imageService->deleteImageBytsSubjectKey($tsSubjectKey);
-                        }
-                }
+                } 
+                // else {
+                //         if (isset($bpSubjectImage['images']))
+                //         {
+                //             $tsSubjectKey = $bpSubjectImage->ts_subjectkey;
+                //             $this->imageService->deleteImageBytsSubjectKey($tsSubjectKey);
+                //         }
+                // }
         }
         return $bpSubjectImageUpdated;
     }

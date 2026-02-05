@@ -262,7 +262,7 @@
     {{-- Edit Folder configs --}}
 
     {{-- Delete & Archive Job --}}
-        @include('proofing.franchise.configure.archive-delete-job',['jobIdHash' => $jobIdHash])
+        @include('proofing.franchise.configure.archive-delete-job',['jobKeyHash' => $jobKeyHash])
     {{-- Delete & Archive Job --}}    
 
     {{--Modal--}}

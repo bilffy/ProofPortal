@@ -96,8 +96,6 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/proofing/closeSeason', [ProofHomeController::class, 'closeSeason'])->name('dashboard.closeSeason');
         //Dashboard - Open Job
         Route::get('/proofing/openJob', [ProofHomeController::class, 'openJob'])->name('dashboard.openJob');
-        //Delete Job - Used in Configure
-        Route::post('/franchise/delete-job/{hash}', [ProofHomeController::class, 'deleteJob'])->name('dashboard.deleteJob'); 
         //Dashboard - Archive Job
         Route::post('/proofing/jobs/archive', [ProofHomeController::class, 'archive'])->name('dashboard.archive');
         //Dashboard - Restore Job
@@ -231,11 +229,13 @@ Route::middleware(['auth', NoCacheHeaders::class, CheckJobSession::class])->grou
             //Configure Job
             Route::get('/proofing/config-job/{hash}', [ConfigureController::class, 'index'])->name('config-job')
             // ->middleware(SetTimezone::class)
-            ;
+            ->middleware('signed');
             //TNJ Refresh
             Route::post('/franchise/config-job/{action}/{hash}', [ConfigureController::class, 'handleJobAction'])
                 ->name('config-job-action')
                 ->where('action', 'merge-duplicate-folders|merge-duplicate-subjects|update-subject-associations|update-people-images')->middleware('signed'); 
+            //Delete Job - Used in Configure
+            Route::post('/franchise/delete-job/{hash}', [ProofHomeController::class, 'deleteJob'])->name('dashboard.deleteJob')->middleware('signed');
 
             //Manage Photo Coordinators & Teachers
             Route::get('/proofing/staffs/{hash}', [InvitationController::class, 'manageStaffs'])->name('invitation.manageStaffs')->middleware('signed'); 

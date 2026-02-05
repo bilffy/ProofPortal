@@ -319,6 +319,9 @@ class ProofHomeController extends Controller
             } 
             // Case 2: Job exists → Folder sync only (Force Sync)
             else {
+                if ($selectedJob->job_status_id == $this->statusService->deleted) {
+                    $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
+                }
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
             }
     
@@ -425,7 +428,7 @@ class ProofHomeController extends Controller
             abort(404); 
         }
         
-        $this->jobService->deleteJob($selectedJob->ts_job_id);
+        $this->jobService->deleteJob($selectedJob->ts_jobkey);
         if(Session::has('selectedJob') && Session::has('selectedSeason')){
             return redirect()->route('dashboard.closeJob')
                          ->with('message', 'The Job "' . $selectedJob->ts_jobname . '" has been deleted.');

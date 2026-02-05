@@ -1,3 +1,4 @@
+<div class="mt-3"></div>
 <div class="alert alert-success alert-dismissible fade show" role="alert">
     @if(isset($message))
         {!! $message !!} 

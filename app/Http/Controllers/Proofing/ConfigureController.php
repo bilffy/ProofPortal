@@ -190,8 +190,8 @@ class ConfigureController extends Controller
     // tnj Refresh Config - Merge Duplicate Folders, Subjects, Update Associations, and People Images
     public function handleJobAction($action, $hashedJob)
     {
-        $decryptedJobId = $this->getDecryptData($hashedJob);
-        $selectedJob = $this->jobService->getJobByJobKey($decryptedJobId)->first();
+        $decryptedJobKey = $this->getDecryptData($hashedJob);
+        $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
         
         if (!$selectedJob) {
             abort(404); 
@@ -205,18 +205,18 @@ class ConfigureController extends Controller
         switch ($action) {
             case 'merge-duplicate-folders':
                 $count = $this->getDuplicateFolder($selectedJob)->count();
-                $this->configureService->mergeDuplicateFolders($decryptedJobId);
+                $this->configureService->mergeDuplicateFolders($selectedJob->ts_job_id);
                 $message = "Merged $count duplicate Folders in \"$selectedJob->ts_jobname\".";
                 break;
 
             case 'merge-duplicate-subjects':
                 $count = $this->getDuplicateSubject($selectedJob)->count();
-                $this->configureService->mergeDuplicateSubjects($decryptedJobId);
+                $this->configureService->mergeDuplicateSubjects($selectedJob->ts_job_id);
                 $message = "Merged $count duplicate People in \"$selectedJob->ts_jobname\".";
                 break;
 
             case 'update-subject-associations':
-                // $this->configureService->updateSubjectAssociations($decryptedJobId);
+                // $this->configureService->updateSubjectAssociations($selectedJob->ts_job_id);
                 $client = Http::withoutVerifying()->timeout(30);
                 $baseUrl = 'http://bpsync.msp.local/index.php';
                 $jobKey = $selectedJob->ts_jobkey;
@@ -250,7 +250,7 @@ class ConfigureController extends Controller
                 break;
 
             case 'update-people-images':
-                $this->configureService->updatePeopleImage($decryptedJobId);
+                $this->configureService->updatePeopleImage($selectedJob->ts_job_id);
                 $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
                 break;
 

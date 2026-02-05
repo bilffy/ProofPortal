@@ -91,21 +91,12 @@
 
     <body class="font-sans antialiased">
         <div id="toast-wrapper"></div>
-        @if(session('success'))
+        {{-- @if(session('success'))
             <x-toast-success message="{!! session('success') !!}" />
         @elseif(session('error'))
             <x-toast-error message="{!!  session('error') !!}" />
-        @endif
+        @endif --}}
 
-        <div id="flash-container">
-            @if ($msg = session()->pull('message'))
-                @include('proofing.franchise.flash-success', ['message' => $msg])
-            @endif
-        
-            @if ($err = session()->pull('error'))
-                @include('proofing.franchise.flash-error', ['message' => $err])
-            @endif
-        </div>
         <div class="flex flex-row">
             <x-layout.navBar />
             <div class="flex flex-col w-full h-screen">
@@ -301,7 +292,17 @@
                                 </div>
                             @endif
                         @endif
-                    
+
+                        <div id="flash-container">
+                            @if ($msg = session()->pull('message'))
+                                @include('proofing.franchise.flash-success', ['message' => $msg])
+                            @endif
+                        
+                            @if ($err = session()->pull('error'))
+                                @include('proofing.franchise.flash-error', ['message' => $err])
+                            @endif
+                        </div>
+                        
                         <div class="container3 p-4">
                             {{-- Spacer if no job or season --}}
                             @if(!session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false)

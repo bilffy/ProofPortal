@@ -238,10 +238,10 @@ class JobService
     //     // $job->email()->delete(); // Delete emails associated with the job  - (2026 Dec Enhancement)
     // }
 
-    public function deleteJob($tsJobId)
+    public function deleteJob($tsJobKey)
     {                    
-        $job = Job::where('ts_job_id', $tsJobId)->firstOrFail();
-        $tsJobKey = $job->ts_jobkey;
+        $job = Job::where('ts_jobkey', $tsJobKey)->firstOrFail();
+        $tsJobId = $job->ts_job_id;
                                                     
         $tsFolderIds = $job->folders()->pluck('ts_folder_id')->toArray();                                                                
                                                                     
