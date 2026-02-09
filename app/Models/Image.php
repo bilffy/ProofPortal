@@ -19,6 +19,7 @@ class Image extends Model
      */
     protected $fillable = [
         'name',
+        'is_primary',
         'ts_image_id',
         'ts_imagekey',
         'ts_job_id',

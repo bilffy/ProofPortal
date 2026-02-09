@@ -295,16 +295,25 @@ class ConfigureService
 
     public function updatePeopleImage($tsJobId)
     {
-        // Timestone
-        $tsSubjectImages = $this->timestoneTableService->getAllTimestoneHomeSubjectsImageByJobID($tsJobId); // Format subjects by SubjectId
-
-        // Blueprint
-        $bpSubjectImages = $this->subjectService->getAllTimestoneHomeSubjectsByJobID($tsJobId);
-
-        $this->updateImage($tsSubjectImages, $bpSubjectImages);
-
-        // $this->updateAttachedPeopleImage($tsJobId);
-    }
+        DB::beginTransaction();
+    
+        try {
+            // Timestone (grouped by SubjectID, multiple images supported)
+            $tsSubjectImages = $this->timestoneTableService
+                ->getAllTimestoneHomeSubjectsImageByJobID($tsJobId);
+    
+            // Blueprint subjects (ARRAY-based)
+            $bpSubjectImages = $this->subjectService
+                ->getAllTimestoneHomeSubjectsByJobID($tsJobId);
+    
+            $this->updateImage($tsSubjectImages, $bpSubjectImages);
+    
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack(); // NOTHING SAVES if error occurs
+            throw $e;
+        }
+    }    
 
     private function updateAttachedPeopleImage($tsJobId)
     {
@@ -322,46 +331,42 @@ class ConfigureService
     private function updateImage($tsSubjectImages, $bpSubjectImages)
     {
         $bpSubjectImageUpdated = [];
+    
+        foreach ($bpSubjectImages as $bpSubjectImage) {
+    
+            $tsSubjectId  = $bpSubjectImage['ts_subject_id'];
+            $tsSubjectKey = $bpSubjectImage['ts_subjectkey'];
+    
+            // Skip if no Timestone images
+            if (!isset($tsSubjectImages[$tsSubjectId])) {
+                continue;
+            }
 
-        foreach ($bpSubjectImages as $bpSubjectImage) 
-        {
-            $tsSubjectId = $bpSubjectImage->ts_subject_id;
-
-                if (isset($tsSubjectImages[$tsSubjectId])) {
-                    //fetching timestone imagekey and imageid of subject
-                    $imageKey = $tsSubjectImages[$tsSubjectId]->ImageKey;
-                    $imageID = $tsSubjectImages[$tsSubjectId]->ImageID;
-                    
-                    if (isset($bpSubjectImage['images']) )
-                    {
-                        // Check if we have a result and if ts_image_id or ts_imagekey is different
-                        if (($bpSubjectImage['images']->ts_image_id != $imageID) || ($bpSubjectImage['images']->ts_imagekey != $imageKey)) {
-                            $bpSubjectImage['images']->ts_image_id = $imageID;
-                            $bpSubjectImage['images']->ts_imagekey = $imageKey;
-
-                            $this->imageService->updateOrCreateImageRecord($bpSubjectImage);
-
-                            // Add to the updated list
-                            $bpSubjectImageUpdated[] = $bpSubjectImage;
-                        }
-                    } else {
-                        $bpSubjectImage['images'] = (object)[
-                            'ts_image_id' => $imageID,
-                            'ts_imagekey' => $imageKey
-                        ];
-        
-                        $this->imageService->updateOrCreateImageRecord($bpSubjectImage);
-                        $bpSubjectImageUpdated[] = $bpSubjectImage;
-                    }
-                } 
-                // else {
-                //         if (isset($bpSubjectImage['images']))
-                //         {
-                //             $tsSubjectKey = $bpSubjectImage->ts_subjectkey;
-                //             $this->imageService->deleteImageBytsSubjectKey($tsSubjectKey);
-                //         }
-                // }
+            foreach ($tsSubjectImages[$tsSubjectId] as $tsImage) {
+    
+                $imageKey = $tsImage->ImageKey;
+                $imageID  = $tsImage->ImageID;
+                $imageIsPrimary  = $tsImage->IsPrimary;
+    
+                // Check if image already exists in Blueprint
+                $existingImage = $this->imageService
+                    ->getImageBySubjectAndImageKey($tsSubjectKey, $imageKey);
+    
+                if (!$existingImage) {
+                    $this->imageService->updateOrCreateImageRecord([
+                        'ts_subjectkey' => $tsSubjectKey,
+                        'ts_subject_id' => $tsSubjectId,
+                        'ts_imagekey'   => $imageKey,
+                        'ts_image_id'   => $imageID,
+                        'ts_job_id'     => $bpSubjectImage['ts_job_id'],
+                        'is_primary' => $imageIsPrimary
+                    ]);
+    
+                    $bpSubjectImageUpdated[] = $bpSubjectImage;
+                }
+            }
         }
+    
         return $bpSubjectImageUpdated;
     }
 

@@ -40,10 +40,10 @@ class TimestoneTableService
         ->join('ImageMatches', 'ImageMatches.SubjectID', '=', 'Subjects.SubjectID')
         ->join('Images', 'Images.ImageID', '=', 'ImageMatches.ImageID')
         ->where('Subjects.JobID', $tsJobId)
-        ->select(['Images.ImageID', 'Images.ImageKey', 'Subjects.SubjectID'])
+        ->select(['Images.ImageID', 'Images.ImageKey', 'Subjects.SubjectID', 'ImageMatches.IsPrimary'])
         ->orderBy('SubjectID', 'asc')
         ->get()
-        ->keyBy('SubjectID'); // Format subjects by SubjectKey
+        ->groupBy('SubjectID');; // Format subjects by SubjectKey
     }
 
     public function getAllTimestoneAttachedSubjectsImageByJobID($tsJobId)

@@ -21,30 +21,34 @@ class ImageService
         return Image::whereIn('id', $imagesToDelete)->delete();
     }
 
-    public function updateOrCreateImageRecord($bpSubjectImage)
+    public function updateOrCreateImageRecord(array $data)
     {
-        // Check if the image already exists
-        $image = Image::where('keyvalue', $bpSubjectImage->ts_subjectkey)
-        ->orderBy('is_primary', 'desc') //CODE BY IT
-        ->first();
-    
-        // Update or create the image record
         Image::updateOrCreate(
-            ['keyvalue' => $bpSubjectImage->ts_subjectkey],
             [
-                'ts_image_id' => $bpSubjectImage['images']->ts_image_id,
-                'ts_imagekey' => $bpSubjectImage['images']->ts_imagekey,
-                'ts_job_id' => $bpSubjectImage->ts_job_id,  // Use null if ts_job_id is not provided
-                'keyorigin' => 'Subject',
-                'protected' => 0,
-                'created_at' => Carbon::now()
+                // ✅ Proper uniqueness (prevents duplicates)
+                'keyorigin'   => 'Subject',
+                'keyvalue'    => $data['ts_subjectkey'],
+                'ts_imagekey' => $data['ts_imagekey'],
+            ],
+            [
+                'ts_image_id' => $data['ts_image_id'],
+                'ts_job_id'   => $data['ts_job_id'],
+                'is_primary'  => $data['is_primary'],
+                'protected'   => 0,
             ]
         );
     
         return true;
+    }   
+
+    public function getImageBySubjectAndImageKey(string $subjectKey, string $imageKey)
+    {
+        return Image::where('keyorigin', 'Subject')
+            ->where('keyvalue', $subjectKey)
+            ->where('ts_imagekey', $imageKey)
+            ->first();
     }
     
-
     public function deleteImageBytsSubjectKey($tsSubjectKey)
     {
         return Image::where([
