@@ -3,13 +3,13 @@
     'subject' => null,
     'schoolKey' => '',
     'externalSubjectId' => null,
-    'isLightbox' => true, //code by IT
+    'isLightbox' => true, //CODE BY IT
 ])
 
 <x-modal.lightbox id='lightbox-modal' :$title body="components.modal.body">
     <x-slot name="body">
         <x-modal.body class="max-h-[calc(100vh-12rem)] overflow-y-auto">
-            @if(!$isLightbox) {{-- code by IT --}}
+            @if(!$isLightbox) {{-- CODE BY IT --}}
                 <div class="flex justify-between items-center">
                     <h3 class="text-sm text-gray-900 font-semibold dark:text-white">
                         MSP Photography Timeline
@@ -24,7 +24,7 @@
                         </x-button.primary>
                     </div>
                 </div>
-            @endif {{-- code by IT --}}
+            @endif {{-- CODE BY IT --}}
             <livewire:photography.lightbox :$subject :$schoolKey :$externalSubjectId/>
         </x-modal.body>
     </x-slot>

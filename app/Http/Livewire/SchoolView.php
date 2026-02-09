@@ -23,12 +23,12 @@ class SchoolView extends Component
             'openJob',
             'approvedSubjectChangesCount',
             'awaitApprovalSubjectChangesCount',
-        ]);//code by IT
+        ]);//CODE BY IT
         $this->checkUserRole();
-        $id = Crypt::decryptString($hashedId);//code byIT
-        $this->school = School::findOrFail($id);//code byIT
+        $id = Crypt::decryptString($hashedId);//CODE BYIT
+        $this->school = School::findOrFail($id);//CODE BYIT
         // $id = Hashids::decodeHex($hashedId);
-        // $this->school = School::findOrFail($hashedId);//code by chromedia
+        // $this->school = School::findOrFail($hashedId);//CODE BY chromedia
         
         // redirect to the manage users page if the user is a franchise level
         if (Auth::user()->isFranchiseLevel()) {

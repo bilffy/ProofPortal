@@ -372,15 +372,15 @@ class PhotographyController extends Controller
             } else {
                 $path = '';
             }
-            // $fileExtension = File::extension($path); //code by Chromedia
-            $fileExtension = 'jpg'; //code by IT
+            // $fileExtension = File::extension($path); //CODE BY Chromedia
+            $fileExtension = 'jpg'; //CODE BY IT
             // and make sure to resizeImage if the long_edge option is set
             if ($imageOption->long_edge) {
                 return $this->resizeImage($path, $imageOption->long_edge, $filename, $fileExtension);
             }
             // retrieve the image content using the ImageService - as is?
-            // $imageContent = base64_encode($this->imageService->getImageContent($key)); //code by Chromedia
-            $imageContent = $this->imageService->getImageContent($key); //code by IT
+            // $imageContent = base64_encode($this->imageService->getImageContent($key)); //CODE BY Chromedia
+            $imageContent = $this->imageService->getImageContent($key); //CODE BY IT
             return response()->json([
                 'success' => true,
                 'data' => $imageContent,

@@ -94,16 +94,7 @@ class JobService
             ->where('jobs.ts_season_id', $seasonID)
             ->orderBy('id', 'asc')
             ->get();
-    }
-
-    public function geJobsBySeason($schoolkey, $seasonID)
-    {
-        return $this->queryJobs(null,$schoolkey)
-            ->where('jobs.jobsync_status_id', $this->statusService->sync)
-            ->where('jobs.ts_season_id', $seasonID)
-            ->orderBy('id', 'asc')
-            ->get();
-    }    
+    }  
     
     public function getJobsByTSJobID($TSJobID)
     {

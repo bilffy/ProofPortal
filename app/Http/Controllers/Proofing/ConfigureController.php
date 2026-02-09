@@ -11,7 +11,6 @@ use App\Models\Job;
 use App\Models\School;
 use App\Models\Template;
 use App\Models\FranchiseUser;
-use App\Models\JobUser;
 use App\Models\FolderUser;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\JobService;
@@ -198,9 +197,9 @@ class ConfigureController extends Controller
         }
 
         // Check if proofing has started
-        if ($this->hasProofingStarted($selectedJob)) {
-            return redirect()->back()->with('error', 'Unable to update for "'.$selectedJob->ts_jobname.'"! Proofing already started.');
-        }
+        // if ($this->hasProofingStarted($selectedJob)) {
+        //     return redirect()->back()->with('error', 'Unable to update for "'.$selectedJob->ts_jobname.'"! Proofing already started.');
+        // }
 
         switch ($action) {
             case 'merge-duplicate-folders':
@@ -233,11 +232,6 @@ class ConfigureController extends Controller
                         $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
         
                         foreach ($franchiseUserIds as $userId) {
-                            JobUser::firstOrCreate([
-                                'user_id'   => $userId,
-                                'ts_job_id' => $selectedJob->ts_job_id
-                            ]);
-        
                             foreach ($folderIds as $folderId) {
                                 FolderUser::firstOrCreate([
                                     'user_id'      => $userId,

@@ -13,18 +13,18 @@
                 @php
                     $isFolder = $image['category'] == 'FOLDER';
                     $imageId = $image['id'];
-                    // $name = $isFolder ? $image['classGroup'] : $image['firstname'] . ' ' . $image['lastname']; //code by Chromedia
-                    $name = ''; //code by IT
+                    // $name = $isFolder ? $image['classGroup'] : $image['firstname'] . ' ' . $image['lastname']; //CODE BY Chromedia
+                    $name = ''; //CODE BY IT
                     $folderName = $image['year'];
                     $landscape = !$image['isPortrait'];
                     $key = "img-lb_{{$imageId}}";
                     $isLightbox = true;
                     $isUploaded = $image['isUploaded'] ?? false;
                 @endphp
-                {{-- <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded :key="$key" lazy="on-load"/> --}} {{--code by chromedia--}}
-                {{--code by IT--}}
+                {{-- <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded :key="$key" lazy="on-load"/> --}} {{--CODE BY chromedia--}}
+                {{--CODE BY IT--}}
                 <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded wire:key="lb-{{ $imageId }}"  lazy="on-load"/>
-                {{--code by IT--}}
+                {{--CODE BY IT--}}
             @endforeach
         </div>
     </div>

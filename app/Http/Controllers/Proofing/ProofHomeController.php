@@ -148,11 +148,15 @@ class ProofHomeController extends Controller
         $user = Auth::user();
 
         $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
-    
+        $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)->pluck('ts_jobkey');
+        $filteredTsJobs = $tsJobs->reject(function ($tsJob) use ($bpJobs) {
+            return $bpJobs->contains($tsJob->JobKey);
+        });
+        
         return view('proofing.open-season-job', [
             'user' => new UserResource($user),
             'selectedSeason' => $selectedSeason,
-            'tsJobs' => $tsJobs
+            'tsJobs' => $filteredTsJobs
         ]);
     }   
     
@@ -321,7 +325,7 @@ class ProofHomeController extends Controller
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
                 $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
             } 
-            // Case 2: Job exists → Folder sync only (Force Sync)
+            // Case 2: Job exists → Folder sync only (This logs the number of associations to sync)
             else {
                 if ($selectedJob->job_status_id == $this->statusService->deleted) {
                     $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);

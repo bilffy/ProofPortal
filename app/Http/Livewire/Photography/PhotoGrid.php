@@ -30,17 +30,17 @@ class PhotoGrid extends Component
     public $viewOptions = ['ALL' => 'All'];
 
     protected $listeners = [
-        'gotoPage' => 'setPage', //code by IT
+        'gotoPage' => 'setPage', //CODE BY IT
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
         PhotographyHelper::EV_CHANGE_TAB => 'updateActiveCategory',
     ];
-    //code by IT
+    //CODE BY IT
     public function setPage($page)
     {
         $this->page = $page;
     }
-    //code by IT
+    //CODE BY IT
     public function mount($category = 'portraits', $season = 1, $schoolKey = '')
     {
         $this->category = $category;
@@ -194,7 +194,7 @@ class PhotoGrid extends Component
             'folderKeys' => $keys,
             'searchTerm' => $this->search,
         ];
-        //code by Chromedia
+        //CODE BY Chromedia
         // $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
 
         // $this->updateHasImages($filteredImages, $imageService);
@@ -205,8 +205,8 @@ class PhotoGrid extends Component
         //     null,
         //     ['path' => LengthAwarePaginator::resolveCurrentPath()]
         // );
-        //code by Chromedia
-        //code by IT
+        //CODE BY Chromedia
+        //CODE BY IT
         $paginated = $imageService->getFilteredPhotographyImages(
             $options,
             $this->category,
@@ -215,7 +215,7 @@ class PhotoGrid extends Component
         );
 
         $this->updateHasImages($paginated->getCollection(), $imageService);
-        //code by IT
+        //CODE BY IT
         // Modify the paginated items
         $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection(), $this->category);
         $paginated->setCollection($modifiedItems);

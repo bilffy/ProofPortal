@@ -277,8 +277,8 @@ class ImageService
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
-            // ->distinct() //code by Chromedia
-            ->distinct('subjects.ts_subjectkey') //code by IT
+            // ->distinct() //CODE BY Chromedia
+            ->distinct('subjects.ts_subjectkey') //CODE BY IT
             ->orderBy('subjects.lastname')
             ->orderBy('subjects.firstname');
     }
@@ -327,7 +327,7 @@ class ImageService
         
         return $query
             ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
-            ->distinct('folders.ts_folderkey') //code by IT
+            ->distinct('folders.ts_folderkey') //CODE BY IT
             ->orderBy('folders.ts_foldername');
     }
 
@@ -338,8 +338,8 @@ class ImageService
      * @param string $tab
      * @return Collection
      */
-    // public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS): Collection  //code by Chromedia
-    public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS, $perPage = 30, $page = 1)  //code by IT
+    // public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS): Collection  //CODE BY Chromedia
+    public function getFilteredPhotographyImages(array $options, string $tab = PhotographyHelper::TAB_PORTRAITS, $perPage = 30, $page = 1)  //CODE BY IT
     {
         $seasonId = $options['tsSeasonId'];
         $schoolKey = $options['schoolKey'];
@@ -357,7 +357,7 @@ class ImageService
                 break;
         }
 
-        // return $images->get();   //code by IT
+        // return $images->get();   //CODE BY IT
         return $images->paginate($perPage, ['*'], 'page', $page);
     }
 
@@ -501,10 +501,10 @@ class ImageService
                 if ($subject) {
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
-                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null); //code by IT
+                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null); //CODE BY IT
                 } else {
                     $uploaded = false;
-                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null); //code by IT
+                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null); //CODE BY IT
                 }
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->first();
@@ -516,7 +516,7 @@ class ImageService
                 }
             }
             $fileContent = $this->getImageContent($imgKey);
-            //code by IT
+            //CODE BY IT
             if ($fileContent) {
                 $binaryImage = base64_decode($fileContent);
                 $dimensions = getimagesizefromstring($binaryImage);
@@ -524,9 +524,9 @@ class ImageService
             } else {
                 $isPortrait = true; // default
             }
-            //code by IT
+            //CODE BY IT
 
-            //code by Chromedia
+            //CODE BY Chromedia
             // $dimensions = getimagesizefromstring($fileContent); 
 
             // if ($isSubject) {
@@ -535,13 +535,13 @@ class ImageService
             // } else {
             //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
             // }
-            //code by Chromedia
+            //CODE BY Chromedia
 
             return [
                 'id' => base64_encode(base64_encode($image->$key)),
                 'firstname' => $isSubject ? $image->firstname : '',
                 'lastname' => $isSubject ? $image->lastname : '',
-                // 'isPortrait' => $dimensions[0] <= $dimensions[1], //code by Chromedia
+                // 'isPortrait' => $dimensions[0] <= $dimensions[1], //CODE BY Chromedia
                 'isPortrait' => $isPortrait,
                 'classGroup' => $classGroup,
                 'year' => $image->year ?? 0,
@@ -553,7 +553,7 @@ class ImageService
 
         return $images->map($toData);
     }
-    //code by IT
+    //CODE BY IT
     public function getImageContent(string $key): ?string
     {
         $urls = $this->getImageUrls($key);
@@ -618,14 +618,14 @@ class ImageService
         $headers = @get_headers($url);
         return $headers && strpos($headers[0], '200') !== false;
     }
-    //code by IT
+    //CODE BY IT
 
     /**
      * Get File Content based on $key value
      * @param string $key
      * @return string|null
      */
-    //code by Chromedia
+    //CODE BY Chromedia
     // public function getImageContent($key)
     // {
     //     $path = ImageHelper::getImagePath($key);
@@ -646,8 +646,8 @@ class ImageService
     //     }
     //     return Storage::disk('local')->exists($path);
     // }
-    //code by Chromedia
-    //code by IT
+    //CODE BY Chromedia
+    //CODE BY IT
     // public function getImageContent($key)
     // {
     //     $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
@@ -698,7 +698,7 @@ class ImageService
 
     //     return false;
     // }
-    //code by IT
+    //CODE BY IT
     /**
      * This method is used to get the path of the image.
      * The directory is defined in the .env file.
