@@ -69,10 +69,20 @@ class CleanUploadedImagesCommand extends Command
             }
 
             $this->info(">> Checking keyvalue ({$metadata['key']}) and keyorigin ({$metadata['origin']})");
-
-            $image = Image::where('keyvalue', $metadata['key'])
+            
+            //CODE BY IT
+            if($metadata['origin'] === 'Subject') {
+                $image = Image::where('keyvalue', $metadata['key'])
+                ->where('keyorigin', $metadata['origin'])
+                ->orderBy('is_primary', 'desc') 
+                ->orderBy('id', 'asc') 
+                ->first();
+            } else { //CODE BY IT
+                $image = Image::where('keyvalue', $metadata['key'])
                 ->where('keyorigin', $metadata['origin'])
                 ->first();
+            //CODE BY IT
+            }//CODE BY IT
 
             if (is_null($image)) {
                 $this->info(">> No corresponding image found in images table for keyvalue {$metadata['key']} and origin {$metadata['origin']}.");

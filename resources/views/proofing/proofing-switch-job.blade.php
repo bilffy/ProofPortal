@@ -19,6 +19,7 @@
                 </h1>
             </div>
         </div>
+        
         @if(count($jobs) > 0)
             <div class="row mt-4">
                 <div class="col-12">

@@ -50,6 +50,7 @@ class ProofHomeController extends Controller
 
     public function index(Request $request)
     {
+        // dd($this->getDecryptData('eyJpdiI6IkZWbVJ4Q1VuaXZsVW9HZGtmNlZ2WEE9PSIsInZhbHVlIjoiV0lON2ZSY1gzN0txbTZmaHU3T2JDUT09IiwibWFjIjoiMmNhNDdjOWNjZWFkNDA1M2JiYmMyYmEzZmE2YWM2OWNiMDZhZmJlMzM3MzRiNDY5YTMyYjE2NjVhM2I5Yzk4NiIsInRhZyI6IiJ9'));
         // Get the authenticated user
         $user = Auth::user();
         if(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true) {
@@ -87,10 +88,13 @@ class ProofHomeController extends Controller
                 'data' => $data, // Passing the dashboard data
             ]);
         } elseif($user->hasRole('Photo Coordinator') || $user->hasRole('Teacher')) {
-            $currentSchool = $this->schoolService
-            ->getSchoolById(Session::get('school_context-sid'))
-            ->first(['schoolkey']);
-        
+            if(Session::has('school_context-sid')) {
+                $currentSchool = $this->schoolService
+                ->getSchoolById(Session::get('school_context-sid'))
+                ->first(['schoolkey']);
+            }else{
+                $currentSchool = $user->getSchool();
+            }
             if ($currentSchool) {
                 $jobs = $user->jobs()
                     ->select('jobs.ts_job_id', 'ts_jobname', 'ts_season_id', 'ts_schoolkey')

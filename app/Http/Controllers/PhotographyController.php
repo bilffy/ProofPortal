@@ -232,20 +232,54 @@ class PhotographyController extends Controller
                 ->exists();*/
             
             // Check if all keys exist and belong to the school
+            //CODE BY CHROMEDIA
+            // $imageCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+            //     ->whereIn('images.keyvalue', $keys)
+            //     ->where('jobs.ts_schoolkey', '=', $schoolKey)
+            //     ->count();
+            //CODE BY CHROMEDIA
+
+            //CODE BY IT
             $imageCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
-                ->whereIn('images.keyvalue', $keys)
+                ->whereIn('images.id', function($query) use ($keys) {
+                    $query->selectRaw('COALESCE(
+                            MAX(CASE WHEN is_primary = 1 THEN id END), 
+                            MAX(id)
+                        )')
+                        ->from('images')
+                        ->whereIn('keyvalue', $keys)
+                        ->groupBy('keyvalue');
+                })
                 ->where('jobs.ts_schoolkey', '=', $schoolKey)
                 ->count();
-            
+            //CODE BY IT
+
             if ($imageCount != count($keys)) {
                 return response()->json('Invalid Request', 403);
             }
             
             // Check if any keys belong to other schools, to make sure all keys are valid and belongs to the school
+            //CODE BY CHROMEDIA
+            // $foundCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+            //     ->whereIn('images.keyvalue', $keys)
+            //     ->where('jobs.ts_schoolkey', '!=', $schoolKey)
+            //     ->count(); 
+            //CODE BY CHROMEDIA
+
+            //CODE BY IT
             $foundCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
-                ->whereIn('images.keyvalue', $keys)
+                ->whereIn('images.id', function($query) use ($keys) {
+                    $query->selectRaw('COALESCE(
+                            MAX(CASE WHEN is_primary = 1 THEN id END), 
+                            MAX(id)
+                        )')
+                        ->from('images')
+                        ->whereIn('keyvalue', $keys)
+                        ->groupBy('keyvalue');
+                })
                 ->where('jobs.ts_schoolkey', '!=', $schoolKey)
                 ->count();
+            //CODE BY IT
         
             if ($foundCount) {
                 return response()->json('Invalid Request', 403);
@@ -270,7 +304,18 @@ class PhotographyController extends Controller
             // Add to logged image keys
             $logImgKeys[] = $key;
             // Query the Image model to get the image data
-            $image = Image::where('keyvalue', $key)->first();
+
+            //CODE BY CHROMEDIA
+            // $image = Image::where('keyvalue', $key)
+            //         ->first();
+            //CODE BY CHROMEDIA
+
+            //CODE BY IT
+            $image = Image::where('keyvalue', $key)
+                ->orderBy('is_primary', 'desc') // Put primary (1) before non-primary (0) 📈
+                ->orderBy('id', 'asc')          // Fallback: get the oldest image if no primary is set 🕰️
+                ->first();
+            //CODE BY IT
             
             if ($image) {
                 $job = Job::where('ts_job_id', $image->ts_job_id)->first();
@@ -379,6 +424,18 @@ class PhotographyController extends Controller
                 $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
                 $existingImages = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->get();
                 $origin = 'subject';
+                //CODE BY CHROMEDIA
+                // $image = Image::where('keyvalue', $key)
+                //     ->where('keyorigin', $origin)->first();
+                //CODE BY CHROMEDIA
+
+                //CODE BY IT   
+                $image = Image::where('keyvalue', $key)
+                    ->where('keyorigin', $origin)
+                    ->orderBy('is_primary', 'desc') // Put primary (1) before non-primary (0) 📈
+                    ->orderBy('id', 'asc')          // Fallback: get the oldest image if no primary is set 🕰️
+                    ->first();
+                //CODE BY IT
             } else {
                 $folder = Folder::where('ts_folderkey', $key)->first();
                 if (!$folder) {
@@ -386,9 +443,9 @@ class PhotographyController extends Controller
                 }
                 $existingImages = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->get();
                 $origin = 'folder';
+                $image = Image::where('keyvalue', $key)
+                    ->where('keyorigin', $origin)->first();
             }
-            $image = Image::where('keyvalue', $key)
-                ->where('keyorigin', $origin)->first();
             // If there is an existing uploaded image, delete previous image
             if ($existingImages->count() > 0) {
                 foreach ($existingImages as $existingImage) {
@@ -455,7 +512,19 @@ class PhotographyController extends Controller
             $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
             $image = SchoolPhotoUpload::where('subject_id', $subject->id)
                 ->where('folder_id', $folder->id)->whereNull('deleted_at');
-            $origin = 'subject';
+            $origin = 'subject';       
+            //CODE BY CHROMEDIA
+            // $img = Image::where('keyvalue', $key)
+            // ->where('keyorigin', $origin)->first();
+            //CODE BY CHROMEDIA
+
+            //CODE BY IT
+            $img = Image::where('keyvalue', $key)
+                ->where('keyorigin', $origin)
+                ->orderBy('is_primary', 'desc') // Put primary (1) before non-primary (0) 📈
+                ->orderBy('id', 'asc')          // Fallback: get the oldest image if no primary is set 🕰️
+                ->first();
+            //CODE BY IT
         } else {
             $folder = Folder::where('ts_folderkey', $key)->first();
             if (!$folder) {
@@ -463,11 +532,12 @@ class PhotographyController extends Controller
             }
             $image = SchoolPhotoUpload::where('folder_id', $folder->id)
                 ->where('subject_id', null)->whereNull('deleted_at');
-            $origin = 'folder';
+            $origin = 'folder';  
+            $img = Image::where('keyvalue', $key)
+            ->where('keyorigin', $origin)->first();
         }
 
-        $img = Image::where('keyvalue', $key)
-            ->where('keyorigin', $origin)->first();
+
         // Find the latest uploaded image
         $image = $image->latest()->first();
         

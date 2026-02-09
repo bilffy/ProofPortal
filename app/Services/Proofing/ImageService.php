@@ -24,7 +24,9 @@ class ImageService
     public function updateOrCreateImageRecord($bpSubjectImage)
     {
         // Check if the image already exists
-        $image = Image::where('keyvalue', $bpSubjectImage->ts_subjectkey)->first();
+        $image = Image::where('keyvalue', $bpSubjectImage->ts_subjectkey)
+        ->orderBy('is_primary', 'desc') //CODE BY IT
+        ->first();
     
         // Update or create the image record
         Image::updateOrCreate(

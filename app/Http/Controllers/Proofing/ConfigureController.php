@@ -372,10 +372,8 @@ class ConfigureController extends Controller
             ];
         });
 
-
         return response()->json($jobsWithDetails);
     }
-
 
     public function configSchoolFolderConfig(Request $request)
     {

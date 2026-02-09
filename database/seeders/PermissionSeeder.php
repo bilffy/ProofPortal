@@ -80,6 +80,10 @@ class PermissionSeeder extends Seeder
                 [
                     PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
                     PH::getAccessToPage(PH::SUB_PROOFING),
+                    PH::getAccessToPage(PH::SUB_CONFIG_PROOFING),
+                    PH::getAccessToPage(PH::SUB_MANGE_INVITATION),
+                    PH::getAccessToPage(PH::SUB_PROOF_CHANGE),
+                    PH::getAccessToPage(PH::SUB_BULK_UPLOAD),
                     PH::toPermission(PH::ACT_INVITE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_DISABLE, RoleHelper::ROLE_SCHOOL_ADMIN),
                     PH::toPermission(PH::ACT_REVOKE, RoleHelper::ROLE_SCHOOL_ADMIN),
@@ -99,6 +103,8 @@ class PermissionSeeder extends Seeder
                 [
                     PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
                     PH::getAccessToPage(PH::SUB_PROOFING),
+                    PH::getAccessToPage(PH::SUB_MANGE_INVITATION),
+                    PH::getAccessToPage(PH::SUB_PROOF_CHANGE),
                     PH::getAccessToPage(PH::SUB_ADMIN_TOOLS),
                 ],
                 $coordinatorAndTeacher,

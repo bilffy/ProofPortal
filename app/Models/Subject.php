@@ -40,7 +40,7 @@ class Subject extends Model
     }
 
     public function images(){
-        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subjectkey');
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subjectkey')->orderBy('is_primary', 'desc');
     }
 
     public function attachedsubjects(){

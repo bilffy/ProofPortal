@@ -25,6 +25,10 @@ class PermissionHelper
     public const SUB_ORDERING = 'ordering';
     public const SUB_PHOTOGRAPHY = 'photography';
     public const SUB_PROOFING = 'proofing';
+    public const SUB_CONFIG_PROOFING = 'config_proofing';
+    public const SUB_MANGE_INVITATION = 'manage_invitation';
+    public const SUB_PROOF_CHANGE = 'proof_change';
+    public const SUB_BULK_UPLOAD = 'bulk_upload';
     public const SUB_REPORTS = 'reports';
 
     private static function normalizeSubject(string $subject): string

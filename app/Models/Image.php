@@ -30,11 +30,11 @@ class Image extends Model
     
     //Subjects Table
     public function subjects(){
-        return $this->belongsTo('App\Models\Subject', 'keyvalue', 'ts_subject_id');
+        return $this->belongsTo('App\Models\Subject', 'keyvalue', 'ts_subjectkey');
     }
     //Folders Table
     public function folders(){
-        return $this->belongsTo('App\Models\Folder', 'keyvalue', 'ts_folder_id');
+        return $this->belongsTo('App\Models\Folder', 'keyvalue', 'ts_folderkey');
     }
     //Jobs Table
     public function jobs(){

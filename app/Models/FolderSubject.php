@@ -33,6 +33,8 @@ class FolderSubject extends Model
             'keyvalue',           // Foreign key on the Image table (to Subject)
             'ts_subject_id',      // Local key on the FolderSubject table
             'ts_subjectkey'      // Local key on the Subject table
-        )->select('ts_imagekey');
+        )
+        ->select('ts_imagekey', 'keyvalue', 'is_primary') // Added is_primary for the order to work
+        ->orderBy('is_primary', 'desc'); 
     }
 }

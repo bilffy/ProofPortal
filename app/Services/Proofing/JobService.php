@@ -40,7 +40,8 @@ class JobService
         $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode);
         $statuses = $this->statusService->getAllStatusData('id', 'status_internal_name', 'status_external_name')->get();
         $completedStatus = $this->statusService->completed;
-        $totalSchoolCount = $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])->count();
+        $totalSchoolCount = $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
+            ->where('job_users.user_id', Auth::user()->id)->count();
         $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
         
@@ -70,6 +71,7 @@ class JobService
         $deleted = $this->statusService->deleted;
         return $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
+            ->where('job_users.user_id', Auth::user()->id)
             ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
             ->orderBy('id', 'asc')
             ->get();
@@ -117,6 +119,7 @@ class JobService
             return $this->queryJobs($franchiseCode,null)
                 ->where('jobs.job_status_id', $this->statusService->archived)
                 ->where('jobs.ts_schoolkey', $schoolKey)
+                ->where('job_users.user_id', Auth::user()->id)
                 ->get()
                 ->map(function ($job) {
                     $job->hash = Crypt::encryptString($job->ts_job_id);
@@ -132,6 +135,7 @@ class JobService
             ->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound, $deleted])
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->where('jobs.ts_schoolkey', $schoolKey)
+            ->where('job_users.user_id', Auth::user()->id)
             ->get()
             ->map(function ($job) {
                 $job->hash = Crypt::encryptString($job->ts_job_id);
@@ -183,6 +187,7 @@ class JobService
             ['jobs.jobsync_status_id', $this->statusService->sync],
             ['jobs.foldersync_status_id', $this->statusService->completed]
         ])
+        ->distinct()
         ->orderBy('id', 'asc')
         ->get();
     }
@@ -293,6 +298,7 @@ class JobService
         return Job::join('schools', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
         ->join('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
         ->join('franchises', 'franchises.ts_account_id', '=', 'jobs.ts_account_id')
+        ->leftjoin('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
         ->when($franchiseCode, fn($query) => $query->where('franchises.alphacode', $franchiseCode))
         ->when($schoolkey, fn($query) => $query->where('jobs.ts_schoolkey', $schoolkey))
         ->with(['reviewStatuses', 'folders' => function ($query) {
