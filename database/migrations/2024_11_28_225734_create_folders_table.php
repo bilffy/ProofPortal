@@ -45,6 +45,10 @@ return new class extends Migration
             $table->tinyInteger('is_edit_groups')->nullable();
             $table->tinyInteger('is_edit_job_title')->nullable();
             $table->tinyInteger('is_edit_salutation')->nullable();
+            $table->tinyInteger('show_prefix_suffix_portraits')->nullable();
+            $table->tinyInteger('show_prefix_suffix_groups')->nullable();
+            $table->tinyInteger('show_salutation_portraits')->nullable();
+            $table->tinyInteger('show_salutation_groups')->nullable();
             $table->tinyInteger('is_locked')->nullable();
             $table->tinyInteger('is_visible_for_proofing')->nullable();
             $table->tinyInteger('is_visible_for_portrait')->nullable();

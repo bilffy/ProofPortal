@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('images', function (Blueprint $table) {
             $table->string('portal_subject_id', 100)->nullable()->after('keyorigin');
+            $table->integer('is_primary')->nullable();
         });
     }
 
@@ -23,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('images', function (Blueprint $table) {
             $table->dropColumn(['portal_subject_id']);
+            $table->dropColumn(['is_primary']);
         });
     }
 };

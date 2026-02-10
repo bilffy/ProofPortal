@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->integer('ts_season_id')->nullable();
             $table->integer('code')->nullable();
+            $table->integer('ts_season_key')->nullable();
             $table->integer('is_default')->nullable();
             $table->timestamps();
         });

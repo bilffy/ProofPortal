@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('lastname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('title', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('salutation', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('prefix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('suffix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('ts_subjectkey', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->integer('ts_job_id')->nullable();
             $table->integer('ts_folder_id')->nullable();
