@@ -216,6 +216,7 @@ class ConfigureController extends Controller
 
             case 'update-subject-associations':
                 // $this->configureService->updateSubjectAssociations($selectedJob->ts_job_id);
+                $this->configureService->updatePeopleImage($selectedJob->ts_job_id);
                 $client = Http::withoutVerifying()->timeout(30);
                 $baseUrl = 'http://bpsync.msp.local/index.php';
                 $jobKey = $selectedJob->ts_jobkey;

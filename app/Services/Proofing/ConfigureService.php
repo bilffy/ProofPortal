@@ -162,7 +162,7 @@ class ConfigureService
         foreach ($duplicateSubjects as $duplicateSubject) {
             $subjects = $this->subjectService->getAllSubjectAssociationByKey($duplicateSubject->ts_subjectkey);
             
-            $keepSubject = $subjects->first();//keep the first subject
+            $keepSubject = $subjects->first();// keep the first subject
 
             $imagesToDelete = [];
             $attachedSubjectsToDelete = [];
@@ -339,6 +339,9 @@ class ConfigureService
     
             // Skip if no Timestone images
             if (!isset($tsSubjectImages[$tsSubjectId])) {
+                $this->imageService->deleteImageBytsSubjectKey($tsSubjectKey);
+
+                $bpSubjectImageUpdated[] = $bpSubjectImage;
                 continue;
             }
 
