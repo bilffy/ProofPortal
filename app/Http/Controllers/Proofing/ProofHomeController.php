@@ -50,7 +50,6 @@ class ProofHomeController extends Controller
 
     public function index(Request $request)
     {
-        // dd($this->getDecryptData('eyJpdiI6IkZWbVJ4Q1VuaXZsVW9HZGtmNlZ2WEE9PSIsInZhbHVlIjoiV0lON2ZSY1gzN0txbTZmaHU3T2JDUT09IiwibWFjIjoiMmNhNDdjOWNjZWFkNDA1M2JiYmMyYmEzZmE2YWM2OWNiMDZhZmJlMzM3MzRiNDY5YTMyYjE2NjVhM2I5Yzk4NiIsInRhZyI6IiJ9'));
         // Get the authenticated user
         $user = Auth::user();
         if(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true) {
@@ -323,6 +322,8 @@ class ProofHomeController extends Controller
             if (!$selectedJob) {
                 $jobResponse = $client->get("{$baseUrl}/jobs/sync/{$jobKey}");
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
+                \Log::info($jobResponse);
+                \Log::info($folderResponse);
                 $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
             } 
             // Case 2: Job exists → Folder sync only (This logs the number of associations to sync)
@@ -331,6 +332,7 @@ class ProofHomeController extends Controller
                     $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
                 }
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
+                \Log::info($folderResponse);
             }
     
             // Validate responses
