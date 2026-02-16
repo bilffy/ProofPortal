@@ -238,12 +238,12 @@ class ProofingChangelogService
     }    
 
     public function insertFolderProofingChangeLog($decryptedFolderKey, $issue, $note, $newValue) {
-        \Log::info('Service insertFolderProofingChangeLog called', [
-            'folder' => $decryptedFolderKey,
-            'issue' => $issue,
-            'note' => $note,
-            'newValue' => $newValue
-        ]);
+        // \Log::info('Service insertFolderProofingChangeLog called', [
+        //     'folder' => $decryptedFolderKey,
+        //     'issue' => $issue,
+        //     'note' => $note,
+        //     'newValue' => $newValue
+        // ]);
         $folderData = $this->folderService->getFolderByKey($decryptedFolderKey)
         ->with(['job' => function($query) {
             $query->select('ts_job_id', 'ts_jobkey'); // Select columns from the jobs table
@@ -366,12 +366,12 @@ class ProofingChangelogService
             'resolved_status_id' => $isResolved
         ]);
 
-        \Log::info('Proofing change log inserted', [
-            'folder' => $folderData->ts_folderkey,
-            'issue' => $issue,
-            'issue_id' => $issueObject ? $issueObject->id : 0,
-            'note' => $changeNote
-        ]);
+        // \Log::info('Proofing change log inserted', [
+        //     'folder' => $folderData->ts_folderkey,
+        //     'issue' => $issue,
+        //     'issue_id' => $issueObject ? $issueObject->id : 0,
+        //     'note' => $changeNote
+        // ]);
     }
 
     private function getDecryptData($hash){

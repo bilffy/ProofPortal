@@ -223,7 +223,7 @@ class JobConfigureController extends Controller
                 $jobKey = $selectedJob->ts_jobkey;
                 $this->jobService->updateJobData($jobKey, 'force_sync', 1);
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
-                Log::info($folderResponse);
+                // Log::info($folderResponse);
                 $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
                 
                 $folderSuccess = $folderResponse && $folderResponse->successful();

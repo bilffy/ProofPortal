@@ -286,7 +286,7 @@ class EmailService
     
         $rolesWithFieldTrue = $notificationsMatrix['schools'][$field] ?? [];
         $rolesWithFieldTrue = array_keys(array_filter($rolesWithFieldTrue, fn($v) => $v === true));
-        \Log::info('saveEmailContent roles check', ['field' => $field, 'roles' => $rolesWithFieldTrue, 'notifications_enabled' => $selectedJob->notifications_enabled]);
+        // \Log::info('saveEmailContent roles check', ['field' => $field, 'roles' => $rolesWithFieldTrue, 'notifications_enabled' => $selectedJob->notifications_enabled]);
    
         // Prepare template content
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
@@ -312,7 +312,7 @@ class EmailService
                 ->pluck('id');
     
             $users = User::whereIn('id', $userIds)->select('id','name','email','firstname','lastname')->get();
-            \Log::info('saveEmailContent users found', ['count' => $users->count(), 'job' => $tsJobKey]);
+            // \Log::info('saveEmailContent users found', ['count' => $users->count(), 'job' => $tsJobKey]);
     
             foreach ($users as $user) {
                 $userFolders = $selectedJob->folders
@@ -405,7 +405,7 @@ class EmailService
             ['Franchise', 'Photo Coordinator', 'Teacher'],
             $role
         ), $roleNames);
-        \Log::info('saveEmailFolderContent mapped roles', ['field' => $field, 'mappedRoles' => $mappedRoleNames]);
+        // \Log::info('saveEmailFolderContent mapped roles', ['field' => $field, 'mappedRoles' => $mappedRoleNames]);
     
         $roleIds = Role::whereIn('name', $mappedRoleNames)->pluck('id')->toArray();
 
@@ -417,7 +417,7 @@ class EmailService
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
 
-        \Log::info('saveEmailFolderContent users found', ['count' => $users->count(), 'job' => $selectedFolder->job->ts_jobkey]);
+        // \Log::info('saveEmailFolderContent users found', ['count' => $users->count(), 'job' => $selectedFolder->job->ts_jobkey]);
 
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
         if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {

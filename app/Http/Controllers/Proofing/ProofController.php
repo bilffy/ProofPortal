@@ -371,12 +371,12 @@ class ProofController extends Controller
 
     public function insertFolderProofingChangeLog(Request $request, $folderKey)
     {
-        \Log::info('insertFolderProofingChangeLog hit', [
-            'folderKey' => $folderKey,
-            'issue' => $request->input('issue'),
-            'note' => $request->input('note'),
-            'newValue' => $request->input('newValue')
-        ]);
+        // \Log::info('insertFolderProofingChangeLog hit', [
+        //     'folderKey' => $folderKey,
+        //     'issue' => $request->input('issue'),
+        //     'note' => $request->input('note'),
+        //     'newValue' => $request->input('newValue')
+        // ]);
 
         $request->validate([
             'issue' => 'required|string',
@@ -386,11 +386,11 @@ class ProofController extends Controller
 
         $decryptedFolderKey = $this->getDecryptData($folderKey);
         if (!$decryptedFolderKey) {
-            \Log::error('Folder key decryption failed', ['hash' => $folderKey]);
+            // \Log::error('Folder key decryption failed', ['hash' => $folderKey]);
             return response()->json(['error' => 'Invalid key'], 400);
         }
 
-        \Log::info('Folder key decrypted', ['key' => $decryptedFolderKey]);
+        // \Log::info('Folder key decrypted', ['key' => $decryptedFolderKey]);
 
         $this->proofingChangelogService->insertFolderProofingChangeLog(
             $decryptedFolderKey, 
