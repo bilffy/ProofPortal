@@ -207,11 +207,16 @@ class FolderService
         ];
     }
 
-    public function findIncompletedFolders($tsJobId)
+    /**
+     * Counts folders in a job that do NOT have the specified status.
+     * TNJ NOT FOUND folders are excluded from this count as they are considered inactive.
+     */
+    public function countFoldersByNotStatus($tsJobId, $statusId)
     {
         return Folder::where('ts_job_id', $tsJobId)
-        ->where('status_id', '!=', $this->statusService->completed)
-        ->count();
+            ->where('status_id', '!=', $statusId)
+            ->where('status_id', '!=', $this->statusService->tnjNotFound)
+            ->count();
     }
 
     public function updateFolderStatus($folderIds, $status)
@@ -246,16 +251,40 @@ class FolderService
             return $this->getDecryptData($hash);
         }, $folderIds);
     
+        $newStatusId = (int) $data['new_status'];
+        
+        // Fetch current folder statuses to identify which ones are actually changing
+        $folders = \App\Models\Folder::whereIn('ts_folder_id', $decryptedFolderIds)
+            ->select('ts_folder_id', 'status_id')
+            ->get();
+            
+        $changingFolderIds = [];
+        foreach ($folders as $folder) {
+            if ($folder->status_id != $newStatusId) {
+                $changingFolderIds[] = $folder->ts_folder_id;
+            }
+        }
 
-        $this->updateFolderStatus($decryptedFolderIds, $data['new_status']);
-        $this->sendEmailContent($decryptedFolderIds, $data['new_status']);
+        $this->updateFolderStatus($decryptedFolderIds, $newStatusId);
+        
+        // Only send emails for folders that actually changed status
+        if (!empty($changingFolderIds)) {
+            $this->sendEmailContent($changingFolderIds, $newStatusId);
+        }
 
         $tsJobId = $this->getDecryptData($data['JobId']);
 
-        $incompleteFolders = $this->findIncompletedFolders($tsJobId);
-
-        if ($incompleteFolders === 0) {
-            $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->completed); 
+        // If all active folders are now Completed, mark the Job as Completed
+        if ($newStatusId == $this->statusService->completed) {
+            if ($this->countFoldersByNotStatus($tsJobId, $this->statusService->completed) === 0) {
+                $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->completed); 
+            }
+        } 
+        // If all active folders are now Unlocked, mark the Job as Unlocked
+        elseif ($newStatusId == $this->statusService->unlocked) {
+            if ($this->countFoldersByNotStatus($tsJobId, $this->statusService->unlocked) === 0) {
+                $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->unlocked); 
+            }
         }
 
         return ['success' => true];

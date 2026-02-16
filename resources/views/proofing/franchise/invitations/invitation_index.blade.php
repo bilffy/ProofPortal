@@ -18,18 +18,30 @@
             </div>
             <div class="col-12 mb-3">
                 @php
-                    // Set the button attributes
-                    $btnAttrCancel = 'class="btn btn-primary float-right pl-4 pr-4"';
-        
-                    // Get the previous URL
-                    $referer = url()->previous();
-        
-                    // If the referer contains 'invitations', set the URL to the dashboard route, otherwise use the referer
-                    if (str_contains($referer, 'invitations')) {
-                        $urlDone = route('proofing'); // Assuming you have a named route 'dashboard'
-                    } else {
-                        $urlDone = $referer;
+                    // Determine Origin and persist in Session
+                    $previousUrl = url()->previous();
+                    
+                    // Only update origin if coming from a primary entry point
+                    if (str_contains($previousUrl, 'proofing/staffs')) {
+                        Session::put('invitation_origin', 'staffs');
+                    } elseif (str_contains($previousUrl, 'dashboard') || $previousUrl == route('proofing')) {
+                        Session::put('invitation_origin', 'dashboard');
                     }
+                    // If returning from single/multi, we keep the existing session value
+
+                    // Generate 'Done' URL based on Session
+                    if (Session::get('invitation_origin') === 'staffs') {
+                         $urlDone = URL::signedRoute('invitation.manageStaffs', ['hash' => Crypt::encryptString($selectedJob->ts_jobkey)]);
+                    } else {
+                        // Default to dashboard
+                        if ($selectedJob) {
+                            $urlDone = URL::signedRoute('proofing.dashboard', ['hash' => Crypt::encryptString($selectedJob->ts_jobkey)]);
+                        } else {
+                            $urlDone = route('proofing');
+                        }
+                    }
+
+                    $btnAttrCancel = 'class="btn btn-primary float-right pl-4 pr-4"';
                 @endphp
         
                 {{-- Render the link --}}

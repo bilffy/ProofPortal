@@ -32,15 +32,19 @@ class JobService
         $this->emailService = $emailService;
     }
 
-    public function getDashboardData($franchiseCode)
+    public function getDashboardData($franchiseCode, $schoolKey = null)
     {
-        $selectedSchoolkey = $this->schoolService->getSchoolById(Session::get('school_context-sid'))->select('schoolkey')->first() ?? Auth::user()->getSchool();
+        $school = $this->schoolService->getSchoolById($schoolKey)->select('schoolkey')->first()
+               ?? $this->schoolService->getSchoolBySchoolKey($schoolKey)->select('schoolkey')->first()
+               ?? Auth::user()->getSchool();
+        $selectedSchoolkey = $school ? $school->schoolkey : null;
+        
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode);
+        $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode, $selectedSchoolkey);
         $statuses = $this->statusService->getAllStatusData('id', 'status_internal_name', 'status_external_name')->get();
         $completedStatus = $this->statusService->completed;
-        $totalSchoolCount = $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
+        $totalSchoolCount = $this->queryJobs($franchiseCode, $selectedSchoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
             ->where('job_users.user_id', Auth::user()->id)->count();
         $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
@@ -62,18 +66,22 @@ class JobService
             'schools'
         );
     }
-
-    public function getActiveSyncJobs($franchiseCode)
+    
+    public function getActiveSyncJobs($franchiseCode, $schoolKey = null)
     {
-        $selectedSchoolkey = $this->schoolService->getSchoolById(Session::get('school_context-sid'))->select('schoolkey')->first() ?? Auth::user()->getSchool();
+        $school = $this->schoolService->getSchoolById($schoolKey)->select('schoolkey')->first()
+               ?? $this->schoolService->getSchoolBySchoolKey($schoolKey)->select('schoolkey')->first()
+               ?? Auth::user()->getSchool();
         
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        return $this->queryJobs($franchiseCode,$selectedSchoolkey->schoolkey)
+        $targetSchoolkey = $school ? $school->schoolkey : null;
+
+        return $this->queryJobs($franchiseCode, $targetSchoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->where('job_users.user_id', Auth::user()->id)
             ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
-            ->orderBy('id', 'asc')
+            ->orderBy('jobs.id', 'asc')
             ->get();
     }
 
@@ -84,7 +92,7 @@ class JobService
         return $this->queryJobs(null,$schoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
-            ->orderBy('id', 'asc')
+            ->orderBy('jobs.id', 'asc')
             ->get();
     }
 
@@ -92,7 +100,7 @@ class JobService
     {
         return $this->queryJobs($franchiseCode,null)
             ->where('jobs.ts_season_id', $seasonID)
-            ->orderBy('id', 'asc')
+            ->orderBy('jobs.id', 'asc')
             ->get();
     }  
     
@@ -147,7 +155,8 @@ class JobService
         if (!$job) {
             throw new \Exception("Job not found for ID: " . $tsJobId);
         }
-    
+
+        $oldStatusId = $job->job_status_id;
         $job->update(['job_status_id' => $newStatusId]);
     
         $statusFields = [
@@ -157,10 +166,13 @@ class JobService
         ];
     
         if (isset($statusFields[$newStatusId])) {
-            $this->emailService->saveEmailContent($job->ts_jobkey, $statusFields[$newStatusId], Carbon::now(), $newStatusId);
+            // Only send 'modified' email if it wasn't already modified
+            if ($newStatusId != $this->statusService->modified || $oldStatusId != $this->statusService->modified) {
+                $this->emailService->saveEmailContent($job->ts_jobkey, $statusFields[$newStatusId], Carbon::now(), $newStatusId);
+            }
         }
     
-        if ($newStatusId === $this->statusService->completed) {
+        if ($newStatusId == $this->statusService->completed) {
             $this->getFolderService()->updateFolderStatus($job->folders->pluck('ts_folder_id')->toArray(), $newStatusId);
         }
     }

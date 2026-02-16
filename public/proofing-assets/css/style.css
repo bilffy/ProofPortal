@@ -13479,3 +13479,11 @@ img.lazyload.loaded {
     background-color: #fff9c4 !important;
     transition: all 0.3s ease;
 }
+
+/* Force radio buttons to be round */
+input[type="radio"] {
+    -webkit-appearance: radio !important;
+    -moz-appearance: radio !important;
+    appearance: radio !important;
+    border-radius: 50% !important; /* Ensures roundness */
+}

@@ -93,6 +93,9 @@ class SqlServerReportingServices
         $inProgress = '';
     
         // Get header row
+        if (empty($reportRows)) {
+            return '';
+        }
         $headerRow = array_keys((array)$reportRows[0]);
         $headerRow = self::humanizeWords($headerRow); // Use self:: to call static methods
         $headerRow = self::qualifyWords($headerRow, "\"", [",", "\r", "\n", "\t"]);

@@ -31,7 +31,7 @@
                     <div class="row">
                         @foreach($jobs as $job)
                         @php
-                            $jobIdHash = Crypt::encryptString($job->ts_job_id);
+                            $jobIdHash = Crypt::encryptString($job->ts_jobkey);
                         @endphp
                             <div class="col-6 col-lg-3">
                                 <div class="card">

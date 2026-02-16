@@ -39,6 +39,8 @@ class SubjectChangesController extends Controller
 
     public function approveChange($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
+        if (!$decryptedJobKey) abort(404);
+
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first(); 
         
         if (!$selectedJob) {
@@ -62,6 +64,8 @@ class SubjectChangesController extends Controller
 
     public function awaitApproveChangeFranchise($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
+        if (!$decryptedJobKey) abort(404);
+
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
         
         if (!$selectedJob) {
@@ -84,6 +88,8 @@ class SubjectChangesController extends Controller
 
     public function awaitApproveChangeCoordinator($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
+        if (!$decryptedJobKey) abort(404);
+
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
         
         if (!$selectedJob) {
@@ -110,16 +116,20 @@ class SubjectChangesController extends Controller
     }
 
     public function submitApproveChangeCoordinator(Request $request, $hash){
+        $request->validate([
+            'action' => 'required|in:modify,approve,reject',
+            'subject_correction_id' => 'required|integer',
+        ]);
+
         if($request->action == 'modify'){
-            $responseData = $this->proofingChangelogService->insertSubjectProofingChangeLog($request->all());
-            // return $responseData;
-            $modifyData = $this->proofingChangelogService->modifyProofingChangelogById($request->subject_correction_id);
+            $this->proofingChangelogService->insertSubjectProofingChangeLog($request->all());
+            $this->proofingChangelogService->modifyProofingChangelogById($request->subject_correction_id);
         }else if($request->action == 'approve'){
-            $approveData = $this->proofingChangelogService->approveProofingChangelogById($request->subject_correction_id);
+            $this->proofingChangelogService->approveProofingChangelogById($request->subject_correction_id);
         }else if($request->action == 'reject'){
-            $rejectData = $this->proofingChangelogService->rejectProofingChangelogById($request->subject_correction_id);
+            $this->proofingChangelogService->rejectProofingChangelogById($request->subject_correction_id);
         }
-        return json_encode(['success' => true, 'action' => $request->action]);
+        return response()->json(['success' => true, 'action' => $request->action]);
     }
     
 }

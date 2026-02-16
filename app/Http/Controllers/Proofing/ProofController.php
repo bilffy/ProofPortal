@@ -57,10 +57,14 @@ class ProofController extends Controller
     public function MyFoldersList($hash)
     {
         $decryptedJobKey = $this->getDecryptData($hash);
+        if (!$decryptedJobKey) {
+            return redirect()->route('proofing')->with('error', 'Invalid Job Key');
+        }
+
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->with(['seasons'])->first();
 
         if (!$selectedJob) {
-            abort(404); 
+            abort(404);
         }
 
         $selectedSeason = $selectedJob->seasons;
@@ -69,21 +73,80 @@ class ProofController extends Controller
 
     protected function renderFolderProofingView($selectedJob, $selectedSeason, $tsJobId)
     {
+        // Eager load subjects and images to prevent N+1 queries
         $selectedFolders = $this->folderService->getFolderByJobId($tsJobId)
-            ->with('images')
+            ->with(['images', 'subjects']) 
             ->where('is_visible_for_proofing', 1)
             ->whereHas('folderUsers', function($query) {
                 $query->where('user_id', Auth::id());
             })
             ->orderBy('ts_foldername', 'asc')
             ->get();
+
         $reviewStatusesColours = $this->statusService->getAllStatusData('id', 'status_external_name', 'colour_code')->get();
-        $getChangelog = $this->proofingChangelogService->getAllChangelogsByJobkeyExceptTraditional($selectedJob->ts_jobkey)->select('keyvalue')->get();
+        // Get all unique keyvalues that have changes to avoid repeated DB lookups
+        $getChangelog = $this->proofingChangelogService->getAllChangelogsByJobkeyExceptTraditional($selectedJob->ts_jobkey)
+            ->select('keyvalue')
+            ->get();
+        $changelogKeysMap = $getChangelog->pluck('keyvalue')->unique()->flip();
+
+        $preparedFolders = $selectedFolders->map(function ($folder) use ($selectedJob, $changelogKeysMap) {
+            $hasChanges = false;
+            
+            // 1. Check if the folder key itself has changes
+            if (isset($changelogKeysMap[$folder->ts_folderkey])) {
+                $hasChanges = true;
+            }
+
+            // 2. Check if subjects in this folder have changes
+            if (!$hasChanges) {
+                foreach ($folder->subjects as $subject) {
+                    if (isset($changelogKeysMap[$subject->ts_subjectkey])) {
+                        $hasChanges = true;
+                        break;
+                    }
+                }
+            }
+
+            // 3. Check for specific subject-folder-change entries
+            if (!$hasChanges) {
+                 if ($this->proofingChangelogService->subjectChangedFolderCount($folder->id) > 0) {
+                     $hasChanges = true;
+                 }
+            }
+
+            $displayStatusId = $folder->status_id;
+            $isManuallyModified = 0;
+
+            // Auto-promotion logic: Transition to 'Modified' if changes detected and not already 'Modified'
+            if ($folder->status_id == $this->statusService->none && $hasChanges) {
+                $isManuallyModified = 1;
+                $displayStatusId = $this->statusService->modified;
+                
+                // Perform updates
+                $folder->update(['status_id' => $this->statusService->modified]);
+                
+                // If the job itself wasn't already modified, update it and send job notification
+                if ($selectedJob->job_status_id != $this->statusService->modified) {
+                    $selectedJob->update(['job_status_id' => $this->statusService->modified]);
+                    $this->emailService->saveEmailContent($selectedJob->ts_jobkey, 'job_status_modified', Carbon::now(), $this->statusService->modified);
+                }
+
+                // Send folder notification for the transition to 'Modified'
+                $this->emailService->saveEmailFolderContent($folder->ts_folder_id, 'folder_status_modified', Carbon::now(), $this->statusService->modified);                                                        
+            }
+
+            return [
+                'folder' => $folder,
+                'displayStatusId' => $displayStatusId,
+                'isManuallyModified' => $isManuallyModified
+            ];
+        });
+
         return view('proofing.franchise.proof-my-people.folder-proofing', [
             'selectedJob' => $selectedJob,
             'selectedSeason' => $selectedSeason,
-            'selectedFolders' => $selectedFolders,
-            'getChangelog' => $getChangelog,
+            'preparedFolders' => $preparedFolders,
             'noneStatus' => $this->statusService->none,
             'syncStatus' => $this->statusService->sync,
             'unsyncStatus' => $this->statusService->unsync,
@@ -97,156 +160,104 @@ class ProofController extends Controller
     public function MyFoldersValidate($folderKey = null)
     {
         $decryptedFolderKey = $this->getDecryptData($folderKey);
-        // Safety check: if decryption fails or folderKey is missing
+        
         if (!$decryptedFolderKey) {
             return redirect()->route('proofing')->with('error', 'Invalid Folder Key');
         }
+
         $currentFolder = $this->folderService->getFolderByKey($decryptedFolderKey)
-                        ->with(['job.seasons', 'job.subjects', 'subjects', 'subjects.images'])
+                        ->with(['job.seasons'])
                         ->select(
-                            'id',
-                            'ts_foldername',
-                            'ts_folder_id',
-                            'ts_folderkey',
-                            'is_edit_portraits',
-                            'is_edit_groups',
-                            'ts_job_id', 
-                            'is_edit_job_title', 
-                            'is_edit_salutation', 
-                            'show_prefix_suffix_portraits', 
-                            'show_prefix_suffix_groups', 
-                            'show_salutation_portraits', 
-                            'show_salutation_groups', 
-                            'teacher', 
-                            'principal', 
-                            'deputy',
-                            'is_subject_list_allowed',
-                            'is_edit_principal',
-                            'is_edit_deputy',
-                            'is_edit_teacher')->first();
+                            'id', 'ts_foldername', 'ts_folder_id', 'ts_folderkey',
+                            'is_edit_portraits', 'is_edit_groups', 'ts_job_id', 
+                            'is_edit_job_title', 'is_edit_salutation', 
+                            'show_prefix_suffix_portraits', 'show_prefix_suffix_groups', 
+                            'show_salutation_portraits', 'show_salutation_groups', 
+                            'teacher', 'principal', 'deputy',
+                            'is_subject_list_allowed', 'is_edit_principal', 
+                            'is_edit_deputy', 'is_edit_teacher'
+                        )
+                        ->whereHas('folderUsers', function($query) {
+                            $query->where('user_id', Auth::id());
+                        })
+                        ->first();
+
         if (!$currentFolder) abort(404);
           
-        $subQuerySubjects = $this->subjectService->getByJobId($currentFolder->ts_job_id, 'ts_folder_id')->distinct()
+        $subQuerySubjects = $this->subjectService->getByJobId($currentFolder->ts_job_id, 'ts_folder_id')
+                            ->distinct()
                             ->pluck('ts_folder_id');
 
         $folderSelections = $this->folderService->getHomeFolders($subQuerySubjects)
                             ->select(['folders.id', 'ts_foldername'])
                             ->get();
 
-        $selectedJob = $this->jobService->getJobById($currentFolder->ts_job_id);
+        $selectedJob = $currentFolder->job;
+        $selectedSeason = $selectedJob->seasons;
 
-        if (!$selectedJob) {
-            abort(404); 
-        }
-
-        $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
-
-        $homedSubjects = $this->subjectService
-        ->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id)
-        ->sortBy([
-            ['ts_folder_id', 'asc'],
-            ['ts_subject_id', 'asc'],
-        ])
-        ->values();
+        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id)
+            ->sortBy([['ts_folder_id', 'asc'], ['ts_subject_id', 'asc']])
+            ->values();
         
-        $attachedSubjects = $this->subjectService
-            ->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy([
-                ['ts_folder_id', 'asc'],
-                ['ts_subject_id', 'asc'],
-            ])
+        $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id)
+            ->sortBy([['ts_folder_id', 'asc'], ['ts_subject_id', 'asc']])
             ->values();
         
         $allSubjects = $attachedSubjects->merge($homedSubjects);
         
-        $allSubjectsByJob = $this->subjectService->getSubjectByJobId($currentFolder->job->ts_job_id)
+        $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([
-                                'ts_subject_id',
-                                'ts_subjectkey',
-                                'salutation',
-                                'prefix',
-                                'firstname',
-                                'lastname',
-                                'suffix',
-                                'title'
+                                'ts_subject_id', 'ts_subjectkey', 'salutation', 
+                                'prefix', 'firstname', 'lastname', 'suffix', 'title'
                             ])->get();
 
         $groupDetails = $this->folderService->getGroupByFolder($currentFolder->ts_folderkey);
-
         $rawGroupDetails = $groupDetails['groupDetails'] ?? [];
-
         $finalGroupDetails = [];
                 
-            foreach ($rawGroupDetails as $rowKey => $subjects) {
+        foreach ($rawGroupDetails as $rowKey => $subjects) {
+            $finalGroupDetails[$rowKey] = [];
+            if (!is_iterable($subjects)) continue;
 
-                $finalGroupDetails[$rowKey] = [];
+            $subjectsByKey = $allSubjectsByJob->keyBy('ts_subjectkey');
             
-                if (!is_iterable($subjects)) {
-                    continue;
-                }        
+            foreach ($subjects as $subjectStr) {
+                $subjectStr = trim($subjectStr ?? '');
                 
-                foreach ($subjects as $subjectStr) {
-                    $subjectStr = trim($subjectStr ?? '');
-                    $subject = null;
-            
-                    // Match by ID or NAME
-                    if (str_starts_with($subjectStr, 'SUBJECTKEY:')) {
-                        $subjectKey = trim(str_replace('SUBJECTKEY:', '', $subjectStr));
-                        // $subject = $allSubjects->firstWhere('ts_subjectkey', $subjectKey);
-                        // $subject = $allSubjectsByJob->firstWhere('ts_subjectkey', $subjectKey);
-                        $subjectsByKey = $allSubjectsByJob->keyBy('ts_subjectkey');
-                        $subject = $subjectsByKey[$subjectKey] ?? null;
-                    } elseif (str_starts_with($subjectStr, 'NAME:')) {
-                        $nameOnly = trim(str_replace('NAME:', '', $subjectStr));
-                        $finalGroupDetails[$rowKey][] = $nameOnly;
-                        continue;
-                    }
-            
-                    // If subject found, build clean name dynamically
-                    if ($subject) {
-                        $useSalutation = $currentFolder->show_salutation_groups;
-                        $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
-            
-                        $salutation = trim($subject->salutation ?? '');
-                        $prefix = trim($subject->prefix ?? '');
-                        $suffix = trim($subject->suffix ?? '');
-                        $first = trim($subject->firstname ?? '');
-                        $last = trim($subject->lastname ?? '');
-            
-                        // Dynamically build name only from non-empty parts
-                        $parts = [];
-            
-                        if ($useSalutation && $salutation !== '') $parts[] = $salutation;
-                        if ($usePrefixSuffix && $prefix !== '') $parts[] = $prefix;
-                        if ($first !== '') $parts[] = $first;
-                        if ($last !== '') $parts[] = $last;
-                        if ($usePrefixSuffix && $suffix !== '') $parts[] = $suffix;
-            
-                        $fullName = implode(' ', $parts);
-            
-                        $finalGroupDetails[$rowKey][] = $fullName;
-                    }
-                }
-            }        
-    
-            // Now create JSON representation
-            $groupValue = json_encode($finalGroupDetails, JSON_UNESCAPED_UNICODE);
-    
-            // For debugging
-            $groupDetails = ([
-                'groupDetails' => $finalGroupDetails,
-                'groupValue' => $groupValue,
-            ]);
+                if (str_starts_with($subjectStr, 'SUBJECTKEY:')) {
+                    $subjectKey = trim(str_replace('SUBJECTKEY:', '', $subjectStr));
+                    $subject = $subjectsByKey[$subjectKey] ?? null;
 
-        $formattedFoldersWithChanges = $this->proofingChangelogService->getAllProofingChangelogFolder($currentFolder->job->ts_jobkey,$currentFolder->ts_folderkey)->get();      
+                    if ($subject) {
+                        $parts = [];
+                        if ($currentFolder->show_salutation_groups && !empty($subject->salutation)) $parts[] = trim($subject->salutation);
+                        if ($currentFolder->show_prefix_suffix_groups && !empty($subject->prefix)) $parts[] = trim($subject->prefix);
+                        if (!empty($subject->firstname)) $parts[] = trim($subject->firstname);
+                        if (!empty($subject->lastname)) $parts[] = trim($subject->lastname);
+                        if ($currentFolder->show_prefix_suffix_groups && !empty($subject->suffix)) $parts[] = trim($subject->suffix);
+            
+                        $finalGroupDetails[$rowKey][] = implode(' ', $parts);
+                    }
+                } elseif (str_starts_with($subjectStr, 'NAME:')) {
+                    $finalGroupDetails[$rowKey][] = trim(str_replace('NAME:', '', $subjectStr));
+                }
+            }
+        }        
+    
+        $groupDetails = [
+            'groupDetails' => $finalGroupDetails,
+            'groupValue' => json_encode($finalGroupDetails, JSON_UNESCAPED_UNICODE),
+        ];
+
+        $formattedFoldersWithChanges = $this->proofingChangelogService->getAllProofingChangelogFolder($selectedJob->ts_jobkey, $currentFolder->ts_folderkey)->get();      
         $folder_questions = $this->fetchProofingQuestions('FOLDER');
         $subject_questions = $this->fetchProofingQuestions('SUBJECT');
         $group_questions = $this->fetchProofingQuestions('GROUP');
 
         return view('proofing.franchise.proof-my-people.validate-people', [
             'currentFolder' => $currentFolder,
-            'selectedSeason' => $currentFolder->job->seasons,
-            'selectedJob' => $currentFolder->job,
+            'selectedSeason' => $selectedSeason,
+            'selectedJob' => $selectedJob,
             'allSubjects' => $allSubjects,
             'formattedFoldersWithChanges' => $formattedFoldersWithChanges,
             'folder_questions' => $folder_questions,
@@ -254,9 +265,7 @@ class ProofController extends Controller
             'group_questions' => $group_questions,
             'folderSelections' => $folderSelections,
             'groupDetails' => $groupDetails,
-            'allSubjectsByJob' => $allSubjectsByJob->sortBy([
-                ['ts_subject_id', 'asc'],
-            ])->values(),
+            'allSubjectsByJob' => $allSubjectsByJob->sortBy([['ts_subject_id', 'asc']])->values(),
             'user' => new UserResource(Auth::user()),
         ]);
     }
@@ -264,31 +273,35 @@ class ProofController extends Controller
     public function gridSubjects(Request $request)
     {
         if (!$request->job || !$request->folder) {
-            return response()->json(['error' => 'Missing encrypted data'], 400);
+            return response()->json(['error' => 'Missing data'], 400);
         }
-        // 4. FIXED: Wrap Crypt in try-catch to prevent crash if data is null/malformed
-        try {
-            $jobId = Crypt::decryptString($request->job);
-            $folderKey = Crypt::decryptString($request->folder);
-        } catch (\Exception $e) {
+
+        $jobId = $this->getDecryptData($request->job);
+        $folderKey = $this->getDecryptData($request->folder);
+
+        if (!$jobId || !$folderKey) {
             return response()->json(['error' => 'Invalid parameters'], 400);
         }
     
         $currentFolder = $this->folderService->getFolderByKey($folderKey)
-            ->with(['job.seasons', 'job.subjects', 'subjects', 'subjects.images'])
+            ->with(['job'])
+            ->whereHas('folderUsers', function($query) {
+                $query->where('user_id', Auth::id());
+            })
             ->first();
-    
-        $selectedJob = $this->jobService->getJobById($currentFolder->ts_job_id);
 
-        if (!$selectedJob) {
-            abort(404); 
+        if (!$currentFolder) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
+    
+        $selectedJob = $currentFolder->job;
+        if (!$selectedJob) abort(404); 
     
         $search = $request->input('search', '');
         $perPage = 20;
         $page = $request->input('page', 1);
     
-        $query = Subject::where('ts_job_id', $jobId);
+        $query = Subject::where('ts_job_id', $selectedJob->ts_job_id);
     
         if (!empty($search)) {
             // Split search into words
@@ -331,13 +344,12 @@ class ProofController extends Controller
 
     public function viewChangeHtml(Request $request, $subjectkey){
          if (!$request->ajax()) {
-            return redirect()->route('proofing'); // Adjust route name as needed
+            return redirect()->route('proofing');
         }
 
-        try {
-            $subjectkey = $this->getDecryptData($subjectkey);
-        } catch (\Exception $e) {
-            $body = "<div>Sorry, the Subjectkey {$subjectkey} could not be found</div>";
+        $subjectkey = $this->getDecryptData($subjectkey);
+        if (!$subjectkey) {
+            $body = "<div>Invalid subject key provided.</div>";
             return response($body, 200)->header('Content-Type', 'text/html');
         }
 
@@ -357,13 +369,37 @@ class ProofController extends Controller
         ]);
     }
 
-    public function insertFolderProofingChangeLog(Request $request, $folderKey){
-        $issue = $request->input('issue');
-        $note = $request->input('note');
-        $key_encrypted = $request->input('key_encrypted');
-        $newValue = $request->input('newValue');
+    public function insertFolderProofingChangeLog(Request $request, $folderKey)
+    {
+        \Log::info('insertFolderProofingChangeLog hit', [
+            'folderKey' => $folderKey,
+            'issue' => $request->input('issue'),
+            'note' => $request->input('note'),
+            'newValue' => $request->input('newValue')
+        ]);
+
+        $request->validate([
+            'issue' => 'required|string',
+            'note' => 'required|string',
+            'newValue' => 'nullable|string',
+        ]);
+
         $decryptedFolderKey = $this->getDecryptData($folderKey);
-        return $this->proofingChangelogService->insertFolderProofingChangeLog($decryptedFolderKey, $issue, $note, $newValue);
+        if (!$decryptedFolderKey) {
+            \Log::error('Folder key decryption failed', ['hash' => $folderKey]);
+            return response()->json(['error' => 'Invalid key'], 400);
+        }
+
+        \Log::info('Folder key decrypted', ['key' => $decryptedFolderKey]);
+
+        $this->proofingChangelogService->insertFolderProofingChangeLog(
+            $decryptedFolderKey, 
+            $request->input('issue'), 
+            $request->input('note'), 
+            $request->input('newValue')
+        );
+
+        return response()->json(['status' => true]);
     }
 
     public function ProofingDescription($id){
@@ -371,29 +407,47 @@ class ProofController extends Controller
     }
 
     public function insertSubjectProofingChangeLog(Request $request){
+        $request->validate([
+            'subject_key_encrypted' => 'required|string',
+            'folder_key_encrypted' => 'nullable|string',
+            'new_first_name' => 'nullable|string',
+            'new_last_name' => 'nullable|string',
+            'new_title' => 'nullable|string',
+            'new_salutation' => 'nullable|string',
+        ]);
+
         $responseData = $this->proofingChangelogService->insertSubjectProofingChangeLog($request->all());
         return response()->json(['responseData'=>$responseData]);
     }
 
     public function insertGroupProofingChangeLog(Request $request){
+        $request->validate([
+            'jobHash' => 'required|string',
+            'folderHash' => 'required|string',
+        ]);
+
         $jsonData = $request->json()->all();
-        $jobKey = $this->encryptDecryptService->decryptStringMethod($jsonData['jobHash']);
-        $folderKey = $this->encryptDecryptService->decryptStringMethod($jsonData['folderHash']);
-        unset($jsonData['folderHash']);
-        unset($jsonData['jobHash']);
+        $jobKey = $this->getDecryptData($jsonData['jobHash']);
+        $folderKey = $this->getDecryptData($jsonData['folderHash']);
+
+        if (!$jobKey || !$folderKey) return response()->json(['error' => 'Invalid keys'], 400);
+
+        unset($jsonData['folderHash'], $jsonData['jobHash']);
         $this->proofingChangelogService->insertGroupProofingChangeLog($jobKey, $folderKey, $jsonData);
+        return response()->json(['status' => true]);
     }
 
     public function submitProof(Request $request)
     {
         $decryptedFolderKey = $this->getDecryptData($request->folderHash);
-    
-        // Retrieve folder with related job in a single query
-        $folder = $this->folderService->getFolderByKey($decryptedFolderKey)
-                ->select('status_id', 'is_locked', 'ts_folder_id', 'ts_job_id', 'id')->first(); // Ensure the folder is found
+        if (!$decryptedFolderKey) return response()->json(['status' => false, 'message' => 'Invalid folder'], 422);
 
-        // FIX 1: Ensure folder and job exist before proceeding
-        if (!$folder || !$folder->job || !$folder->job->ts_jobkey) {
+        $folder = $this->folderService->getFolderByKey($decryptedFolderKey)
+                ->with(['job.folders'])
+                ->select('status_id', 'is_locked', 'ts_folder_id', 'ts_job_id', 'id', 'ts_folderkey')
+                ->first();
+
+        if (!$folder || !isset($folder->job) || !$folder->job->ts_jobkey) {
             return response()->json(['status' => false, 'message' => 'Job data missing'], 422);
         }
     
@@ -409,27 +463,24 @@ class ProofController extends Controller
         ];
     
         if ($isSaveForLater || $isMarkAsComplete) {
-            $folder->is_locked = $isSaveForLater ? false : true;
+            $folder->is_locked = !$isSaveForLater;
             $folder->status_id = $isSaveForLater ? $this->statusService->modified : $this->statusService->completed;
             $folder->save();
             
             $this->emailService->saveEmailFolderContent($folder->ts_folder_id, $statusFields[$folder->status_id], Carbon::now(), $folder->status_id);
 
-            if ($folder->job) {
-                if ($isMarkAsComplete) {
-                    $incompleteFolders = $folder->job->folders->filter(function($f) {
-                        return $f->status_id != $this->statusService->completed;
-                    });
-                    
-                    $jobStatus = $incompleteFolders->isEmpty() ? $this->statusService->completed : $this->statusService->incomplete;
-                } else if ($isSaveForLater) {
-                    $jobStatus = $this->statusService->incomplete;
-                }
-                $folder->job()->update(['job_status_id' => $jobStatus]);
+            $job = $folder->job;
+            if ($isMarkAsComplete) {
+                $incompleteFolders = $job->folders()->where('status_id', '!=', $this->statusService->completed)->count();
+                $jobStatus = ($incompleteFolders === 0) ? $this->statusService->completed : $this->statusService->incomplete;
+            } else {
+                $jobStatus = $this->statusService->incomplete;
+            }
 
-                if ($jobStatus === $this->statusService->completed) {
-                    $this->emailService->saveEmailContent($folder->job->ts_jobkey, 'job_status_completed', Carbon::now(), $jobStatus);
-                }
+            $job->update(['job_status_id' => $jobStatus]);
+
+            if ($jobStatus === $this->statusService->completed) {
+                $this->emailService->saveEmailContent($job->ts_jobkey, 'job_status_completed', Carbon::now(), $jobStatus);
             }
         
             if ($isSaveForLater) {
@@ -437,6 +488,5 @@ class ProofController extends Controller
             }
         }
         return response()->json(['status'=>true,'url'=>$location,'csrf' => csrf_token()]);
-
     }
 }

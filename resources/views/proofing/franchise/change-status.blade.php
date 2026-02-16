@@ -33,24 +33,26 @@
                                 <td class="align-middle">{{ $selectedJob->ts_jobname }}</td>
                                 <td class="align-middle text-center">{{ $selectedJob->reviewStatuses->status_external_name }}</td>
                                 <td class="align-middle text-center">
-                                    @php $counter = 0; @endphp
+                                    @php 
+                                        $counter = 0; 
+                                        $jobIdHash = Crypt::encryptString($selectedJob->ts_job_id);
+                                    @endphp
                                     @foreach ($reviewStatusesNewList as $statusKey => $reviewStatusesNewItem)
                                         @php
                                             $confirmMsg = __('Are you sure you want to change the status from :currentStatus to :newStatus?', [
                                                 'currentStatus' => $selectedJob->reviewStatuses->status_external_name,
                                                 'newStatus' => $reviewStatusesNewItem
                                             ]);
-                                            $jobKey = Crypt::encryptString($selectedJob->ts_job_id);
                                         @endphp
                                         
                                         @if(
-                                            $selectedJob->reviewStatuses->status_external_name !== $reviewStatusesNewItem &&
-                                            ($statusKey !== $completeStatus || ($selectedJob->reviewStatuses->id !== $locked && $selectedJob->reviewStatuses->id !== $archived))
+                                            $statusKey != $selectedJob->reviewStatuses->id &&
+                                            ($statusKey != $completeStatus || ($selectedJob->reviewStatuses->id != $locked && $selectedJob->reviewStatuses->id != $archived))
                                         )
                                             @if ($counter > 0)
                                                 | 
                                             @endif
-                                            <a href="#" class="change-job-status" data-job = "{{ $jobKey }}" data-value="{{ $statusKey }}" data-confirm-msg="{{ $confirmMsg }}">{{ __($reviewStatusesNewItem) }}</a>
+                                            <a href="#" class="change-job-status" data-job = "{{ $jobIdHash }}" data-value="{{ $statusKey }}" data-confirm-msg="{{ $confirmMsg }}">{{ __($reviewStatusesNewItem) }}</a>
                                             @php $counter++; @endphp
                                         @endif
                                     @endforeach
@@ -77,7 +79,7 @@
                                             </select>
                                         </div>
                                         <div class="col-4">
-                                            <a href="#" class="btn btn-primary" data-job = "{{ $jobKey }}" id="change-folder-status">Apply</a>
+                                            <a href="#" class="btn btn-primary" data-job = "{{ $jobIdHash }}" id="change-folder-status">Apply</a>
                                         </div>
                                     </div>
                                 </div>
@@ -131,7 +133,7 @@
                         </table>
                     </div>
                     <div class="card-footer">
-                        <a href="{{ route('proofing') }}" class="btn btn-primary float-right">{{ __('Done') }}</a>
+                        <a @if($selectedJob) href="{{ URL::signedRoute('proofing.dashboard', ['hash' => Crypt::encryptString($selectedJob->ts_jobkey)]) }}" @else href="{{ route('proofing') }}" @endif class="btn btn-primary float-right">{{ __('Done') }}</a>
                     </div>
                 </div>
             </div>

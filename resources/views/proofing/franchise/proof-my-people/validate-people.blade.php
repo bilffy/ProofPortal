@@ -113,6 +113,28 @@
             $principalExistNote = Config::get('constants.PRINCIPAL_EXIST_NOTE');
             $principalNote = Config::get('constants.PRINCIPAL_NOTE');
 
+            $groupCommentsIssue = $currentFolder->is_edit_groups && isset($group_questions) ? $group_questions->where('issue_name', 'GROUP_COMMENTS')->first() : null;
+            $groupComments = $groupCommentsIssue ? $groupCommentsIssue->issue_description : Config::get('constants.GROUP_COMMENTS');
+            $groupCommentsNote = Config::get('constants.GROUP_COMMENTS_NOTE');
+
+            $tradPhotoTagged = Config::get('constants.TRADITIONAL_PHOTO_TAGGED');
+            $tradPhotoTaggedNote = Config::get('constants.TRADITIONAL_PHOTO_TAGGED_NOTE');
+            
+            $folderBelong = Config::get('constants.FOLDER_BELONG_SUBJECTS');
+            $folderBelongNote = Config::get('constants.FOLDER_BELONG_SUBJECTS_NOTE');
+
+            $folderSpell = Config::get('constants.FOLDER_SPELL_SUBJECT');
+            $folderSpellNote = Config::get('constants.FOLDER_SPELL_SUBJECT_NOTE');
+
+            $photoCorrect = Config::get('constants.SUBJECTS_CORRECT_PHOTO');
+            $photoCorrectNote = Config::get('constants.SUBJECTS_CORRECT_PHOTO_NOTE');
+
+            $subjectAccounted = Config::get('constants.SUBJECTS_ACCOUNTED');
+            $subjectAccountedNote = Config::get('constants.SUBJECTS_ACCOUNTED_NOTE');
+
+            $folderCorrected = Config::get('constants.FOLDER_CORRECTED');
+            $folderCorrectedNote = Config::get('constants.FOLDER_CORRECTED_NOTE');
+
             $subjectNames = [];
             $useSalutation = $currentFolder->show_salutation_groups;
             $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
@@ -248,140 +270,126 @@
             jQuery.noConflict();
             var location = @json($location);
 
-            $('#folder_name').on('keyup change', function () {
-                //var classNameCurrent = @json($className);
+            $('#folder_name').on('keyup change', function (event) {
+                var newValue = $(this).val();
                 var issue = @json($folderName);
                 var note = @json($folderNameNote);
-                var classNameNew = $(this).val();
-
-                $('.group-name').html(classNameNew);
+                
+                $('.group-name').html(newValue);
 
                 if (event.type === 'change') {
-                    sendFolderChanges(location, issue, classNameNew, note);
-                    classNameCurrent = classNameNew; // Update current class name after changes are sent
+                    console.log('Folder name change triggered', {newValue: newValue});
+                    sendFolderChanges(location, issue, newValue, note);
                 }
             });
 
-            $('#subject_missing_names').on('keyup change', function () {
-                var subjectMissingName = $(this).val();
-                //var subjectMissingNameCurrent = $('#recorded_subjectmissing').val();
+            $('#subject_missing_names').on('keyup change', function (event) {
+                var newValue = $(this).val();
                 var issue = @json($subjectMissing);
                 var note = @json($subjectMissingNote);
+                
                 if (event.type === 'change') {
-                    sendFolderChanges(location, issue, subjectMissingName, note);
+                    console.log('Subject missing names change triggered', {newValue: newValue});
+                    var previousValue = $('#recorded_subjectmissing').val();
+                    if (newValue !== previousValue) {
+                        console.log('Sending change to server...');
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#recorded_subjectmissing').val(newValue);
+                    }
                 }
             });
             
-            const groupCommentTextArea = document.getElementById("group_comments");
-
-            groupCommentTextArea.addEventListener('blur', function() {
-                var issue_id = $(this).data('id');
+            $('#group_comments').on('keyup change', function (event) {
                 var newValue = $(this).val();
-                var currentValue = $('#groupPreviousValue_'+issue_id).val();
-                $.ajax({
-                    dataType: 'json',
-                    type: "GET",
-                    url: base_url + "/franchise/proofing-description/" + issue_id, 
-                    async: true,
-                    cache: false,
-                    success: function (response) {
-                        // Retrieve constants from the server
-                        $.get(base_url + '/constants', function(constants) {
-                            // Function to find constant name by value
-                            function findConstantName(value) {
-                                for (const [key, val] of Object.entries(constants)) {
-                                    if (val === value) {
-                                        return key;
-                                    }
-                                }
-                                return null;
-                            }
-                            // Function to get constant value by name
-                            function getConstantValue(name) {
-                                return constants[name];
-                            }
-                            // Extract description and corresponding constant names
-
-                            const description = response.issue_description;
-                            const constantNameDescription = findConstantName(description);
-                            const constantNameDescriptionNote = constantNameDescription + '_NOTE';
-                            const constantNameDescriptionNoteData = getConstantValue(constantNameDescriptionNote);
-
-                            // Initialize issue and note variables
-                            var issue = description || '';
-                            var note = constantNameDescriptionNoteData || '';
-
-                            // Call function to handle folder changes with the updated issue and note
-                            sendFolderChanges(location, issue, newValue, note);
-                        });
-                    },
-                    error: function (e) {
-                        // console.log("An error occurred: " + e.responseText.message);
-                        return false;
-                    },
-                    complete: function (xhr) {
-                        // Do something on complete if necessary
-                    }
-                });
-            });
-
-            $('#subject_general_issue_text').on('keyup change', function () {
-                var generalIssue = $(this).val();
-                //var generalIssueCurrent = $('#recorded_pageissue').val();
-                var issue = @json($generalIssue);
-                var note = @json($generalIssueNote);
+                var issue_id = $(this).data('id');
+                var issue = @json($groupComments);
+                var note = @json($groupCommentsNote);
+                
                 if (event.type === 'change') {
-                    sendFolderChanges(location, issue, generalIssue, note);
+                    console.log('Group comment change triggered', {issue: issue, newValue: newValue});
+                    var previousValue = $('#groupPreviousValue_' + issue_id).val();
+                    if (newValue !== previousValue) {
+                        console.log('Sending change to server...');
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#groupPreviousValue_' + issue_id).val(newValue);
+                    }
                 }
             });
 
-            $('#teacher_name').on('keyup change', function () {
+            $('#subject_general_issue_text').on('keyup change', function (event) {
+                var newValue = $(this).val();
+                var issue = @json($generalIssue);
+                var note = @json($generalIssueNote);
+                
+                if (event.type === 'change') {
+                    console.log('General issue change triggered', {newValue: newValue});
+                    var previousValue = $('#recorded_pageissue').val();
+                    if (newValue !== previousValue) {
+                        console.log('Sending change to server...');
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#recorded_pageissue').val(newValue);
+                    }
+                }
+            });
+
+            $('#teacher_name').on('keyup change', function (event) {
                 var newValue = $(this).val();
                 var previousValue = $('#recorded_teachername').val();
                 var issue = @json($teacher);
-                if(previousValue){
-                    var note = @json($teacherExistNote);
-                }else{
-                    var note = @json($teacherNote);
-                }
+                var note = previousValue ? @json($teacherExistNote) : @json($teacherNote);
+
                 if (event.type === 'change') {
-                    sendFolderChanges(location, issue, newValue, note);
+                    console.log('Teacher name change triggered', {newValue: newValue});
+                    if (newValue !== previousValue) {
+                        console.log('Sending change to server...');
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#recorded_teachername').val(newValue);
+                    }
                 }
             });
-
             
-            $('#principal_name').on('keyup change', function () {
+            $('#principal_name').on('keyup change', function (event) {
                 var newValue = $(this).val();
                 var previousValue = $('#recorded_principalname').val();
                 var issue = @json($principal);
-                if(previousValue){
-                    var note = @json($principalExistNote);
-                }else{
-                    var note = @json($principalNote);
-                }
+                var note = previousValue ? @json($principalExistNote) : @json($principalNote);
+
                 if (event.type === 'change') {
-                    sendFolderChanges(location, issue, newValue, note);
+                    console.log('Principal name change triggered', {newValue: newValue});
+                    if (newValue !== previousValue) {
+                        console.log('Sending change to server...');
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#recorded_principalname').val(newValue);
+                    }
                 }
             });
-
             
-            $('#deputy_name').on('keyup change', function () {
+            $('#deputy_name').on('keyup change', function (event) {
                 var newValue = $(this).val();
                 var previousValue = $('#recorded_deputyname').val();
                 var issue = @json($deputy);
-                if(previousValue){
-                    var note = @json($deputyExistNote);
-                }else{
-                    var note = @json($deputyNote);
-                }
+                var note = previousValue ? @json($deputyExistNote) : @json($deputyNote);
+
                 if (event.type === 'change') {
-                    sendFolderChanges(location, issue, newValue, note);
+                    console.log('Deputy name change triggered', {newValue: newValue});
+                    if (newValue !== previousValue) {
+                        console.log('Sending change to server...');
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#recorded_deputyname').val(newValue);
+                    }
                 }
             });
 
             $('.is_group_select').change(function () {
                 var issue_id = $(this).data('id');
-                if ($(this).val() == '0') {
+                var issueName = $(this).data('name');
+                var issueDescription = $(this).data('description');
+                var newValue = $(this).val();
+
+                console.log('Group select changed:', {id: issue_id, name: issueName, desc: issueDescription, val: newValue});
+
+                // UI Toggle Logic
+                if (newValue === '0') {
                     $('#groupNext').addClass("d-none");
                     $('#groupNextDisabled').removeClass("d-none");
                     $('#trad_photo_named_no_'+issue_id).show();
@@ -390,113 +398,79 @@
                     $('#groupNextDisabled').addClass("d-none");
                     $('#trad_photo_named_no_'+issue_id).hide();
                 }
-                var newValue = $(this).val();
-                var currentValue = $('#groupPreviousValue_'+issue_id).val();
-                // Perform AJAX request to get the proofing description
-                $.ajax({
-                    dataType: 'json',
-                    type: "GET",
-                    url: base_url + "/franchise/proofing-description/" + issue_id, 
-                    async: true,
-                    cache: false,
-                    success: function (response) {
-                        // Retrieve constants from the server
-                        $.get(base_url + '/constants', function(constants) {
-                            // Function to find constant name by value
-                            function findConstantName(value) {
-                                for (const [key, val] of Object.entries(constants)) {
-                                    if (val === value) {
-                                        return key;
-                                    }
-                                }
-                                return null;
-                            }
-                            // Function to get constant value by name
-                            function getConstantValue(name) {
-                                return constants[name];
-                            }
-                            // Extract description and corresponding constant names
 
-                            const description = response.issue_description;
-                            const constantNameDescription = findConstantName(description);
-                            const constantNameDescriptionNote = constantNameDescription + '_NOTE';
-                            const constantNameDescriptionNoteData = getConstantValue(constantNameDescriptionNote);
+                // Value Change check
+                var previousValue = $('#groupPreviousValue_' + issue_id).val();
+                if (newValue !== previousValue) {
+                    var issue = issueDescription || issueName;
+                    var note = '';
 
-                            // Initialize issue and note variables
-                            var issue = description || '';
-                            var note = constantNameDescriptionNoteData || '';
-
-                            // Call function to handle folder changes with the updated issue and note
-                            sendFolderChanges(location, issue, newValue, note);
-                        });
-                    },
-                    error: function (e) {
-                        // console.log("An error occurred: " + e.responseText.message);
-                        return false;
-                    },
-                    complete: function (xhr) {
-                        // Do something on complete if necessary
+                    if (issueName === 'TRADITIONAL_PHOTO_TAGGED' || issueName === 'GROUP_NAMED' || issueDescription === @json($tradPhotoTagged)) {
+                        issue = @json($tradPhotoTagged);
+                        note = @json($tradPhotoTaggedNote);
                     }
-                });
+
+                    if (issue) {
+                        console.log('Sending group select change...', {issue: issue, newValue: newValue, note: note});
+                        sendFolderChanges(location, issue, newValue, note);
+                        $('#groupPreviousValue_' + issue_id).val(newValue);
+                    }
+                }
             });
 
             // Event listener for change on select elements with class 'is_proceed_select'
             $('.is_proceed_select').change(function () {
-                // Get the previous value and the proofing description id from data attributes
-                var currentValue = $(this).data('previousValue'); 
-                var proofing_description_id = $(this).data('id');
+                var issue_id = $(this).data('id');
+                var issueName = $(this).data('name');
+                var issueDescription = $(this).data('description');
+                var newValue = $(this).val();
 
-                // Perform AJAX request to get the proofing description
-                $.ajax({
-                    dataType: 'json',
-                    type: "GET",
-                    url: base_url + "/franchise/proofing-description/" + proofing_description_id, 
-                    async: true,
-                    cache: false,
-                    success: function (response) {
-                        // Retrieve constants from the server
-                        $.get(base_url + '/constants', function(constants) {
-                            // Function to find constant name by value
-                            function findConstantName(value) {
-                                for (const [key, val] of Object.entries(constants)) {
-                                    if (val === value) {
-                                        return key;
-                                    }
-                                }
-                                return null;
-                            }
-                            // Function to get constant value by name
-                            function getConstantValue(name) {
-                                return constants[name];
-                            }
-                            // Extract description and corresponding constant names
+                console.log('Proceed select changed:', {id: issue_id, name: issueName, desc: issueDescription, val: newValue});
 
-                            const description = response.issue_description;
-                            const constantNameDescription = findConstantName(description);
-                            const constantNameDescriptionNote = constantNameDescription + '_NOTE';
-                            const constantNameDescriptionNoteData = getConstantValue(constantNameDescriptionNote);
+                // Value Change check
+                var previousValue = $(this).data('previousValue');
+                if (newValue !== previousValue) {
+                    var issue = issueDescription || issueName;
+                    var note = '';
 
-                            // Initialize issue and note variables
-                            var issue = description || '';
-                            var note = constantNameDescriptionNoteData || '';
-
-                            // Call function to handle folder changes with the updated issue and note
-                            sendFolderChanges(location, issue, newValue, note);
-                        });
-                    },
-                    error: function (e) {
-                        // console.log("An error occurred: " + e.responseText.message);
-                        return false;
-                    },
-                    complete: function (xhr) {
-                        // Do something on complete if necessary
+                    switch(issueName) {
+                        case 'FOLDER_BELONG_SUBJECTS':
+                            issue = @json($folderBelong);
+                            note = @json($folderBelongNote);
+                            break;
+                        case 'FOLDER_SPELL_SUBJECT':
+                            issue = @json($folderSpell);
+                            note = @json($folderSpellNote);
+                            break;
+                        case 'SUBJECTS_CORRECT_PHOTO':
+                            issue = @json($photoCorrect);
+                            note = @json($photoCorrectNote);
+                            break;
+                        case 'SUBJECTS_ACCOUNTED':
+                            issue = @json($subjectAccounted);
+                            note = @json($subjectAccountedNote);
+                            break;
+                        case 'FOLDER_CORRECTED':
+                            issue = @json($folderCorrected);
+                            note = @json($folderCorrectedNote);
+                            break;
                     }
-                });
+                    
+                    // Fallback by description match
+                    if (note === '') {
+                        if (issueDescription === @json($folderBelong)) { issue = @json($folderBelong); note = @json($folderBelongNote); }
+                        else if (issueDescription === @json($folderSpell)) { issue = @json($folderSpell); note = @json($folderSpellNote); }
+                        else if (issueDescription === @json($photoCorrect)) { issue = @json($photoCorrect); note = @json($photoCorrectNote); }
+                        else if (issueDescription === @json($subjectAccounted)) { issue = @json($subjectAccounted); note = @json($subjectAccountedNote); }
+                        else if (issueDescription === @json($folderCorrected)) { issue = @json($folderCorrected); note = @json($folderCorrectedNote); }
+                    }
 
-                // Get the new value of the select element
-                var newValue = $(this).find('option:selected').val();
-                // Update the 'previousValue' data attribute
-                $(this).data('previousValue', newValue);
+                    if (issue) {
+                        console.log('Sending folder select change...', {issue: issue, newValue: newValue, note: note});
+                        sendFolderChanges(location, issue, newValue, note);
+                        $(this).data('previousValue', newValue);
+                    }
+                }
             });
         });
     </script>

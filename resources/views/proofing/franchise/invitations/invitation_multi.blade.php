@@ -31,7 +31,7 @@
     <div class="col-12 mb-3">
         @php
             $btnAttrCancel = "btn btn-primary float-right pl-4 pr-4";
-            $urlDone = url()->previous();
+            $urlDone = route('invitation.index', ['role' => $role]);
             $title = $role === 'photocoordinator' ? 'Photo-Coordinator' : 'Teacher';
         @endphp
         <a href="{{ $urlDone }}" class="{{ $btnAttrCancel }}">Back</a>

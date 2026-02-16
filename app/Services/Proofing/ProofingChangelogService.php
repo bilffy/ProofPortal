@@ -238,6 +238,12 @@ class ProofingChangelogService
     }    
 
     public function insertFolderProofingChangeLog($decryptedFolderKey, $issue, $note, $newValue) {
+        \Log::info('Service insertFolderProofingChangeLog called', [
+            'folder' => $decryptedFolderKey,
+            'issue' => $issue,
+            'note' => $note,
+            'newValue' => $newValue
+        ]);
         $folderData = $this->folderService->getFolderByKey($decryptedFolderKey)
         ->with(['job' => function($query) {
             $query->select('ts_job_id', 'ts_jobkey'); // Select columns from the jobs table
@@ -245,6 +251,10 @@ class ProofingChangelogService
         ->select('ts_folderkey', 'ts_job_id', 'ts_foldername', 'id')->first(); // Select columns from the folders table
  
         if (!$folderData || !$folderData->job) {
+            \Log::error('Folder data or job missing in insertFolderProofingChangeLog', [
+                'folderKey' => $decryptedFolderKey,
+                'found' => (bool)$folderData
+            ]);
             return;
         }
         $currentValue = '';
@@ -252,8 +262,14 @@ class ProofingChangelogService
         $textValue = ($newValue === "1") ? 'Yes' : (($newValue === "0") ? 'No' : null);
         $isResolved = ($newValue === "1") ? $this->statusService->active : (($newValue === "0") ? $this->statusService->inactive : null);
         $replace = [];
-        switch ($issue) {
-            case $constants['FOLDER_NAME_CHANGE']:
+        $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByDescription($issue, 'id', 'issue_name');
+        if (!$issueObject) {
+            $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName($issue, 'id', 'issue_name');
+        }
+        $issueName = $issueObject ? $issueObject->issue_name : null;
+
+        switch (true) {
+            case $issue === $constants['FOLDER_NAME_CHANGE']:
                 $replace = ['CHANGEFROM' => $folderData->ts_foldername, 'CHANGETO' => $newValue];
                 $currentValue = $folderData->ts_foldername;
                 $isResolved =  $this->statusService->active;
@@ -262,22 +278,25 @@ class ProofingChangelogService
                 $folder->ts_foldername = $newValue;
                 $folder->save();
                 break;
-            case $constants['FOLDER_BELONG_SUBJECTS']:
+            case $issue === $constants['FOLDER_BELONG_SUBJECTS']:
                 $replace = ['FOLDER' => $folderData->ts_foldername, 'VALUE' => $textValue];
                 $keyOrigin =  'Folder';
                 break;
-            case $constants['SUBJECT_MISSING_NAMES']:
-                $keyOrigin =  'Folder';
-            case $constants['GENERAL_ISSUES']:
+            case $issueName === 'GROUP_COMMENTS' || $issue === $constants['GROUP_COMMENTS']:
+                $replace = ['DATA' => $newValue];
+                $keyOrigin =  'Group';
+                $isResolved = $this->statusService->active;
+                break;
+            case $issueName === 'GENERAL' || $issue === $constants['GENERAL_ISSUES'] || $issueName === 'SUBJECT_MISSING_NAMES' || $issue === $constants['SUBJECT_MISSING_NAMES']:
                 $replace = ['DATA' => $newValue];
                 $keyOrigin =  'Folder';
                 $isResolved = $this->statusService->active;
                 break;
-            case $constants['TRADITIONAL_PHOTO_TAGGED']:
+            case $issueName === 'TRADITIONAL_PHOTO_TAGGED' || $issueName === 'GROUP_NAMED' || $issue === $constants['TRADITIONAL_PHOTO_TAGGED']:
                 $replace = ['VALUE' => $textValue];
                 $keyOrigin =  'Group';
                 break;
-            case $constants['DEPUTY']:
+            case $issue === $constants['DEPUTY']:
                 $folder = $this->folderService->findFolderId($folderData->id);
                 if(isset($folder->deputy) && isset($newValue)){
                     $currentValue = $folder->deputy;
@@ -290,7 +309,7 @@ class ProofingChangelogService
                 $folder->save();
                 $keyOrigin =  'Group';
                 break;
-            case $constants['TEACHER']:
+            case $issue === $constants['TEACHER']:
                 $folder = $this->folderService->findFolderId($folderData->id);
                 if(isset($folder->teacher) && isset($newValue)){
                     $currentValue = $folder->teacher;
@@ -303,7 +322,7 @@ class ProofingChangelogService
                 $folder->save();
                 $keyOrigin =  'Group';
                 break;
-            case $constants['PRINCIPAL']:
+            case $issue === $constants['PRINCIPAL']:
                 $folder = $this->folderService->findFolderId($folderData->id);
                 if(isset($folder->principal) && isset($newValue)){
                     $currentValue = $folder->principal;
@@ -323,7 +342,18 @@ class ProofingChangelogService
         }
 
         $changeNote = str_replace(array_keys($replace), $replace, $note);
-        ProofingChangelog::insert([
+        
+        // If we still don't have an issueObject (e.g. description lookup failed), try fallback by well-known names
+        if (!$issueObject) {
+            $constants = Config::get('constants');
+            if ($issue === $constants['GROUP_COMMENTS']) {
+                $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('GROUP_COMMENTS', 'id');
+            } elseif ($issue === $constants['GENERAL_ISSUES']) {
+                $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('GENERAL', 'id');
+            }
+        }
+
+        ProofingChangelog::create([
             'ts_jobkey' => $folderData->job->ts_jobkey,
             'keyorigin' => $keyOrigin,
             'keyvalue' => $folderData->ts_folderkey,
@@ -331,9 +361,16 @@ class ProofingChangelogService
             'change_to' => $newValue,
             'notes' => $changeNote,
             'user_id' => Auth::user()->id,
-            'issue_id' => $this->proofingDescriptionService->getAllProofingDescriptionByDescription($issue, 'id')->id,
+            'issue_id' => $issueObject ? $issueObject->id : 0,
             'change_datetime' => Carbon::now(),
             'resolved_status_id' => $isResolved
+        ]);
+
+        \Log::info('Proofing change log inserted', [
+            'folder' => $folderData->ts_folderkey,
+            'issue' => $issue,
+            'issue_id' => $issueObject ? $issueObject->id : 0,
+            'note' => $changeNote
         ]);
     }
 
@@ -944,7 +981,63 @@ class ProofingChangelogService
 
     }
 
-    public function insertGroupProofingChangeLog($jobKey, $folderkey, $data) {
+    // public function insertGroupProofingChangeLog($jobKey, $folderkey, $data) {
+    //     // Retrieve subject IDs and current folder details
+    //     $getData = $this->folderService->getSubjectIDByName($folderkey, $data);
+
+    //     // Decode JSON data
+    //     $jsonData = json_decode($getData['jsonData'], true);
+        
+    //     // Insert into ProofingChangelog
+    //     ProofingChangelog::create([
+    //         'ts_jobkey' => $jobKey,
+    //         'keyorigin' => 'Folder',
+    //         'keyvalue' => $folderkey,
+    //         'change_to' => $getData['jsonformattedResult'],
+    //         'user_id' => Auth::user()->id,
+    //         'notes' => 'Traditional Photo People Row Positions for Folder "'.$folderkey.'" have been created.',
+    //         'issue_id' => $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('TRADITIONAL PHOTO', 'id')->id,
+    //         'change_datetime' => Carbon::now(),
+    //         'resolved_status_id' => $this->statusService->active
+    //     ]);
+    //     // Get keys (rowLabels) from jsonData
+    //     $rowLabels = array_keys($jsonData);
+
+    //     $this->getGroupPositionService()->deleteGroupPosition($folderkey);
+        
+    //     // Insert into GroupPosition
+    //     foreach ($rowLabels as $rowIndex => $rowLabel) {
+    //         // Create a new variable for modified row label
+    //         $modifiedRowLabel = 'Absent';
+
+    //         if(count($rowLabels) < 2){
+    //             if($rowLabel === 'Row_0'){
+    //                 $modifiedRowLabel = 'Back Row';
+    //             }
+    //         } elseif(count($rowLabels) === 2){
+    //             if($rowLabel === 'Row_0'){
+    //                 $modifiedRowLabel = 'Back Row';
+    //             } elseif($rowLabel === 'Row_1'){
+    //                 $modifiedRowLabel = 'Front Row';
+    //             }
+    //         } elseif(count($rowLabels) > 2){
+    //             if($rowLabel === 'Row_0'){
+    //                 $modifiedRowLabel = 'Back Row';
+    //             } elseif($rowLabel === 'Row_'.(count($rowLabels) - 2)){
+    //                 $modifiedRowLabel = 'Front Row';
+    //             }  elseif($rowLabel !== 'Absent'){
+    //                 $modifiedRowLabel = 'Middle Row '.(count($rowLabels) - 2 - $rowIndex) ;
+    //             }
+    //         }
+
+    //         foreach ($jsonData[$rowLabel] as $index => $subjectKey) {
+    //             $subjectSplit = explode(':' ,$subjectKey);
+    //             $this->getGroupPositionService()->createGroupPosition($getData['jobKey'], $folderkey, $subjectSplit[0], $subjectSplit[1], $modifiedRowLabel, count($rowLabels) - $rowIndex, $index + 1);
+    //         }
+    //     }
+    // }
+
+        public function insertGroupProofingChangeLog($jobKey, $folderkey, $data) {
         // Retrieve subject IDs and current folder details
         $getData = $this->folderService->getSubjectIDByName($folderkey, $data);
 
@@ -966,36 +1059,64 @@ class ProofingChangelogService
         // Get keys (rowLabels) from jsonData
         $rowLabels = array_keys($jsonData);
 
+        // Filter out 'Absent' to calculate the count of actual physical rows
+        $physicalRows = array_filter(array_keys($jsonData), function($key) {
+            return $key !== 'Absent';
+        });
+        $totalPhysicalRows = count($physicalRows);
+
         $this->getGroupPositionService()->deleteGroupPosition($folderkey);
         
         // Insert into GroupPosition
-        foreach ($rowLabels as $rowIndex => $rowLabel) {
-            // Create a new variable for modified row label
-            $modifiedRowLabel = 'Absent';
+        foreach ($jsonData as $rowLabel => $subjects) {
+            $modifiedRowLabel = $rowLabel; // Default
+            
+            if ($rowLabel === 'Absent') {
+                $modifiedRowLabel = 'Absent';
+                $sortOrder = $totalPhysicalRows + 1; 
+            } else {
+                // Extract the numeric index from "Row_X"
+                $rowIndex = (int) str_replace('Row_', '', $rowLabel);
 
-            if(count($rowLabels) < 2){
-                if($rowLabel === 'Row_0'){
-                    $modifiedRowLabel = 'Back Row';
+                if ($totalPhysicalRows === 1) {
+                    $modifiedRowLabel = 'Back Row L-R';
+                } elseif ($totalPhysicalRows === 2) {
+                    $modifiedRowLabel = ($rowIndex === 0) ? 'Back Row L-R' : 'Front Row L-R';
+                } else {
+                    // Logic for 3 or more rows
+                    if ($rowIndex === 0) {
+                        $modifiedRowLabel = 'Back Row L-R';
+                    } elseif ($rowIndex === $totalPhysicalRows - 1) {
+                        $modifiedRowLabel = 'Front Row L-R';
+                    } else {
+                        /** * Middle Row Logic: 
+                         * Row_1 in a 4-row set becomes "3rd Row"
+                         * Row_2 in a 4-row set becomes "2nd Row"
+                         * Calculation: (TotalRows - CurrentIndex)
+                         */
+                        $displayNum = $totalPhysicalRows - $rowIndex;
+                        
+                        // Optional: Use helper for ordinals (2nd, 3rd)
+                        $suffix = ['th','st','nd','rd','th','th','th','th','th','th'];
+                        $ext = ($displayNum % 100 >= 11 && $displayNum % 100 <= 13) ? 'th' : $suffix[$displayNum % 10];
+                        $modifiedRowLabel = $displayNum . $ext . ' Row';
+                    }
                 }
-            } elseif(count($rowLabels) === 2){
-                if($rowLabel === 'Row_0'){
-                    $modifiedRowLabel = 'Back Row';
-                } elseif($rowLabel === 'Row_1'){
-                    $modifiedRowLabel = 'Front Row';
-                }
-            } elseif(count($rowLabels) > 2){
-                if($rowLabel === 'Row_0'){
-                    $modifiedRowLabel = 'Back Row';
-                } elseif($rowLabel === 'Row_'.(count($rowLabels) - 2)){
-                    $modifiedRowLabel = 'Front Row';
-                }  elseif($rowLabel !== 'Absent'){
-                    $modifiedRowLabel = 'Middle Row '.(count($rowLabels) - 2 - $rowIndex) ;
-                }
+                // Sort order: Physical rows usually sort highest number (Back) to lowest (Front)
+                $sortOrder = $rowIndex + 1;
             }
 
-            foreach ($jsonData[$rowLabel] as $index => $subjectKey) {
-                $subjectSplit = explode(':' ,$subjectKey);
-                $this->getGroupPositionService()->createGroupPosition($getData['jobKey'], $folderkey, $subjectSplit[0], $subjectSplit[1], $modifiedRowLabel, count($rowLabels) - $rowIndex, $index + 1);
+            foreach ($subjects as $index => $subjectKey) {
+                $subjectSplit = explode(':', $subjectKey);
+                $this->getGroupPositionService()->createGroupPosition(
+                    $getData['jobKey'], 
+                    $folderkey, 
+                    $subjectSplit[0], 
+                    $subjectSplit[1], 
+                    $modifiedRowLabel, 
+                    $sortOrder, 
+                    $index + 1
+                );
             }
         }
     }

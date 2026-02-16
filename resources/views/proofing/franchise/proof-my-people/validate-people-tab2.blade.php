@@ -179,7 +179,7 @@
                                         <label for="folder_question_{{$folder_question->id}}" class="form-control-label">
                                             {!! str_replace('FOLDER', '<span class="group-name">"' . $className . '"</span>', $folder_question->issue_description) !!}
                                         </label>
-                                        <select id="folder_question_{{$folder_question->id}}" name="folder_question_{{$folder_question->id}}" class="form-control is_proceed_select" data-id="{{$folder_question->id}}" data-is-proceed="{{$folder_question->is_proceed_confirm}}" onchange="toggleValidationMessage({{$folder_question->id}})">
+                                        <select id="folder_question_{{$folder_question->id}}" name="folder_question_{{$folder_question->id}}" class="form-control is_proceed_select" data-id="{{$folder_question->id}}" data-is-proceed="{{$folder_question->is_proceed_confirm}}" data-name="{{$folder_question->issue_name}}" data-description="{{$folder_question->issue_description}}" onchange="toggleValidationMessage({{$folder_question->id}})">
                                             <option value="" @if($latestChange){{ !$latestChange->change_to ? 'selected' : '' }}@endif>--Please Select--</option>
                                             <option value="1"  @if($latestChange){{ $latestChange->change_to === "1" ? 'selected' : '' }}@endif>Yes</option>
                                             <option value="0"  @if($latestChange){{ $latestChange->change_to === "0" ? 'selected' : '' }}@endif>No</option>

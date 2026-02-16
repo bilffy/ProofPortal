@@ -27,8 +27,7 @@
             }
 
             $btnAttrCancel = "btn btn-primary float-right pl-4 pr-4";
-            $urlDone = (strpos(request()->headers->get('referer'), $role) !== false)
-                        ? route('proofing') : url()->previous();
+            $urlDone = route('invitation.index', ['role' => $role]);
         @endphp
 
         <div class="row">

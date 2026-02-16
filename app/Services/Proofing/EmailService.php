@@ -286,6 +286,7 @@ class EmailService
     
         $rolesWithFieldTrue = $notificationsMatrix['schools'][$field] ?? [];
         $rolesWithFieldTrue = array_keys(array_filter($rolesWithFieldTrue, fn($v) => $v === true));
+        \Log::info('saveEmailContent roles check', ['field' => $field, 'roles' => $rolesWithFieldTrue, 'notifications_enabled' => $selectedJob->notifications_enabled]);
    
         // Prepare template content
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
@@ -311,6 +312,7 @@ class EmailService
                 ->pluck('id');
     
             $users = User::whereIn('id', $userIds)->select('id','name','email','firstname','lastname')->get();
+            \Log::info('saveEmailContent users found', ['count' => $users->count(), 'job' => $tsJobKey]);
     
             foreach ($users as $user) {
                 $userFolders = $selectedJob->folders
@@ -347,8 +349,7 @@ class EmailService
     
                 $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-                $filePath = public_path("$field.$key.eml");
-                file_put_contents($filePath, $emlContent);
+
     
                 // Save email record per user
                 $emailRecord = Email::where([
@@ -404,28 +405,19 @@ class EmailService
             ['Franchise', 'Photo Coordinator', 'Teacher'],
             $role
         ), $roleNames);
+        \Log::info('saveEmailFolderContent mapped roles', ['field' => $field, 'mappedRoles' => $mappedRoleNames]);
     
-        $roleIds = Role::whereIn('name', $mappedRoleNames)->pluck('id');
+        $roleIds = Role::whereIn('name', $mappedRoleNames)->pluck('id')->toArray();
 
-        $query = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
-            ->select('users.id')
-            ->distinct();
-    
-        $schoolQuery = $query->clone()
-            ->join('school_users', 'school_users.user_id', '=', 'users.id')
-            ->join('schools', 'school_users.school_id', '=', 'schools.id')
-            ->where('schools.schoolkey', $selectedFolder->job->ts_schoolkey);
-    
-        $franchiseQuery = $query->clone()
-            ->join('franchise_users', 'franchise_users.user_id', '=', 'users.id')
-            ->join('franchises', 'franchise_users.franchise_id', '=', 'franchises.id')
-            ->where('franchises.ts_account_id', $selectedFolder->job->ts_account_id);
-    
-        $finalUserIds = $schoolQuery->union($franchiseQuery)->pluck('id');
-    
-        $users = User::whereIn('id', $finalUserIds)
+        $users = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
+            ->where(function ($query) use ($selectedFolder) {
+                $query->whereHas('schools', fn($q) => $q->where('schoolkey', $selectedFolder->job->ts_schoolkey))
+                      ->orWhereHas('franchises', fn($q) => $q->where('ts_account_id', $selectedFolder->job->ts_account_id));
+            })
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
+
+        \Log::info('saveEmailFolderContent users found', ['count' => $users->count(), 'job' => $selectedFolder->job->ts_jobkey]);
 
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
         if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {
@@ -476,8 +468,7 @@ class EmailService
             $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $date);
             $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-            $filePath = public_path("$field.$key.eml");
-            file_put_contents($filePath, $emlContent);
+
 
             $this->storeEmailRecord($authUser, $selectedFolder->job, $user, $template, $date, $emlContent, $selectedFolder->job->ts_jobkey);
         }

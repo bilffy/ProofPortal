@@ -9,7 +9,6 @@ use App\Http\Controllers\InviteController;
 use App\Http\Controllers\NavBarController;
 use App\Http\Controllers\PhotographyController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProofingController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Livewire\Order\Order;
@@ -23,8 +22,11 @@ use App\Http\Middleware\CheckJobSession;
 use Illuminate\Support\Facades\Route;
 
 //Proofing
-use App\Http\Controllers\Proofing\ProofHomeController;
-use App\Http\Controllers\Proofing\ConfigureController;
+use App\Http\Controllers\Proofing\ProofingDashboardController;
+use App\Http\Controllers\Proofing\ProofingJobController;
+use App\Http\Controllers\Proofing\ProofingSeasonController;
+use App\Http\Controllers\Proofing\JobConfigureController;
+use App\Http\Controllers\Proofing\SchoolConfigureController;
 use App\Http\Controllers\Proofing\ProofController;
 use App\Http\Controllers\Proofing\ReviewStatusController;
 use App\Http\Controllers\Proofing\InvitationController;
@@ -105,23 +107,23 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::get('/settings/role-permission', RolePermission::class)->name('settings.role.permission');
     
     //Configure School - fetch jobs by season
-        Route::get('/config-school/fetch-jobs', [ConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
+        Route::get('/config-school/fetch-jobs', [SchoolConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
     //Configure School - get-job-details of job
-        Route::post('/config-school/folder-config', [ConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
+        Route::post('/config-school/folder-config', [SchoolConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
     //Configure School - Submit
-        Route::post('/config-school/digital-download/submit', [ConfigureController::class, 'configSchoolDigitalDownload'])->name('config-school-digital-download');
+        Route::post('/config-school/digital-download/submit', [SchoolConfigureController::class, 'configSchoolDigitalDownload'])->name('config-school-digital-download');
     //Configure School - Job Change Submit
-        Route::post('/job-change/submit', [ConfigureController::class, 'configSchoolJobChangeUpdate'])->name('config-school-job-change-update');
+        Route::post('/job-change/submit', [SchoolConfigureController::class, 'configSchoolJobChangeUpdate'])->name('config-school-job-change-update');
     //Configure School - Folder Change Submit
-        Route::post('/folder-change/submit', [ConfigureController::class, 'configSchoolFolderChangeUpdate'])->name('config-school-folder-change-update');
+        Route::post('/folder-change/submit', [SchoolConfigureController::class, 'configSchoolFolderChangeUpdate'])->name('config-school-folder-change-update');
     //Configure School - School Submit
-        Route::post('/school-change/submit', [ConfigureController::class, 'configSchoolChangeUpdate'])->name('config-school-change-update');
+        Route::post('/school-change/submit', [SchoolConfigureController::class, 'configSchoolChangeUpdate'])->name('config-school-change-update');
     //Configure School - School Logo Upload
-        Route::post('/config-school/upload-school-logo', [ConfigureController::class, 'uploadSchoolLogo'])->name('upload.school.logo');
+        Route::post('/config-school/upload-school-logo', [SchoolConfigureController::class, 'uploadSchoolLogo'])->name('upload.school.logo');
     //Configure School - show encrypted image path
-        Route::get('/config-school/school-logo/{encryptedPath}', [ConfigureController::class, 'showSchoolLogo'])->name('school.logo');
+        Route::get('/config-school/school-logo/{encryptedPath}', [SchoolConfigureController::class, 'showSchoolLogo'])->name('school.logo');
     //Configure School - School Logo Delete
-        Route::post('/config-school/delete-school-logo', [ConfigureController::class, 'deleteSchoolLogo'])->name('delete.school.logo');
+        Route::post('/config-school/delete-school-logo', [SchoolConfigureController::class, 'deleteSchoolLogo'])->name('delete.school.logo');
 
     /* ----------------------------------------- Proofing ----------------------------------------- */
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
@@ -133,11 +135,11 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class]], function () {
         //Dashboard
-        Route::get('/proofing', [ProofHomeController::class, 'index'])->name('proofing');
+        Route::get('/proofing', [ProofingDashboardController::class, 'index'])->name('proofing');
         //Dashboard  - Open Job
-        Route::get('/proofing/openJob', [ProofHomeController::class, 'openJob'])->name('dashboard.openJob');
+        Route::get('/proofing/openJob', [ProofingJobController::class, 'openJob'])->name('dashboard.openJob');
         //Dashboard Header - Close Job
-        Route::get('/franchise/close-job', [ProofHomeController::class, 'closeJob'])->name('dashboard.closeJob');
+        Route::get('/franchise/close-job', [ProofingJobController::class, 'closeJob'])->name('dashboard.closeJob');
         
         //Proof-my-people - Fetching all issues associated with folders and subjects for proofing
         Route::get('/franchise/proofing-description/{id}', [ProofController::class, 'ProofingDescription'])->name('proofing-description');
@@ -160,30 +162,30 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     Route::group(['middleware' => ["permission:{$permissionCanConfigProof}", CheckUserRestriction::class]], function () {
         //Dashboard Configure - open all seasons
-        Route::get('/proofing/view-season', [ProofHomeController::class, 'viewSeason'])->name('dashboard.viewSeason');
+        Route::get('/proofing/view-season', [ProofingSeasonController::class, 'viewSeason'])->name('dashboard.viewSeason');
         //Dashboard Configure - pass specific season
-        Route::post('/proofing/passSeason', [ProofHomeController::class, 'passSeason'])->name('dashboard.passSeason');
+        Route::post('/proofing/passSeason', [ProofingSeasonController::class, 'passSeason'])->name('dashboard.passSeason');
         //Dashboard Configure - open specific seasons
-        Route::get('/proofing/open-season/{selectedSeasonId}', [ProofHomeController::class, 'openSeason'])->name('dashboard.openSeason');
+        Route::get('/proofing/open-season/{selectedSeasonId}', [ProofingSeasonController::class, 'openSeason'])->name('dashboard.openSeason');
         //Dashboard Configure - close season
-        Route::get('/proofing/closeSeason', [ProofHomeController::class, 'closeSeason'])->name('dashboard.closeSeason');
+        Route::get('/proofing/closeSeason', [ProofingSeasonController::class, 'closeSeason'])->name('dashboard.closeSeason');
         //Dashboard Configure - Archive Job
-        Route::post('/proofing/jobs/archive', [ProofHomeController::class, 'archive'])->name('dashboard.archive');
+        Route::post('/proofing/jobs/archive', [ProofingJobController::class, 'archive'])->name('dashboard.archive');
         //Dashboard Configure - Restore Job
-        Route::post('/proofing/jobs/restore', [ProofHomeController::class, 'restore'])->name('dashboard.restore');
+        Route::post('/proofing/jobs/restore', [ProofingJobController::class, 'restore'])->name('dashboard.restore');
         //Dashboard Configure  - Show/Hide Archive Jobs
-        Route::get('/proofing/jobs/toggle-archived', [ProofHomeController::class, 'toggleArchived'])->name('dashboard.toggleArchived');
+        Route::get('/proofing/jobs/toggle-archived', [ProofingJobController::class, 'toggleArchived'])->name('dashboard.toggleArchived');
 
         //Configure Job - timeline insert
-        Route::post('/franchise/config-job/proofing-timeline/submit', [ConfigureController::class, 'proofingTimelineInsert'])->name('config-job.proofingTimelineInsert');
+        Route::post('/franchise/config-job/proofing-timeline/submit', [JobConfigureController::class, 'proofingTimelineInsert'])->name('config-job.proofingTimelineInsert');
         //Configure Job - timeline email send
-        Route::post('franchise/config-job/proofing-timeline/email-send', [ConfigureController::class, 'proofingTimelineEmailSend'])->name('config-job.proofingTimelineEmailSend');
+        Route::post('franchise/config-job/proofing-timeline/email-send', [JobConfigureController::class, 'proofingTimelineEmailSend'])->name('config-job.proofingTimelineEmailSend');
         //Configure Job - Email-notifications enable
-        Route::post('/franchise/config-job/email-notifications/enable', [ConfigureController::class, 'notificationEnable'])->name('config-job.notificationEnable');
+        Route::post('/franchise/config-job/email-notifications/enable', [JobConfigureController::class, 'notificationEnable'])->name('config-job.notificationEnable');
         //Configure Job - Email-notifications matrix insert
-        Route::post('/franchise/config-job/email-notifications/submit', [ConfigureController::class, 'notificationMatrixInsert'])->name('config-job.notificationMatrixInsert');
+        Route::post('/franchise/config-job/email-notifications/submit', [JobConfigureController::class, 'notificationMatrixInsert'])->name('config-job.notificationMatrixInsert');
         //Configure Job - Folder-config update all
-        Route::post('/franchise/config-job/folder-config/update/all', [ConfigureController::class, 'folderConfigAll'])->name('config-job.folderConfigAll');
+        Route::post('/franchise/config-job/folder-config/update/all', [JobConfigureController::class, 'folderConfigAll'])->name('config-job.folderConfigAll');
         //Configure Job - Folder-Image Upload
         Route::post('/franchise/config-job/upload-file', [ImageController::class, 'groupImageUploadFile'])->name('groupImage.uploadFile');
         //Configure Job - Folder-Image Delete
@@ -225,15 +227,15 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     Route::group(['middleware' => ["permission:{$permissionCanConfigProof}", CheckUserRestriction::class, CheckJobSession::class]], function () {
         //Configure Job
-        Route::get('/proofing/config-job/{hash}', [ConfigureController::class, 'index'])->name('config-job')
+        Route::get('/proofing/config-job/{hash}', [JobConfigureController::class, 'index'])->name('config-job')
         // ->middleware(SetTimezone::class)
         ->middleware('signed');
         //Configure Job - TNJ Refresh
-        Route::post('/franchise/config-job/{action}/{hash}', [ConfigureController::class, 'handleJobAction'])
+        Route::post('/franchise/config-job/{action}/{hash}', [JobConfigureController::class, 'handleJobAction'])
             ->name('config-job-action')
             ->where('action', 'merge-duplicate-folders|merge-duplicate-subjects|update-subject-associations|update-people-images')->middleware('signed'); 
         //Configure Job - Delete Job
-        Route::post('/franchise/delete-job/{hash}', [ProofHomeController::class, 'deleteJob'])->name('dashboard.deleteJob')->middleware('signed');
+        Route::post('/franchise/delete-job/{hash}', [ProofingJobController::class, 'deleteJob'])->name('dashboard.deleteJob')->middleware('signed');
     });
 
     Route::group(['middleware' => ["permission:{$permissionCanProofChange}", CheckUserRestriction::class, CheckJobSession::class]], function () {        
@@ -248,6 +250,8 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     });
 
     Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class, CheckJobSession::class]], function () {
+        //Dashboard - Job Key
+        Route::get('/proofing/{hash}/dashboard', [ProofingDashboardController::class, 'index'])->name('proofing.dashboard')->middleware('signed');
         //Proof-my-people - Folder and Subject Proofing - Wizard Page
         Route::get('/proofing/my-folders-validate/{hash}', [ProofController::class, 'MyFoldersValidate'])->name('my-folders-validate')->middleware('signed');
         //Proof-my-people - Folder listing associated with job
@@ -281,11 +285,25 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             Route::get('/proofing/reports/{query}/{tsJobId?}/{tsFolderId?}', [ReportController::class, 'run'])->name('reports.run');
         //Report - Download
             Route::post('/proofing/reports/download', [ReportController::class, 'downloadReport'])->name('report.download');
+        
+        // Redirect routes for backward compatibility (auto-add /proofing prefix)
+        // This allows users to access /reports/* and automatically redirects to /proofing/reports/*
+            Route::get('/reports', function () {
+                return redirect()->route('reports');
+            });
+            
+            Route::get('/reports/{query}/{tsJobId?}/{tsFolderId?}', function ($query, $tsJobId = null, $tsFolderId = null) {
+                return redirect()->route('reports.run', [
+                    'query' => $query,
+                    'tsJobId' => $tsJobId,
+                    'tsFolderId' => $tsFolderId
+                ]);
+            });
     });    
 
     Route::group(['middleware' => ["permission:{$permissionCanConfigProof}"]], function () {
         //sync Job & associations
-        Route::post('/proxy-sync-job', [ProofHomeController::class, 'proxySyncJob'])->name('proxy.syncJob');
+        Route::post('/proxy-sync-job', [ProofingJobController::class, 'proxySyncJob'])->name('proxy.syncJob');
     }); 
     /* ----------------------------------------- Proofing ----------------------------------------- */
 });

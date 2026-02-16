@@ -78,6 +78,7 @@
 
     @php
         use Illuminate\Support\Facades\Crypt;
+        use Illuminate\Support\Facades\URL;
         use Carbon\Carbon;
         use App\Helpers\Helper;
     @endphp
@@ -229,7 +230,13 @@
 
         <div class="row mb-3">
             <div class="col-12 m-auto">
-                <a href="{{ route('proofing') }}" class="btn btn-primary float-right pl-4 pr-4">{{ __('Done') }}</a>
+                @php
+                    $doneUrl = route('proofing');
+                    if (session('openJob') === true && isset($selectedJob)) {
+                        $doneUrl = URL::signedRoute('proofing.dashboard', ['hash' => Crypt::encryptString($selectedJob->ts_jobkey)]);
+                    }
+                @endphp
+                <a href="{{ $doneUrl }}" class="btn btn-primary float-right pl-4 pr-4">{{ __('Done') }}</a>
             </div>
         </div>
 

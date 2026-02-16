@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\EmailService;
 use App\Services\Proofing\JobService;
+use App\Services\Proofing\SchoolService;
 use App\Services\Proofing\StatusService;
 use Illuminate\Support\Facades\Crypt;
 use App\Http\Resources\UserResource;
@@ -26,10 +27,11 @@ class InvitationController extends Controller
 {
     protected $encryptDecryptService;
     protected $jobService;
+    protected $schoolService;
     protected $emailService;
     protected $statusService;
 
-    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, StatusService $statusService, EmailService $emailService)
+    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, SchoolService $schoolService, StatusService $statusService, EmailService $emailService)
     {
         $this->encryptDecryptService = $encryptDecryptService;
         $this->jobService = $jobService;
@@ -134,12 +136,16 @@ class InvitationController extends Controller
             abort(404); 
         }
         
+        $currentSchool = Session::get('school_context-sid');
         $user = Auth::user(); 
     
         $users = User::query()
             ->whereHas('roles', function($q) use ($role) {
                 // Removes spaces and converts to lowercase for a truly fuzzy match
                 $q->whereRaw("LOWER(REPLACE(name, ' ', '')) = ?", [strtolower($role)]);
+            })
+            ->whereHas('schools', function($q) use ($currentSchool) {
+                $q->where('school_id', $currentSchool);
             })
             ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
             ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
@@ -234,12 +240,16 @@ class InvitationController extends Controller
             abort(404); 
         }
         
+        $currentSchool = Session::get('school_context-sid');
         $user = Auth::user(); 
     
         $users = User::query()
             ->whereHas('roles', function($q) use ($role) {
                 // Removes spaces and converts to lowercase for a truly fuzzy match
                 $q->whereRaw("LOWER(REPLACE(name, ' ', '')) = ?", [strtolower($role)]);
+            })
+            ->whereHas('schools', function($q) use ($currentSchool) {
+                $q->where('school_id', $currentSchool);
             })
             ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
             ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')

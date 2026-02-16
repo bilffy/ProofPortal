@@ -29,12 +29,14 @@
 
             <div class="row mb-3">
                 <div class="col-12 m-auto">
-                    <a href="#" id="cancel-upload" class="btn btn-secondary float-right pl-4 pr-4"
-                    data-cancel="true" data-upload_session="{{ $uploadSession }}">
-                        {{ __('Cancel') }}
-                    </a>
-                </div>
-            </div>
+                                            <a href="#" id="cancel-upload" class="btn btn-secondary float-right pl-4 pr-4"
+                                            data-cancel="true" 
+                                            data-upload_session="{{ $uploadSession }}"
+                                            data-redirect-url="{{ URL::signedRoute('proofing.dashboard', ['hash' => $jobHash]) }}">
+                                                {{ __('Cancel') }}
+                                            </a>
+                                        </div>
+                                    </div>
 
             @if($step === 'upload')
                 <div class="row">
@@ -146,6 +148,7 @@
                                             <form id="folder-matching-form" method="POST" action="{{ route('groupImage.submit') }}">
                                                 @csrf
                                                 <input type="hidden" name="upload_session" value="{{ $uploadSession }}">
+                                                <input type="hidden" name="jobHash" value="{{ $jobHash }}">
                                                 <input type="hidden" name="artifact-to-folder-map" value="">
                                                 <button type="submit" class="btn btn-primary float-right pl-4 pr-4">{{ __('Submit') }}</button>
                                             </form>
@@ -190,6 +193,7 @@
 
                 // Get the upload session value
                 var uploadSession = $(this).data('upload_session');
+                var redirectUrl = $(this).data('redirect-url'); // Get the dynamic redirect URL
 
                 // Confirm the action (optional)
                 if (!confirm('Are you sure you want to cancel and delete the uploaded images?')) {
@@ -206,7 +210,7 @@
                     },
                     success: function (response) {
                         // Redirect to proofing upon successful deletion
-                        window.location.href = "{{ route('proofing') }}";
+                        window.location.href = redirectUrl ? redirectUrl : "{{ route('proofing') }}";
                     },
                     error: function (xhr, status, error) {
                         // Handle the error response

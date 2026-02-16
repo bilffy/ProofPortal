@@ -87,6 +87,23 @@ class ReportController extends Controller
             return redirect()->route('reports');
         }
     
+        // Decrypt the encrypted parameters if they exist
+        try {
+            if (!is_null($tsJobId) && $tsJobId !== '') {
+                $tsJobId = Crypt::decryptString($tsJobId);
+                // Cast to integer as repository methods expect ?int
+                $tsJobId = (int) $tsJobId;
+            }
+            if (!is_null($tsFolderId) && $tsFolderId !== '') {
+                $tsFolderId = Crypt::decryptString($tsFolderId);
+                // Cast to integer as repository methods expect ?int
+                $tsFolderId = (int) $tsFolderId;
+            }
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            session()->flash('error', __('Invalid report parameters. Please try again.'));
+            return redirect()->route('reports');
+        }
+
         // Fetch seasons
         // $seasons = Season::all();  // Assuming a Season model exists
         $currentSeasonID = Session::has('selectedSeason') ? Session::get('selectedSeason')->ts_season_id : '';  // Custom method in Season model
@@ -112,9 +129,16 @@ class ReportController extends Controller
         $data['reportDescription'] = $report->description;
         $data['user'] = new UserResource($user);
 
-        // Parameters passed in URL
-        $passedParamValues = request()->route()->parameters();
-        array_shift($passedParamValues);  // Shift out $reportName
+        // Parameters passed in URL (now decrypted)
+        // Build the parameter values array with decrypted integers
+        $passedParamValues = [];
+        if (!is_null($tsJobId)) {
+            $passedParamValues[] = $tsJobId;  // Already decrypted and cast to int
+        }
+        if (!is_null($tsFolderId)) {
+            $passedParamValues[] = $tsFolderId;  // Already decrypted and cast to int
+        }
+        
         $passedParamCount = count($passedParamValues);
     
         $data['passedParamCount'] = $passedParamCount;
@@ -180,26 +204,32 @@ class ReportController extends Controller
                     $data['format'] = $format;
     
                     // Render the view content
-                    $view = view('reports.run', $data)->render();
+                    $view = view('proofing.reports.run', $data)->render();
                     $content = trim($view);
     
                     // If no error in content, serve the report file
                     if (substr($content, 0, 5) !== 'error') {
                         $reportBinaryLocation = session()->get("MyReports." . auth()->user()->id);
+                        if (!$reportBinaryLocation || !file_exists($reportBinaryLocation)) {
+                            return back()->with('error', 'Report file not found.');
+                        }
                         $reportBinaryData = file_get_contents($reportBinaryLocation);
-                        unlink($reportBinaryLocation);
     
                         if ($browserMode == 'download') {
-                            return response($reportBinaryData)
+                            $response = response($reportBinaryData)
                                 ->header('Content-Type', mime_content_type($reportBinaryLocation))
                                 ->header('Content-Disposition', 'attachment; filename=' . $requestData['downloadName']);
+                            unlink($reportBinaryLocation);
+                            return $response;
                         }
     
-                        return response($reportBinaryData)->header('Content-Type', mime_content_type($reportBinaryLocation));
+                        $response = response($reportBinaryData)->header('Content-Type', mime_content_type($reportBinaryLocation));
+                        unlink($reportBinaryLocation);
+                        return $response;
                     } else {
                         $errorValues = explode(":", $content);
-                        $msg = __("Code {0} - {1}", $errorValues[1], $errorValues[2]);
-                        session()->flash('error', __('Error Creating Report ({0}).', $msg));
+                        $msg = __("Code :code - :message", ['code' => $errorValues[1], 'message' => $errorValues[2]]);
+                        session()->flash('error', __('Error Creating Report (:msg).', ['msg' => $msg]));
                         return redirect()->back();
                     }
                 }

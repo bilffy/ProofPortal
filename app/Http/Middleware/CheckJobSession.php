@@ -75,5 +75,7 @@ class CheckJobSession
 
             return $next($request);
         }
+
+        return $next($request);
     }
 }

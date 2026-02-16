@@ -185,7 +185,7 @@
             if ($btn.data('loading')) return;
             $btn.data('loading', true);
 
-            showLoader();                    // 👈 SHOW LOADER
+            showLoader();                    // SHOW LOADER
             $btn.prop('disabled', true);
     
             $.ajax({
@@ -197,10 +197,14 @@
                         $.ajax({
                             url: "{{ route('dashboard.openJob') }}",
                             type: "GET",
-                            data: { jobId },
+                            data: { jobKey },
                             success: function (response) {
                                 if (response.success) {
-                                    window.location.href = "{{ url('/proofing') }}";
+                                    if (response.redirectUrl) {
+                                        window.location.href = response.redirectUrl;
+                                    } else {
+                                        window.location.href = "{{ url('/proofing') }}";
+                                    }
                                 }
                             }
                         });

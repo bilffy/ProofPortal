@@ -4,484 +4,289 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Repositories\ReportRepository;
 
-use App\Models\Job;
-use App\Models\Folder;
-use App\Models\Subject;
-use App\Models\ProofingChangelog;
-use App\Models\GroupPosition;
-use App\Models\Franchise;
-use App\Models\User;
-use App\Models\JobUsers;
-use Auth;
-
+/**
+ * Report Model
+ * 
+ * This model now delegates all complex SQL queries to the ReportRepository.
+ * Static methods are maintained for backward compatibility with existing code
+ * (particularly ReportController which uses reflection to call these methods).
+ */
 class Report extends Model
 {
     use HasFactory;
+    
     protected $table = "reports";
     protected $fillable = ['id', 'name', 'description', 'query', 'params'];
 
-    // Fetch Jobs (Schools) by franchiseAccountID and syncStatus
+    /**
+     * Get the repository instance
+     * 
+     * @return ReportRepository
+     */
+    protected static function repository(): ReportRepository
+    {
+        return app(ReportRepository::class);
+    }
+
+    // ========================================================================
+    // BACKWARD COMPATIBILITY METHODS
+    // These static methods delegate to the repository while maintaining
+    // the same interface expected by ReportController
+    // ========================================================================
+
+    /**
+     * Fetch Jobs (Schools) IDs by franchiseAccountID and syncStatus
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySchoolsIds($tsJobId = null)
     {
-        // Get the logged-in user's ID
-        $userId = Auth::user()->id; 
-        
-        // Base query
-        $query = Job::select(
-                    'jobs.id',
-                    'jobs.ts_job_id',
-                    'jobs.ts_jobname',
-                    'jobs.ts_season_id'
-                )
-                ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-                ->join('users', 'users.id', '=', 'job_users.user_id')
-                ->where('users.id', $userId)
-                ->orderBy('jobs.ts_jobname', 'asc')->get();
-
-        // Return results
-        return $query;  // Execute the query and return the results
+        return self::repository()->getSchoolsIds($tsJobId);
     }
 
-    // Fetch Folders by franchiseAccountID and syncStatus
+    /**
+     * Fetch Folders IDs by franchiseAccountID and syncStatus
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFoldersIds($tsJobId = null)
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-        
-        // Base query
-        $query = Folder::select(
-            'folders.id',
-            'folders.ts_foldername',
-            'folders.ts_folder_id'
-        )
-        ->join('jobs', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('users', 'users.id', '=', 'job_users.user_id')
-        ->where('users.id', $userId)
-        ->orderBy('folders.ts_foldername', 'asc')->get();
-
-        return $query;
+        return self::repository()->getFoldersIds($tsJobId);
     }
 
-
-    // Fetch Folders by school (job) with franchiseAccountID, syncStatus, and tsJobId
+    /**
+     * Fetch Folders IDs by school (job)
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFoldersIdsBySchool($tsJobId = null)
     {
-        $query = Folder::select('ts_folder_id', 'ts_foldername')->where('ts_job_id',$tsJobId)->get();
-
-        return $query;
+        return self::repository()->getFoldersIdsBySchool($tsJobId);
     }
 
+    /**
+     * Get franchises accessible by the current user
+     * 
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFranchises()
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-        
-        // Base query
-        $query = Franchise::select(
-                    'franchises.id',
-                    'franchises.alphacode',
-                    'franchises.name',
-                    'users.id as user_id' // Alias to avoid ambiguity
-                )
-                ->join('school_franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
-                ->join('schools', 'schools.id', '=', 'school_franchises.school_id')
-                ->join('school_users', 'school_users.school_id', '=', 'schools.id') // Assuming the correct join on school_id
-                ->join('users', 'users.id', '=', 'school_users.user_id')
-                ->where('users.id', $userId)
-                ->orderBy('franchises.alphacode', 'asc')->get();
-
-        // Return results, either as a collection or query object
-        return $query;  // Call ->get() to execute and return results as a collection
+        return self::repository()->getFranchises();
     }
 
+    /**
+     * Get schools (jobs) accessible by the current user
+     * 
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySchools()
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-        
-        // Base query
-        $query = Job::select(
-                    'jobs.id',
-                    'jobs.ts_jobkey',
-                    'jobs.ts_jobname',
-                    'jobs.ts_season_id'
-                )
-                ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-                ->join('users', 'users.id', '=', 'job_users.user_id')
-                ->where('users.id', $userId)
-                ->orderBy('jobs.ts_jobname', 'asc')->get();
-
-        // Return results
-        return $query;  // Execute the query and return the results
+        return self::repository()->getSchools();
     }
 
+    /**
+     * Get folders accessible by the current user
+     * 
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFolders()
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-        
-        // Base query
-        $query = Folder::select(
-            'folders.id',
-            'folders.ts_folderkey',
-            'folders.ts_foldername'
-        )
-        ->join('jobs', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('users', 'users.id', '=', 'job_users.user_id')
-        ->where('users.id', $userId)
-        ->orderBy('folders.ts_foldername', 'asc')->get();
-
-        return $query;
+        return self::repository()->getFolders();
     }
 
+    /**
+     * Get folders by school
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFoldersBySchool($tsJobId = null)
     {
-        // Base query
-        $query = Folder::select(
-            'folders.id',
-            'folders.ts_folderkey',
-            'folders.ts_foldername'
-        )
-        ->join('jobs', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->where('jobs.ts_job_id', $tsJobId)
-        ->orderBy('folders.ts_foldername', 'asc')->get();
-
-        return $query;
+        return self::repository()->getFoldersBySchool($tsJobId);
     }
 
+    /**
+     * Get subjects accessible by the current user
+     * 
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjects()
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-
-        // Base query
-        $query = Subject::select(
-            'subjects.id',
-            'subjects.ts_subjectkey',
-            'subjects.firstname',
-            'subjects.lastname'
-        )
-        ->join('jobs', 'subjects.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-        ->join('users', 'users.id', '=', 'job_users.user_id')
-        ->where('users.id', $userId)->get();
-
-        return $query;
+        return self::repository()->getSubjects();
     }
 
+    /**
+     * Get subjects by school
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjectsBySchool($tsJobId = null)
     {
-        // Base query
-        $query = Subject::select(
-            'subjects.id',
-            'subjects.ts_subjectkey',
-            'subjects.firstname',
-            'subjects.lastname'
-        )
-        ->join('jobs', 'subjects.ts_job_id', '=', 'jobs.ts_job_id')
-        ->where('jobs.ts_job_id', $tsJobId)->get();
-
-        return $query;
+        return self::repository()->getSubjectsBySchool($tsJobId);
     }
 
+    /**
+     * Get subjects by folder
+     * 
+     * @param int|null $tsJobId Note: This is actually a folder ID for backward compatibility
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjectsByFolder($tsJobId = null)
     {
-        $folderId = $tsJobId;
-        // Base query
-        $query = Subject::select(
-            'subjects.id',
-            'subjects.ts_subjectkey',
-            'subjects.firstname',
-            'subjects.lastname'
-        )
-        ->join('folders', 'folders.ts_folder_id', '=', 'subjects.ts_folder_id')
-        ->where('folders.ts_folder_id', $folderId)->get();
-
-        return $query;
+        return self::repository()->getSubjectsByFolder($tsJobId);
     }
 
+    /**
+     * Get subjects by school and folder
+     * 
+     * @param int|null $tsJobId
+     * @param int|null $tsFolderId
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjectsBySchoolAndFolder($tsJobId = null, $tsFolderId = null)
     {
-        // Base query
-        $query = Subject::select(
-            'subjects.id',
-            'subjects.ts_subjectkey',
-            'subjects.firstname',
-            'subjects.lastname'
-        )
-        ->join('folders', 'folders.ts_folder_id', '=', 'subjects.ts_folder_id')
-        ->join('jobs', 'jobs.ts_job_id', '=', 'folders.ts_job_id')
-        ->where([
-            ['jobs.ts_job_id', $tsJobId],
-            ['folders.ts_folder_id', $tsFolderId]
-        ])->get();
-
-        return $query;
+        return self::repository()->getSubjectsBySchoolAndFolder($tsJobId, $tsFolderId);
     }
 
+    /**
+     * Get photo coordinators accessible by the current user
+     * 
+     * @return \Illuminate\Support\Collection
+     */
     public static function myPhotocoordinators()
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-    
-        // Fetch users with the role 'PhotoCoordinator' who are associated with the jobs of the current user
-        $query = User::select('users.id', 'users.firstname', 'users.lastname')
-            ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-            ->join('roles', 'roles.role_id', '=', 'model_has_roles.role_id')
-            ->join('job_users as ju_current', 'ju_current.user_id', '=', 'users.id')
-            ->join('job_users as ju_logged', 'ju_logged.ts_job_id', '=', 'ju_current.ts_job_id')
-            ->where('ju_logged.user_id', $userId)
-            ->where('roles.name', 'Photo Coordinator')
-            ->get();
-    
-        return $query;
+        return self::repository()->getPhotoCoordinators();
     }
-    
 
+    /**
+     * Get teachers accessible by the current user
+     * 
+     * @return \Illuminate\Support\Collection
+     */
     public static function myTeachers()
     {
-        // Get the logged-in user's ID
-
-        $userId = Auth::user()->id; 
-    
-        // Fetch users with the role 'Teacher' who are associated with the jobs of the current user
-        $query = User::select('users.id', 'users.firstname', 'users.lastname')
-            ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-            ->join('roles', 'roles.role_id', '=', 'model_has_roles.role_id')
-            ->join('job_users as ju_current', 'ju_current.user_id', '=', 'users.id')
-            ->join('job_users as ju_logged', 'ju_logged.ts_job_id', '=', 'ju_current.ts_job_id')
-            ->where('ju_logged.user_id', $userId)
-            ->where('roles.name', 'Teacher')
-            ->get();
-    
-        return $query;
+        return self::repository()->getTeachers();
     }
 
+    /**
+     * Get folder changes by school
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFolderChangesBySchool($tsJobId = null)
     {
-        $issues = [
-            'FOLDER_NAME_CHANGE',
-            'TEACHER',
-            'PRINCIPAL',
-            'DEPUTY'
-        ];
-    
-        // Query definition with correct table aliasing
-        $query = ProofingChangelog::
-            select(
-                'changelogs.id', 
-                'changelogs.change_datetime', 
-                'changelogs.change_from', 
-                'changelogs.change_to', 
-                'issues.issue_description',  
-                'folders.ts_foldername', 
-                'folders.ts_folderkey'
-            )
-            ->join('jobs', 'jobs.ts_jobkey', '=', 'changelogs.ts_jobkey')
-            ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
-            ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
-            ->where('jobs.ts_job_id', $tsJobId)
-            ->whereIn('issues.issue_name', $issues)
-            ->get();
-    
-        return $query;
+        return self::repository()->getFolderChangesBySchool($tsJobId);
     }
 
+    /**
+     * Get folder changes by school and folder
+     * 
+     * @param int|null $tsJobId
+     * @param int|null $tsFolderId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myFolderChangesBySchoolAndFolder($tsJobId = null, $tsFolderId = null)
     {
-        $issues = [
-            'FOLDER_NAME_CHANGE',
-            'TEACHER',
-            'PRINCIPAL',
-            'DEPUTY'
-        ];
-    
-        // Query definition with correct table aliasing
-        $query = ProofingChangelog::
-            select(
-                'changelogs.id', 
-                'changelogs.change_datetime', 
-                'changelogs.change_from', 
-                'changelogs.change_to', 
-                'issues.issue_description',  
-                'folders.ts_foldername', 
-                'folders.ts_folderkey'
-            )
-            ->join('jobs', 'jobs.ts_jobkey', '=', 'changelogs.ts_jobkey')
-            ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
-            ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
-            ->where('jobs.ts_job_id', $tsJobId)
-            ->where('folders.ts_folder_id', $tsFolderId)
-            ->whereIn('issues.issue_name', $issues)
-            ->get();
-    
-        return $query;
+        return self::repository()->getFolderChangesBySchoolAndFolder($tsJobId, $tsFolderId);
     }
 
+    /**
+     * Get subject changes by school
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjectChangesBySchool($tsJobId = null)
     {
-        // Query definition with correct table aliasing
-        $query = ProofingChangelog::
-            select(
-                'changelogs.id', 
-                'changelogs.change_datetime', 
-                'changelogs.change_from', 
-                'changelogs.change_to', 
-                'issues.issue_description',
-                'changelogs.notes', 
-                'subjects.ts_subjectkey',
-                'subjects.firstname',
-                'subjects.lastname'
-            )
-            ->join('jobs', 'jobs.ts_jobkey', '=', 'changelogs.ts_jobkey')
-            ->join('subjects', 'subjects.ts_subjectkey', '=', 'changelogs.keyvalue')
-            ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
-            ->where('jobs.ts_job_id', $tsJobId)
-            ->where('changelogs.keyorigin', 'Subject')
-            ->get();
-    
-        return $query;
+        return self::repository()->getSubjectChangesBySchool($tsJobId);
     }
 
+    /**
+     * Get subject changes by school and folder
+     * 
+     * @param int|null $tsJobId
+     * @param int|null $tsFolderId
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjectChangesBySchoolAndFolder($tsJobId = null, $tsFolderId = null)
     {
-        // Query definition with correct table aliasing
-        $query = ProofingChangelog::
-            select(
-                'changelogs.id', 
-                'changelogs.change_datetime', 
-                'changelogs.change_from', 
-                'changelogs.change_to', 
-                'issues.issue_description',
-                'changelogs.notes', 
-                'subjects.ts_subjectkey',
-                'subjects.firstname',
-                'subjects.lastname'
-            )
-            ->join('jobs', 'jobs.ts_jobkey', '=', 'changelogs.ts_jobkey')
-            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('subjects', 'subjects.ts_subjectkey', '=', 'changelogs.keyvalue')
-            ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
-            ->where([
-                ['jobs.ts_job_id', $tsJobId],
-                ['folders.ts_folder_id', $tsFolderId],
-                ['changelogs.keyorigin', 'Subject']
-            ])
-            ->get();
-    
-        return $query;
+        return self::repository()->getSubjectChangesBySchoolAndFolder($tsJobId, $tsFolderId);
     }
 
+    /**
+     * Get subject changes by school for Timestone import
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function mySubjectChangesBySchoolForTimestoneImport($tsJobId = null)
     {
-        // Query definition with correct table aliasing
-        $query = ProofingChangelog::
-            select(
-                'changelogs.id', 
-                'changelogs.change_datetime', 
-                'changelogs.change_from', 
-                'changelogs.change_to', 
-                'issues.issue_description',
-                'changelogs.notes', 
-                'subjects.ts_subjectkey',
-                'subjects.firstname',
-                'subjects.lastname'
-            )
-            ->join('jobs', 'jobs.ts_jobkey', '=', 'changelogs.ts_jobkey')
-            ->join('subjects', 'subjects.ts_subjectkey', '=', 'changelogs.keyvalue')
-            ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
-            ->where('jobs.ts_job_id', $tsJobId)
-            ->where('changelogs.keyorigin', 'Subject')
-            ->get();
-    
-        return $query;
+        return self::repository()->getSubjectChangesBySchoolForTimestoneImport($tsJobId);
     }
 
+    /**
+     * Get group photo positions by school for TNJ importing
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myGroupPhotoPositionsBySchoolForTnjImporting($tsJobId = null)
     {
-        // Query definition with correct table aliasing
-        $query = GroupPosition::
-            select(
-                'group_positions.ts_subjectkey', 
-                'group_positions.row_number', 
-                'group_positions.row_position', 
-                'folders.ts_foldername', 
-                'group_positions.row_description'
-            )
-        ->join('jobs', 'jobs.ts_jobkey', '=', 'group_positions.ts_jobkey')
-        ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->where('jobs.ts_job_id', $tsJobId)
-        ->orderBy('group_positions.row_number', 'asc')
-        ->orderBy('group_positions.row_position', 'asc')
-        ->get();
-    
-        return $query;
+        return self::repository()->getGroupPhotoPositionsBySchoolForTnjImporting($tsJobId);
     }
 
+    /**
+     * Get group photo positions by folder for TNJ importing
+     * 
+     * @param int|null $tsJobId Note: This is actually a folder ID for backward compatibility
+     * @return \Illuminate\Support\Collection
+     */
     public static function myGroupPhotoPositionsByFolderForTnjImporting($tsJobId = null)
     {
-        $tsFolderId = $tsJobId;
-        // Query definition with correct table aliasing
-        $query = GroupPosition::
-            select(
-                'group_positions.ts_subjectkey', 
-                'group_positions.row_number', 
-                'group_positions.row_position', 
-                'folders.ts_foldername', 
-                'group_positions.row_description'
-            )
-        ->join('jobs', 'jobs.ts_jobkey', '=', 'group_positions.ts_jobkey')
-        ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->where('folders.ts_folder_id', $tsFolderId)
-        ->orderBy('group_positions.row_number', 'asc')
-        ->orderBy('group_positions.row_position', 'asc')
-        ->get();
-    
-        return $query;
+        return self::repository()->getGroupPhotoPositionsByFolderForTnjImporting($tsJobId);
     }
 
+    /**
+     * Get group photo positions by school and folder for TNJ importing
+     * 
+     * @param int|null $tsJobId
+     * @param int|null $tsFolderId
+     * @return \Illuminate\Support\Collection
+     */
     public static function myGroupPhotoPositionsBySchoolAndFolderForTnjImporting($tsJobId = null, $tsFolderId = null)
     {
-        // Query definition with correct table aliasing
-        $query = GroupPosition::
-            select(
-                'group_positions.ts_subjectkey', 
-                'group_positions.row_number', 
-                'group_positions.row_position', 
-                'folders.ts_foldername', 
-                'group_positions.row_description'
-            )
-        ->join('jobs', 'jobs.ts_jobkey', '=', 'group_positions.ts_jobkey')
-        ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->where([
-            ['jobs.ts_job_id', $tsJobId],
-            ['folders.ts_folder_id', $tsFolderId]
-        ])
-        ->orderBy('group_positions.row_number', 'asc')
-        ->orderBy('group_positions.row_position', 'asc')
-        ->get();
-    
-        return $query;
+        return self::repository()->getGroupPhotoPositionsBySchoolAndFolderForTnjImporting($tsJobId, $tsFolderId);
     }
 
+    /**
+     * Get blueprint full change list
+     * 
+     * @param int|null $tsJobId
+     * @return \Illuminate\Support\Collection
+     */
     public static function blueprintFullChangeList($tsJobId = null)
     {
         return self::mySchools();
     }
 
-    //ReportRole Table
+    // ========================================================================
+    // ELOQUENT RELATIONSHIPS
+    // ========================================================================
+
+    /**
+     * Get the report roles associated with this report
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function report_roles()
     {
         return $this->hasMany('App\Models\ReportRole', 'report_id', 'id');
     }
 }
-

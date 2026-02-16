@@ -4,12 +4,12 @@
         @php
             $scaledImageUrl = $image_url = URL::asset('proofing-assets/img/440x290.png');
             $width = $height = 0;
-            $artifactNameCrypt = $artifact->name ?? '';
+            $artifactNameCrypt = (isset($artifact) && isset($artifact->name)) ? Crypt::encryptString($artifact->name) : '';
 
             if(isset($artifact) && isset($artifact->name)) {
                 $imagePath = storage_path('app/public/groupImages/'.$artifact->name);
                 if (file_exists($imagePath)) {
-                    $scaledImageUrl = route('image.show', Crypt::encryptString($artifact->name));
+                    $scaledImageUrl = route('image.show', $artifactNameCrypt);
                     list($width, $height) = getimagesize($imagePath);
                 }
             }
@@ -225,9 +225,9 @@
                 <label for="trad_photo_named_{{$group_question->id}}">{!! $group_question->issue_description !!}</label>
                 <input type="hidden" id="groupPreviousValue_{{$group_question->id}}" name="groupPreviousValue_{{$group_question->id}}" @if($groupChange) value="{{$groupChange->change_to}}" @else value="" @endif>
                 @if ($group_question->issue_name === 'GROUP_COMMENTS')
-                    <textarea class="form-control" name="group_comments" id="group_comments"data-id="{{$group_question->id}}" rows="5">{!! $groupChange->change_to ?? '' !!}</textarea>
+                    <textarea class="form-control" name="group_comments" id="group_comments" data-id="{{$group_question->id}}" rows="5">{!! $groupChange->change_to ?? '' !!}</textarea>
                 @else
-                    <select name="trad_photo_named_{{$group_question->id}}" id="trad_photo_named_{{$group_question->id}}" data-id="{{$group_question->id}}" class="form-control is_group_select" select="form-control">
+                    <select name="trad_photo_named_{{$group_question->id}}" id="trad_photo_named_{{$group_question->id}}" data-id="{{$group_question->id}}" data-name="{{$group_question->issue_name}}" data-description="{{$group_question->issue_description}}" class="form-control is_group_select" select="form-control">
                         <option value="" @if($groupChange){{ !$groupChange->change_to ? 'selected' : '' }}@endif>--Please Select--</option>
                         <option value="1"  @if($groupChange){{ $groupChange->change_to === "1" ? 'selected' : '' }}@endif>Yes</option>
                         <option value="0"  @if($groupChange){{ $groupChange->change_to === "0" ? 'selected' : '' }}@endif>No</option>

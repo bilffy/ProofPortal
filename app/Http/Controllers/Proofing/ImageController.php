@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Proofing;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
-use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\ImageService;
 use Intervention\Image\Facades\Image;
 use App\Services\Proofing\JobService;
@@ -19,23 +18,18 @@ use Session;
 use Storage;
 use Auth;
 use Log;
+use Illuminate\Support\Facades\URL;
 
 class ImageController extends Controller
 {
     
-    protected $encryptDecryptService;
     protected $jobService;
     protected $imageService;
 
-    public function __construct(EncryptDecryptService $encryptDecryptService, JobService $jobService, ImageService $imageService)
+    public function __construct(JobService $jobService, ImageService $imageService)
     {
-        $this->encryptDecryptService = $encryptDecryptService;
         $this->jobService = $jobService;
         $this->imageService = $imageService;
-    }
-
-    private function getDecryptData($hash){
-        return $this->encryptDecryptService->decryptStringMethod($hash);
     }
 
     public function zoom(Request $request)
@@ -45,7 +39,7 @@ class ImageController extends Controller
             $h = $request->query('imgClientSizeH');
             $xPercent = $request->query('mousePosPercentX');
             $yPercent = $request->query('mousePosPercentY');
-            $artifactImage = $request->query('artifactNameCrypt');
+            $artifactImage = Crypt::decryptString($request->query('artifactNameCrypt'));
             
             $image = Image::make(storage_path('app/public/groupImages/'.$artifactImage));
 
@@ -55,8 +49,7 @@ class ImageController extends Controller
 
             $w = intval($w);
             $h = intval($h);
-
-            $a = 5; // Default value, can be set from query parameters if needed
+            $a = $request->query('anchor', 5); // Default to center if not provided
 
             switch ($a) {
                 case 7:
@@ -114,9 +107,8 @@ class ImageController extends Controller
             // Return response with proper headers
             return new Response($imageContent, 200, ['Content-Type' => $mimeType]);
         } catch (\Exception $e) {
-            \Log::error('Error processing image: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Error processing image: ' . $e->getMessage());
+            return response()->json(['error' => 'Image processing failed'], 500);
         }
     }
 
@@ -137,7 +129,7 @@ class ImageController extends Controller
             $char1 = $deCryptfilename[0];
             $char2 = $deCryptfilename[1];
             
-            $imageUrl = env('EXPORTIMAGELOCATION')."{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
+            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
 
             // 3. Fetch the image while bypassing SSL verification
             $response = Http::timeout(15)
@@ -175,14 +167,14 @@ class ImageController extends Controller
 
     public function bulkUploadImage($jobHash, $step = null)
     {
-        $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobHash))->first();
+        $selectedJob = $this->jobService->getJobByJobKey(Crypt::decryptString($jobHash))->first();
         
         if (!$selectedJob) {
             abort(404); 
         }
 
         $sessionFiles = '';
-        $uploadSession = $uploadSession ?? sha1(Crypt::encryptString(Str::random(2048)));
+        $uploadSession = sha1(Crypt::encryptString(Str::random(2048)));
 
         if($step === 'match'){
             if(Session::has('upload_session')){
@@ -206,16 +198,21 @@ class ImageController extends Controller
 
     public function showgroupImage($filename)
     {
-        $path = 'groupImages/' . $this->getDecryptData($filename);
+        try {
+            $path = 'groupImages/' . Crypt::decryptString($filename);
 
-        if (!Storage::disk('public')->exists($path)) {
+            if (!Storage::disk('public')->exists($path)) {
+                abort(404);
+            }
+
+            $file = Storage::disk('public')->get($path);
+            $type = Storage::disk('public')->mimeType($path);
+
+            return response($file, Response::HTTP_OK)->header('Content-Type', $type);
+        } catch (\Exception $e) {
+            Log::error('Error showing group image: ' . $e->getMessage());
             abort(404);
         }
-
-        $file = Storage::disk('public')->get($path);
-        $type = Storage::disk('public')->mimeType($path);
-
-        return response($file, Response::HTTP_OK)->header('Content-Type', $type);
     }
 
     public function groupImageUpload(Request $request)
@@ -230,6 +227,7 @@ class ImageController extends Controller
             // Validate file type and size
             $request->validate([
                 'file' => 'image|mimes:jpeg,png,jpg|max:15360', // Restrict to image files only
+                'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/', // Prevent directory traversal
             ]);
         
             // Generate a filename
@@ -251,6 +249,11 @@ class ImageController extends Controller
 
     public function groupImageDelete(Request $request)
     {
+        // Validate the upload session to prevent directory traversal
+        $request->validate([
+            'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/',
+        ]);
+
         Session::pull('upload_session');   
         
         // Get the upload session from the request
@@ -270,13 +273,14 @@ class ImageController extends Controller
     {
         // Validate the request as necessary
         $request->validate([
-            'upload_session' => 'required|string',
+            'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/', // Prevent directory traversal
             'artifact-to-folder-map' => 'required|string', // Ensure this field is sent
+            'jobHash' => 'nullable|string',
         ]);
     
         // Decode the JSON data from the artifact-to-folder-map
         $artifactToFolderMap = json_decode($request->input('artifact-to-folder-map'), true);
-        $folderPath = session('upload_session');
+        $folderPath = $request->input('upload_session');
     
         // Now you can process this mapping as needed
         foreach ($artifactToFolderMap as $artifact => $folderKey) {
@@ -292,13 +296,16 @@ class ImageController extends Controller
                     Storage::disk('public')->move($artifact, $newPath);
                     $this->imageService->createGroupImage($folderKey, $extension);
                 }
-            }else{
+            } else {
                 Storage::disk('public')->delete($artifact);
             }
         }
         Storage::disk('public')->deleteDirectory($folderPath);
     
         // Return a response, redirect, or whatever your flow requires
+        if ($request->has('jobHash')) {
+            return redirect()->to(URL::signedRoute('proofing.dashboard', ['hash' => $request->input('jobHash')]));
+        }
         return redirect()->route('proofing');
     }
 

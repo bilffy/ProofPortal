@@ -71,7 +71,10 @@
                                             ? __(':name (:season)', ['name' => $record->$v, 'season' => $seasonList[$record->ts_season_id]])
                                             : __(':name', ['name' => $record->$v]);
 
-                                        $url = array_merge($urlArray, [$record->$k]);
+                                        // Encrypt the parameter value for security
+                                        $encryptedParamValue = Crypt::encryptString($record->$k);
+                                        
+                                        $url = array_merge($urlArray, [$encryptedParamValue]);
                                         $url = url('reports/'.implode('/', $urlArray));
                                     @endphp
                                     <tr class="choice" data-choice-name="{{ strtolower($title) }}">
@@ -79,7 +82,7 @@
                                             {{ $title }}
                                         </td>
                                         <td class="align-middle text-center">
-                                            <a href="{{$url}}/{{$record->$k}}" class="btn btn-link">Select</a>
+                                            <a href="{{$url}}/{{$encryptedParamValue}}" class="btn btn-link">Select</a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -111,16 +114,60 @@
                 let filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
 
                 if (filterByText.length >= 1) {
-                    $(".choice").addClass("d-none");
-                    let foundChoices = $("[data-choice-name*='" + filterByText + "']").removeClass("d-none");
-                    let foundCount = foundChoices.length;
-                    $("#choice-name-filter-feedback").text("Found " + foundCount + " records containing the text '" + filterByTextOriginal + "'.");
+                    // Hide all choices first
+                    $(".choice").addClass("d-none").removeClass("exact-match");
+                    
+                    // Find all matching choices
+                    let allMatches = $("[data-choice-name*='" + filterByText + "']");
+                    
+                    // Separate exact matches from partial matches
+                    let exactMatches = [];
+                    let partialMatches = [];
+                    
+                    allMatches.each(function() {
+                        let choiceName = $(this).data('choice-name');
+                        if (choiceName === filterByText) {
+                            exactMatches.push(this);
+                            $(this).addClass("exact-match");
+                        } else {
+                            partialMatches.push(this);
+                        }
+                    });
+                    
+                    // Show exact matches first, then partial matches
+                    $(exactMatches).removeClass("d-none");
+                    $(partialMatches).removeClass("d-none");
+                    
+                    let foundCount = allMatches.length;
+                    let exactCount = exactMatches.length;
+                    
+                    if (exactCount > 0) {
+                        $("#choice-name-filter-feedback").html(
+                            "Found " + foundCount + " records containing '" + filterByTextOriginal + "'. " +
+                            "<strong>" + exactCount + " exact match(es)</strong> shown first."
+                        );
+                    } else {
+                        $("#choice-name-filter-feedback").text(
+                            "Found " + foundCount + " records containing '" + filterByTextOriginal + "'."
+                        );
+                    }
                 } else {
-                    $(".choice").removeClass("d-none");
+                    $(".choice").removeClass("d-none").removeClass("exact-match");
                     $("#choice-name-filter-feedback").text("");
                 }
             }
         });
     </script>
+    
+    <style>
+        /* Highlight exact matches */
+        tr.exact-match {
+            background-color: #e8f4f8 !important;
+            border-left: 4px solid #0066cc;
+        }
+        tr.exact-match td {
+            font-weight: 600;
+        }
+    </style>
 @stop
 

@@ -1,122 +1,122 @@
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-        const lazyImages = document.querySelectorAll("img.lazyload");
+    const lazyImages = document.querySelectorAll("img.lazyload");
 
-        if ("IntersectionObserver" in window) {
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        
-                        // 1. Determine priority
-                        // If it's in a modal, we want it to jump the network queue
-                        const priority = img.dataset.priority === 'high' ? 'high' : 'low';
-    
-                        // 2. Trigger the load
-                        loadImage(img, priority);
-    
-                        // 3. Stop observing once loading starts
-                        observer.unobserve(img);
-                    }
-                });
-            }, {
-                // Start loading when 500px away to make it feel "instant"
-                rootMargin: "500px 0px",
-                threshold: 0.01
+    if ("IntersectionObserver" in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+
+                    // 1. Determine priority
+                    // If it's in a modal, we want it to jump the network queue
+                    const priority = img.dataset.priority === 'high' ? 'high' : 'low';
+
+                    // 2. Trigger the load
+                    loadImage(img, priority);
+
+                    // 3. Stop observing once loading starts
+                    observer.unobserve(img);
+                }
             });
-    
-            lazyImages.forEach(img => imageObserver.observe(img));
+        }, {
+            // Start loading when 500px away to make it feel "instant"
+            rootMargin: "500px 0px",
+            threshold: 0.01
+        });
+
+        lazyImages.forEach(img => imageObserver.observe(img));
+    } else {
+        // Fallback for very old browsers
+        lazyImages.forEach(img => loadImage(img, 'low'));
+    }
+
+    function loadImage(img, priority) {
+        const src = img.dataset.src;
+        if (!src) return;
+
+        // Create a temporary image object to pre-decode
+        const tempImage = new Image();
+
+        // Set fetch priority (Modern browsers support this to manage the queue)
+        if (priority === 'high') {
+            tempImage.fetchPriority = "high";
+            img.style.zIndex = "1000"; // Visual hint for browser layering
         } else {
-            // Fallback for very old browsers
-            lazyImages.forEach(img => loadImage(img, 'low'));
-        }
-    
-        function loadImage(img, priority) {
-            const src = img.dataset.src;
-            if (!src) return;
-    
-            // Create a temporary image object to pre-decode
-            const tempImage = new Image();
-            
-            // Set fetch priority (Modern browsers support this to manage the queue)
-            if (priority === 'high') {
-                tempImage.fetchPriority = "high";
-                img.style.zIndex = "1000"; // Visual hint for browser layering
-            } else {
-                tempImage.fetchPriority = "low";
-            }
-    
-            tempImage.src = src;
-    
-            // Use .decode() to ensure the browser doesn't "freeze" while rendering
-            tempImage.decode().then(() => {
-                img.src = src;
-                img.classList.add("loaded");
-            }).catch(err => {
-                // Fallback if decode fails (e.g. broken image)
-                img.src = src;
-            });
-        }
-        
-
-        //loading folderquestions
-        if (typeof folderQuestions !== 'undefined') {
-            folderQuestions.forEach(function(id) {
-                toggleValidationMessage(id);
-            });
-        }
-        
-        //Previous and Next Button in Proofing
-        var validateStep1 = document.getElementById('ValidateStep1');
-        var validateStep2 = document.getElementById('ValidateStep2');
-        var validateStep3 = document.getElementById('ValidateStep3');
-        var validateStep4 = document.getElementById('ValidateStep4');
-        if (validateStep1) {
-            // Show the buttons with id backPage and classNext
-            var backPageButton = document.getElementById('backPage');
-            var classNextButton = document.getElementById('classNext');
-            if (backPageButton) {
-                backPageButton.style.display = 'inline-block';
-            }
-            if (classNextButton) {
-                classNextButton.style.display = 'inline-block';
-            }
-        }
-        if (validateStep2) {
-            // Show the buttons with id backPage and classNext
-            var subjectPreviousButton = document.getElementById('subjectPrevious');
-            var subjectNextButton = document.getElementById('subjectNext');
-            if (subjectPreviousButton) {
-                subjectPreviousButton.style.display = 'inline-block';
-            }
-            if (subjectNextButton) {
-                subjectNextButton.style.display = 'inline-block';
-            }
-        }
-        if (validateStep3) {
-            // Show the buttons with id backPage and classNext
-            var groupPreviousButton = document.getElementById('groupPrevious');
-            var groupNextButton = document.getElementById('groupNext');
-            if (groupPreviousButton) {
-                groupPreviousButton.style.display = 'inline-block';
-            }
-            if (groupNextButton) {
-                groupNextButton.style.display = 'inline-block';
-            }
-        }
-        if (validateStep4) {
-            // Show the buttons with id backPage and classNext
-            var submitPreviousButton = document.getElementById('submitPrevious');
-            var submitNextButton = document.getElementById('submitProofingDisabled');
-            if (submitPreviousButton) {
-                submitPreviousButton.style.display = 'inline-block';
-            }
-            if (submitNextButton) {
-                submitNextButton.style.display = 'inline-block';
-            }
+            tempImage.fetchPriority = "low";
         }
 
-    });
+        tempImage.src = src;
+
+        // Use .decode() to ensure the browser doesn't "freeze" while rendering
+        tempImage.decode().then(() => {
+            img.src = src;
+            img.classList.add("loaded");
+        }).catch(err => {
+            // Fallback if decode fails (e.g. broken image)
+            img.src = src;
+        });
+    }
+
+
+    //loading folderquestions
+    if (typeof folderQuestions !== 'undefined') {
+        folderQuestions.forEach(function (id) {
+            toggleValidationMessage(id);
+        });
+    }
+
+    //Previous and Next Button in Proofing
+    var validateStep1 = document.getElementById('ValidateStep1');
+    var validateStep2 = document.getElementById('ValidateStep2');
+    var validateStep3 = document.getElementById('ValidateStep3');
+    var validateStep4 = document.getElementById('ValidateStep4');
+    if (validateStep1) {
+        // Show the buttons with id backPage and classNext
+        var backPageButton = document.getElementById('backPage');
+        var classNextButton = document.getElementById('classNext');
+        if (backPageButton) {
+            backPageButton.style.display = 'inline-block';
+        }
+        if (classNextButton) {
+            classNextButton.style.display = 'inline-block';
+        }
+    }
+    if (validateStep2) {
+        // Show the buttons with id backPage and classNext
+        var subjectPreviousButton = document.getElementById('subjectPrevious');
+        var subjectNextButton = document.getElementById('subjectNext');
+        if (subjectPreviousButton) {
+            subjectPreviousButton.style.display = 'inline-block';
+        }
+        if (subjectNextButton) {
+            subjectNextButton.style.display = 'inline-block';
+        }
+    }
+    if (validateStep3) {
+        // Show the buttons with id backPage and classNext
+        var groupPreviousButton = document.getElementById('groupPrevious');
+        var groupNextButton = document.getElementById('groupNext');
+        if (groupPreviousButton) {
+            groupPreviousButton.style.display = 'inline-block';
+        }
+        if (groupNextButton) {
+            groupNextButton.style.display = 'inline-block';
+        }
+    }
+    if (validateStep4) {
+        // Show the buttons with id backPage and classNext
+        var submitPreviousButton = document.getElementById('submitPrevious');
+        var submitNextButton = document.getElementById('submitProofingDisabled');
+        if (submitPreviousButton) {
+            submitPreviousButton.style.display = 'inline-block';
+        }
+        if (submitNextButton) {
+            submitNextButton.style.display = 'inline-block';
+        }
+    }
+
+});
 
 
 /****************************************************************************************** Group Image *****************************************************************************************************************/
@@ -349,37 +349,37 @@ $(document).ready(function () {
 
         var windowsScrollLeft = $(window).scrollLeft();
         var windowsScrollTop = $(window).scrollTop();
-    
+
         var imgPosViewportX = $(this).offset().left - windowsScrollLeft;
         var imgPosViewportY = $(this).offset().top - windowsScrollTop;
-    
+
         var mousePosViewportX = event.pageX - windowsScrollLeft;
         var mousePosViewportY = event.pageY - windowsScrollTop;
-    
+
         var mousePosInsideImgX = mousePosViewportX - imgPosViewportX;
         var mousePosInsideImgY = mousePosViewportY - imgPosViewportY;
-    
+
         var imgClientSizeW = this.clientWidth;
         var imgClientSizeH = this.clientHeight;
-    
+
         var imgNativeSizeW = $(this).data('native-width');
         var imgNativeSizeH = $(this).data('native-height');
         var artifactNameCrypt = $(this).data('artifact-name');
-    
+
         var mousePosPercentX = mousePosInsideImgX / imgClientSizeW;
         var mousePosPercentY = mousePosInsideImgY / imgClientSizeH;
-    
+
         // Set the size and position of the click-box
         var boxWidth = Math.floor((imgClientSizeW / imgNativeSizeW) * imgClientSizeW);
         var boxHeight = Math.floor((imgClientSizeH / imgNativeSizeH) * imgClientSizeH);
         var boxPosX = Math.floor(mousePosInsideImgX - (boxWidth / 2));
         var boxPosY = Math.floor(mousePosInsideImgY - (boxHeight / 2));
-    
+
         var zoomedImageUrl = base_url + "/franchise/zoom?imgClientSizeW=" + encodeURIComponent(imgClientSizeW) +
-        "&imgClientSizeH=" + encodeURIComponent(imgClientSizeH) +
-        "&mousePosPercentX=" + encodeURIComponent(mousePosPercentX) +
-        "&mousePosPercentY=" + encodeURIComponent(mousePosPercentY)+
-        "&artifactNameCrypt=" + artifactNameCrypt;
+            "&imgClientSizeH=" + encodeURIComponent(imgClientSizeH) +
+            "&mousePosPercentX=" + encodeURIComponent(mousePosPercentX) +
+            "&mousePosPercentY=" + encodeURIComponent(mousePosPercentY) +
+            "&artifactNameCrypt=" + artifactNameCrypt;
 
         $('.click-box').css({
             'top': boxPosY + 'px',
@@ -387,15 +387,15 @@ $(document).ready(function () {
             'width': boxWidth + 'px',
             'height': boxHeight + 'px'
         });
-    
+
         // Update the src of the zoomed image
         $('#group-image-zoom-placeholder').attr('src', zoomedImageUrl);
     });
-    
 
 
 
-/****************************************************************************************** Tags Input - Groups *****************************************************************************************************************/
+
+    /****************************************************************************************** Tags Input - Groups *****************************************************************************************************************/
 
 
     var isaddedrow = false;
@@ -404,20 +404,25 @@ $(document).ready(function () {
     function fetchAndUpdateSubjectNames() {
         // Fetch updated subject names from the input field
         var subjectNamesString = $('#allSubjectNames').val();
-        if(subjectNamesString){
-           var subjectNames = JSON.parse(subjectNamesString); 
+        var subjectNames = [];
+        if (subjectNamesString) {
+            try {
+                subjectNames = JSON.parse(subjectNamesString);
+            } catch (e) {
+                console.error("Failed to parse subject names", e);
+            }
         }
-        
+
         // Update all tagsinput fields with the new subject names
-        $('input[data-role="tagsinput"]').each(function() {
+        $('input[data-role="tagsinput"]').each(function () {
             var $input = $(this);
             var selector = '#' + $input.attr('id');
-    
+
             // Destroy any existing tagsinput and typeahead instances
             if ($input.data('tagsinput')) {
                 $input.tagsinput('destroy');
             }
-    
+
             // Reinitialize the tagsinput with the updated Typeahead configuration
             initializeTagsInput(selector, subjectNames);
 
@@ -445,22 +450,22 @@ $(document).ready(function () {
                 source: subjectNamesSuggestions.ttAdapter()
             }]
         });
-    
+
         setTimeout(() => {
             addEditButtonToTagsInput();
             makeTagsSortable(selector);  // Add the sortable feature after initialization
         }, 5);
-    
-        $(selector).on('itemAdded', function(event) {
+
+        $(selector).on('itemAdded', function (event) {
             var $input = $(this);
             var newTag = event.item;
-    
+
             // Prevent duplicates
             if ($input.tagsinput('items').filter(item => item === newTag).length > 1) {
                 $input.tagsinput('remove', newTag);
                 return;
             }
-    
+
             setTimeout(() => {
                 addEditButtonToNewTag(newTag);
                 makeTagsSortable(selector);  // Ensure sortable is re-applied when new tags are added
@@ -472,7 +477,7 @@ $(document).ready(function () {
         });
 
         // Add listener for itemRemoved events
-        $(selector).on('itemRemoved', function(event) {
+        $(selector).on('itemRemoved', function (event) {
             // console.log(selector);
             debouncedCreateJsonData();
         });
@@ -483,7 +488,7 @@ $(document).ready(function () {
 
     // function makeTagsSortable(selector) {
     //     const $tagsInputContainer = $(selector).closest('.tagsSection').find('.bootstrap-tagsinput');
-    
+
     //     $tagsInputContainer.sortable({
     //         items: 'span.tag',
     //         connectWith: '.tagsSection .bootstrap-tagsinput',
@@ -499,12 +504,12 @@ $(document).ready(function () {
     //             const isSameContainer = sourceInput.is(targetInput);    
     //             let targetInputId = targetInput.attr('id');  
     //             let sourceInputId = sourceInput.attr('id');
-    
+
     //             // If dragged to a new container, remove from source
     //             if (!isSameContainer) {
     //                 sourceInput.tagsinput('remove', tagName, { silent: true });
     //             }
-    
+
     //             // Get the target index for the drop position
     //             const targetIndex = ui.item.index();
     //             const targetTags = targetInput.tagsinput('items');
@@ -514,7 +519,7 @@ $(document).ready(function () {
     //             if (existingIndex > -1) {
     //                 targetTags.splice(existingIndex, 1);
     //             }
-    
+
     //             // // Insert the tag at the new position
     //             targetTags.splice(targetIndex, 0, tagName);
     //             sources.push(sourceInputId);
@@ -536,30 +541,30 @@ $(document).ready(function () {
     //         }              
     //     }).disableSelection();
     // }  
-     
+
     function makeTagsSortable(selector) {
         const $tagsInputContainer = $(selector)
             .closest('.tagsSection')
             .find('.bootstrap-tagsinput');
-    
+
         $tagsInputContainer.sortable({
             items: 'span.tag',
             connectWith: '.tagsSection .bootstrap-tagsinput',
             placeholder: 'sortable-placeholder',
             helper: 'clone',
-            start: function (event, ui) {},
-    
+            start: function (event, ui) { },
+
             update: function (event, ui) {
                 const sourceInput = $(ui.sender).closest('.tagsSection').find('input[data-role="tagsinput"]');
                 const targetInput = $(this).closest('.tagsSection').find('input[data-role="tagsinput"]');
                 const tagName = $(ui.item).clone().children().remove().end().text().trim();
                 const isSameContainer = sourceInput.is(targetInput);
-    
+
                 // If dragged to a new container, remove from source
                 if (!isSameContainer && sourceInput.length) {
                     sourceInput.tagsinput('remove', tagName, { silent: true });
                 }
-    
+
                 // Rebuild tags in the target container based on new DOM order
                 const newTags = [];
                 $(this)
@@ -568,20 +573,20 @@ $(document).ready(function () {
                         const cleanText = $(this).clone().children().remove().end().text().trim();
                         if (cleanText) newTags.push(cleanText);
                     });
-    
+
                 // Clear and re-add tags in the correct order
                 targetInput.tagsinput('removeAll');
                 newTags.forEach(tag => targetInput.tagsinput('add', tag));
-    
+
                 // Update hidden input value for form consistency
                 document.getElementById(targetInput.attr('id')).value = newTags.join(',');
-    
+
                 // Trigger createJsonData() safely after update
                 if (typeof createJsonData === 'function') {
                     setTimeout(() => createJsonData(), 50);
                 }
             },
-    
+
             over: function (event, ui) {
                 const targetField = $(this);
                 if (targetField.find('span.ui-sortable-handle').length === 0) {
@@ -589,19 +594,19 @@ $(document).ready(function () {
                         .insertBefore(targetField.find('span.twitter-typeahead'));
                 }
             },
-    
+
             stop: function (event, ui) {
                 count = 0;
             }
         }).disableSelection();
-    }    
-    
+    }
+
     fetchAndUpdateSubjectNames();
 
     function addEditButtonToNewTag(newTag) {
-        var isPortrait = $('#isPortrait').val();    
-        var editIcon = $('<i class="fa fa-edit ml-2 clickable" data-toggle="modal"' + 
-        (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + '></i>');
+        var isPortrait = $('#isPortrait').val();
+        var editIcon = $('<i class="fa fa-edit ml-2 clickable" data-toggle="modal"' +
+            (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + '></i>');
 
         $('.tagsSection').each(function () {
             var $tagsInput = $(this).find('.bootstrap-tagsinput');
@@ -622,9 +627,9 @@ $(document).ready(function () {
     }
 
     function addEditButtonToTagsInput() {
-        var isPortrait = $('#isPortrait').val();    
-        var editIcon = $('<i class="fa fa-edit ml-2 clickable" data-toggle="modal"' + 
-        (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + '></i>');
+        var isPortrait = $('#isPortrait').val();
+        var editIcon = $('<i class="fa fa-edit ml-2 clickable" data-toggle="modal"' +
+            (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + '></i>');
 
         $('.tagsSection').each(function () {
             $(this).find('.bootstrap-tagsinput span.tag').each(function () {
@@ -640,35 +645,35 @@ $(document).ready(function () {
 
     function debounce(func, wait) {
         let timeout;
-        return function() {
+        return function () {
             const context = this;
             const args = arguments;
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(context, args), wait);
         };
-    }    
+    }
 
     // Debounced version of createJsonData with a delay of 300ms
     const debouncedCreateJsonData = debounce(createJsonData, 300);
 
-    $('input[data-role="tagsinput"]').on('itemAdded', function(event) {
+    $('input[data-role="tagsinput"]').on('itemAdded', function (event) {
         debouncedCreateJsonData();
     });
 
-    $('input[data-role="tagsinput"]').on('itemRemoved', function(event) {
+    $('input[data-role="tagsinput"]').on('itemRemoved', function (event) {
         debouncedCreateJsonData();
     });
 
-    $(document).on('click', '.remove_row', function(e) {
+    $(document).on('click', '.remove_row', function (e) {
         e.preventDefault();
 
-        let frontRow = $('.form-group.row-label').filter(function() {
+        let frontRow = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().includes('Front Row');
         });
-        let middleRow = $('.form-group.row-label').filter(function() {
+        let middleRow = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().includes('Middle Row');
         });
-        let backRow = $('.form-group.row-label').filter(function() {
+        let backRow = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().includes('Back Row');
         });
 
@@ -684,12 +689,12 @@ $(document).ready(function () {
 
         // If the current row label is 'Front Row', rename the previous row's label to 'Front Row'
         if (currentRow.find('label').text().includes('Front Row') && prevRow.length) {
-            if(rowCount === maxRowNumber){
+            if (rowCount === maxRowNumber) {
                 prevRow.find('label').html('Front Row');
-            }else{
+            } else {
                 if (backRow.length && frontRow.length && !middleRow.length) {
                     prevRow.find('label').html('Back Row');
-                }else{
+                } else {
                     prevRow.find('label').html('Front Row <a href="#" class="remove_row">(Remove Row)</a>');
                 }
             }
@@ -698,19 +703,19 @@ $(document).ready(function () {
     });
 
 
-    $('.add_row_button').on('click', function(e) {
+    $('.add_row_button').on('click', function (e) {
         e.preventDefault();
 
-        let frontRowOnly = $('.form-group.row-label').filter(function() {
+        let frontRowOnly = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().trim() === 'Front Row';
         });
-        let frontRow = $('.form-group.row-label').filter(function() {
+        let frontRow = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().includes('Front Row');
         });
-        let middleRow = $('.form-group.row-label').filter(function() {
+        let middleRow = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().includes('Middle Row');
         });
-        let backRow = $('.form-group.row-label').filter(function() {
+        let backRow = $('.form-group.row-label').filter(function () {
             return $(this).find('label').text().includes('Back Row');
         });
         var rowCount = parseInt(document.querySelector('input[name="groupCount"]').value);
@@ -721,9 +726,9 @@ $(document).ready(function () {
         } else if (frontRow.length && backRow.length && !frontRowOnly.length) {
             // insertFrontRowBefore(frontRow, rowCount, 'Front_remove');
             insertMiddleRowBefore(rowCount);
-        }else if (backRow.length && frontRowOnly.length) {
+        } else if (backRow.length && frontRowOnly.length) {
             insertFrontRowBefore(frontRowOnly, rowCount, 'Front');
-        }else if (backRow.length) {
+        } else if (backRow.length) {
             insertFrontRowBeforeOnlyBack(backRow, rowCount);
         }
         isaddedrow = true;
@@ -734,34 +739,34 @@ $(document).ready(function () {
         backRow.find('label').html('Back Row');
         let newRowNumber = rowCount + 1;
         let maxRowNumber = $('[data-row-number]').length + 1;
-    
+
         // Determine if the remove link should be shown
         let removeRowLink = '';
 
         if (rowCount < maxRowNumber) {
             removeRowLink = '<a href="#" class="remove_row">(Remove Row)</a>';
         }
-    
+
         let newRowHtml = `
             <div class="form-group row-label tagsSection" data-row-number="${newRowNumber}">
                 <label for="tags_${newRowNumber}">Front Row ${removeRowLink}</label>
                 <input type="text" class="form-control tagsinput" id="tags_${newRowNumber}" name="tags[]" data-role="tagsinput" data-key="" value="" placeholder="Add a Name" autocomplete="off" style="display: none;">
             </div>
         `;
-    
+
         $(`.form-group.row-label[data-row-number=${rowCount}]`).before(newRowHtml);
         fetchAndUpdateSubjectNames();
     }
 
     function insertFrontRowBefore(frontRow, rowCount, rowLabel) {
-        if(rowLabel === 'Front_remove'){
+        if (rowLabel === 'Front_remove') {
             frontRow.find('label').html('Middle Row <a href="#" class="remove_row">(Remove Row)</a>');
-        }else if(rowLabel === 'Front'){
+        } else if (rowLabel === 'Front') {
             frontRow.find('label').html('Middle Row');
         }
-        
+
         let maxRowNumber = 0;
-        $('.form-group.row-label').each(function() {
+        $('.form-group.row-label').each(function () {
             let rowNumber = parseInt($(this).attr('data-row-number'));
             if (rowNumber > maxRowNumber) {
                 maxRowNumber = rowNumber;
@@ -776,21 +781,21 @@ $(document).ready(function () {
         if (rowCount <= maxRowNumber) {
             removeRowLink = '<a href="#" class="remove_row">(Remove Row)</a>';
         }
-    
+
         let newRowHtml = `
             <div class="form-group row-label tagsSection" data-row-number="${newRowNumber}">
                 <label for="tags_${newRowNumber}">Front Row ${removeRowLink}</label>
                 <input type="text" class="form-control tagsinput" id="tags_${newRowNumber}" name="tags[]" data-role="tagsinput" data-key="" value="" placeholder="Add a Name" autocomplete="off" style="display: none;">
             </div>
         `;
-    
+
         $(`.form-group.row-label[data-row-number=${rowCount}]`).before(newRowHtml);
         fetchAndUpdateSubjectNames();
     }
 
     function insertMiddleRowBefore(rowCount) {
         let maxRowNumber = 0;
-        $('.form-group.row-label').each(function() {
+        $('.form-group.row-label').each(function () {
             let rowNumber = parseInt($(this).attr('data-row-number'));
             if (rowNumber > maxRowNumber) {
                 maxRowNumber = rowNumber;
@@ -823,7 +828,7 @@ $(document).ready(function () {
         var jobHash = $('#jobHash').val();
 
         // Sort the tagsSection elements so that the one with 'Absent List' label comes first
-        let sortedSections = $('.tagsSection').sort(function(a, b) {
+        let sortedSections = $('.tagsSection').sort(function (a, b) {
             let labelA = $(a).find('label').text().trim();
             let labelB = $(b).find('label').text().trim();
 
@@ -834,12 +839,14 @@ $(document).ready(function () {
         });
 
         // Loop through each sorted tagsSection
-        sortedSections.each(function(index) {
+        let nameRowCounter = 0;
+        sortedSections.each(function (index) {
             let rowLabel = $(this).find('label').text().trim();
-            if (rowLabel === 'Absent List') {
+            if (rowLabel.includes('Absent List')) {
                 rowLabel = 'Absent';
             } else {
-                rowLabel = 'Row_' + (index-1);
+                rowLabel = 'Row_' + nameRowCounter;
+                nameRowCounter++;
             }
 
             let tagNames = $(this).find('input[data-role="tagsinput"]').val().split(',');
@@ -861,8 +868,8 @@ $(document).ready(function () {
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-        if(JSON.stringify(subjectNamesjson) !== JSON.stringify(jsonData)){
-            var targetUrl = base_url+"/franchise/proofing-change-log/group-change/submit";
+        if (JSON.stringify(subjectNamesjson) !== JSON.stringify(jsonData)) {
+            var targetUrl = base_url + "/franchise/proofing-change-log/group-change/submit";
             jsonData['folderHash'] = folderHash;
             jsonData['jobHash'] = jobHash;
             $.ajax({
@@ -872,21 +879,23 @@ $(document).ready(function () {
                 async: true,
                 data: JSON.stringify(jsonData),
                 cache: false,
-                contentType: false,
+                contentType: 'application/json; charset=utf-8',
                 processData: false,
                 headers: {
                     'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
                 },
                 timeout: 60000,
                 success: function (response) {
-                    //  console.log(response);
+                    // Update the data-key to prevent redundant saves until the next change
+                    $('#allSubjectNames').attr('data-key', JSON.stringify(jsonData));
+                    $('#allSubjectNames').data('key', jsonData);
                 },
                 error: function (e) {
                     // console.log('An error occurred:', e);
                 }
             })
         }
-        
+
     }
 
     /****************************************************************************************** GridSpellingModal - Groups *****************************************************************************************************************/
@@ -894,7 +903,7 @@ $(document).ready(function () {
     let currentPage = 1;
     let loading = false;
     let currentSearch = "";
-    
+
     // Load subjects via AJAX
     function loadGridSubjects(searchQuery = "") {
         if (loading) return;
@@ -902,7 +911,7 @@ $(document).ready(function () {
 
         const $tbody = $("#spelling-subjects-tbody");
         const $btn = $("#loadMoreSubjects");
-    
+
         // Reset tbody if first page
         // if (currentPage === 1) {
         //     $("#spelling-subjects-tbody").empty();
@@ -915,16 +924,16 @@ $(document).ready(function () {
             // Just show loading on the button for "Load More"
             $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Loading...');
         }
-    
+
         $.get(window.GridConfig.subjectsGridUrl, {
             job: window.GridConfig.encryptedJob,
             folder: window.GridConfig.encryptedFolder,
             page: currentPage,
             search: searchQuery
-        }, function(res) {
+        }, function (res) {
             // Append the returned rows
             // $("#spelling-subjects-tbody").append(res.html);
-    
+
             // // Show or hide "Load More" button
             // if (res.hasMore) {
             //     $("#loadMoreSubjects").removeClass("d-none");
@@ -935,18 +944,18 @@ $(document).ready(function () {
             if (currentPage === 1) $tbody.empty(); // Remove spinner before appending
 
             $tbody.append(res.html);
-            
+
             // Reset Button
             $btn.prop('disabled', false).text('Load more');
-            
-            if (res.hasMore) { $btn.removeClass("d-none"); } 
+
+            if (res.hasMore) { $btn.removeClass("d-none"); }
             else { $btn.addClass("d-none"); }
-    
+
             // Lazy load images
             initLazyImages(document.getElementById("GridSpellingEdits_Modal"));
-    
+
             loading = false;
-    
+
             // If a search is active, highlight / filter rows
             if (searchQuery) {
                 const val = searchQuery.toLowerCase();
@@ -957,11 +966,11 @@ $(document).ready(function () {
             }
         });
     }
-    
+
     // Lazy load images
     function initLazyImages(container) {
         const lazyImages = container.querySelectorAll("img.lazyloadgrid");
-    
+
         if ("IntersectionObserver" in window) {
             const observer = new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
@@ -973,7 +982,7 @@ $(document).ready(function () {
                     }
                 });
             }, { rootMargin: "300px 0px", threshold: 0.1 });
-    
+
             lazyImages.forEach(img => observer.observe(img));
         } else {
             lazyImages.forEach(img => {
@@ -982,26 +991,26 @@ $(document).ready(function () {
             });
         }
     }
-    
+
     // Open modal and apply server-side search
     $('#GridSpellingEdits_Modal').on('show.bs.modal', function (event) {
         const modal = $(this);
         const button = $(event.relatedTarget); // icon clicked
         const subjectName = button.data('subject-name') || '';
-    
+
         const filterBox = modal.find('input#subject-name-filter');
-    
+
         // Set filter input
         filterBox.val(subjectName);
-    
+
         // Reset page
         currentPage = 1;
         currentSearch = subjectName;
         $("#spelling-subjects-tbody").empty();
-    
+
         // Load first page with server-side search
         loadGridSubjects(currentSearch);
-    
+
         // Bind input for dynamic search
         filterBox.off('input').on('input', function () {
             currentPage = 1;
@@ -1009,20 +1018,20 @@ $(document).ready(function () {
             loadGridSubjects(currentSearch);
         });
     });
-    
+
     // Load more button
     $("#loadMoreSubjects").on("click", function () {
         currentPage++;
         loadGridSubjects(currentSearch);
     });
-    
+
     $('#subject-name-filter').on('input', function () {
         currentPage = 1;
         currentSearch = $(this).val().trim();
         // console.log(currentSearch);
         loadGridSubjects(currentSearch);
     });
-    
+
     $(document).on("change", "input[id*='-grid-spelling-']", function (event) {
         var inputField = $(this);
 
@@ -1044,7 +1053,7 @@ $(document).ready(function () {
         $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
 
         var tableRow = $(this).parent().parent();
-       //console.log(tableRow);
+        //console.log(tableRow);
 
         var newTableRowDataFilterValue = '';
         tableRow.find('input').each(function () {
@@ -1091,7 +1100,7 @@ $(document).ready(function () {
 
 
     function gridSpellingUpdate(skHash, skEncrypted, folderkeyEncrypted) {
-        var targetUrl = base_url+"/franchise/proofing-change-log/subject-change/submit";
+        var targetUrl = base_url + "/franchise/proofing-change-log/subject-change/submit";
 
         var inputGridSpellingSalutation = $("#" + skHash + "-grid-spelling-salutation");
         var inputGridSpellingFirstName = $("#" + skHash + "-grid-spelling-first-name");
@@ -1100,7 +1109,7 @@ $(document).ready(function () {
         var inputGridSpellingPrefix = $("#" + skHash + "-grid-spelling-prefix");
         var inputGridSpellingSuffix = $("#" + skHash + "-grid-spelling-suffix");
 
-        if(inputGridSpellingSalutation.val() || inputGridSpellingFirstName.val() || inputGridSpellingLastName.val() || inputGridSpellingTitle.val() || inputGridSpellingPrefix.val() || inputGridSpellingSuffix.val()){
+        if (inputGridSpellingSalutation.val() || inputGridSpellingFirstName.val() || inputGridSpellingLastName.val() || inputGridSpellingTitle.val() || inputGridSpellingPrefix.val() || inputGridSpellingSuffix.val()) {
             var formData = new FormData();
             formData.append("issue", 'grid-spelling');
             formData.append("subject_key_hash", skHash);
@@ -1162,19 +1171,17 @@ $(document).ready(function () {
                     $("." + skHash + "-title").text(title);
                     $("." + skHash + "-salutation").text(salutation);
                     $("." + skHash + "-prefix").text(prefix);
-                    $("." + skHash + "-suffix").text(suffix); 
+                    $("." + skHash + "-suffix").text(suffix);
 
                     $("." + skHash + "-salutation").addClass('d-none');
                     $("." + skHash + "-prefix").addClass('d-none');
-                    $("." + skHash + "-suffix").addClass('d-none');  
+                    $("." + skHash + "-suffix").addClass('d-none');
 
-                    if(useSalutationPortrait)
-                    {
-                        $("." + skHash + "-salutation").removeClass('d-none');  
+                    if (useSalutationPortrait) {
+                        $("." + skHash + "-salutation").removeClass('d-none');
                     }
 
-                    if(usePrefixSuffixPortrait)
-                    {
+                    if (usePrefixSuffixPortrait) {
                         $("." + skHash + "-prefix").removeClass('d-none');
                         $("." + skHash + "-suffix").removeClass('d-none');
                     }
@@ -1194,17 +1201,17 @@ $(document).ready(function () {
                     $("." + skHash + "-grid-spelling-prefix").val(prefix);
                     $("." + skHash + "-grid-spelling-suffix").val(suffix);
 
-                    $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
+                    $('tr.person-row.' + skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
 
                     //find and replace general
-                    $('.'+ skHash +'-find-replace').contents().filter(function () {
+                    $('.' + skHash + '-find-replace').contents().filter(function () {
                         return this.nodeType === 3;
                     }).replaceWith(function () {
                         // Ensure we are replacing with a string, even if empty
                         let newName = fullNamePortraitNew || "";
                         return this.nodeValue.replace(fullNamePortraitOld, newName);
                     });
-                    
+
                     var $subjectNamesInput = $('#allSubjectNames');
 
                     if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
@@ -1212,46 +1219,46 @@ $(document).ready(function () {
                             // 1. Parse the JSON strings from the value and the data attribute
                             var mainArray = JSON.parse($subjectNamesInput.val());
                             var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
-                    
+
                             // 2. Helper function to update names in an array
-                            var updateArray = function(arr, oldName, newName) {
-                                return arr.map(function(name) {
+                            var updateArray = function (arr, oldName, newName) {
+                                return arr.map(function (name) {
                                     return name === oldName ? newName : name;
                                 });
                             };
-                    
+
                             // 3. Update the main array
                             mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
-                    
+
                             // 4. Update the data-key object (Row_0, Row_1, etc.)
                             if (keyData) {
-                                Object.keys(keyData).forEach(function(row) {
+                                Object.keys(keyData).forEach(function (row) {
                                     keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
                                 });
                             }
-                    
+
                             // 5. Save back to the element
                             // Update the value attribute
                             $subjectNamesInput.val(JSON.stringify(mainArray));
-                            
+
                             // Update the internal jQuery data object AND the actual DOM attribute
                             $subjectNamesInput.data('key', keyData);
                             $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
-                    
+
                             // 6. Trigger change for other listeners
                             $subjectNamesInput.trigger('change');
                         } catch (e) {
                             // console.error("Error parsing allSubjectNames JSON:", e);
                         }
                     }
-                    
+
 
                     //update the JS array with the new name.
                     findSpanByText(fullNameGroupOld, fullNameGroupNew);
                     fetchAndUpdateSubjectNames();
                     // createJsonData();
 
-                    $('#grid-spelling-acknowledge') 
+                    $('#grid-spelling-acknowledge')
                         .removeClass("text-success")
                         .removeClass("text-info")
                         .removeClass("text-warning")
@@ -1330,7 +1337,7 @@ $(document).ready(function () {
         $(".people-photos-show").addClass("d-inline").removeClass("d-none");
         $(".person-pic-wrapper").addClass("d-none").removeClass("d-inline");
     });
-    
+
     $(document).on('click', '.people-photos-show', function (e) {
         e.preventDefault(); // Prevent page jump
         $(".people-photos-hide").addClass("d-inline").removeClass("d-none");
@@ -1344,7 +1351,7 @@ $(document).ready(function () {
         // Get all <span> elements on the page with the old text
         const spans = document.querySelectorAll('span.tag');
         const matchingSpans = Array.from(spans).filter(span => span.textContent.trim() === fullNameOld);
-    
+
         if (matchingSpans.length > 0) {
             matchingSpans.forEach(span => {
                 // Find the closest .form-group div
@@ -1360,9 +1367,9 @@ $(document).ready(function () {
                     }
                 }
                 // Update the span's inner HTML with the new text and edit icon
-                var isPortrait = $('#isPortrait').val(); 
-                span.innerHTML = fullNameNew + '<i class="fa fa-edit ml-2 clickable" data-toggle="modal"' + 
-                (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + ' data-subject-name="' + fullNameNew + '"></i><span data-role="remove"></span>';
+                var isPortrait = $('#isPortrait').val();
+                span.innerHTML = fullNameNew + '<i class="fa fa-edit ml-2 clickable" data-toggle="modal"' +
+                    (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + ' data-subject-name="' + fullNameNew + '"></i><span data-role="remove"></span>';
             });
         } else {
             //console.log('No spans with the old text found');
@@ -1389,7 +1396,7 @@ $(document).ready(function () {
             $('#saveProofing').removeClass("d-none");
             $('#completeProofing').addClass("d-none");
             $('#submitProofingDisabled').addClass("d-none");
-        }else if($(this).val() === 'mark-as-complete'){
+        } else if ($(this).val() === 'mark-as-complete') {
             $('#saveProofing').addClass("d-none");
             $('#completeProofing').removeClass("d-none");
             $('#submitProofingDisabled').addClass("d-none");
@@ -1412,20 +1419,20 @@ $(document).ready(function () {
             $.ajax({
                 dataType: 'json',
                 type: "POST",
-                url: base_url+"/franchise/proofing-change-log/submit",
+                url: base_url + "/franchise/proofing-change-log/submit",
                 async: true,
                 data: formData,
                 cache: false,
                 contentType: false,
                 processData: false,
                 timeout: 60000,
-                success: function(response) {
-                    if(response.status==true){window.location.href = response.url; }
-                    else{$(".showinfo").html(response.alert);}
+                success: function (response) {
+                    if (response.status == true) { window.location.href = response.url; }
+                    else { $(".showinfo").html(response.alert); }
                 },
                 error: function (xhr, status) {
-                    var obj = request.responseJSON.errors ;
-                   // console.log(obj);
+                    var obj = request.responseJSON.errors;
+                    // console.log(obj);
                 }
             })
 
@@ -1446,20 +1453,20 @@ $(document).ready(function () {
             $.ajax({
                 dataType: 'json',
                 type: "POST",
-                url: base_url+"/franchise/proofing-change-log/submit",
+                url: base_url + "/franchise/proofing-change-log/submit",
                 async: true,
                 data: formData,
                 cache: false,
                 contentType: false,
                 processData: false,
                 timeout: 60000,
-                success: function(response) {
-                    if(response.status==true){window.location.href = response.url; }
-                    else{$(".showinfo").html(response.alert);}
+                success: function (response) {
+                    if (response.status == true) { window.location.href = response.url; }
+                    else { $(".showinfo").html(response.alert); }
                 },
                 error: function (xhr, status) {
-                    var obj = request.responseJSON.errors ;
-                   // console.log(obj);
+                    var obj = request.responseJSON.errors;
+                    // console.log(obj);
                 }
             })
 
@@ -1470,395 +1477,393 @@ $(document).ready(function () {
 
     /****************************************************************************************** Proofing - Final submit *****************************************************************************************************************/
 
-        //Modal Subject Proofing
-        $('.modal_start').on('change', '.is_subject_select', function() {
-            var modalId = $(this).closest('.modal_start').attr('id');
-            var skHash = $(this).data('id');
-            var selectedOption = $(this).val();
-            var selectedText = $(this).find('option:selected').text();
-            var classNameCurrent = document.querySelector('input[name="old_folder_name"]').value;
-            var classNameNew = document.querySelector('input[name="folder_name"]').value;
-    
-            var inputFieldsContainer = $('#inputFieldsContainer_' + modalId.split('_')[0]);
-            inputFieldsContainer.empty(); // Clear previous input fields
-    
-    
-            var templateId;
-            if (selectedText.includes('Job Title') || selectedText.includes('Salutation')) {
-                // Get the template based on the selected option
-                templateId = 'inputFieldTemplate_' + modalId.split('_')[0];
-            } else {
-                templateId = 'inputFieldTemplate' + selectedOption + '_' +skHash;
-            }
+    //Modal Subject Proofing
+    $('.modal_start').on('change', '.is_subject_select', function () {
+        var modalId = $(this).closest('.modal_start').attr('id');
+        var skHash = $(this).data('id');
+        var selectedOption = $(this).val();
+        var selectedText = $(this).find('option:selected').text();
+        var classNameCurrent = document.querySelector('input[name="old_folder_name"]').value;
+        var classNameNew = document.querySelector('input[name="folder_name"]').value;
 
-            var template = $('#' + templateId).html();
-    
-            if (template) {
-                var firstName  = $('#'+skHash+'-first-name').text();
-                var lastName   = $('#'+skHash+'-last-name').text();
-                var salutation = $('#'+skHash+'-salutation').text();
-                var title      = $('#'+skHash+'-title').text();
-                var picture    = $('#'+skHash+'_picture').text();
-                var folder     = $('#'+skHash+'_folder').text();
-                var prefix     = $('#'+skHash+'-prefix').text();
-                var suffix     = $('#'+skHash+'-suffix').text();
-                
-                var templateElement = $(template);
-                
-                var firstNameInput  = templateElement.find('input[name="' + skHash + '_new_first_name"]');
-                var lastNameInput   = templateElement.find('input[name="' + skHash + '_new_last_name"]');
-                var salutationInput = templateElement.find('input[name="' + skHash + '_new_salutation"]');
-                var prefixInput     = templateElement.find('input[name="' + skHash + '_new_prefix"]');
-                var suffixInput     = templateElement.find('input[name="' + skHash + '_new_suffix"]');
-                var titleInput      = templateElement.find('input[name="' + skHash + '_new_title"]');
-                var pictureInput    = templateElement.find('input[name="' + skHash + '_picture_issue"]');
-                var folderInput     = templateElement.find('select[name="' + skHash + '_folder_issue"]');
-                
-                /* ✅ SET ONLY IF VALUE EXISTS */
-                if (firstNameInput.length)  firstNameInput.val(firstName);
-                if (lastNameInput.length)   lastNameInput.val(lastName);
-                if (salutationInput.length) salutationInput.val(salutation);
-                if (prefixInput.length)     prefixInput.val(prefix);
-                if (suffixInput.length)     suffixInput.val(suffix);
-                if (titleInput.length)      titleInput.val(title);
-                if (pictureInput.length)    pictureInput.val(picture);
-                if (folderInput.length)     folderInput.val(folder);
-                
-                inputFieldsContainer.append(templateElement);
+        var inputFieldsContainer = $('#inputFieldsContainer_' + modalId.split('_')[0]);
+        inputFieldsContainer.empty(); // Clear previous input fields
+
+
+        var templateId;
+        if (selectedText.includes('Job Title') || selectedText.includes('Salutation')) {
+            // Get the template based on the selected option
+            templateId = 'inputFieldTemplate_' + modalId.split('_')[0];
+        } else {
+            templateId = 'inputFieldTemplate' + selectedOption + '_' + skHash;
+        }
+
+        var template = $('#' + templateId).html();
+
+        if (template) {
+            var firstName = $('#' + skHash + '-first-name').text();
+            var lastName = $('#' + skHash + '-last-name').text();
+            var salutation = $('#' + skHash + '-salutation').text();
+            var title = $('#' + skHash + '-title').text();
+            var picture = $('#' + skHash + '_picture').text();
+            var folder = $('#' + skHash + '_folder').text();
+            var prefix = $('#' + skHash + '-prefix').text();
+            var suffix = $('#' + skHash + '-suffix').text();
+
+            var templateElement = $(template);
+
+            var firstNameInput = templateElement.find('input[name="' + skHash + '_new_first_name"]');
+            var lastNameInput = templateElement.find('input[name="' + skHash + '_new_last_name"]');
+            var salutationInput = templateElement.find('input[name="' + skHash + '_new_salutation"]');
+            var prefixInput = templateElement.find('input[name="' + skHash + '_new_prefix"]');
+            var suffixInput = templateElement.find('input[name="' + skHash + '_new_suffix"]');
+            var titleInput = templateElement.find('input[name="' + skHash + '_new_title"]');
+            var pictureInput = templateElement.find('input[name="' + skHash + '_picture_issue"]');
+            var folderInput = templateElement.find('select[name="' + skHash + '_folder_issue"]');
+
+            /* ✅ SET ONLY IF VALUE EXISTS */
+            if (firstNameInput.length) firstNameInput.val(firstName);
+            if (lastNameInput.length) lastNameInput.val(lastName);
+            if (salutationInput.length) salutationInput.val(salutation);
+            if (prefixInput.length) prefixInput.val(prefix);
+            if (suffixInput.length) suffixInput.val(suffix);
+            if (titleInput.length) titleInput.val(title);
+            if (pictureInput.length) pictureInput.val(picture);
+            if (folderInput.length) folderInput.val(folder);
+
+            inputFieldsContainer.append(templateElement);
+        }
+
+        $('.homedfolders option').each(function () {
+            if ($(this).text() === classNameCurrent) {
+                $(this).text(classNameNew); // Correct way to update the text
             }
-    
-            $('.homedfolders option').each(function() {
-                if ($(this).text() === classNameCurrent) {
-                    $(this).text(classNameNew); // Correct way to update the text
-                }
-            });
         });
-    
-        //subject submit
-        $('.subject_submit').click(function(){
-            suppressChangeEvent = true;
-            $('#subjects_questions option[value=""]').removeAttr('selected');
-            var skHash = $(this).attr('id').replace('_issue_submit','');
-            var data = $('#'+skHash+"_form").serialize();
+    });
 
-            // Remove the prefix from the serialized data
-            data = data.replace(new RegExp(skHash + "_", "g"), "");
-            $.ajax({
-                dataType: 'json',
-                type: 'POST',
-                url: base_url+"/franchise/proofing-change-log/subject-change/submit",
-                data: data,
-                success: function(response) {
-                    if (response && response.responseData) {
-                        var responseData = response.responseData;
-                        // console.log(responseData);
-                        var fullNamePortraitOld = responseData['fullNameOldPortrait'];
-                        var fullNamePortraitNew = responseData['fullNamePortrait'];
-                        var fullNameGroupOld = responseData['fullNameOldGroup'];
-                        var fullNameGroupNew = responseData['fullNameGroup'];
-                        var useSalutationPortrait = responseData['useSalutationPortrait'];
-                        var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
+    //subject submit
+    $('.subject_submit').click(function () {
+        suppressChangeEvent = true;
+        $('#subjects_questions option[value=""]').removeAttr('selected');
+        var skHash = $(this).attr('id').replace('_issue_submit', '');
+        var data = $('#' + skHash + "_form").serialize();
 
-                        // Use the Logical OR operator (|| "") to ensure nulls become empty strings
-                        var firstName = responseData.first_name || "";
-                        var lastName  = responseData.last_name || "";
-                        var title     = responseData.title || "";
-                        var salutation = responseData.salutation || "";
-                        var prefix    = responseData.prefix || "";
-                        var suffix    = responseData.suffix || "";
-                        var picture    = responseData.picture || "";
-                        var folder    = responseData.folder || "";
+        // Remove the prefix from the serialized data
+        data = data.replace(new RegExp(skHash + "_", "g"), "");
+        $.ajax({
+            dataType: 'json',
+            type: 'POST',
+            url: base_url + "/franchise/proofing-change-log/subject-change/submit",
+            data: data,
+            success: function (response) {
+                if (response && response.responseData) {
+                    var responseData = response.responseData;
+                    // console.log(responseData);
+                    var fullNamePortraitOld = responseData['fullNameOldPortrait'];
+                    var fullNamePortraitNew = responseData['fullNamePortrait'];
+                    var fullNameGroupOld = responseData['fullNameOldGroup'];
+                    var fullNameGroupNew = responseData['fullNameGroup'];
+                    var useSalutationPortrait = responseData['useSalutationPortrait'];
+                    var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
 
-                        $('#spelling_'+ skHash).addClass('d-none');
-                        $('#picture_'+ skHash).addClass('d-none');
-                        $('#folder_'+ skHash).addClass('d-none');
-                        $('#title-salutation_'+ skHash).addClass('d-none');
-                        $('#prefix-suffix_'+ skHash).addClass('d-none');
-    
-                        $('#'+ skHash +'_acknowledge').removeClass("text-success text-info text-warning text-danger");
-                        $('#'+ skHash +'_acknowledge').addClass("text-" + responseData.htmlUpdates.alert);
-                        $('#'+ skHash +'_acknowledge').html(responseData.htmlUpdates.acknowledge).fadeIn(500).delay(4000).fadeOut(1000);
-    
-                        //find and replace names wrapped in specific HTML classes
-                        $('.'+ skHash +'-first-name').text(firstName);
-                        $('.'+ skHash +'-last-name').text(lastName);
-                        $('.'+ skHash +'-title').text(title);
-                        $('#'+ skHash +'_picture').text(picture);
-                        $('#'+ skHash +'_folder').text(folder);
-                        $("." + skHash + "-salutation").text(salutation);
-                        $("." + skHash + "-prefix").text(prefix);
-                        $("." + skHash + "-suffix").text(suffix); 
+                    // Use the Logical OR operator (|| "") to ensure nulls become empty strings
+                    var firstName = responseData.first_name || "";
+                    var lastName = responseData.last_name || "";
+                    var title = responseData.title || "";
+                    var salutation = responseData.salutation || "";
+                    var prefix = responseData.prefix || "";
+                    var suffix = responseData.suffix || "";
+                    var picture = responseData.picture || "";
+                    var folder = responseData.folder || "";
 
-                        $("." + skHash + "-salutation").addClass('d-none');
-                        $("." + skHash + "-prefix").addClass('d-none');
-                        $("." + skHash + "-suffix").addClass('d-none');  
+                    $('#spelling_' + skHash).addClass('d-none');
+                    $('#picture_' + skHash).addClass('d-none');
+                    $('#folder_' + skHash).addClass('d-none');
+                    $('#title-salutation_' + skHash).addClass('d-none');
+                    $('#prefix-suffix_' + skHash).addClass('d-none');
 
-                        if(useSalutationPortrait)
-                        {
-                            $("." + skHash + "-salutation").removeClass('d-none');  
-                        }
+                    $('#' + skHash + '_acknowledge').removeClass("text-success text-info text-warning text-danger");
+                    $('#' + skHash + '_acknowledge').addClass("text-" + responseData.htmlUpdates.alert);
+                    $('#' + skHash + '_acknowledge').html(responseData.htmlUpdates.acknowledge).fadeIn(500).delay(4000).fadeOut(1000);
 
-                        if(usePrefixSuffixPortrait)
-                        {
-                            $("." + skHash + "-prefix").removeClass('d-none');
-                            $("." + skHash + "-suffix").removeClass('d-none');
-                        }
+                    //find and replace names wrapped in specific HTML classes
+                    $('.' + skHash + '-first-name').text(firstName);
+                    $('.' + skHash + '-last-name').text(lastName);
+                    $('.' + skHash + '-title').text(title);
+                    $('#' + skHash + '_picture').text(picture);
+                    $('#' + skHash + '_folder').text(folder);
+                    $("." + skHash + "-salutation").text(salutation);
+                    $("." + skHash + "-prefix").text(prefix);
+                    $("." + skHash + "-suffix").text(suffix);
 
-                        // Now update the fields using these safe variables
-                        $("." + skHash + "-form-spelling-first-name").val(firstName);
-                        $("." + skHash + "-form-spelling-last-name").val(lastName);
-                        $("." + skHash + "-form-spelling-title").val(title);
-                        $("." + skHash + "-form-spelling-salutation").val(salutation);
-                        $("." + skHash + "-form-spelling-prefix").val(prefix);
-                        $("." + skHash + "-form-spelling-suffix").val(suffix);
-                        
-                        $('.'+ skHash +'-grid-spelling-first-name').val(firstName);
-                        $('.'+ skHash +'-grid-spelling-last-name').val(lastName);
-                        $('.'+ skHash +'-grid-spelling-title').val(title);
-                        $('.'+ skHash +'-grid-spelling-salutation').val(salutation);
-                        $('.'+ skHash +'-grid-spelling-prefix').val(prefix);
-                        $('.'+ skHash +'-grid-spelling-suffix').val(suffix);
+                    $("." + skHash + "-salutation").addClass('d-none');
+                    $("." + skHash + "-prefix").addClass('d-none');
+                    $("." + skHash + "-suffix").addClass('d-none');
 
-                        $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
-
-                        $('tr.person-row.'+ skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
-    
-                        // Define or select the modal element
-                        var modal = $('#' + skHash + '_modal'); // Adjust the selector to target the correct modal
-                        if (modal.length > 0) {
-                            modal.find("#history-box-subject-history-table").html(responseData.htmlUpdates.full_name);
-                        }
-                        
-                        //find and replace general
-                        $('.'+ skHash +'-find-replace').contents().filter(function () {
-                            return this.nodeType === 3;
-                        }).replaceWith(function () {
-                            // Ensure we are replacing with a string, even if empty
-                            let newName = fullNamePortraitNew || "";
-                            return this.nodeValue.replace(fullNamePortraitOld, newName);
-                        });
-
-                        //updation for the names to select from dropdown in tagsinput
-                        var $subjectNamesInput = $('#allSubjectNames');
-
-                        if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
-                            try {
-                                // 1. Parse the JSON strings from the value and the data attribute
-                                var mainArray = JSON.parse($subjectNamesInput.val());
-                                var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
-                        
-                                // 2. Helper function to update names in an array
-                                var updateArray = function(arr, oldName, newName) {
-                                    return arr.map(function(name) {
-                                        return name === oldName ? newName : name;
-                                    });
-                                };
-                        
-                                // 3. Update the main array
-                                mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
-                        
-                                // 4. Update the data-key object (Row_0, Row_1, etc.)
-                                if (keyData) {
-                                    Object.keys(keyData).forEach(function(row) {
-                                        keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
-                                    });
-                                }
-                        
-                                // 5. Save back to the element
-                                // Update the value attribute
-                                $subjectNamesInput.val(JSON.stringify(mainArray));
-                                
-                                // Update the internal jQuery data object AND the actual DOM attribute
-                                $subjectNamesInput.data('key', keyData);
-                                $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
-                        
-                                // 6. Trigger change for other listeners
-                                $subjectNamesInput.trigger('change');
-                            } catch (e) {
-                                // console.error("Error parsing allSubjectNames JSON:", e);
-                            }
-                        }
-                        
-                        findSpanByText(fullNameGroupOld, fullNameGroupNew); //data-role = 'tagsinput'
-                        fetchAndUpdateSubjectNames(); //typeahead
-                        // createJsonData();
-
-                        $('#subjects_questions option[value=""]').attr('selected', 'selected');
-    
-                        //show the history button
-                        $('#'+ skHash +'_history_edits_button').removeClass("d-none").addClass("d-inline-block");
-    
-                        if (responseData.resolved_status_id === 0) {
-                            $('#'+ skHash +'_history_edits_button').find("i.fa-history").addClass('text-success');
-                        } else {
-                            $('#'+ skHash +'_history_edits_button').find("i.fa-history").addClass('text-danger');
-                        }
-
-                       // console.log("Completed");
-                    } else {
-                      // console.log("Error: Invalid response structure.");
+                    if (useSalutationPortrait) {
+                        $("." + skHash + "-salutation").removeClass('d-none');
                     }
-                    suppressChangeEvent = false;
-                },
-                error: function (e) {
-                    // alert("An error occurred: " + e.responseText.message);
-                    // console.log(e);
+
+                    if (usePrefixSuffixPortrait) {
+                        $("." + skHash + "-prefix").removeClass('d-none');
+                        $("." + skHash + "-suffix").removeClass('d-none');
+                    }
+
+                    // Now update the fields using these safe variables
+                    $("." + skHash + "-form-spelling-first-name").val(firstName);
+                    $("." + skHash + "-form-spelling-last-name").val(lastName);
+                    $("." + skHash + "-form-spelling-title").val(title);
+                    $("." + skHash + "-form-spelling-salutation").val(salutation);
+                    $("." + skHash + "-form-spelling-prefix").val(prefix);
+                    $("." + skHash + "-form-spelling-suffix").val(suffix);
+
+                    $('.' + skHash + '-grid-spelling-first-name').val(firstName);
+                    $('.' + skHash + '-grid-spelling-last-name').val(lastName);
+                    $('.' + skHash + '-grid-spelling-title').val(title);
+                    $('.' + skHash + '-grid-spelling-salutation').val(salutation);
+                    $('.' + skHash + '-grid-spelling-prefix').val(prefix);
+                    $('.' + skHash + '-grid-spelling-suffix').val(suffix);
+
+                    $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
+
+                    $('tr.person-row.' + skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
+
+                    // Define or select the modal element
+                    var modal = $('#' + skHash + '_modal'); // Adjust the selector to target the correct modal
+                    if (modal.length > 0) {
+                        modal.find("#history-box-subject-history-table").html(responseData.htmlUpdates.full_name);
+                    }
+
+                    //find and replace general
+                    $('.' + skHash + '-find-replace').contents().filter(function () {
+                        return this.nodeType === 3;
+                    }).replaceWith(function () {
+                        // Ensure we are replacing with a string, even if empty
+                        let newName = fullNamePortraitNew || "";
+                        return this.nodeValue.replace(fullNamePortraitOld, newName);
+                    });
+
+                    //updation for the names to select from dropdown in tagsinput
+                    var $subjectNamesInput = $('#allSubjectNames');
+
+                    if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
+                        try {
+                            // 1. Parse the JSON strings from the value and the data attribute
+                            var mainArray = JSON.parse($subjectNamesInput.val());
+                            var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
+
+                            // 2. Helper function to update names in an array
+                            var updateArray = function (arr, oldName, newName) {
+                                return arr.map(function (name) {
+                                    return name === oldName ? newName : name;
+                                });
+                            };
+
+                            // 3. Update the main array
+                            mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
+
+                            // 4. Update the data-key object (Row_0, Row_1, etc.)
+                            if (keyData) {
+                                Object.keys(keyData).forEach(function (row) {
+                                    keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
+                                });
+                            }
+
+                            // 5. Save back to the element
+                            // Update the value attribute
+                            $subjectNamesInput.val(JSON.stringify(mainArray));
+
+                            // Update the internal jQuery data object AND the actual DOM attribute
+                            $subjectNamesInput.data('key', keyData);
+                            $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
+
+                            // 6. Trigger change for other listeners
+                            $subjectNamesInput.trigger('change');
+                        } catch (e) {
+                            // console.error("Error parsing allSubjectNames JSON:", e);
+                        }
+                    }
+
+                    findSpanByText(fullNameGroupOld, fullNameGroupNew); //data-role = 'tagsinput'
+                    fetchAndUpdateSubjectNames(); //typeahead
+                    // createJsonData();
+
+                    $('#subjects_questions option[value=""]').attr('selected', 'selected');
+
+                    //show the history button
+                    $('#' + skHash + '_history_edits_button').removeClass("d-none").addClass("d-inline-block");
+
+                    if (responseData.resolved_status_id === 0) {
+                        $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-success');
+                    } else {
+                        $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-danger');
+                    }
+
+                    // console.log("Completed");
+                } else {
+                    // console.log("Error: Invalid response structure.");
                 }
-            });
+                suppressChangeEvent = false;
+            },
+            error: function (e) {
+                // alert("An error occurred: " + e.responseText.message);
+                // console.log(e);
+            }
         });
-    
-        //Modal HistoryEdits 
-        $('#HistoryEdits_Modal').on('show.bs.modal', function (event) {
-            var modal = $(this);
-    
-            var button = $(event.relatedTarget); // Button that triggered the modal
-            var skHash = button.data('skhash'); // Extract info from data-* attributes
-            var titleHtml = $("#" + skHash + "_history_edits_name_populate").html();
-            // var spinningHtml = '<i class="fa fa-spinner fa-3x fa-spin" aria-hidden="true"></i>';
-            var spinningHtml = `
+    });
+
+    //Modal HistoryEdits 
+    $('#HistoryEdits_Modal').on('show.bs.modal', function (event) {
+        var modal = $(this);
+
+        var button = $(event.relatedTarget); // Button that triggered the modal
+        var skHash = button.data('skhash'); // Extract info from data-* attributes
+        var titleHtml = $("#" + skHash + "_history_edits_name_populate").html();
+        // var spinningHtml = '<i class="fa fa-spinner fa-3x fa-spin" aria-hidden="true"></i>';
+        var spinningHtml = `
             <div class="spinner-container">
                 <div class="table-spinner"></div>
                 <div class="ml-2 mt-2 text-muted">Retrieving history...</div>
             </div>`;
-    
-            modal.find("#history-box-subject-name").html(titleHtml);
-            modal.find("#history-box-subject-history-table").html(spinningHtml)
-    
-            selectedRoute = $("#" + skHash + "_history_edits_button").data('route');
-    
-            var targetUrl = selectedRoute;
-            $.ajax({
-                dataType: 'html',
-                type: 'GET',
-                url: targetUrl,
-                success: function (htmlResult, textStatus, jqXHR) {
-                    //console.log(htmlResult);
-                    modal.find("#history-box-subject-history-table").html(htmlResult)
-                },
-                error: function (xhr, status) {
-                    //console.log("Sorry, there was a problem!");
-                },
-                complete: function (xhr, status) {
-                    //console.log("Completed");
-                }
-            });
+
+        modal.find("#history-box-subject-name").html(titleHtml);
+        modal.find("#history-box-subject-history-table").html(spinningHtml)
+
+        selectedRoute = $("#" + skHash + "_history_edits_button").data('route');
+
+        var targetUrl = selectedRoute;
+        $.ajax({
+            dataType: 'html',
+            type: 'GET',
+            url: targetUrl,
+            success: function (htmlResult, textStatus, jqXHR) {
+                //console.log(htmlResult);
+                modal.find("#history-box-subject-history-table").html(htmlResult)
+            },
+            error: function (xhr, status) {
+                //console.log("Sorry, there was a problem!");
+            },
+            complete: function (xhr, status) {
+                //console.log("Completed");
+            }
         });
+    });
 
 });
 
-    
 
 
-    //Folder Proofing Validation message
-    function toggleValidationMessage(id) {
-        var selectElement = document.getElementById('folder_question_' + id);
-        if(selectElement){
-            var noMessageElement = document.getElementById('folder_question_' + id + '_no');
-            if (selectElement.value == '0') {
-                noMessageElement.style.display = 'block';
-            } else {
-                noMessageElement.style.display = 'none';
-            }
-            checkProceedStatus(); //proceed button disable
-        }
-    }
 
-    function checkProceedStatus() {
-        var proceedSelects = document.querySelectorAll('.is_proceed_select');
-        var showDisabledNext = false;
-
-        proceedSelects.forEach(function(select) {
-            var isProceedValue = select.dataset.isProceed;
-            var selectValue = select.value;
-
-            if (isProceedValue == '1' && selectValue != '1') {
-                // If a required select is not set to 'Yes', disable the "Next" button
-                showDisabledNext = true;
-                return; // No need to check further
-            }
-            
-            if (selectValue === '') {
-                // If any question is not answered, disable the "Next" button
-                showDisabledNext = true;
-                return; // No need to check further
-            }
-        });
-
-        var nextButton = document.getElementById('subjectNext');
-        var nextDisabledButton = document.getElementById('subjectNextDisabled');
-
-        if (showDisabledNext) {
-            nextButton.classList.add("d-none");
-            nextDisabledButton.classList.remove("d-none");
+//Folder Proofing Validation message
+function toggleValidationMessage(id) {
+    var selectElement = document.getElementById('folder_question_' + id);
+    if (selectElement) {
+        var noMessageElement = document.getElementById('folder_question_' + id + '_no');
+        if (selectElement.value == '0') {
+            noMessageElement.style.display = 'block';
         } else {
-            nextButton.classList.remove("d-none");
-            nextDisabledButton.classList.add("d-none");
+            noMessageElement.style.display = 'none';
         }
+        checkProceedStatus(); //proceed button disable
     }
+}
 
+function checkProceedStatus() {
+    var proceedSelects = document.querySelectorAll('.is_proceed_select');
+    var showDisabledNext = false;
 
-    //Global Functions
+    proceedSelects.forEach(function (select) {
+        var isProceedValue = select.dataset.isProceed;
+        var selectValue = select.value;
 
-    // Store the initial value of each select element with class 'is_proceed_select'
-    $('.is_proceed_select').each(function() {
-        $(this).data('previousValue', $(this).val());
+        if (isProceedValue == '1' && selectValue != '1') {
+            // If a required select is not set to 'Yes', disable the "Next" button
+            showDisabledNext = true;
+            return; // No need to check further
+        }
+
+        if (selectValue === '') {
+            // If any question is not answered, disable the "Next" button
+            showDisabledNext = true;
+            return; // No need to check further
+        }
     });
 
-    function isVisible(element) {
-        var el = $(element);
-        return el.is(':visible') && el.css('visibility') !== 'hidden' && el.css('display') !== 'none';
+    var nextButton = document.getElementById('subjectNext');
+    var nextDisabledButton = document.getElementById('subjectNextDisabled');
+
+    if (showDisabledNext) {
+        nextButton.classList.add("d-none");
+        nextDisabledButton.classList.remove("d-none");
+    } else {
+        nextButton.classList.remove("d-none");
+        nextDisabledButton.classList.add("d-none");
+    }
+}
+
+
+//Global Functions
+
+// Store the initial value of each select element with class 'is_proceed_select'
+$('.is_proceed_select').each(function () {
+    $(this).data('previousValue', $(this).val());
+});
+
+function isVisible(element) {
+    var el = $(element);
+    return el.is(':visible') && el.css('visibility') !== 'hidden' && el.css('display') !== 'none';
+}
+
+$('#classNext').click(function () {
+    // Check if the hidden input with id='recorded_subjectmissing' has any value
+    var recordedSubjectMissingValue = $('#recorded_subjectmissing').val();
+    if (recordedSubjectMissingValue) {
+        document.getElementById("subject_missing_names").value = recordedSubjectMissingValue;
     }
 
-    $('#classNext').click(function(){       
-            // Check if the hidden input with id='recorded_subjectmissing' has any value
-            var recordedSubjectMissingValue = $('#recorded_subjectmissing').val();
-            if (recordedSubjectMissingValue) {
-                document.getElementById("subject_missing_names").value= recordedSubjectMissingValue;
-            }
+    // Check if the hidden input with id='recorded_pageissue' has any value
+    var recordedPageIssueValue = $('#recorded_pageissue').val();
+    if (recordedPageIssueValue) {
+        document.getElementById("subject_general_issue_text").value = recordedPageIssueValue;
+    }
+});
 
-            // Check if the hidden input with id='recorded_pageissue' has any value
-            var recordedPageIssueValue = $('#recorded_pageissue').val();
-            if (recordedPageIssueValue) {
-                document.getElementById("subject_general_issue_text").value= recordedPageIssueValue;
-            }
-    });
+function sendFolderChanges(location, issue, classNameNew, note) {
+    var returnResponse;
 
-    function sendFolderChanges(location, issue, classNameNew, note) { 
-        var returnResponse;
+    var formData = new FormData();
+    formData.append("issue", issue);
+    formData.append("note", note);
+    formData.append("newValue", classNameNew);
 
-        var formData = new FormData();
-        formData.append("issue", issue);
-        formData.append("note", note);
-        formData.append("newValue", classNameNew);
+    formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
 
-        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+    $.ajax({
+        dataType: 'json',
+        type: "POST",
+        url: location,
+        async: true,
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false,
+        timeout: 60000,
 
-        $.ajax({
-            dataType: 'json',
-            type: "POST",
-            url: location,
-            async: true,
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false,
-            timeout: 60000,
-
-            success: function (response) {
-                returnResponse = response;
-            },
-            error: function (e) {
-                //alert("An error occurred: " + e.responseText.message);
+        success: function (response) {
+            returnResponse = response;
+        },
+        error: function (e) {
+            //alert("An error occurred: " + e.responseText.message);
             //console.log(e);
-                returnResponse = false;
-            },
-            complete: function (xhr) {
-                // if (xhr.status >= 400 && xhr.status <= 499) {
-                //     window.location.replace("<?= $targetUrlStatus4xx ?>");
-                // }
-            }
-        })
-        return returnResponse;
-    }
+            returnResponse = false;
+        },
+        complete: function (xhr) {
+            // if (xhr.status >= 400 && xhr.status <= 499) {
+            //     window.location.replace("<?= $targetUrlStatus4xx ?>");
+            // }
+        }
+    })
+    return returnResponse;
+}
 
 

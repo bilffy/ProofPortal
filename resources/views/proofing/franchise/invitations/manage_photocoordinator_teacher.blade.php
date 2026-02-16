@@ -25,7 +25,12 @@
                     'class' => 'btn btn-primary float-right pl-4 pr-4',
                 ];
 
-                $urlDone = strpos(url()->previous(), 'staffs') ? route('proofing') : url()->previous();
+                if ($selectedJob) {
+                    $urlDone = URL::signedRoute('proofing.dashboard', ['hash' => Crypt::encryptString($selectedJob->ts_jobkey)]);
+                } else {
+                    $urlDone = route('proofing');
+                }
+                
                 @endphp
         
                 <a href="{{ $urlDone }}" class="{{ $btnAttrDanger['class'] }}">

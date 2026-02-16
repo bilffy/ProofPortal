@@ -26,8 +26,8 @@ class ReviewStatusController extends Controller
         $this->folderService = $folderService;
     }
 
-    private function getDecryptData($hash){
-        return $this->encryptDecryptService->decryptStringMethod($hash);
+    private function getDecryptData($data){
+        return $this->encryptDecryptService->decryptStringMethod($data);
     }
 
     public function changeStatus($hash){
@@ -38,10 +38,12 @@ class ReviewStatusController extends Controller
             abort(404); 
         }
         
-        $reviewStatusesNewList = $this->statusService->getDataById([$this->statusService->unlocked, $this->statusService->completed])->pluck('status_external_name', 'id')
-            ->sortByDesc(function ($statusExternalName, $statusId) {
-                return $statusExternalName;
-            });
+        // Filter out null IDs if some statuses are not defined in the database
+        $statusIds = array_filter([$this->statusService->unlocked, $this->statusService->completed]);
+        
+        $reviewStatusesNewList = $this->statusService->getDataById($statusIds)
+            ->pluck('status_external_name', 'id')
+            ->sortBy('status_external_name'); // Alphabetical sort is usually preferred over descending name sort unless specified
         $selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->with('reviewStatuses')->orderBy('ts_foldername', 'asc')->get();
         $user = Auth::user();
         return view('proofing.franchise.change-status', [
@@ -64,7 +66,8 @@ class ReviewStatusController extends Controller
     public function updateJobStatus(Request $request)
     {
         $decryptedJobId = $this->getDecryptData($request->JobId);
-        $this->jobService->updateJobStatus($decryptedJobId, $request->ChangeStatus);
+        // Cast ChangeStatus to integer to ensure strict comparisons (===) in services work correctly
+        $this->jobService->updateJobStatus($decryptedJobId, (int) $request->ChangeStatus);
         return response()->json(['message' => 'Job statuses updated successfully.']);
     }
 

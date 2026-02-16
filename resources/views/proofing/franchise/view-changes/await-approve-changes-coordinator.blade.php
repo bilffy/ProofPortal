@@ -27,7 +27,11 @@
                 $btnAttrCancel = [
                     "class" => "btn btn-primary float-right pl-4 pr-4",
                 ];
-                $urlDone = route('proofing');
+                if ($selectedJob) {
+                    $urlDone = URL::signedRoute('proofing.dashboard', ['hash' => Crypt::encryptString($selectedJob->ts_jobkey)]);
+                } else {
+                    $urlDone = route('proofing');
+                }
                 $image_url = asset('proofing-assets/img/subject-image.png');   
             @endphp
     

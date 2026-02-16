@@ -184,7 +184,7 @@
                                                                 @if($proofDue){{ $proofDue->format('Y-m-d') }}@endif
                                                             </td>
                                                             <td>
-                                                                <a href="#" id="open-job-link" data-job="{{ $jobIdHash }}">Open Job</a> |
+                                                                <a href="#" id="open-job-link" data-job="{{ $jobKeyHash }}">Open Job</a> |
                                                                 <a href="{{ URL::signedRoute('config-job', ['hash' => $jobKeyHash]) }}">Configure</a> |
                                                                 <a href="#" class="archive-job" data-job="{{ $jobIdHash }}" data-name="{{ $activeSyncJob->ts_jobname }}">Archive</a>
                                                             </td>
