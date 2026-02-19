@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <div class="row mt-4">
+        <div class="row mt-4 d-none">
             <div class="col-12">
                 <p class="lead">
                     <?php echo __('Your Active Jobs...'); ?>
