@@ -45,7 +45,7 @@
                             <tr>
                                 <td colspan="2" bgcolor="#00b3e0"
                                     style="text-align: center; padding: 0px 0px 20px 0px;">
-                                    <a href="mailto:{{ $franchiseEmail }}?subject=MSP%20Photography%20Portal%20Enquiry"><img
+                                    <a href="mailto:{{ $franchiseEmail }}?subject={{ rawurlencode('MSP Photography Portal Enquiry') }}"><img
                                             src="https://www.msp.com.au/wp-content/uploads/2020/02/msp_op_button_email.png"
                                             width="225"></a>
                                 </td>
@@ -57,3 +57,5 @@
         </td>
     </tr>
 </table>
+
+
