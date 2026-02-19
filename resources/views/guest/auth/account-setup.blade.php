@@ -54,7 +54,7 @@
         <div class="flex flex-col items-center mb-4">
             <label class="inline-flex">
                 <input id="accept-tnc" type="checkbox" x-model="acceptedTerms" wire:model="acceptedTerms" class="form-checkbox mr-2 mt-1 focus:ring-0" />
-                <span class="text-xs text-gray-500">I have read the <a href="https://www.msp.com.au/terms-of-use" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a>, and understand it applies to all digital images uploaded by MSP Photography on this Portal site.</a></span>
+                <span class="text-xs text-gray-500">I have read the <a href="https://www.msp.com.au/msp-terms-conditions/" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a>, and understand it applies to all digital images uploaded by MSP Photography on this Portal site.</a></span>
             </label>
             @error('acceptedTerms')  <span class="error text-alert italic">*{{ $message }}</span> @enderror
         </div>
