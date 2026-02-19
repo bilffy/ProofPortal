@@ -33,7 +33,7 @@ class OTPMail extends Mailable
     public function build()
     {
         // Get OTP expiration time from .env
-        $expiration = config('app.otp.expiration_minutes', 60);
+        $expiration = config('app.otp.expiration_minutes', 60) + 5;
         
         return $this->markdown('emails.otp')
             ->subject('Your MSP School Portal security code')
