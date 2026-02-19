@@ -41,14 +41,11 @@ class SendUserInviteJob implements ShouldQueue
     {
         $token = Password::createToken($this->user);
 
-        $setupUrl = url(config('app.url').route('account.setup.create', 
-                [
-                    'token' => $token, 
-                    'email' => $this->user->getHashedIdAttribute()
-                ], 
-                false
-            )
-        );
+        $setupUrl = route('account.setup.create', [
+            'token' => $token,
+            'email' => $this->user->getHashedIdAttribute()
+        ]);
+        
         
         // Set the user status to invited
         $this->user->status = User::STATUS_INVITED;
