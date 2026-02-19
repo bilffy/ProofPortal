@@ -44,8 +44,7 @@ class SendUserInviteJob implements ShouldQueue
         $setupUrl = route('account.setup.create', [
             'token' => $token,
             'email' => $this->user->getHashedIdAttribute()
-        ]);
-        
+        ], true);        
         
         // Set the user status to invited
         $this->user->status = User::STATUS_INVITED;
