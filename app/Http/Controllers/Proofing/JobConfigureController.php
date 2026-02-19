@@ -220,7 +220,7 @@ class JobConfigureController extends Controller
                 $this->configureService->updatePeopleImage($selectedJob->ts_job_id);
                 $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(30);
                 // $baseUrl = config('services.bpsync.url');
-                $baseUrl = 'http://bpsync.msp.local';
+                $baseUrl = 'http://bpsync.msp.local/index.php/';
                 $jobKey = $selectedJob->ts_jobkey;
                 $this->jobService->updateJobData($jobKey, 'force_sync', 1);
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");

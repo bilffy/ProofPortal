@@ -182,7 +182,7 @@ class ProofingJobController extends Controller
         $jobKey = $this->getDecryptData($request->input('jobKey'));
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
         // $baseUrl = config('services.bpsync.url');
-        $baseUrl = 'http://bpsync.msp.local';
+        $baseUrl = 'http://bpsync.msp.local/index.php/';
     
         try {
             $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(30);
