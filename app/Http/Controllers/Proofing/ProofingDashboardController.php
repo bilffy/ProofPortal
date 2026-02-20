@@ -105,6 +105,7 @@ class ProofingDashboardController extends Controller
                     ->select('jobs.ts_job_id', 'ts_jobname', 'ts_season_id', 'ts_schoolkey', 'ts_jobkey')
                     ->where('ts_schoolkey', $currentSchool->schoolkey)
                     ->get();
+                dd($jobs);
             } else {
                 $jobs = collect(); // empty collection
             }

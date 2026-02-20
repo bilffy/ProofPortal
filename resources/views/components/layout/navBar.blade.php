@@ -47,12 +47,14 @@
         @endif
     @endhasanyrole
     
-    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
-        @unlessrole($RoleHelper::ROLE_FRANCHISE)
-            {{--Proofing are not yet implemented, hide for now until the blueprint implemented into the system--}}
-            <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
-        @endunlessrole
-    @endcan
+    @if(Auth::user()->hasRole('Franchise'))
+        @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
+            @unlessrole($RoleHelper::ROLE_FRANCHISE)
+                {{--Proofing are not yet implemented, hide for now until the blueprint implemented into the system--}}
+                <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+            @endunlessrole
+        @endcan
+    @endif
 
     {{-- @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Ordering</x-layout.navItem>

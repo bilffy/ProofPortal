@@ -16,7 +16,7 @@ class UsersList extends Component
     use WithPagination;
 
     public $statusOptions = [
-        User::STATUS_NEW => 'New',
+        // User::STATUS_NEW => 'New',
         User::STATUS_INVITED => 'Invited',
         User::STATUS_ACTIVE => 'Active',
         User::STATUS_DISABLED => 'Disabled',
