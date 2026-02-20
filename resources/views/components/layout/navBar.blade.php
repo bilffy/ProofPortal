@@ -54,9 +54,9 @@
         @endunlessrole
     @endcan
 
-    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
+    {{-- @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Ordering</x-layout.navItem>
-    @endcan
+    @endcan --}}
     
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
