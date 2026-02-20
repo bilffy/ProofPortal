@@ -151,7 +151,7 @@
                                     </x-table.cell>
                                 @endforeach
                             </tr>
-                            <tr>
+                            {{-- <tr>
                                 <x-table.cell>Group Photo</x-table.cell>
                                 @foreach($selectOptionsEmailTo as $key => $value)
                                     <x-table.cell data-model="digital_download_permission" data-field="download_group">
@@ -184,7 +184,7 @@
                                             >
                                     </x-table.cell>
                                 @endforeach
-                            </tr>
+                            </tr> --}}
                         </tbody>
                     </table>
                 </div>
