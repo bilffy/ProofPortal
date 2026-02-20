@@ -39,7 +39,7 @@ class SendUserInviteJob implements ShouldQueue
      */
     public function handle()
     {
-        $token = Password::createToken($this->user);
+        $token = Password::broker('invites')->createToken($this->user);
 
         $setupUrl = route('account.setup.create', [
             'token' => $token,

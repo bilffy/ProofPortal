@@ -53,6 +53,15 @@ class AccountSetup extends Component
         $this->token = $token;
 
         $user = User::findOrFail($id);
+
+        if ($user->disabled) {
+            $user->update(['is_setup_complete' => false, 'disabled' => false]);
+        }
+
+        if (!Password::broker('invites')->tokenExists($user, $this->token)) {
+            $this->linkExpired = true;
+            return;
+        }        
         
         // Check if the user has already completed the setup
         if ($user->is_setup_complete) {
@@ -92,7 +101,7 @@ class AccountSetup extends Component
             ]);
         }*/
         
-        $status = Password::reset(
+        $status = Password::broker('invites')->reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password, 'token' => $this->token],
             function ($user) {
                 $user->forceFill([

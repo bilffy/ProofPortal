@@ -62,7 +62,7 @@ class ResetPassword extends Component
         // Check if the user exists otherwise throw an exception
         $user = User::where('email', $this->email)->firstOrFail();
 
-        $status = Password::reset(
+        $status =Password::broker('users')->reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password, 'token' => $this->token],
             function ($user) {
                 $user->forceFill([

@@ -194,7 +194,7 @@
                 data: { _token: '{{ csrf_token() }}', jobKey },
                 success: function (proxyResponse) {
                     if (proxyResponse.success) {
-                        window.location.href = "{{ url('/proofing') }}";
+                        window.location.href = "{{ url('/photography/configure') }}";
                         // $.ajax({
                         //     url: "{{ route('dashboard.openJob') }}",
                         //     type: "GET",

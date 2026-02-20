@@ -64,7 +64,7 @@ class ForgotPassword extends Component
                 ]);
             }
 
-            $token = Password::createToken($user);
+            $token = Password::broker('users')->createToken($user);
             $user->notify(new ResetPassword($token, $user));
             //$status = Password::RESET_LINK_SENT;
         } else {
