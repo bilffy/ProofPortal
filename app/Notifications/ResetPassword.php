@@ -42,7 +42,7 @@ class ResetPassword extends Notification
         $fullName = ucfirst($this->user->firstname) .' '. ucfirst($this->user->lastname);
         
         return (new MailMessage)
-            ->subject('Reset your MSP Photography School Portal password')
+            ->subject('Reset your MSP School Portal password')
             ->markdown('emails.reset_password', [
                 'firstname' => $this->user->firstname,
                 'resetUrl' => $resetUrl,

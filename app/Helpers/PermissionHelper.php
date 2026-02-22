@@ -22,7 +22,7 @@ class PermissionHelper
     public const SUB_USER = 'user';
     // Pages
     public const SUB_ADMIN_TOOLS = 'admin_tools';
-    public const SUB_ORDERING = 'ordering';
+    // public const SUB_ORDERING = 'ordering';
     public const SUB_PHOTOGRAPHY = 'photography';
     public const SUB_PROOFING = 'proofing';
     public const SUB_CONFIG_PROOFING = 'config_proofing';
