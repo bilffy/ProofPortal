@@ -30,6 +30,12 @@
             <input class="border rounded-md p-2 border-neutral" wire:model="lastName" required placeholder="Last Name" autocomplete="lastName" />
             @error('lastName') <span class="error">{{ $message }}</span> @enderror
         </div>
+
+        <div class="flex flex-col mb-4">
+            <label for="email" class="text-neutral-600">Email</label>
+            <input class="border rounded-md p-2 border-neutral" readonly wire:model="email" required placeholder="Email" autocomplete="email" />
+            @error('email') <span class="error">{{ $message }}</span> @enderror
+        </div>
         
         <div class="flex flex-col mb-4">
             <input class="border rounded-md p-2 border-neutral" type="password" wire:model="password" required placeholder="Password" autocomplete="new-password" />
