@@ -494,7 +494,7 @@ class ImageService
         }
 
         $toData = function ($image) use ($key, $category) {
-            $isSubject = $category != 'FOLDER';
+            $isSubject = $category != 'FOLDER'; 
             $imgKey = $image->$key;
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
