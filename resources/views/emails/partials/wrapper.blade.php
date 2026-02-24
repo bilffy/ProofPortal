@@ -11,7 +11,7 @@
                             align="center" width="100%">
                             <tr>
                                 <td colspan="2">
-                                    <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_header.png">
+                                    {{-- <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_header.png" width="750" style="width: 100%; max-width: 750px; height: auto; display: block; border: 0;"> --}}
                                 </td>
                             </tr>
                             {{ $slot }}
