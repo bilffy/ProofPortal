@@ -204,17 +204,17 @@ class PhotographyController extends Controller
         // get the season code as the year
         $selectedFilters['year'] = $season->code;
         
-//        // check if the image belongs to the school, basically schoolKey should match
-//        foreach ($images as $image) {
-//            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
-//            $imgRecord = Image::where('keyvalue', $key)->first();
-//            if ($imgRecord) {
-//                $job = Job::where('ts_job_id', $imgRecord->ts_job_id)->first();
-//                if ($job && $job->ts_schoolkey !== $schoolKey) {
-//                    return response()->json('Invalid Request', 422);
-//                }
-//            }
-//        }
+        //        // check if the image belongs to the school, basically schoolKey should match
+        //        foreach ($images as $image) {
+        //            $key = base64_decode(base64_decode(preg_replace('/^img_/', '', $image)));
+        //            $imgRecord = Image::where('keyvalue', $key)->first();
+        //            if ($imgRecord) {
+        //                $job = Job::where('ts_job_id', $imgRecord->ts_job_id)->first();
+        //                if ($job && $job->ts_schoolkey !== $schoolKey) {
+        //                    return response()->json('Invalid Request', 422);
+        //                }
+        //            }
+        //        }
 
         // check if the image belongs to the school, basically schoolKey should match
         $keys = array_filter(array_map(function($img) {
