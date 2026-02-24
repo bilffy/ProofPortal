@@ -584,6 +584,7 @@ class ImageService
     public function getIsImageFound(string $key): bool
     {
         $urls = $this->getImageUrls($key);
+        \Log::info($urls);
 
         foreach ($urls as $url) {
             if ($this->urlExists($url)) {
