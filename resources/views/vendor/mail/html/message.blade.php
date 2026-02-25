@@ -22,18 +22,24 @@
 
         {{-- Footer --}}
     <x-slot:footer>
-        <x-mail::footer>
-            <p style="font-size: 12px; color: #666666; line-height: 1.5; margin: 0;">
-                {{$franchise->getBusinessName()}}
-                <br/>
-                @if (null == $franchise->state)
-                    {{$franchise->address}}
-                @else
-                    {{$franchise->address}}, {{$franchise->state}} {{$franchise->postcode}}
-                @endif
-                <br/><br/>
-                &copy;MSP Photography 2025. All rights reserved.
-            </p>
-        </x-mail::footer>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="750" style="width: 750px; margin: 0 auto;">
+            <tr>
+                <td style="padding: 32px 0; text-align: center;">
+                    <x-mail::footer>
+						<p style="font-size: 12px; color: #666666; line-height: 1.3;">
+							{{$franchise->getBusinessName()}}
+							<br/>
+							@if (null == $franchise->state)
+								{{$franchise->address}}
+							@else
+								{{$franchise->address}}, {{$franchise->state}} {{$franchise->postcode}}
+							@endif
+							<br/><br/>
+							&copy;MSP Photography 2025. All rights reserved.
+						</p>
+                    </x-mail::footer>
+                </td>
+            </tr>
+        </table>
     </x-slot:footer>
 </x-mail::layout>
