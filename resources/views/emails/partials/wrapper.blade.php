@@ -10,11 +10,8 @@
                         <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0"
                             align="center" width="100%">
                             <tr>
-                                <td colspan="2" align="center" style="font-size: 0; line-height: 0;">
-                                    <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_header.png" 
-                                         width="750" 
-                                         alt="MSP Photography"
-                                         style="width: 100%; max-width: 750px; height: auto; display: block; border: 0;">
+                                <td colspan="2">
+                                    <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_header.png">
                                 </td>
                             </tr>
                             {{ $slot }}
