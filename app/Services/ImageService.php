@@ -556,6 +556,12 @@ class ImageService
     //CODE BY IT
     public function getImageContent(string $key): ?string
     {
+        $imageRecordExists = Image::where('keyvalue', $key)->exists();
+
+        if (!$imageRecordExists) {
+            return $this->getFallbackAbsentImage();
+        }
+
         $urls = $this->getImageUrls($key);
     
         foreach ($urls as $url) {
@@ -567,24 +573,43 @@ class ImageService
             }
         }
     
-        // If no remote image is found, use default "not found" image from storage
-        $notFoundPath = ImageHelper::NOT_FOUND_IMG; // e.g., 'images/not_found.jpg'
+        return $this->getFallbackNotFoundImage();
+    }
+    
+    private function getFallbackNotFoundImage(): ?string
+    {
+        $notFoundPath = ImageHelper::NOT_FOUND_IMG;
         if (Storage::disk('local')->exists($notFoundPath)) {
             $binary = Storage::disk('local')->get($notFoundPath);
             return base64_encode($binary);
         }
-    
-        return null; // fallback in case even default image is missing
+
+        return null;
     }
-     
+    
+    private function getFallbackAbsentImage(): ?string
+    {
+        $notFoundPath = ImageHelper::ABSENT_IMG;
+        if (Storage::disk('local')->exists($notFoundPath)) {
+            $binary = Storage::disk('local')->get($notFoundPath);
+            return base64_encode($binary);
+        }
+
+        return null;
+    }
     
     /**
      * Check if at least one image exists for the key
      */
     public function getIsImageFound(string $key): bool
     {
+        $imageRecordExists = Image::where('keyvalue', $key)->exists();
+
+        if (!$imageRecordExists) {
+            return false;
+        }
+
         $urls = $this->getImageUrls($key);
-        \Log::info($urls);
 
         foreach ($urls as $url) {
             if ($this->urlExists($url)) {

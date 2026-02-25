@@ -25,7 +25,7 @@
                 </p>
                 <p style="font-weight: 400; font-size: 14px; color: #8a8a8a; line-height: 1.3;">
                     <br/>
-                    <em>Code expired? Click Resend Code on the Security Code screen, or start the login process again. You will receive a new email containing a brand new security code.</em>
+                    <em>Code expired? Click Resend Code on the Security Code screen, or start the login process again. You will receive a new email containing a new security code.</em>
                     <br/>
                     <br/>
                 </p>
