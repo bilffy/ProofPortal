@@ -641,7 +641,15 @@ class ImageService
      */
     private function urlExists(string $url): bool
     {
-        $headers = @get_headers($url);
+        // Use HEAD instead of GET to only fetch headers and prevent downloading mb image payloads
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'HEAD',
+                'timeout' => 2
+            ]
+        ]);
+        
+        $headers = @get_headers($url, 0, $context);
         return $headers && strpos($headers[0], '200') !== false;
     }
     //CODE BY IT
