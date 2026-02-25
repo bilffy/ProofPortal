@@ -24,7 +24,7 @@
     <x-slot:footer>
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="750" style="width: 750px; margin: 0 auto;">
             <tr>
-                <td style="padding: 32px 0; text-align: center;">
+                <td style="padding: 0; text-align: center;">
                     <x-mail::footer>
 						<p style="font-size: 12px; color: #666666; line-height: 1.3;">
 							{{$franchise->getBusinessName()}}
