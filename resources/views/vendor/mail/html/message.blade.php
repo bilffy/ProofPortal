@@ -23,7 +23,7 @@
         {{-- Footer --}}
     <x-slot:footer>
         <x-mail::footer>
-            <p style="font-size: 12px; color: #666666; line-height: 1.3;">
+            <p style="font-size: 12px; color: #666666; line-height: 1.5; margin: 0;">
                 {{$franchise->getBusinessName()}}
                 <br/>
                 @if (null == $franchise->state)

@@ -33,7 +33,7 @@
         <tr>
             <td colspan="2" style="padding: 0px 40px 0px 40px">
                 <p style="font-size: 14px; color: #6d6e71; line-height: 1.3;">
-                    During the setup process, you'll confirm your name, create a password and then be 										directed to the login page.
+                    During the setup process, you'll confirm your name, create a password and then be directed to the login page.
                     <br/><br/>
                     This single-use invitation expires after 14 days.
                 </p>
