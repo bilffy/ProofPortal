@@ -97,7 +97,7 @@
                 @if ($canDownloadPortraits)
                     @include('partials.photography.portraits')
                 @else
-                    <div class="flex items-center justify-center h-64 text-neutral-500 bg-white mt-4">
+                    <div class="flex items-center justify-center h-64 bg-white mt-4">
                         You do not have permission to view or download Portraits.
                     </div>
                 @endif
@@ -106,7 +106,7 @@
                 @if ($canDownloadGroups)
                     @include('partials.photography.groups')
                 @else
-                    <div class="flex items-center justify-center h-64 text-neutral-500 bg-white mt-4">
+                    <div class="flex items-center justify-center h-64 bg-white mt-4">
                         You do not have permission to view or download Groups.
                     </div>
                 @endif
@@ -115,7 +115,7 @@
                 @if ($canDownloadOthers)
                     @include('partials.photography.others')
                 @else
-                    <div class="flex items-center justify-center h-64 text-neutral-500 bg-white mt-4">
+                    <div class="flex items-center justify-center h-64 bg-white mt-4">
                         You do not have permission to view or download Others.
                     </div>
                 @endif
