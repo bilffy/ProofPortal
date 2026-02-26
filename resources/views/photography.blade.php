@@ -2,6 +2,7 @@
 
 @php
     use App\Helpers\SchoolContextHelper;
+    use App\Helpers\RoleHelper;
     
     $highResDownloadOption = $AppSettingsHelper::getByPropertyKey('high_res_download_option');
     $lowResDownloadOption = $AppSettingsHelper::getByPropertyKey('low_res_download_option');
@@ -32,9 +33,9 @@
         if (isset($permissions['digital_download_permission'])) {
             $userRoleName = Auth::user()->roles->first()->name ?? '';
             $roleValueMap = [
-                \App\Helpers\RoleHelper::ROLE_PHOTO_COORDINATOR => 'photocoordinator',
-                \App\Helpers\RoleHelper::ROLE_SCHOOL_ADMIN => 'schooladmin',
-                \App\Helpers\RoleHelper::ROLE_TEACHER => 'teacher',
+                RoleHelper::ROLE_PHOTO_COORDINATOR => 'photocoordinator',
+                RoleHelper::ROLE_SCHOOL_ADMIN => 'schooladmin',
+                RoleHelper::ROLE_TEACHER => 'teacher',
             ];
             
             if (isset($roleValueMap[$userRoleName])) {
