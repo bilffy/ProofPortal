@@ -22,6 +22,29 @@
     
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
+
+    $canDownloadPortraits = true;
+    $canDownloadGroups = true;
+    $canDownloadOthers = true;
+    
+    if ($school && $school->digital_download_permission_notification) {
+        $permissions = json_decode($school->digital_download_permission_notification, true);
+        if (isset($permissions['digital_download_permission'])) {
+            $userRoleName = Auth::user()->roles->first()->name ?? '';
+            $roleValueMap = [
+                \App\Helpers\RoleHelper::ROLE_PHOTO_COORDINATOR => 'photocoordinator',
+                \App\Helpers\RoleHelper::ROLE_SCHOOL_ADMIN => 'schooladmin',
+                \App\Helpers\RoleHelper::ROLE_TEACHER => 'teacher',
+            ];
+            
+            if (isset($roleValueMap[$userRoleName])) {
+                $mappedRole = $roleValueMap[$userRoleName];
+                $canDownloadPortraits = isset($permissions['digital_download_permission']['download_portrait'][$mappedRole]) && $permissions['digital_download_permission']['download_portrait'][$mappedRole] === true;
+                $canDownloadGroups = isset($permissions['digital_download_permission']['download_group'][$mappedRole]) && $permissions['digital_download_permission']['download_group'][$mappedRole] === true;
+                $canDownloadOthers = isset($permissions['digital_download_permission']['download_schoolPhoto'][$mappedRole]) && $permissions['digital_download_permission']['download_schoolPhoto'][$mappedRole] === true;
+            }
+        }
+    }
 @endphp
 
 @section('content')
@@ -39,7 +62,21 @@
             @if ($otherTabValue)
                 <x-tabs.tab id="others" isActive="{{$currentTab == 'others'}}" route="{{route('photography.others')}}">Others</x-tabs.tab>
             @endif
-            <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$currentTab == 'configure' ? 'hidden' : ''}}">
+
+            @php
+                $hideDownloadBtn = false;
+                if ($currentTab == 'configure' || $currentTab == 'configure-new') {
+                    $hideDownloadBtn = true;
+                } else if ($currentTab == 'portraits' && !$canDownloadPortraits) {
+                    $hideDownloadBtn = true;
+                } else if ($currentTab == 'groups' && !$canDownloadGroups) {
+                    $hideDownloadBtn = true;
+                } else if ($currentTab == 'others' && !$canDownloadOthers) {
+                    $hideDownloadBtn = true;
+                }
+            @endphp
+
+            <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$hideDownloadBtn ? 'hidden' : ''}}">
                 <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.primary-inverse>
                 <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Cancel Selection</x-button.primary-inverse>
                 <x-button.primary 
@@ -57,13 +94,31 @@
                 </x-tabs.tabContent>
             @endrole
             <x-tabs.tabContent id="portraits">
-                @include('partials.photography.portraits')
+                @if ($canDownloadPortraits)
+                    @include('partials.photography.portraits')
+                @else
+                    <div class="flex items-center justify-center h-64 text-neutral-500 bg-white mt-4">
+                        You do not have permission to view or download Portraits.
+                    </div>
+                @endif
             </x-tabs.tabContent>
             <x-tabs.tabContent id="groups">
-                @include('partials.photography.groups')
+                @if ($canDownloadGroups)
+                    @include('partials.photography.groups')
+                @else
+                    <div class="flex items-center justify-center h-64 text-neutral-500 bg-white mt-4">
+                        You do not have permission to view or download Groups.
+                    </div>
+                @endif
             </x-tabs.tabContent>
             <x-tabs.tabContent id="others">
-                @include('partials.photography.others')
+                @if ($canDownloadOthers)
+                    @include('partials.photography.others')
+                @else
+                    <div class="flex items-center justify-center h-64 text-neutral-500 bg-white mt-4">
+                        You do not have permission to view or download Others.
+                    </div>
+                @endif
             </x-tabs.tabContent>
         </x-tabs.tabContentContainer>
 
@@ -424,18 +479,28 @@
                     const tab = e.target.id;
                     // Hide download section when in configuration tab
                     const downloadSection = document.querySelector('#download-section');
-                    if ('configure-tab' == tab || 'configure-new-tab' == tab) {
+                    
+                    const tabPermissions = {
+                        'portraits-tab': {{ $canDownloadPortraits ? 'true' : 'false' }},
+                        'groups-tab': {{ $canDownloadGroups ? 'true' : 'false' }},
+                        'others-tab': {{ $canDownloadOthers ? 'true' : 'false' }}
+                    };
+
+                    if ('configure-tab' == tab || 'configure-new-tab' == tab || !tabPermissions[tab]) {
                         downloadSection.classList.add('hidden');
                     } else {
                         downloadSection.classList.remove('hidden');
+                    }
+
+                    if ('configure-tab' != tab && 'configure-new-tab' != tab) {
                         if ('portraits-tab' == tab) {
-                            window.updateDownloadsForPortraits(tab);
+                            if (typeof window.updateDownloadsForPortraits === 'function') window.updateDownloadsForPortraits(tab);
                             setCategory('PORTRAITS');
                         } else if ('groups-tab' == tab) {
-                            window.updateDownloadsForGroups(tab);
+                            if (typeof window.updateDownloadsForGroups === 'function') window.updateDownloadsForGroups(tab);
                             setCategory('GROUPS');
                         } else if ('others-tab' == tab) {
-                            window.updateDownloadsForOthers(tab);
+                            if (typeof window.updateDownloadsForOthers === 'function') window.updateDownloadsForOthers(tab);
                             setCategory('OTHERS');
                         }
                     }

@@ -515,15 +515,8 @@ class ImageService
                     $uploaded = false;
                 }
             }
-            $fileContent = $this->getImageContent($imgKey);
-            //CODE BY IT
-            if ($fileContent) {
-                $binaryImage = base64_decode($fileContent);
-                $dimensions = getimagesizefromstring($binaryImage);
-                $isPortrait =  $dimensions[0] <= $dimensions[1];
-            } else {
-                $isPortrait = true; // default
-            }
+            // Skip full image network download during initial grid compilation for massive speed boost
+            $isPortrait = $isSubject; // Default portrait for subjects, landscape for folders
             //CODE BY IT
 
             //CODE BY Chromedia
