@@ -26,10 +26,11 @@
     });
     window.addEventListener('resize', () => { setTimeout(() => calculateAndSet(), 300); });
 ">
-    <div class="mt-4" wire:loading>
+    <!-- <div class="mt-4" wire:loading>
         <x-spinner.icon :size="10"/>
     </div>
-    <div wire:loading.remove>
+    <div wire:loading.remove> -->
+    <div>
         <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $paginatedImages->total() }}">
             @foreach ($paginatedImages as $image)
                 @php
