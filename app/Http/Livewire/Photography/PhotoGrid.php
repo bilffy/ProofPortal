@@ -22,6 +22,7 @@ class PhotoGrid extends Component
     public $season;
     public $schoolKey;
     public $page = 1;
+    public $perPage = 30;
     
     public $images = [];
     public $search = '';
@@ -40,6 +41,16 @@ class PhotoGrid extends Component
     {
         $this->page = $page;
     }
+
+    public function setPerPage($newPerPage)
+    {
+        $newPerPage = max(30, (int) $newPerPage);
+        if ($this->perPage !== $newPerPage) {
+            $this->perPage = $newPerPage;
+            Session::put('photo_grid_per_page', $newPerPage);
+            $this->resetPage();
+        }
+    }
     //CODE BY IT
     public function mount($category = 'portraits', $season = 1, $schoolKey = '')
     {
@@ -56,6 +67,7 @@ class PhotoGrid extends Component
             abort(403, 'Access denied.');                    
         }                   
 
+        $this->perPage = Session::get('photo_grid_per_page', 30);
         $this->setupFilters($season);
     }
 
@@ -210,7 +222,7 @@ class PhotoGrid extends Component
         $paginated = $imageService->getFilteredPhotographyImages(
             $options,
             $this->category,
-            30,       // images per page
+            $this->perPage,       // images per page
             $this->page // current page from Livewire													  
         );
 

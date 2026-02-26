@@ -1,4 +1,31 @@
-<div class="w-full text-center">
+<div class="w-full text-center" x-data="{
+    calculateAndSet() {
+        let gridEl = this.$el.querySelector('.grid');
+        if (!gridEl) return;
+        
+        let computed = window.getComputedStyle(gridEl);
+        let colsStr = computed.getPropertyValue('grid-template-columns');
+        let cols = colsStr ? colsStr.trim().split(/\s+/).length : 1;
+        if (cols < 1) cols = 1;
+        
+        let targetPerPage = cols * 3;
+        
+        if (targetPerPage < 30) {
+            // Find how many rows it takes to hold at least 30 images
+            // and multiply by the exact columns to ensure a completely flat bottom row
+            targetPerPage = Math.ceil(30 / cols) * cols;
+        }
+        
+        if (this.$wire.perPage !== targetPerPage) {
+            this.$wire.setPerPage(targetPerPage);
+        }
+    }
+}" x-init="
+    $nextTick(() => {
+        setTimeout(() => calculateAndSet(), 150);
+    });
+    window.addEventListener('resize', () => { setTimeout(() => calculateAndSet(), 300); });
+">
     <div class="mt-4" wire:loading>
         <x-spinner.icon :size="10"/>
     </div>
