@@ -45,9 +45,7 @@ class ProofingSeasonController extends Controller
     public function viewSeason()
     {
         $user = Auth::user();
-        $allSeasons = $this->seasonService->getAllSeasonData('ts_season_id', 'code', 'ts_season_key', 'is_default')->orderBy('id', 'desc')
-            // ->where('is_default', 1)
-            ->get();
+        $allSeasons = $this->seasonService->getAllSeasonData('ts_season_id', 'code', 'ts_season_key', 'is_default')->orderBy('id', 'desc')->get();
         return view('proofing.open-season', [
             'user' => new UserResource($user), // Passing the authenticated user
             'allSeasons' => $allSeasons

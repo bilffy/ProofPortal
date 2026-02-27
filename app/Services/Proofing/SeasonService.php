@@ -15,7 +15,8 @@ class SeasonService
 
     public function getAllSeasonData(...$selectedValues)
     {
-        return Season::select($selectedValues);
+        return Season::select($selectedValues)
+            ->where('is_default', 1);
     }
 
     public function getSeasonByTimestoneSeasonId($seasonId){
