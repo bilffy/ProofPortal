@@ -25,6 +25,7 @@ class ImageService
     {
         return DB::table('seasons')
             ->select('id', 'ts_season_id', 'code as Year')
+            ->where('is_default', 1)
             ->orderBy('code', direction: 'desc')
             ->get();
     }
@@ -64,6 +65,7 @@ class ImageService
                     $q->where("folders.$visibilityColumn", 1);
                 }
             })
+            ->where('seasons.is_default', 1)
         ;
         
         return $query
