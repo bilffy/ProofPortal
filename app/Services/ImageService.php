@@ -190,8 +190,8 @@ class ImageService
             });
 
         return $query
-            ->select('folders.ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id', 'seasons.code as year')
-            ->orderBy('folders.ts_foldername')
+            ->select('folders.portal_ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id', 'seasons.code as year')
+            ->orderBy('folders.portal_ts_foldername')
             ->get();
     }
 
@@ -214,14 +214,14 @@ class ImageService
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
-                $query->where('subjects.firstname', 'like', "%$searchTerm%")
-                    ->orWhere('subjects.lastname', 'like', "%$searchTerm%")
-                    ->orWhere('folders.ts_foldername', 'like', "%$searchTerm%");
+                $query->where('subjects.portal_firstname', 'like', "%$searchTerm%")
+                    ->orWhere('subjects.portal_lastname', 'like', "%$searchTerm%")
+                    ->orWhere('folders.portal_ts_foldername', 'like', "%$searchTerm%");
             });
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
-        return $query->select('subjects.firstname', 'subjects.lastname', 'subjects.ts_subjectkey', 'folders.ts_foldername');
+        return $query->select('subjects.portal_firstname', 'subjects.portal_lastname', 'subjects.ts_subjectkey', 'folders.portal_ts_foldername');
     }
 
     /**
@@ -264,25 +264,25 @@ class ImageService
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
-                $query->where('subjects.firstname', 'like', "%$searchTerm%")
-                    ->orWhere('subjects.lastname', 'like', "%$searchTerm%")
-                    ->orWhere('folders.ts_foldername', 'like', "%$searchTerm%");
+                $query->where('subjects.portal_firstname', 'like', "%$searchTerm%")
+                    ->orWhere('subjects.portal_lastname', 'like', "%$searchTerm%")
+                    ->orWhere('folders.portal_ts_foldername', 'like', "%$searchTerm%");
             });
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
             ->select(
-                'subjects.firstname', 
-                'subjects.lastname', 
+                'subjects.portal_firstname', 
+                'subjects.portal_lastname', 
                 'subjects.ts_subjectkey', 
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
             // ->distinct() //CODE BY Chromedia
             ->distinct('subjects.ts_subjectkey') //CODE BY IT
-            ->orderBy('subjects.lastname')
-            ->orderBy('subjects.firstname');
+            ->orderBy('subjects.portal_lastname')
+            ->orderBy('subjects.portal_firstname');
     }
 
     /**
@@ -323,14 +323,14 @@ class ImageService
         });
         
         if($searchTerm) {
-            $query->where('folders.ts_foldername', 'like', "%$searchTerm%");
+            $query->where('folders.portal_ts_foldername', 'like', "%$searchTerm%");
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
         
         return $query
-            ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
+            ->select('folders.ts_folderkey', 'folders.portal_ts_foldername', 'seasons.code as year')
             ->distinct('folders.ts_folderkey') //CODE BY IT
-            ->orderBy('folders.ts_foldername');
+            ->orderBy('folders.portal_ts_foldername');
     }
 
     /**
@@ -397,12 +397,12 @@ class ImageService
         });
 
         if($searchTerm) {
-            $query->where('folders.ts_foldername', 'like', "$searchTerm%");
+            $query->where('folders.portal_ts_foldername', 'like', "$searchTerm%");
         }
 
         return $query
-            ->select('folders.ts_folderkey', 'folders.ts_foldername', 'seasons.code as year')
-            ->orderBy('folders.ts_foldername')
+            ->select('folders.ts_folderkey', 'folders.portal_ts_foldername', 'seasons.code as year')
+            ->orderBy('folders.portal_ts_foldername')
             ->get();
     }
 
@@ -448,7 +448,7 @@ class ImageService
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm, $searchTerm2) {
-                $query->where('subjects.firstname', 'like', "%$searchTerm%")
+                $query->where('subjects.portal_firstname', 'like', "%$searchTerm%")
                     ->orWhere('subjects.lastname', 'like', "%$searchTerm2%");
             });
         }
@@ -461,16 +461,16 @@ class ImageService
         }
         
         return $query
-            ->select('subjects.firstname', 
-                'subjects.lastname', 
+            ->select('subjects.portal_firstname', 
+                'subjects.portal_lastname', 
                 'subjects.ts_subjectkey', 
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
             ->distinct()
             ->orderBy('year')
-            ->orderBy('subjects.lastname')
-            ->orderBy('subjects.firstname')
+            ->orderBy('subjects.portal_lastname')
+            ->orderBy('subjects.portal_firstname')
             ->get();
     }
 
@@ -503,10 +503,10 @@ class ImageService
                 if ($subject) {
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
-                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null); //CODE BY IT
+                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->portal_ts_foldername, $image->year ?? null); //CODE BY IT
                 } else {
                     $uploaded = false;
-                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null); //CODE BY IT
+                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->portal_ts_foldername, $image->year ?? null); //CODE BY IT
                 }
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->first();
@@ -526,16 +526,16 @@ class ImageService
 
             // if ($isSubject) {
             //     $subject = Subject::where('ts_subjectkey', $image->$key)->first();
-            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null);
+            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->portal_ts_foldername, $image->year ?? null);
             // } else {
-            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
+            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->portal_ts_foldername, $image->year ?? null);
             // }
             //CODE BY Chromedia
 
             return [
                 'id' => base64_encode(base64_encode($image->$key)),
-                'firstname' => $isSubject ? $image->firstname : '',
-                'lastname' => $isSubject ? $image->lastname : '',
+                'firstname' => $isSubject ? $image->portal_firstname : '',
+                'lastname' => $isSubject ? $image->portal_lastname : '',
                 // 'isPortrait' => $dimensions[0] <= $dimensions[1], //CODE BY Chromedia
                 'isPortrait' => $isPortrait,
                 'classGroup' => $classGroup,

@@ -22,6 +22,7 @@ class Folder extends Model
         'ts_folder_id',
         'ts_folderkey',
         'ts_foldername',
+        'portal_ts_foldername',
         'ts_job_id',
         'folder_tag',
         'status_id',

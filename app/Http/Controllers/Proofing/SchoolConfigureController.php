@@ -96,7 +96,7 @@ class SchoolConfigureController extends Controller
                     });
     
                     return [
-                        'ts_foldername' => $folder->ts_foldername,
+                        'ts_foldername' => $folder->portal_ts_foldername,
                         'ts_folder_id' => $folder->ts_folder_id,
                         'tag' => $folder->folderTags->external_name ?? null, // Handle null if folderTags is empty
                         'is_visible_for_portrait' => $folder->is_visible_for_portrait,

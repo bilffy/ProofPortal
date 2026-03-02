@@ -330,47 +330,57 @@ class ConfigureService
 
     private function updateImage($tsSubjectImages, $bpSubjectImages)
     {
-        $bpSubjectImageUpdated = [];
-    
         foreach ($bpSubjectImages as $bpSubjectImage) {
     
             $tsSubjectId  = $bpSubjectImage['ts_subject_id'];
             $tsSubjectKey = $bpSubjectImage['ts_subjectkey'];
     
-            // Skip if no Timestone images
+            // Get all Blueprint images for this subject
+            $existingBpImages = $this->imageService
+                ->getImagesBySubjectKey($tsSubjectKey);
+    
+            $existingBpImageKeys = $existingBpImages->pluck('ts_imagekey')->toArray();
+    
+            // If no images exist in Timestone → delete all Blueprint images
             if (!isset($tsSubjectImages[$tsSubjectId])) {
+    
                 $this->imageService->deleteImageBytsSubjectKey($tsSubjectKey);
-
-                $bpSubjectImageUpdated[] = $bpSubjectImage;
                 continue;
             }
-
-            foreach ($tsSubjectImages[$tsSubjectId] as $tsImage) {
     
-                $imageKey = $tsImage->ImageKey;
-                $imageID  = $tsImage->ImageID;
-                $imageIsPrimary  = $tsImage->IsPrimary;
+            $tsImages = $tsSubjectImages[$tsSubjectId];
     
-                // Check if image already exists in Blueprint
-                $existingImage = $this->imageService
-                    ->getImageBySubjectAndImageKey($tsSubjectKey, $imageKey);
+            $tsImageKeys = [];
     
-                if (!$existingImage) {
-                    $this->imageService->updateOrCreateImageRecord([
-                        'ts_subjectkey' => $tsSubjectKey,
-                        'ts_subject_id' => $tsSubjectId,
-                        'ts_imagekey'   => $imageKey,
-                        'ts_image_id'   => $imageID,
-                        'ts_job_id'     => $bpSubjectImage['ts_job_id'],
-                        'is_primary' => $imageIsPrimary
-                    ]);
+            foreach ($tsImages as $tsImage) {
     
-                    $bpSubjectImageUpdated[] = $bpSubjectImage;
-                }
+                $imageKey       = $tsImage->ImageKey;
+                $imageID        = $tsImage->ImageID;
+                $imageIsPrimary = $tsImage->IsPrimary;
+    
+                $tsImageKeys[] = $imageKey;
+    
+                // Add or update image
+                $this->imageService->updateOrCreateImageRecord([
+                    'ts_subjectkey' => $tsSubjectKey,
+                    'ts_subject_id' => $tsSubjectId,
+                    'ts_imagekey'   => $imageKey,
+                    'ts_image_id'   => $imageID,
+                    'ts_job_id'     => $bpSubjectImage['ts_job_id'],
+                    'is_primary'    => $imageIsPrimary
+                ]);
+            }
+    
+            // DELETE images that no longer exist in Timestone
+            $imagesToDelete = array_diff($existingBpImageKeys, $tsImageKeys);
+    
+            if (!empty($imagesToDelete)) {
+                $this->imageService->deleteImagesBySubjectAndKeys(
+                    $tsSubjectKey,
+                    $imagesToDelete
+                );
             }
         }
-    
-        return $bpSubjectImageUpdated;
     }
 
     public function peopleImageCount($tsJobId)

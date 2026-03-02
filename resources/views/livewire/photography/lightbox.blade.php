@@ -13,7 +13,7 @@
                 @php
                     $isFolder = $image['category'] == 'FOLDER';
                     $imageId = $image['id'];
-                    // $name = $isFolder ? $image['classGroup'] : $image['firstname'] . ' ' . $image['lastname']; //CODE BY Chromedia
+                    // $name = $isFolder ? $image['classGroup'] : $image['portal_firstname'] . ' ' . $image['portal_lastname']; //CODE BY Chromedia
                     $name = ''; //CODE BY IT
                     $folderName = $image['year'];
                     $landscape = !$image['isPortrait'];

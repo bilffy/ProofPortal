@@ -21,6 +21,8 @@ class Subject extends Model
     protected $fillable = [
         'firstname',
         'lastname',
+        'portal_firstname',
+        'portal_lastname',
         'title',
         'salutation',
         'ts_subjectkey',

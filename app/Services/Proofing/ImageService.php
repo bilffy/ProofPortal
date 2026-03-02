@@ -39,7 +39,7 @@ class ImageService
         );
     
         return true;
-    }   
+    }  
 
     public function getImageBySubjectAndImageKey(string $subjectKey, string $imageKey)
     {

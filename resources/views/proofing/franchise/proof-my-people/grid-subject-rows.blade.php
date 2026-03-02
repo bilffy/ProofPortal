@@ -27,8 +27,8 @@
         $salutation = trim($subject->salutation ?? '');
         $prefix = trim($subject->prefix ?? '');
         $suffix = trim($subject->suffix ?? '');
-        $firstname = trim($subject->firstname ?? '');
-        $lastname = trim($subject->lastname ?? '');
+        $firstname = trim($subject->portal_firstname ?? '');
+        $lastname = trim($subject->portal_lastname ?? '');
 
         // Build display name dynamically using array join to avoid double spaces
         $nameParts = [];
