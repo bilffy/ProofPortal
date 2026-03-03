@@ -31,6 +31,7 @@ class Job extends Model
         'proof_start',
         'proof_warning',
         'proof_due',
+        'show_proofing',
         'download_available_date',
         'download_available_date',
         'notifications_enabled',

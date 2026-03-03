@@ -88,7 +88,11 @@ class SchoolConfigureController extends Controller
             $jobWithRelations = $this->jobService->getJobsByTSJobID($job->ts_job_id); 
 
             if ($jobWithRelations->folders->isNotEmpty()) {
-                $selectedFolders = $jobWithRelations->folders->map(function ($folder) {
+                $selectedFolders =$jobWithRelations->folders
+                ->filter(function ($folder) {
+                    return !is_null($folder->ts_folderkey);
+                })
+                ->map(function ($folder) {
                     $folderWithImage = $folder->images ?? collect();
 
                     $subjectsWithImages = $folder->subjects->filter(function ($subject) {

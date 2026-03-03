@@ -57,6 +57,7 @@ class ImageService
             ->join('jobs', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->where('jobs.ts_schoolkey', $schoolKey)
+            ->whereNotNull('folders.ts_folderkey')
             ->where(function ($q) use ($visibilityColumn) {
                 if (empty($visibilityColumn)) {
                     $q->where('folders.is_visible_for_group', 1)
@@ -65,8 +66,7 @@ class ImageService
                     $q->where("folders.$visibilityColumn", 1);
                 }
             })
-            ->where('seasons.is_default', 1)
-        ;
+            ->where('seasons.is_default', 1);
         
         return $query
             ->select('seasons.id', 'seasons.ts_season_id', 'seasons.code as Year')
@@ -89,6 +89,7 @@ class ImageService
             ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
             ->where('jobs.ts_schoolkey', $schoolKey)
+            ->whereNotNull('folders.ts_folderkey')
             ->where(function ($query) use ($operator, $folderTag) {
                 $query->where('folders.folder_tag', $operator, $folderTag)
                     ->orWhereNull('folders.folder_tag');
@@ -114,7 +115,8 @@ class ImageService
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
-            ->where('jobs.ts_schoolkey', $schoolKey);
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->whereNotNull('folders.ts_folderkey');
             
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
@@ -176,7 +178,8 @@ class ImageService
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_season_id', $seasonId)
-            ->where("folders.$visibilityColumn", 1);
+            ->where("folders.$visibilityColumn", 1)
+            ->whereNotNull('folders.ts_folderkey');
 
             if ($schoolKey) {
                 $query->where('jobs.ts_schoolkey', $schoolKey);
@@ -210,7 +213,9 @@ class ImageService
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
         ->where('jobs.ts_season_id', $seasonId)
-        ->where('jobs.ts_schoolkey', $schoolKey);
+        ->where('jobs.ts_schoolkey', $schoolKey)
+        ->whereNotNull('subjects.ts_subjectkey')
+        ->whereNotNull('folders.ts_folderkey');
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
@@ -237,14 +242,19 @@ class ImageService
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-        ->leftJoin('folder_subjects', 'folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->leftJoin('folder_subjects', function ($join) {
+            $join->on('folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                 ->where('folder_subjects.is_deleted', 0);
+        })
         ->join('subjects', function ($join) {
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
                  ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
         })
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
-        ->where('jobs.ts_schoolkey', $schoolKey);
+        ->where('jobs.ts_schoolkey', $schoolKey)
+        ->whereNotNull('subjects.ts_subjectkey')
+        ->whereNotNull('folders.ts_folderkey');
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -303,6 +313,7 @@ class ImageService
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
+        ->whereNotNull('folders.ts_folderkey')
         // ->where('images.keyorigin', 'Folder')
         ;
         
@@ -378,7 +389,7 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->where('folders.is_visible_for_group', 1)
-        ;
+            ->whereNotNull('folders.ts_folderkey');
 
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -421,14 +432,18 @@ class ImageService
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
-        ->leftJoin('folder_subjects', 'folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+        ->leftJoin('folder_subjects', function ($join) {
+            $join->on('folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                 ->where('folder_subjects.is_deleted', 0);
+        })
         ->join('subjects', function ($join) {
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
                  ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
         })
         ->where('jobs.ts_schoolkey', $schoolKey)
         ->where('folders.is_visible_for_portrait', 1)
-        ;
+        ->whereNotNull('subjects.ts_subjectkey')
+        ->whereNotNull('folders.ts_folderkey');
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -598,6 +613,10 @@ class ImageService
      */
     public function getIsImageFound(string $key): bool
     {
+        if (!$key) {
+            return false;
+        }
+
         $imageRecordExists = Image::where('keyvalue', $key)->exists();
 
         if (!$imageRecordExists) {

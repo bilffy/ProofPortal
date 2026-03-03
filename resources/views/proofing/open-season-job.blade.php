@@ -194,21 +194,20 @@
                 data: { _token: '{{ csrf_token() }}', jobKey },
                 success: function (proxyResponse) {
                     if (proxyResponse.success) {
-                        window.location.href = "{{ url('/photography/configure') }}";
-                        // $.ajax({
-                        //     url: "{{ route('dashboard.openJob') }}",
-                        //     type: "GET",
-                        //     data: { jobKey },
-                        //     success: function (response) {
-                        //         if (response.success) {
-                        //             if (response.redirectUrl) {
-                        //                 window.location.href = response.redirectUrl;
-                        //             } else {
-                        //                 window.location.href = "{{ url('/proofing') }}";
-                        //             }
-                        //         }
-                        //     }
-                        // });
+                        $.ajax({
+                            url: "{{ route('dashboard.openJob') }}",
+                            type: "GET",
+                            data: { jobKey },
+                            success: function (response) {
+                                if (response.success) {
+                                    if (response.redirectUrl) {
+                                        window.location.href = response.redirectUrl;
+                                    } else {
+                                        window.location.href = "{{ url('/proofing') }}";
+                                    }
+                                }
+                            }
+                        });
                     } else {
                         console.error("Proxy sync failed:", proxyResponse);
                     }

@@ -301,7 +301,7 @@ class ProofController extends Controller
         $perPage = 20;
         $page = $request->input('page', 1);
     
-        $query = Subject::where('ts_job_id', $selectedJob->ts_job_id);
+        $query = Subject::where('ts_job_id', $selectedJob->ts_job_id)->whereNotNull('ts_subjectkey');
     
         if (!empty($search)) {
             // Split search into words

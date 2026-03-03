@@ -8,6 +8,8 @@ class FolderSubjectService
     public function getAttachedFolders($subjectChangeTSId){
         return FolderSubject::join('folders', 'folders.ts_folder_id', '=', 'folder_subjects.ts_folder_id')
         ->where('folder_subjects.ts_subject_id', $subjectChangeTSId)
+        ->whereNotNull('folders.ts_folderkey')
+        ->where('folder_subjects.is_deleted', 0)
         ->select('folders.ts_foldername', 'folders.ts_folderkey')
         ->get();
     }
@@ -67,6 +69,7 @@ class FolderSubjectService
     public function getAllAttachedSubjectsImageBySubjectIds($bpsubjectIds)
     {
         return FolderSubject::whereIn('ts_subject_id', $bpsubjectIds)
+            ->where('folder_subjects.is_deleted', 0)
             ->select('folder_subjects.id', 'folder_subjects.ts_subject_id', 'folder_subjects.ts_folder_id') // Fetch only required columns from `folder_subjects`
             ->with(['images:images.id,ts_image_id,ts_imagekey,keyvalue,subjects.ts_job_id']) // Fetch specific fields from `images` table
             ->whereHas('images', function($query) {

@@ -97,13 +97,13 @@ class JobConfigureController extends Controller
 
     private function getDuplicateFolder($selectedJob)
     {
-        $folderKeys = $selectedJob->folders->pluck('ts_folderkey');
+        $folderKeys = $selectedJob->folders->whereNotNull('ts_folderkey')->pluck('ts_folderkey');
         return $folderKeys->duplicates();
     }
 
     private function getDuplicateSubject($selectedJob)
     {
-        $subjectKeys = $selectedJob->subjects->pluck('ts_subjectkey');
+        $subjectKeys = $selectedJob->subjects->whereNotNull('ts_subjectkey')->pluck('ts_subjectkey');
         return $subjectKeys->duplicates();
     }
 
@@ -217,7 +217,6 @@ class JobConfigureController extends Controller
 
             case 'update-subject-associations':
                 // $this->configureService->updateSubjectAssociations($selectedJob->ts_job_id);
-                $this->configureService->updatePeopleImage($selectedJob->ts_job_id);
                 $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(30);
                 // $baseUrl = config('services.bpsync.url');
                 $baseUrl = 'http://bpsync.msp.local/index.php/';

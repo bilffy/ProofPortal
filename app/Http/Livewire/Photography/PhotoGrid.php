@@ -168,9 +168,22 @@ class PhotoGrid extends Component
         $imageCount = $images->count();
         $noImageCount = 0;
         foreach ($images as $image) {
-            if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey)) {
+            if (
+                property_exists($image, 'ts_subjectkey') &&
+                !empty($image->ts_subjectkey) && 
+                !$imageService->getIsImageFound($image->ts_subjectkey)
+            ) {
                 $noImageCount++;
-            } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey)) {
+            } else if (
+                property_exists($image, 'ts_folderkey') &&
+                !empty($image->ts_folderkey)  && 
+                !$imageService->getIsImageFound($image->ts_folderkey)
+            ) {
+                $noImageCount++;
+            } elseif (
+                (property_exists($image, 'ts_subjectkey') && empty($image->ts_subjectkey)) ||
+                (property_exists($image, 'ts_folderkey') && empty($image->ts_folderkey))
+            ) {
                 $noImageCount++;
             }
         }

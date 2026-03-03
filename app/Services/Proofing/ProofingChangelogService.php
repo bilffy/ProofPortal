@@ -125,6 +125,8 @@ class ProofingChangelogService
                 ['ts_jobkey', $jobKey],
                 ['resolved_status_id', $this->statusService->active]
             ])
+            ->whereNotNull('subjects.ts_subjectkey')
+            ->whereNotNull('folders.ts_folderkey')
             ->select(
                 'subjects.firstname', 
                 'subjects.lastname', 
@@ -160,6 +162,8 @@ class ProofingChangelogService
             ['resolved_status_id', $this->statusService->inactive],
             ['approvalStatus', $this->statusService->awaitingApproval]
         ])
+        ->whereNotNull('subjects.ts_subjectkey')
+        ->whereNotNull('folders.ts_folderkey')
         ->select(
             'subjects.firstname', 
             'subjects.lastname', 
@@ -219,6 +223,7 @@ class ProofingChangelogService
         ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
         ->whereIn('issues.issue_name', ['FOLDER_NAME_CHANGE', 'GENERAL_ISSUES', 'TEACHER', 'PRINCIPAL', 'DEPUTY'])
         ->where('ts_jobkey', $jobKey)
+        ->whereNotNull('folders.ts_folderkey')
         ->orderBy('issues.id', 'ASC')
         ->select(
             'folders.ts_foldername', 

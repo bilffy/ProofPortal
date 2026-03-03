@@ -232,6 +232,8 @@ class ReportRepository
             )
             ->join('folders', 'folders.ts_folder_id', '=', 'subjects.ts_folder_id')
             ->where('folders.ts_folder_id', $tsFolderId)
+            ->whereNotNull('subjects.ts_subjectkey')
+            ->whereNotNull('folders.ts_folderkey')
             ->get();
     }
 
@@ -256,6 +258,8 @@ class ReportRepository
                 ['jobs.ts_job_id', $tsJobId],
                 ['folders.ts_folder_id', $tsFolderId]
             ])
+            ->whereNotNull('subjects.ts_subjectkey')
+            ->whereNotNull('folders.ts_folderkey')
             ->get();
     }
 
@@ -325,6 +329,7 @@ class ReportRepository
             ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
             ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
             ->where('jobs.ts_job_id', $tsJobId)
+            ->whereNotNull('folders.ts_folderkey')
             ->whereIn('issues.issue_name', $issues)
             ->get();
     }
@@ -359,6 +364,7 @@ class ReportRepository
             ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
             ->where('jobs.ts_job_id', $tsJobId)
             ->where('folders.ts_folder_id', $tsFolderId)
+            ->whereNotNull('folders.ts_folderkey')
             ->whereIn('issues.issue_name', $issues)
             ->get();
     }
@@ -387,6 +393,7 @@ class ReportRepository
             ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
             ->where('jobs.ts_job_id', $tsJobId)
             ->where('changelogs.keyorigin', 'Subject')
+            ->whereNotNull('subjects.ts_subjectkey')
             ->get();
     }
 
@@ -419,6 +426,8 @@ class ReportRepository
                 ['folders.ts_folder_id', $tsFolderId],
                 ['changelogs.keyorigin', 'Subject']
             ])
+            ->whereNotNull('subjects.ts_subjectkey')
+            ->whereNotNull('folders.ts_folderkey')
             ->get();
     }
 
@@ -446,6 +455,7 @@ class ReportRepository
             ->join('issues', 'issues.id', '=', 'changelogs.issue_id')
             ->where('jobs.ts_job_id', $tsJobId)
             ->where('changelogs.keyorigin', 'Subject')
+            ->whereNotNull('subjects.ts_subjectkey')
             ->get();
     }
 
@@ -467,6 +477,7 @@ class ReportRepository
             ->join('jobs', 'jobs.ts_jobkey', '=', 'group_positions.ts_jobkey')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->where('jobs.ts_job_id', $tsJobId)
+            ->whereNotNull('folders.ts_folderkey')
             ->orderBy('group_positions.row_number', 'asc')
             ->orderBy('group_positions.row_position', 'asc')
             ->get();
@@ -490,6 +501,7 @@ class ReportRepository
             ->join('jobs', 'jobs.ts_jobkey', '=', 'group_positions.ts_jobkey')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->where('folders.ts_folder_id', $tsFolderId)
+            ->whereNotNull('folders.ts_folderkey')
             ->orderBy('group_positions.row_number', 'asc')
             ->orderBy('group_positions.row_position', 'asc')
             ->get();
@@ -517,6 +529,7 @@ class ReportRepository
                 ['jobs.ts_job_id', $tsJobId],
                 ['folders.ts_folder_id', $tsFolderId]
             ])
+            ->whereNotNull('folders.ts_folderkey')
             ->orderBy('group_positions.row_number', 'asc')
             ->orderBy('group_positions.row_position', 'asc')
             ->get();

@@ -24,6 +24,7 @@ class SubjectService
     {
         // Eager load images for subjects
         return Subject::with(['images:id,keyvalue,ts_imagekey'])
+        ->whereNotNull('ts_subjectkey')
         ->where('ts_folder_id', $folderId)
         ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'prefix', 'suffix', 'ts_subject_id')
         ->get();
@@ -42,6 +43,7 @@ class SubjectService
     public function getAllHomedSubjectsImageByJobId($tsJobId)
     {
         return Subject::where('ts_job_id', $tsJobId)
+        ->whereNotNull('ts_subjectkey')
         ->select('id', 'ts_subject_id', 'ts_job_id', 'ts_subjectkey') // Select only required columns from 'subjects' table
         ->with(['images:id,ts_image_id,ts_imagekey,keyvalue,ts_job_id']) // Load only necessary fields from 'images' table
         ->whereHas('images') // Ensure that the subject has images
@@ -51,6 +53,7 @@ class SubjectService
     public function getAllTimestoneHomeSubjectsByJobID($tsJobId)
     {
         return Subject::where('ts_job_id', $tsJobId)
+        ->whereNotNull('ts_subjectkey')
         ->select('id', 'ts_subject_id', 'ts_job_id', 'ts_subjectkey') // Select only required columns from 'subjects' table
         ->with(['images:id,ts_image_id,ts_imagekey,keyvalue,ts_job_id']) // Load only necessary fields from 'images' table
         ->get();
@@ -58,7 +61,8 @@ class SubjectService
 
     public function getSubjectByJobId($tsJobId)
     {
-        return Subject::where('ts_job_id', $tsJobId);
+        return Subject::where('ts_job_id', $tsJobId)
+        ->whereNotNull('ts_subjectkey');
     }
 
     public function getAllSubjectAssociationByKey($subjectkey)
@@ -71,7 +75,8 @@ class SubjectService
     public function getByJobId($tsJobId,...$selectedValues)
     {
         return Subject::select($selectedValues)
-        ->where('ts_job_id', $tsJobId);
+        ->where('ts_job_id', $tsJobId)
+        ->whereNotNull('ts_subjectkey');
     }
 
     public function getBySubjectKey($subjectKey, ...$selectedValues)

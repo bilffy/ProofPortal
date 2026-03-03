@@ -213,7 +213,8 @@ class ProofingJobController extends Controller
     
             if ($jobSuccess && $folderSuccess && $selectedJob) {
                 $franchise = $selectedJob->franchises;
-    
+                $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
+
                 if ($franchise) {
                     $franchiseUserIds = FranchiseUser::where('franchise_id', $franchise->id)->pluck('user_id');
                     $folderIds = $selectedJob->folders()->pluck('ts_folder_id');

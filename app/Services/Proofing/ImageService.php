@@ -16,6 +16,21 @@ class ImageService
         $this->folderService = $folderService;
     }
 
+    public function getImagesBySubjectKey(string $subjectKey)
+    {
+        return Image::where('keyorigin', 'Subject')
+            ->where('keyvalue', $subjectKey)
+            ->get();
+    }
+
+    public function deleteImagesBySubjectAndKeys(string $subjectKey, array $imageKeys)
+    {
+        return Image::where('keyorigin', 'Subject')
+            ->where('keyvalue', $subjectKey)
+            ->whereIn('ts_imagekey', $imageKeys)
+            ->delete();
+    }
+
     public function deleteImage($imagesToDelete)
     {
         return Image::whereIn('id', $imagesToDelete)->delete();

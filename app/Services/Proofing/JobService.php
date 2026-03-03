@@ -320,7 +320,8 @@ class JobService
             'jobs.download_available_date',
             'schools.name as school_name',
             'seasons.ts_season_id as season_id',
-            'seasons.code as season_code'
+            'seasons.code as season_code',
+            'show_proofing'
         );
     }
 }
