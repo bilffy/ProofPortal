@@ -181,57 +181,56 @@ class ProofingJobController extends Controller
     {
         $jobKey = $this->getDecryptData($request->input('jobKey'));
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
-        // $baseUrl = config('services.bpsync.url');
         $baseUrl = 'http://bpsync.msp.local/index.php/';
     
         try {
-            $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(30);
+            $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(60); // Increased timeout for sync
     
             $jobResponse = null;
             $folderResponse = null;
     
-            // Case 1: Job does NOT exist → Job + Folder sync
             if (!$selectedJob) {
+                // Sync Job first
                 $jobResponse = $client->get("{$baseUrl}/jobs/sync/{$jobKey}");
+                
+                if ($jobResponse->successful()) {
+                    // IMPORTANT: Fetch the newly created job
+                    $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
+                }
+                
+                // Sync Folders
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
-                \Log::info($jobResponse);
-                \Log::info($folderResponse);
-                $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
-            } 
-            // Case 2: Job exists → Folder sync only (This logs the number of associations to sync)
-            else {
+            } else {
+                // Re-activate if deleted
                 if ($selectedJob->job_status_id == $this->statusService->deleted) {
                     $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
+                    $selectedJob->refresh(); // Sync the model instance with the DB
                 }
                 $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
-                \Log::info($folderResponse);
             }
     
-            // Validate responses
-            $jobSuccess = is_null($jobResponse) || $jobResponse->successful();
-            $folderSuccess = $folderResponse && $folderResponse->successful();
-    
-            if ($jobSuccess && $folderSuccess && $selectedJob) {
-                $franchise = $selectedJob->franchises;
+            // Validate
+            if ($selectedJob && $folderResponse?->successful()) {
+                $userId = Auth::id();
+                
+                // Ensure permissions and visibility
                 $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
-
-                if ($franchise) {
-                    $franchiseUserIds = FranchiseUser::where('franchise_id', $franchise->id)->pluck('user_id');
-                    $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
     
-                    foreach ($franchiseUserIds as $userId) {
-                        JobUser::firstOrCreate([
-                            'user_id'   => $userId,
-                            'ts_job_id' => $selectedJob->ts_job_id
-                        ]);
+                // Fetch folders - if this is empty, the sync API might be slow
+                $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
     
-                        foreach ($folderIds as $folderId) {
-                            FolderUser::firstOrCreate([
-                                'user_id'      => $userId,
-                                'ts_folder_id' => $folderId
-                            ]);
-                        }
-                    }
+                // Map User to Job
+                JobUser::firstOrCreate([
+                    'user_id'   => $userId,
+                    'ts_job_id' => $selectedJob->ts_job_id
+                ]);
+    
+                // Map User to Folders
+                foreach ($folderIds as $folderId) {
+                    FolderUser::firstOrCreate([
+                        'user_id'      => $userId,
+                        'ts_folder_id' => $folderId
+                    ]);
                 }
     
                 return response()->json([
@@ -243,21 +242,14 @@ class ProofingJobController extends Controller
     
             return response()->json([
                 'success'        => false,
-                'message'        => 'Sync failed.',
+                'message'        => 'Sync completed but record could not be verified.',
                 'job_status'     => $jobResponse?->status(),
                 'folder_status'  => $folderResponse?->status(),
             ], 502);
     
         } catch (\Throwable $e) {
-            \Log::error('Proxy sync failed', [
-                'jobKey' => $jobKey,
-                'error'  => $e->getMessage()
-            ]);
-    
-            return response()->json([
-                'success' => false,
-                'error'   => 'Internal server error'
-            ], 500);
+            \Log::error('Proxy sync failed', ['jobKey' => $jobKey, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => 'Internal server error'], 500);
         }
     }
 }

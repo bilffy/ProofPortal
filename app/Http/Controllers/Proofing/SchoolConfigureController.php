@@ -77,7 +77,8 @@ class SchoolConfigureController extends Controller
         $decryptedSchoolkey = $this->getDecryptData($request->schoolkey);
 
         // Fetch all jobs by season and schoolkey
-        $jobs = $this->jobService->getJobsBySeason($decryptedSchoolkey, $decryptedSeasonID);
+        $jobs = $this->jobService->getJobsBySeason($decryptedSchoolkey, $decryptedSeasonID)->where('show_portal',1)
+        ->get();
 
         // Map through all jobs to get the job details along with folders and associated data
         $jobsWithDetails = $jobs->map(function ($job) {
