@@ -216,7 +216,9 @@
 
         <div id="release-dates-section" class="job-dependent-section">
             <h5 class="mb-4 text-black">Set Digital Image Release Dates</h5>
-            <p>Select when Portrait and Group Digital Images will be available on the portal for the school to view. The default date displayed is the date set in K2 for Parent Digital Downloads, which is also the earliest possible date. You can update the dates below if you wish to push the release of photos in the portal to a later date.</p>
+            <p>Select when Portrait 
+                {{-- and Group  --}}
+                Digital Images will be available on the portal for the school to view. The default date displayed is the date set in K2 for Parent Digital Downloads, which is also the earliest possible date. You can update the dates below if you wish to push the release of photos in the portal to a later date.</p>
 
             <div class="flex gap-4">
                 <div class="w-[213px] flex items-center">
