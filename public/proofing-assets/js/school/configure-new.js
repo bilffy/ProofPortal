@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+jQuery(document).ready(function ($) {
     $('#schoolName_picker').on('keyup change', function () {
         var schoolNameNew = $(this).val();
         const schoolKey = $('#schoolHash').val();
@@ -34,8 +34,8 @@ jQuery(document).ready(function($) {
             suburbCurrent = suburbNew; // Update current class name after changes are sent
         }
     });
-    
-    function sendSchoolChanges(field, newData, schoolKey) { 
+
+    function sendSchoolChanges(field, newData, schoolKey) {
         var returnResponse;
 
         var formData = new FormData();
@@ -48,7 +48,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             dataType: 'json',
             type: "POST",
-            url: base_url+"/school-change/submit",
+            url: base_url + "/school-change/submit",
             async: true,
             data: formData,
             cache: false,
@@ -73,24 +73,24 @@ jQuery(document).ready(function($) {
     }
 
     //Job Update
-    $(document).on('change', '.folder-details-is-visible-for-portrait', function() {
+    $(document).on('change', '.folder-details-is-visible-for-portrait', function () {
         // Get the checked state of the checkbox
         const checkedValue = $(this).is(':checked'); // true if checked, false if unchecked
         const newValue = checkedValue ? 1 : 0;
-    
+
         // Get folder and job-related data
         const folderId = $(this).data('folder-id');
         const field = "is_visible_for_portrait";
         const selectedJobKey = $('#select_job').val();
-    
+
         // Find the selected job in jobsData
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
         if (selectedJob) {
             const selectedFolderName = $(this).data('folder-name');
-    
+
             // Find the specific folder within the selected job's Folders array
             const selectedFolder = selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
-            
+
             // Update the folder property if the folder was found
             if (selectedFolder) {
                 selectedFolder.is_visible_for_portrait = newValue;
@@ -99,32 +99,32 @@ jQuery(document).ready(function($) {
         }
     });
 
-    $(document).on('change', '.folder-details-is-visible-for-group', function() {
+    $(document).on('change', '.folder-details-is-visible-for-group', function () {
         // Get the checked state of the checkbox
         const checkedValue = $(this).is(':checked'); // true if checked, false if unchecked
         const newValue = checkedValue ? 1 : 0;
-    
+
         // Get folder and job-related data
         const folderId = $(this).data('folder-id');
         const field = "is_visible_for_group";
         const selectedJobKey = $('#select_job').val();
-    
+
         // Find the selected job in jobsData
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
         if (selectedJob) {
             const selectedFolderName = $(this).data('folder-name');
-    
+
             // Find the specific folder within the selected job's Folders array
             const selectedFolder = selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
-            
+
             // Update the folder property if the folder was found
             if (selectedFolder) {
                 selectedFolder.is_visible_for_group = newValue;
                 sendFolderChanges(folderId, field, newValue);
             }
         }
-    });    
-    
+    });
+
     function sendFolderChanges(folderId, field, newData) {
         return new Promise((resolve, reject) => {
             const formData = new FormData();
@@ -132,7 +132,7 @@ jQuery(document).ready(function($) {
             formData.append("newValue", newData);
             formData.append("folderId", folderId);
             formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
-    
+
             $.ajax({
                 dataType: 'json',
                 type: "POST",
@@ -155,14 +155,14 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function sendJobChanges(jobKey, field, newData) { 
+    function sendJobChanges(jobKey, field, newData) {
         return new Promise((resolve, reject) => {
             const formData = new FormData();
             formData.append("field", field);
             formData.append("newData", newData);
             formData.append("jobKey", jobKey);
             formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
-    
+
             $.ajax({
                 dataType: 'json',
                 type: "POST",
@@ -184,7 +184,7 @@ jQuery(document).ready(function($) {
             });
         });
     }
-    
+
     let jobsData = [];
     $('#select_season').on('change', function () {
         const selectedSeasonId = $(this).val();
@@ -220,7 +220,7 @@ jQuery(document).ready(function($) {
                         $('#no-jobs-msg').addClass('d-none');
                         $('#select_job').next(".select2-container").removeClass('d-none');
                         jobSelect.empty().append('<option value="">Choose a Job</option>');
-    
+
                         $.each(jobs, function (index, job) {
                             jobSelect.append(`<option value="${job.ts_jobkey}">${job.ts_jobname}</option>`);
                         });
@@ -238,13 +238,13 @@ jQuery(document).ready(function($) {
     });
 
     // Listen for changes in the input field value
-    $('#portrait_download_start_picker').on('change', function() {
+    $('#portrait_download_start_picker').on('change', function () {
         const formattedPortraitDate = $('#portrait_download_start_picker').val();
         const selectedJob = jobsData.find(job => job.ts_jobkey === $('#select_job').val());
         sendJobChanges(selectedJob.ts_jobkey, 'portrait_download_date', formattedPortraitDate);
     });
 
-    $('#group_download_start_picker').on('change', function() {
+    $('#group_download_start_picker').on('change', function () {
         const formattedGroupDate = $('#group_download_start_picker').val();
         const selectedJob = jobsData.find(job => job.ts_jobkey === $('#select_job').val());
         sendJobChanges(selectedJob.ts_jobkey, 'group_download_date', formattedGroupDate);
@@ -256,24 +256,24 @@ jQuery(document).ready(function($) {
         const selectedJobKey = $(this).val();
         $('#jobType, #digital_download').addClass('d-none');
         $('p.alert-message').remove();
-    
+
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-        
+
         let portraitDateToDisplay;
         let groupDateToDisplay;
-    
+
         if (selectedJob) {
             $('#jobType, #digital_download').removeClass('d-none');
-        
+
             if (selectedJob.download_available_date !== null) {
                 function parseDate(dateString) {
                     return dateString ? moment(dateString, 'YYYY-MM-DD HH:mm:ss') : null;
                 }
-    
+
                 const downloadAvailableDate = parseDate(selectedJob.download_available_date);
                 const portraitDownloadDate = parseDate(selectedJob.portrait_download_date);
                 const groupDownloadDate = parseDate(selectedJob.group_download_date);
-                
+
 
                 let downloadAvailableDateInFormat = new Date(downloadAvailableDate.format('YYYY-MM-DD HH:mm:ss'));
                 let portraitDownloadDateInFormat = portraitDownloadDate ? new Date(portraitDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
@@ -289,7 +289,7 @@ jQuery(document).ready(function($) {
 
                 portraitDateToDisplay = downloadAvailableDateInFormat;
                 groupDateToDisplay = downloadAvailableDateInFormat;
-        
+
                 if (portraitDateToDisplay || groupDateToDisplay) {
                     // Update display date if conditions are met
                     if (downloadAvailableDateInFormat < portraitDownloadDateInFormat) {
@@ -318,10 +318,10 @@ jQuery(document).ready(function($) {
                         minDate: downloadAvailableDateInFormat
                     });
                 }
-    
+
                 $("#portrait_download_allowed").prop("checked", !!$("#portrait_download_start_picker").val());
                 $("#group_download_allowed").prop("checked", !!$("#group_download_start_picker").val());
-    
+
             } else {
                 $('#digital_download').addClass('d-none');
                 $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please contact your local MSP Expert.</p>');
@@ -355,72 +355,77 @@ jQuery(document).ready(function($) {
         $('p.alert-message').remove();
         const selectedValue = $('#select_job_access_image').val();
 
-        if (selectedValue === '0'){
+        if (selectedValue === '0') {
             $('#folder_config').addClass('d-none');
         } else {
             // Hide all <tr> elements with class 'folder-row', then show only those with matching data-tagid
             if (selectedValue === 'all') {
                 // Show all <tr> elements with class 'folder-row' inside #folder_config
                 $('#folder_config tr.folder-row').show();
-            }else{
+            } else {
                 $('#folder_config tr.folder-row').hide();
             }
-            
+
             $('#folder_config tr.folder-row[data-tagid="' + selectedValue + '"]').show();
             $('#folder_config tbody .no-row').remove();
-        
+
             // Check if any rows are visible after filtering
             const checkVisibleRows = () => {
                 const visibleRows = $('#folder_config tr.folder-row:visible').length;
                 if (visibleRows === 0) {
                     // If no rows are visible, add the "No folders available" message
                     $('#folder_config tbody').append('<tr class="no-row"><td></td><td class="flex justify-center">No folders available</td><td></td></tr>');
-                }else{
+                } else {
                     $('#folder_config tbody .no-row').remove();
                 }
             };
             // Add 500ms delay to ensure DOM is updated before checking
             setTimeout(checkVisibleRows, 500);
         }
+    });
 
-    function handleSelectColumnAction(checkboxId, checkboxClass) {
-        const inputCheckbox = document.getElementById(checkboxId);
-        if (!inputCheckbox) return;
-        inputCheckbox.addEventListener('change', function() {
-            const isChecked = this.checked;
-            const selectedJobType = document.getElementById('select_job_access_image').value;
-            const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
-            const folderIdsToUpdate = [];
+    function handleBulkCheckboxChange(isChecked, checkboxClass, field) {
+        const selectedJobType = $('#select_job_access_image').val() || 'all';
+        const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
+        const folderIdsToUpdate = [];
+        const newValue = isChecked ? 1 : 0;
+        const selectedJobKey = $('#select_job').val();
+        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
 
-            targetRows.forEach(function(row) {
-                const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
-                checkboxes.forEach(function(checkbox) {
-                    if (checkbox.checked !== isChecked) {
-                        checkbox.checked = isChecked;
-                        checkbox.dispatchEvent(new Event('change'));
-                        const folderId = checkbox.getAttribute('data-folder-id');
-                        folderIdsToUpdate.push(folderId);
+        targetRows.forEach(function (row) {
+            const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
+            checkboxes.forEach(function (checkbox) {
+                if (checkbox.checked !== isChecked) {
+                    checkbox.checked = isChecked;
+                    // Note: We don't trigger 'change' here to avoid individual AJAX spam
+                    const folderId = checkbox.getAttribute('data-folder-id');
+                    const folderName = checkbox.getAttribute('data-folder-name');
+                    folderIdsToUpdate.push(folderId);
+
+                    // Update local jobsData
+                    if (selectedJob && selectedJob.Folders) {
+                        const selectedFolder = selectedJob.Folders.find(f => f.ts_foldername === folderName);
+                        if (selectedFolder) {
+                            selectedFolder[field] = newValue;
+                        }
                     }
-                });
+                }
             });
-
-            if (folderIdsToUpdate.length > 0) {
-                sendFolderChanges(folderIdsToUpdate, checkboxClass === 'folder-details-is-visible-for-portrait' ? "is_visible_for_portrait" : "is_visible_for_group", isChecked ? 1 : 0);
-            }
         });
+
+        if (folderIdsToUpdate.length > 0) {
+            sendFolderChanges(folderIdsToUpdate, field, newValue);
+        }
     }
 
-    handleSelectColumnAction(
-        'set-is-visible-for-portrait',
-        'folder-details-is-visible-for-portrait'
-    );
-
-    handleSelectColumnAction(
-        'set-is-visible-for-group',
-        'folder-details-is-visible-for-group'
-    );
-
+    $(document).on('change', '#set-is-visible-for-portrait', function () {
+        handleBulkCheckboxChange(this.checked, 'folder-details-is-visible-for-portrait', 'is_visible_for_portrait');
     });
+
+    $(document).on('change', '#set-is-visible-for-group', function () {
+        handleBulkCheckboxChange(this.checked, 'folder-details-is-visible-for-group', 'is_visible_for_group');
+    });
+
 
     // Delete link functionality
     $('#deleteSchoolLogo').click(function (event) {
@@ -429,34 +434,34 @@ jQuery(document).ready(function($) {
         const preview = document.getElementById('schoolLogoPreview');
         const deleteLink = document.getElementById('deleteSchoolLogo');
         const schoolKey = $('#schoolHash').val();
-            // Use FormData to handle file uploads
-            const formData = new FormData();
-            formData.append('schoolKey', schoolKey);
-            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
-    
-            $.ajax({
-                url: base_url + '/config-school/delete-school-logo',
-                method: 'POST',
-                data: formData,
-                processData: false, // Required for FormData
-                contentType: false, // Required for FormData
-                success: function (response) {
-                    // Display the uploaded image as a preview if the upload is successful
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                        preview.style.display = 'block';
-                        deleteLink.classList.remove('d-none');
-                    };
-                    const file = fileInput.files[0];
-                    if (file) {
-                        reader.readAsDataURL(file); // Convert the file to a data URL
-                    }
-                },
-                error: function () {
-                    console.error('Failed to upload the school logo.');
+        // Use FormData to handle file uploads
+        const formData = new FormData();
+        formData.append('schoolKey', schoolKey);
+        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+
+        $.ajax({
+            url: base_url + '/config-school/delete-school-logo',
+            method: 'POST',
+            data: formData,
+            processData: false, // Required for FormData
+            contentType: false, // Required for FormData
+            success: function (response) {
+                // Display the uploaded image as a preview if the upload is successful
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    deleteLink.classList.remove('d-none');
+                };
+                const file = fileInput.files[0];
+                if (file) {
+                    reader.readAsDataURL(file); // Convert the file to a data URL
                 }
-            });
+            },
+            error: function () {
+                console.error('Failed to upload the school logo.');
+            }
+        });
         // Clear the input, hide preview and delete link
         fileInput.value = ''; // Clear the file input
         preview.src = ''; // Clear the preview image
@@ -470,7 +475,7 @@ $('#schoolLogoBtn').click(function (event) {
     $('#schoolLogo').click(); // Trigger the file input click
 });
 
-document.getElementById('schoolLogo').addEventListener('change', function(event) {
+document.getElementById('schoolLogo').addEventListener('change', function (event) {
     const file = event.target.files[0];
     const preview = document.getElementById('schoolLogoPreview');
     // Remove delete link since it does not match the current flow as of v1.1.30.2
@@ -499,7 +504,7 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
             success: function (response) {
                 // Display the uploaded image as a preview if the upload is successful
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     preview.src = e.target.result;
                     preview.style.display = 'block';
                     // deleteLink.classList.remove('d-none');
@@ -523,7 +528,7 @@ document.getElementById('schoolLogo').addEventListener('change', function(event)
 });
 
 function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
-    var targetUrl = base_url+"/config-school/digital-download/submit";
+    var targetUrl = base_url + "/config-school/digital-download/submit";
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var schoolKey = $('#schoolHash').val();
 
@@ -533,7 +538,7 @@ function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
 
     $.ajax({
         type: "POST",
-        url:targetUrl,
+        url: targetUrl,
         dataType: "json",
         async: false,
         data: formData, // Use the formData object here
@@ -571,7 +576,7 @@ function hideOrShowJobDependentSections(show) {
 }
 
 // Checkbox in Notification Email
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     $("#select_season").select2();
     $("#select_job").select2();
     $("#select_job_access_image").select2();
