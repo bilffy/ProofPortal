@@ -238,14 +238,13 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-4">
+            {{-- <div class="flex gap-4">
                 <div class="w-[213px] flex items-center">
                     <strong>Groups</strong>
                 </div>
                 <div class="w-[502px]"> 
                     <div class="relative" id="group_download_start_container">
                         <input
-                            {{-- datepicker --}}
                             id="group_download_start_picker"
                             type="text" 
                             class="bg-gray-50 border border-neutral text-gray-900 mb-2 
@@ -257,7 +256,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
         <div id="folders-table-section" class="job-dependent-section">
