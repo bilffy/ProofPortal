@@ -14,6 +14,7 @@
     foreach ($portraitYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
     }
+    $isSingleYear = count($yearOptions) === 1;
 
     $season = $defaultSeasonId;
     $key = "photo-grid-portraits-$schoolKey";
@@ -34,7 +35,7 @@
                     oninput="window.performPortaitSearch(event);"
                 />
             </div> --}}
-            <x-form.select context="portraits_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
+            <x-form.select context="portraits_year" :options="$yearOptions" class="mb-4" :disabled="$isSingleYear">Year</x-form.select>    
             <x-form.select context="portraits_view" :options="[]" class="mb-4">View</x-form.select>
             <x-form.select context="portraits_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
