@@ -88,6 +88,20 @@
             } else if (classValues.length === 0 && hasNone) {
                 $classSelect.find('option[value="none"]').remove();
             }
+
+            const availableOptions = $classSelect.find('option').filter(function() {
+                const val = $(this).val();
+                return val !== 'all' && val !== 'none';
+            });
+            const hasAll = $classSelect.find('option[value="all"]').length > 0;
+            const isAllSelected = availableOptions.length > 0 && classValues.length === availableOptions.length;
+
+            if (isAllSelected && hasAll) {
+                $classSelect.find('option[value="all"]').remove();
+            } else if (!isAllSelected && !hasAll && availableOptions.length > 1) {
+                $classSelect.prepend(new Option('Select All', 'all'));
+            }
+
             classValues = $classSelect.val() || [];
         }
 
