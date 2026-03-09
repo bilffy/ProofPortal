@@ -380,7 +380,7 @@ class PhotographyController extends Controller
             }
             // retrieve the image content using the ImageService - as is?
             // $imageContent = base64_encode($this->imageService->getImageContent($key)); //CODE BY Chromedia
-            $imageContent = $this->imageService->getImageContent($key); //CODE BY IT
+            $imageContent = $this->imageService->getImageContent($key, $selectedFilters['resolution'], $tab); //CODE BY IT
             return response()->json([
                 'success' => true,
                 'data' => $imageContent,

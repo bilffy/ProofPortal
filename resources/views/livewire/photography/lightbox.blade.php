@@ -12,18 +12,30 @@
             @foreach ($images as $image)
                 @php
                     $isFolder = $image['category'] == 'FOLDER';
-                    $imageId = $image['id'];
+                    // $imageId = $image['id']; // No longer needed, accessed directly
                     // $name = $isFolder ? $image['classGroup'] : $image['portal_firstname'] . ' ' . $image['portal_lastname']; //CODE BY Chromedia
-                    $name = ''; //CODE BY IT
-                    $folderName = $image['year'];
-                    $landscape = !$image['isPortrait'];
-                    $key = "img-lb_{{$imageId}}";
-                    $isLightbox = true;
-                    $isUploaded = $image['isUploaded'] ?? false;
+                    // $name = ''; //CODE BY IT // No longer needed, accessed directly
+                    // $folderName = $image['year']; // No longer needed, accessed directly
+                    // $landscape = !$image['isPortrait']; // No longer needed, accessed directly
+                    // $key = "img-lb_{{$imageId}}"; // No longer needed, wire:key used
+                    // $isLightbox = true; // No longer needed, passed directly
+                    // $isUploaded = $image['isUploaded'] ?? false; // No longer needed, passed directly
                 @endphp
                 {{-- <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded :key="$key" lazy="on-load"/> --}} {{--CODE BY chromedia--}}
                 {{--CODE BY IT--}}
-                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isLightbox :$isUploaded wire:key="lb-{{ $imageId }}"  lazy="on-load"/>
+                <livewire:photography.image-frame
+                    wire:key="lb-{{ $image['id'] }}"
+                    :imageId="$image['id']"
+                    :name="$image['firstname'] . ' ' . $image['lastname']"
+                    :landscape="!$image['isPortrait']"
+                    :folderName="$image['classGroup']"
+                    :isUploaded="$image['isUploaded']"
+                    :hasImage="$image['hasPhoto']"
+                    :externalSubjectId="$image['externalSubjectId']"
+                    :category="$category"
+                    :isLightbox="true"
+                    lazy="on-load"
+                />
                 {{--CODE BY IT--}}
             @endforeach
         </div>

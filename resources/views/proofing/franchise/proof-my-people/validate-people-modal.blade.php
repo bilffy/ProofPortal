@@ -108,7 +108,7 @@
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-3 col-sm-12">
-                                        <img style="max-width: 100%" class="lazyload mx-auto d-block" data-src="{{ $image_url }}" alt="Photo-Image">
+                                        <img style="max-width: 100%" class="lazyload mx-auto d-block" data-src="{{ $image_url }}" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Photo-Image">
                                     </div>
                                     <div class="col-md-9 col-sm-12">
                                     <select id="subjects_questions" name="subjects_questions" data-id="{{ $skHash }}" class="form-control is_subject_select">

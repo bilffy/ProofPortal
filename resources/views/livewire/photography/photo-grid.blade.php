@@ -42,10 +42,11 @@
                     $key = "img_{{$imageId}}";
                     $isUploaded = $image['isUploaded'] ?? false;
                     $externalSubjectId = !$isFolder ? $image['externalSubjectId'] : null;
+                    $hasImage = $image['hasPhoto'] ?? false; // Added this line
                 @endphp
                 {{-- <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId :key="$key" lazy="on-load"/> --}} {{-- code by chromedia--}}
                 {{-- code by IT--}}
-                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId wire:key="grid-{{ $imageId }}" lazy="on-load"/>
+                <livewire:photography.image-frame :$imageId :$name :$landscape :$folderName :$isUploaded :$externalSubjectId :$category :$hasImage wire:key="grid-{{ $imageId }}" lazy="on-load"/>
                 {{-- code by IT--}}
             @endforeach
         </div>

@@ -14,6 +14,7 @@
     foreach ($otherYearOptions as $option) {
         $yearOptions[$option->ts_season_id] = $option->Year;
     }
+    $isSingleYear = count($yearOptions) === 1;
 
     $season = $defaultSeasonId;
     $key = "photo-grid-others-$schoolKey";
@@ -22,7 +23,7 @@
 <div class="relative">
     <div class="flex flex-row gap-4">
         <div class="w-[200px]">
-            <div class="mb-4 relative">
+            {{-- <div class="mb-4 relative">
                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                     <x-icon icon="search"/>
                 </div>
@@ -34,8 +35,8 @@
                     onkeypress="if(event.key === 'Enter') { window.performOtherSearch(event); }"
                     oninput="window.performOtherSearch(event);"
                 />
-            </div>
-            <x-form.select context="others_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
+            </div> --}}
+            <x-form.select context="others_year" :options="$yearOptions" class="mb-4" :disabled="$isSingleYear">Year</x-form.select>    
             <x-form.select context="others_view" :options="[]" class="mb-4">View</x-form.select>
             <x-form.select context="others_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
@@ -47,7 +48,7 @@
                 $level = $isFranchiseLevel ? 'franchise_level' : 'school_level';
                 $color = $isFranchiseLevel ? 'alert' : 'neutral-300';
             @endphp
-            <div class="w-full text-center text-{{ $color  }}">{{ $photographyMessages['no_jobs'][$level] }}</div>
+            <div class="w-full text-center text-{{ $color }}">{{ $photographyMessages['no_jobs'][$level] }}</div>
         @endif
     </div>
 </div>
@@ -63,9 +64,36 @@
         }
     }
     function updateGridView(event) {
+        const $classSelect = $('#select_others_class');
+        let classValues = $classSelect.val() || [];
+        
+        if (event && event.currentTarget && event.currentTarget.id === 'select_others_class') {
+            if (classValues.includes('all')) {
+                const allValues = $classSelect.find('option').map(function() {
+                    const val = $(this).val();
+                    if (val !== 'all' && val !== 'none') return val;
+                }).get();
+                $classSelect.val(allValues).trigger('change');
+                return;
+            }
+
+            if (classValues.includes('none')) {
+                $classSelect.val(null).trigger('change');
+                return;
+            }
+
+            const hasNone = $classSelect.find('option[value="none"]').length > 0;
+            if (classValues.length > 0 && !hasNone) {
+                $classSelect.prepend(new Option('Deselect All', 'none'));
+            } else if (classValues.length === 0 && hasNone) {
+                $classSelect.find('option[value="none"]').remove();
+            }
+            classValues = $classSelect.val() || [];
+        }
+
         const selectedYear = $('#select_others_year').val();
         const selectedView = $('#select_others_view').val();
-        const selectedClass = $('#select_others_class').val();
+        const selectedClass = classValues.filter(v => v !== 'all' && v !== 'none');
         
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: category});
@@ -73,6 +101,10 @@
     function updateSelect2Options(selector, options) {
         const select = $(selector);
         select.empty(); // Clear existing options
+
+        if (selector.endsWith('_class')) {
+            select.append(new Option('Select All', 'all'));
+        }
 
         $.each(options, function(value, text) {
             select.append(new Option(text, value));

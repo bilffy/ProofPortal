@@ -118,7 +118,7 @@ class ImageController extends Controller
             // 1. Decrypt the filename
             $deCryptfilename = Crypt::decryptString($filename);
             $deCryptjobKey = Crypt::decryptString($jobKey);
-
+            
             // Basic validation for the decrypted string
             if (empty($deCryptfilename) || strlen($deCryptfilename) < 2) {
                 Log::error("Invalid decrypted filename: " . json_encode($deCryptfilename));

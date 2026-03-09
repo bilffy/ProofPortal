@@ -163,37 +163,6 @@ class PhotoGrid extends Component
         
     }
 
-    private function updateHasImages($images, $imageService)
-    {
-        $imageCount = $images->count();
-        $noImageCount = 0;
-        foreach ($images as $image) {
-            if (
-                property_exists($image, 'ts_subjectkey') &&
-                !empty($image->ts_subjectkey) && 
-                !$imageService->getIsImageFound($image->ts_subjectkey)
-            ) {
-                $noImageCount++;
-            } else if (
-                property_exists($image, 'ts_folderkey') &&
-                !empty($image->ts_folderkey)  && 
-                !$imageService->getIsImageFound($image->ts_folderkey)
-            ) {
-                $noImageCount++;
-            } elseif (
-                (property_exists($image, 'ts_subjectkey') && empty($image->ts_subjectkey)) ||
-                (property_exists($image, 'ts_folderkey') && empty($image->ts_folderkey))
-            ) {
-                $noImageCount++;
-            }
-        }
-
-        $this->dispatch(PhotographyHelper::EV_TOGGLE_NO_IMAGES, [
-            'category' => $this->category,
-            'hasImages' => $imageCount != $noImageCount,
-        ]);
-    }
-
     private function getImages()
     {
         $validator = Validator::make(
@@ -238,11 +207,23 @@ class PhotoGrid extends Component
             $this->perPage,       // images per page
             $this->page // current page from Livewire													  
         );
-
-        $this->updateHasImages($paginated->getCollection(), $imageService);
-        //CODE BY IT
-        // Modify the paginated items
+                 
+        // Modify the paginated items and track if any images actually exist
         $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection(), $this->category);
+        
+        $hasAnyImage = false;
+        foreach($modifiedItems as $item) {
+             if ($item['hasPhoto']) {
+                  $hasAnyImage = true;
+                  break;
+             }
+        }
+
+        $this->dispatch(PhotographyHelper::EV_TOGGLE_NO_IMAGES, [
+            'category' => $this->category,
+            'hasImages' => count($paginated) > 0 && $hasAnyImage,
+        ]);
+
         $paginated->setCollection($modifiedItems);
         
         return $paginated;
@@ -276,5 +257,13 @@ class PhotoGrid extends Component
     {   
         $paginatedImages = $this->getImages();
         return view('livewire.photography.photo-grid', ['paginatedImages' => $paginatedImages]);
+    }
+
+    private function setPaginationValues($targetPerPage, $force = false)
+    {
+        if ($this->perPage !== $targetPerPage || $force) {
+            $this->perPage = $targetPerPage;
+            // $this->resetPage(); // Be careful with resetPage on resize
+        }
     }
 }

@@ -264,9 +264,9 @@
             <h5 id="folders-section" class="mb-4 text-black">Select Folders to Display</h5>
             <p>Tick the folders below to make their images available on the portal once the release dates have passed. Unticked folders will remain hidden.</p>
             <div class="d-none" id="jobTypeMsg"></div>
-            <div class="w-[502px] mb-4" id="jobType"> 
+            {{-- <div class="w-[502px] mb-4" id="jobType"> 
                 <x-form.select context="job_access_image" :options="$folderTypes" class="w-full">Optional: Filter folders by type </x-form.select>
-            </div>
+            </div> --}}
             <div id="folder_config">
                 @include('partials.photography.configure.folders')
             </div>

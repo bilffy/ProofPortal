@@ -14,7 +14,7 @@ class ImageHelper
     ];
 
     public const NOT_FOUND_IMG = '/not_found.jpg';
-    public const ABSENT_IMG = '/absent-image.jpg';
+    public const ABSENT_IMG = '/absent-image.png';
 
     public static function getImagePath($path, $base = '', $patternLeniency = self::FLAG_SOFT_PATTERN): string
     {

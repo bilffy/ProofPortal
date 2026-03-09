@@ -132,7 +132,7 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="col-12 p-2" style="background-color: #EFEFEF">
-                                                        <img style="width:128px;height:170px;" class="lazyload mx-auto d-block" data-src="{{ $image_url }}" alt="Photo-Image">
+                                                        <img style="width:128px;height:170px;" class="lazyload mx-auto d-block" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" data-src="{{ $image_url }}" alt="Photo-Image">
                                                     </div>
 
                                                     {{--                                               

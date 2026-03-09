@@ -12,10 +12,19 @@ use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 class ImageService
 {   
+    protected static $urlCache = [];
+    protected static $existenceCache = [];
+
+    public function clearCache()
+    {
+        self::$urlCache = [];
+        self::$existenceCache = [];
+    }
     /**
      * Get all the years.
      *
@@ -42,9 +51,9 @@ class ImageService
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-            case PhotographyHelper::TAB_OTHERS:
                 $visibilityColumn = 'is_visible_for_group';
                 break;
+            case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
                 $visibilityColumn = 'is_visible_for_portrait';
                 break;
@@ -120,13 +129,13 @@ class ImageService
             
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
-            case PhotographyHelper::TAB_OTHERS:
                 $nullName = 'Class';
                 $query->where(function ($q) {
                     $q->where('folder_tags.external_name', '!=', 'Family')
                         ->orWhereNull('folders.folder_tag');
                 });
                 break;
+            case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
                 $nullName = 'Student';
@@ -162,10 +171,10 @@ class ImageService
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-            case PhotographyHelper::TAB_OTHERS:
                 $visibilityColumn = 'is_visible_for_group';
                 $nullTag = "Class";
                 break;
+            case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
                 $visibilityColumn = 'is_visible_for_portrait';
@@ -361,9 +370,9 @@ class ImageService
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-            case PhotographyHelper::TAB_OTHERS:
                 $images = $this->getFoldersCollection($seasonId, $schoolKey, $folderKeys, $search);
                 break;
+            case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
                 $images = $this->getSubjectsCollection($seasonId, $schoolKey, $folderKeys, $search);
@@ -499,10 +508,10 @@ class ImageService
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-            case PhotographyHelper::TAB_OTHERS:
                 $key = 'ts_folderkey';
                 $category = 'FOLDER';
                 break;
+            case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
                 $key = 'ts_subjectkey';
@@ -510,25 +519,29 @@ class ImageService
                 break;
         }
 
-        $toData = function ($image) use ($key, $category) {
+        $toData = function ($image) use ($key, $category, $tab) {
             $isSubject = $category != 'FOLDER';
             $imgKey = $image->$key;
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->first();
                 if ($subject) {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
-                    $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+                    $uploaded = $uploadExists && $hasPhoto;
                     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->portal_ts_foldername, $image->year ?? null); //CODE BY IT
                 } else {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
                     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->portal_ts_foldername, $image->year ?? null); //CODE BY IT
                 }
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->first();
                 if ($folder) {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();
-                    $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+                    $uploaded = $uploadExists && $hasPhoto;
                 } else {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
                 }
             }
@@ -557,6 +570,7 @@ class ImageService
                 'year' => $image->year ?? 0,
                 'category' => $category,
                 'isUploaded' => $uploaded,
+                'hasPhoto' => $hasPhoto,
                 'externalSubjectId' => $isSubject ? $image->external_subject_id : null,
             ];
         };
@@ -564,7 +578,7 @@ class ImageService
         return $images->map($toData);
     }
     //CODE BY IT
-    public function getImageContent(string $key): ?string
+    public function getImageContent(string $key, $resolutionId = null, $tab = ''): ?string
     {
         $imageRecordExists = Image::where('keyvalue', $key)->exists();
 
@@ -572,7 +586,7 @@ class ImageService
             return $this->getFallbackAbsentImage();
         }
 
-        $urls = $this->getImageUrls($key);
+        $urls = $this->getImageUrls($key, $resolutionId, $tab);
     
         foreach ($urls as $url) {
             if ($this->urlExists($url)) {
@@ -611,43 +625,80 @@ class ImageService
     /**
      * Check if at least one image exists for the key
      */
-    public function getIsImageFound(string $key): bool
+    public function getIsImageFound(string $key, $tab = ''): bool
     {
         if (!$key) {
             return false;
         }
 
-        $imageRecordExists = Image::where('keyvalue', $key)->exists();
+        $upperTab = strtoupper((string)($tab ?? ''));
+        $cacheKey = "photography_exists_{$key}_{$upperTab}";
 
-        if (!$imageRecordExists) {
-            return false;
-        }
+        return Cache::remember($cacheKey, 600, function() use ($key, $upperTab) {
+            $imageRecordExists = Image::where('keyvalue', $key)->exists();
 
-        $urls = $this->getImageUrls($key);
-
-        foreach ($urls as $url) {
-            if ($this->urlExists($url)) {
-                return true;
+            if (!$imageRecordExists) {
+                return false;
             }
-        }
 
-        return false;
+            $urls = $this->getImageUrls($key, null, $upperTab);
+
+            foreach ($urls as $url) {
+                if ($this->urlExists($url)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     /**
      * Generate possible URLs for a key
      */
-    private function getImageUrls(string $key): array
+    private function getImageUrls(string $key, $resolutionId = null, $tab = ''): array
     {
-        $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
-        $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
+        $upperTab = strtoupper((string)($tab ?? ''));
+        $resKey = (string)($resolutionId ?? 'any');
+        $cacheKey = "photography_urls_{$key}_{$resKey}_{$upperTab}";
+        
+        return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab, $resKey) {
+            $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
+            $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
 
-        return [
-            "{$baseImage}_800.jpg",
-            "{$baseImage}_1600.jpg",
-            "{$baseGroup}_800.jpg",
-            "{$baseGroup}_1600.jpg",
-        ];
+            $portraitUrls = [
+                "{$baseImage}_800.jpg",
+                "{$baseImage}_1600.jpg",
+            ];
+
+            if ($resolutionId == 1) { // High Quality
+                $portraitUrls = ["{$baseImage}_1600.jpg"];
+            } else if ($resolutionId == 2) { // Low Quality
+                $portraitUrls = ["{$baseImage}_800.jpg"];
+            }
+
+            $groupUrls = [
+                "{$baseGroup}_800.jpg",
+                "{$baseGroup}_1600.jpg",
+            ];
+
+            if ($resolutionId == 1) { // High Quality
+                $groupUrls = ["{$baseGroup}_1600.jpg"];
+            } else if ($resolutionId == 2) { // Low Quality
+                $groupUrls = ["{$baseGroup}_800.jpg"];
+            }
+
+            // 1 represents the Portrait category or the PORTRAITS tab
+            if ($resolutionId == 1 || $upperTab === PhotographyHelper::TAB_PORTRAITS) {
+                 $result = $portraitUrls;
+            } else if ($resolutionId == 2 || $upperTab === PhotographyHelper::TAB_GROUPS) {
+                 $result = $groupUrls;
+            } else {
+                 $result = array_merge($portraitUrls, $groupUrls);
+            }
+
+            return $result;
+        });
     }
 
     /**

@@ -21,7 +21,7 @@
 <div class="relative">
     <div class="flex flex-row gap-4">
         <div class="w-[200px]">
-            <div class="mb-4 relative">
+            {{-- <div class="mb-4 relative">
                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                     <x-icon icon="search"/>
                 </div>
@@ -33,7 +33,7 @@
                     onkeypress="if(event.key === 'Enter') { window.performPortaitSearch(event); }"
                     oninput="window.performPortaitSearch(event);"
                 />
-            </div>
+            </div> --}}
             <x-form.select context="portraits_year" :options="$yearOptions" class="mb-4">Year</x-form.select>    
             <x-form.select context="portraits_view" :options="[]" class="mb-4">View</x-form.select>
             <x-form.select context="portraits_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
@@ -62,9 +62,36 @@
         }
     }
     function updateGridView(event) {
+        const $classSelect = $('#select_portraits_class');
+        let classValues = $classSelect.val() || [];
+        
+        if (event && event.currentTarget && event.currentTarget.id === 'select_portraits_class') {
+            if (classValues.includes('all')) {
+                const allValues = $classSelect.find('option').map(function() {
+                    const val = $(this).val();
+                    if (val !== 'all' && val !== 'none') return val;
+                }).get();
+                $classSelect.val(allValues).trigger('change');
+                return;
+            }
+
+            if (classValues.includes('none')) {
+                $classSelect.val(null).trigger('change');
+                return;
+            }
+
+            const hasNone = $classSelect.find('option[value="none"]').length > 0;
+            if (classValues.length > 0 && !hasNone) {
+                $classSelect.prepend(new Option('Deselect All', 'none'));
+            } else if (classValues.length === 0 && hasNone) {
+                $classSelect.find('option[value="none"]').remove();
+            }
+            classValues = $classSelect.val() || [];
+        }
+
         const selectedYear = $('#select_portraits_year').val();
         const selectedView = $('#select_portraits_view').val();
-        const selectedClass = $('#select_portraits_class').val();
+        const selectedClass = classValues.filter(v => v !== 'all' && v !== 'none');
         
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: category});
@@ -72,6 +99,10 @@
     function updateSelect2Options(selector, options) {
         const select = $(selector);
         select.empty(); // Clear existing options
+
+        if (selector.endsWith('_class')) {
+            select.append(new Option('Select All', 'all'));
+        }
 
         $.each(options, function(value, text) {
             select.append(new Option(text, value));

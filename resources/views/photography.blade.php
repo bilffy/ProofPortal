@@ -46,6 +46,11 @@
             }
         }
     }
+
+    $imageService = new \App\Services\ImageService();
+    $hasPortraits = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_PORTRAITS)->isNotEmpty();
+    $hasGroups = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_GROUPS)->isNotEmpty();
+    $hasOthers = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_OTHERS)->isNotEmpty();
 @endphp
 
 @section('content')
@@ -68,24 +73,40 @@
                 $hideDownloadBtn = false;
                 if ($currentTab == 'configure' || $currentTab == 'configure-new') {
                     $hideDownloadBtn = true;
-                } else if ($currentTab == 'portraits' && !$canDownloadPortraits) {
+                } else if ($currentTab == 'portraits' && (!$canDownloadPortraits || !$hasPortraits)) {
                     $hideDownloadBtn = true;
-                } else if ($currentTab == 'groups' && !$canDownloadGroups) {
+                } else if ($currentTab == 'groups' && (!$canDownloadGroups || !$hasGroups)) {
                     $hideDownloadBtn = true;
-                } else if ($currentTab == 'others' && !$canDownloadOthers) {
+                } else if ($currentTab == 'others' && (!$canDownloadOthers || !$hasOthers)) {
                     $hideDownloadBtn = true;
                 }
             @endphp
 
-            <div id="download-section" class="absolute right-2 h-full flex align-middle justify-center items-center gap-4 {{$hideDownloadBtn ? 'hidden' : ''}}">
-                <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.primary-inverse>
-                <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Cancel Selection</x-button.primary-inverse>
-                <x-button.primary 
-                        id="btn-download"
-                        onclick="showOptionsDownloadRequest()"
-                >
-                    Download All
-                </x-button.primary>
+            <div class="absolute right-2 h-full flex items-center gap-4">
+                <div id="search-section" class="relative flex items-center {{$hideDownloadBtn ? 'hidden' : ''}}">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <x-icon icon="search"/>
+                    </div>
+                    <input
+                        id="image-search-portraits"
+                        type="search"
+                        class="block w-64 p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
+                        placeholder="Search..."
+                        onkeypress="if(event.key === 'Enter') { window.performPortaitSearch(event); }"
+                        oninput="window.performPortaitSearch(event);"
+                    />
+                </div>
+
+                <div id="download-section" class="flex items-center gap-4 {{$hideDownloadBtn ? 'hidden' : ''}}">
+                    <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.secondary>
+                    <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Cancel Selection</x-button.primary-inverse>
+                    <x-button.primary 
+                            id="btn-download"
+                            onclick="showOptionsDownloadRequest()"
+                    >
+                        Download All
+                    </x-button.primary>
+                </div>
             </div>
         </x-tabs.tabContainer>
         <x-tabs.tabContentContainer id="photography-pages">
@@ -103,24 +124,28 @@
                     </div>
                 @endif
             </x-tabs.tabContent>
-            <x-tabs.tabContent id="groups">
-                @if ($canDownloadGroups)
-                    @include('partials.photography.groups')
-                @else
-                    <div class="flex items-center justify-center h-64 bg-white mt-4">
-                        You do not have permission to view or download Groups.
-                    </div>
-                @endif
-            </x-tabs.tabContent>
-            <x-tabs.tabContent id="others">
-                @if ($canDownloadOthers)
-                    @include('partials.photography.others')
-                @else
-                    <div class="flex items-center justify-center h-64 bg-white mt-4">
-                        You do not have permission to view or download Others.
-                    </div>
-                @endif
-            </x-tabs.tabContent>
+            @if ($groupsTabValue)
+                <x-tabs.tabContent id="groups">
+                    @if ($canDownloadGroups)
+                        @include('partials.photography.groups')
+                    @else
+                        <div class="flex items-center justify-center h-64 bg-white mt-4">
+                            You do not have permission to view or download Groups.
+                        </div>
+                    @endif
+                </x-tabs.tabContent>
+            @endif
+            @if ($otherTabValue)
+                <x-tabs.tabContent id="others">
+                    @if ($canDownloadOthers)
+                        @include('partials.photography.others')
+                    @else
+                        <div class="flex items-center justify-center h-64 bg-white mt-4">
+                            You do not have permission to view or download Others.
+                        </div>
+                    @endif
+                </x-tabs.tabContent>
+            @endif
         </x-tabs.tabContentContainer>
 
         <x-modal.base id="showOptionsDownloadModal" title="{{ $configMessages['options']['title']  }}" body="components.modal.body" footer="components.modal.footer">
@@ -460,7 +485,7 @@
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
-                const url = tab.getAttribute('href');
+                const url = e.currentTarget.getAttribute('href');
                 history.pushState({ path: url }, '', url);
                 if (window.localStorage.getItem('reloadPhotography')) {
                     confirmReloadPageModal.show();
@@ -477,20 +502,23 @@
                         }
                     }, false);
                 } else {
-                    const tab = e.target.id;
-                    // Hide download section when in configuration tab
+                    const tab = e.currentTarget.id;
+                    // Hide download section and search section when in configuration tab
                     const downloadSection = document.querySelector('#download-section');
+                    const searchSection = document.querySelector('#search-section');
                     
                     const tabPermissions = {
-                        'portraits-tab': {{ $canDownloadPortraits ? 'true' : 'false' }},
-                        'groups-tab': {{ $canDownloadGroups ? 'true' : 'false' }},
-                        'others-tab': {{ $canDownloadOthers ? 'true' : 'false' }}
+                        'portraits-tab': {{ ($canDownloadPortraits && $hasPortraits) ? 'true' : 'false' }},
+                        'groups-tab': {{ ($canDownloadGroups && $hasGroups) ? 'true' : 'false' }},
+                        'others-tab': {{ ($canDownloadOthers && $hasOthers) ? 'true' : 'false' }}
                     };
 
                     if ('configure-tab' == tab || 'configure-new-tab' == tab || !tabPermissions[tab]) {
                         downloadSection.classList.add('hidden');
+                        searchSection.classList.add('hidden');
                     } else {
                         downloadSection.classList.remove('hidden');
+                        searchSection.classList.remove('hidden');
                     }
 
                     if ('configure-tab' != tab && 'configure-new-tab' != tab) {

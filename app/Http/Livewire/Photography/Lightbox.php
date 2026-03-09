@@ -59,9 +59,9 @@ class Lightbox extends Component
         $imageCount = $images->count();
         $noImageCount = 0;
         foreach ($images as $image) {
-            if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey)) {
+            if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey, $this->category)) {
                 $noImageCount++;
-            } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey)) {
+            } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey, $this->category)) {
                 $noImageCount++;
             }
         }

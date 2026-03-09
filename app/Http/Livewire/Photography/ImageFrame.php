@@ -17,13 +17,14 @@ class ImageFrame extends Component
     public $isUploaded = false;
     public $image = '';
     public $externalSubjectId = null;
+    public $category = null;
 
     protected $listeners = [
         PhotographyHelper::EV_IMAGE_UPLOADED => 'updateImage',
         PhotographyHelper::EV_IMAGE_DELETED => 'removeImage',
     ];
 
-    public function mount($imageId, $name, $landscape, $folderName, $isUploaded = false, $isLightbox = false, $externalSubjectId = null)
+    public function mount($imageId, $name, $landscape, $folderName, $hasImage = false, $isUploaded = false, $isLightbox = false, $externalSubjectId = null, $category = null)
     {
         $this->imageId = $imageId;
         $this->name = $name;
@@ -32,9 +33,8 @@ class ImageFrame extends Component
         $this->isUploaded = $isUploaded;
         $this->isLightbox = $isLightbox;
         $this->externalSubjectId = $externalSubjectId;
-        
-        $imageService = new ImageService();
-        $this->hasImage = $imageService->getIsImageFound(base64_decode(base64_decode($imageId)));
+        $this->hasImage = $hasImage;
+        $this->category = $category;
     }
 
     public function placeholder()
@@ -70,7 +70,7 @@ class ImageFrame extends Component
     {
         $imageService = new ImageService();
         $key = base64_decode(base64_decode($this->imageId));
-        $imageContent = $imageService->getImageContent($key); //code by IT
+        $imageContent = $imageService->getImageContent($key, null, $this->category); //code by IT
         
         if ($imageContent) {
             $binaryImage = base64_decode($imageContent);

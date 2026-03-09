@@ -191,7 +191,7 @@ class JobService
             ['jobs.foldersync_status_id', $this->statusService->completed]
         ])
         ->distinct()
-        ->orderBy('id', 'asc');
+        ->orderBy('ts_jobname', 'asc');
     }
 
     public function getJobById($id)
