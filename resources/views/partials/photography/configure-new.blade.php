@@ -19,6 +19,9 @@
         .select2 {
             width:100% !important;
         }
+        .job-dependent-section {
+            display: none;
+        }
     </style>
 @stop
 
