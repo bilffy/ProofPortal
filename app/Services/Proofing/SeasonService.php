@@ -22,4 +22,9 @@ class SeasonService
     public function getSeasonByTimestoneSeasonId($seasonId){
         return Season::where('ts_season_id', $seasonId);
     }
+
+    public function getSeasonBySeasonID($seasonID)
+    {
+        return Season::where('ts_season_id',$seasonID);
+    }
 }

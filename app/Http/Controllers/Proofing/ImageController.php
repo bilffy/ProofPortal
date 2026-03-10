@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
 use App\Services\Proofing\ImageService;
+use App\Services\Proofing\SeasonService;
 use Intervention\Image\Facades\Image;
 use App\Services\Proofing\JobService;
 use App\Http\Resources\UserResource;
@@ -25,11 +26,13 @@ class ImageController extends Controller
     
     protected $jobService;
     protected $imageService;
+    protected $seasonService;
 
-    public function __construct(JobService $jobService, ImageService $imageService)
+    public function __construct(JobService $jobService, ImageService $imageService, SeasonService $seasonService)
     {
         $this->jobService = $jobService;
         $this->imageService = $imageService;
+        $this->seasonService = $seasonService;
     }
 
     public function zoom(Request $request)
@@ -119,6 +122,9 @@ class ImageController extends Controller
             $deCryptfilename = Crypt::decryptString($filename);
             $deCryptjobKey = Crypt::decryptString($jobKey);
             
+            $selectedJob = $this->jobService->getJobByJobKey($deCryptjobKey)->first();
+            $selectedSeason = $this->seasonService->getSeasonBySeasonID($selectedJob->ts_season_id)->first();
+
             // Basic validation for the decrypted string
             if (empty($deCryptfilename) || strlen($deCryptfilename) < 2) {
                 Log::error("Invalid decrypted filename: " . json_encode($deCryptfilename));
@@ -129,7 +135,7 @@ class ImageController extends Controller
             $char1 = $deCryptfilename[0];
             $char2 = $deCryptfilename[1];
             
-            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
+            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
 
             // 3. Fetch the image while bypassing SSL verification
             $response = Http::timeout(15)
