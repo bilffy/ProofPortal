@@ -439,7 +439,8 @@ class User extends Authenticatable
         }
         
         if ($this->isSuperAdmin()) { // For Super Admins
-            return $user->isAdmin() || $user->isFranchiseLevel();
+            // return $user->isAdmin() || $user->isFranchiseLevel();
+            return true;
         } else if ($this->isRcUser()) { // For RC Users
             return $user->isRcUser() || $user->isFranchiseLevel();
         } else if ($this->isFranchiseLevel()) { // For Franchise Admins
