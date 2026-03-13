@@ -21,7 +21,6 @@ class PhotoGrid extends Component
     public $category;
     public $season;
     public $schoolKey;
-    public $page = 1;
     public $perPage = 30;
     
     public $images = [];
@@ -31,16 +30,12 @@ class PhotoGrid extends Component
     public $viewOptions = ['ALL' => 'All'];
 
     protected $listeners = [
-        'gotoPage' => 'setPage', //CODE BY IT
         PhotographyHelper::EV_UPDATE_FILTER => 'updateFilters',
         PhotographyHelper::EV_UPDATE_SEARCH => 'performSearch',
         PhotographyHelper::EV_CHANGE_TAB => 'updateActiveCategory',
     ];
     //CODE BY IT
-    public function setPage($page)
-    {
-        $this->page = $page;
-    }
+
 
     public function setPerPage($newPerPage)
     {
@@ -205,7 +200,7 @@ class PhotoGrid extends Component
             $options,
             $this->category,
             $this->perPage,       // images per page
-            $this->page // current page from Livewire													  
+            $this->paginators['page'] ?? 1 // current page from Livewire													  
         );
                  
         // Modify the paginated items and track if any images actually exist
