@@ -91,13 +91,6 @@ class SchoolConfigureController extends Controller
             if ($jobWithRelations->folders->isNotEmpty()) {
                 $selectedFolders =$jobWithRelations->folders
                 ->filter(function ($folder) {
-                    $excludedExternalNames = ['Staff', 'Family'];
-                    $externalName = $folder->folderTags->external_name ?? null;
-
-                    if (in_array($externalName, $excludedExternalNames)) {
-                        return false;
-                    }
-
                     return !is_null($folder->ts_folderkey);
                 })
                 ->map(function ($folder) {
