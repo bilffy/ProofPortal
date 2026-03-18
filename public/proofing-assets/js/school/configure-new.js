@@ -94,6 +94,18 @@ jQuery(document).ready(function ($) {
             // Update the folder property if the folder was found
             if (selectedFolder) {
                 selectedFolder.is_visible_for_portrait = newValue;
+
+                // Check if any folder in this job now has is_visible_for_portrait = 1
+                const anyVisible = selectedJob.Folders.some(f => f.is_visible_for_portrait == 1);
+                const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
+                if (anyVisible) {
+                    jobOption.data('has-visible', true).attr('data-has-visible', 'true');
+                } else {
+                    jobOption.data('has-visible', false).attr('data-has-visible', 'false');
+                }
+                // Refresh select2 to show/hide the tick if needed
+                $('#select_job').trigger('change.select2');
+
                 sendFolderChanges(folderId, field, newValue);
             }
         }
@@ -222,7 +234,8 @@ jQuery(document).ready(function ($) {
                         jobSelect.empty().append('<option value="">Choose a Job</option>');
 
                         $.each(jobs, function (index, job) {
-                            jobSelect.append(`<option value="${job.ts_jobkey}">${job.ts_jobname}</option>`);
+                            const hasVisible = job.has_visible_portrait ? 'data-has-visible="true"' : '';
+                            jobSelect.append(`<option value="${job.ts_jobkey}" ${hasVisible}>${job.ts_jobname}</option>`);
                         });
                     }
                     $('#job-select-loading').addClass('d-none'); // hide loading spinner
@@ -415,6 +428,20 @@ jQuery(document).ready(function ($) {
 
         if (folderIdsToUpdate.length > 0) {
             sendFolderChanges(folderIdsToUpdate, field, newValue);
+
+            // Update the green checkmark for the current job in real-time
+            if (field === 'is_visible_for_portrait' && selectedJob && selectedJob.Folders) {
+                const anyVisible = selectedJob.Folders.some(f => f.is_visible_for_portrait == 1);
+                const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
+
+                if (anyVisible) {
+                    jobOption.data('has-visible', true).attr('data-has-visible', 'true');
+                } else {
+                    jobOption.data('has-visible', false).attr('data-has-visible', 'false');
+                }
+                // Refresh select2 to show/hide the tick if needed
+                $('#select_job').trigger('change.select2');
+            }
         }
     }
 
@@ -583,8 +610,33 @@ function hideOrShowJobDependentSections(show) {
 
 // Checkbox in Notification Email
 document.addEventListener("DOMContentLoaded", function () {
+    const formatJobResult = (job) => {
+        if (!job.id) return job.text;
+        const hasVisible = $(job.element).data('has-visible');
+        if (hasVisible) {
+            return $(`<div class="flex justify-between items-center w-full">
+                        <span>${job.text}</span>
+                        <i class="fa fa-check text-success ml-2" title="Folders with visible portraits"></i>
+                      </div>`);
+        }
+        return job.text;
+    };
+
+    const formatJobSelection = (job) => {
+        if (!job.id) return job.text;
+        const hasVisible = $(job.element).data('has-visible');
+        if (hasVisible) {
+            return $(`<span>${job.text} <i class="fa fa-check text-success" title="Folders with visible portraits"></i></span>`);
+        }
+        return job.text;
+    };
+
     $("#select_season").select2();
-    $("#select_job").select2();
+    $("#select_job").select2({
+        templateResult: formatJobResult,
+        templateSelection: formatJobSelection,
+        escapeMarkup: function (m) { return m; }
+    });
     $("#select_job_access_image").select2();
     $('#select_job').parent().hide();
     hideOrShowJobDependentSections(false);

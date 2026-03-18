@@ -120,6 +120,7 @@ class SchoolConfigureController extends Controller
                 'download_available_date' => $jobWithRelations->download_available_date,
                 'portrait_download_date' => $jobWithRelations->portrait_download_date,
                 'group_download_date' => $jobWithRelations->group_download_date,
+                'has_visible_portrait' => !empty($selectedFolders) && collect($selectedFolders)->contains('is_visible_for_portrait', 1),
                 'Folders' => $selectedFolders
             ];
         });
