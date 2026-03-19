@@ -98,8 +98,7 @@
                 </div>
 
                 <div id="download-section" class="flex items-center gap-4 {{$hideDownloadBtn ? 'hidden' : ''}}">
-                    <x-button.secondary id="btn-select-mode" onclick="toggleSelectMode()">Select</x-button.secondary>
-                    <x-button.primary-inverse id="btn-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages()">Cancel Selection</x-button.primary-inverse>
+                    <x-button.primary-inverse id="btn-download-clear" hollow class="border-none transition-none hover:transition-none" onclick="resetImages()">Clear Selection</x-button.primary-inverse>
                     <x-button.primary 
                             id="btn-download"
                             onclick="showOptionsDownloadRequest()"
@@ -320,10 +319,7 @@
             clearDownloadBtn.classList.remove('hidden');
             downloadBtn.innerHTML = `Download Selected (${selectedCount})`;
         } else {
-            const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
-            if (!selectMode) {
-                clearDownloadBtn.classList.add('hidden');
-            }
+            clearDownloadBtn.classList.add('hidden');
             downloadBtn.innerHTML = 'Download All';
         }
     }
@@ -347,7 +343,6 @@
             const images = window.localStorage.getItem('selectedImages');
             const imagesCount = images ? JSON.parse(images).length : 0;
             window.localStorage.setItem('selectedImages', JSON.stringify([]));
-            toggleSelectMode(false);
         }
         updateDownloadSelection(isLightbox);
     }
@@ -426,7 +421,7 @@
                     return;
                 }
             } else {
-                showLightboxModal(imageId, name, externalSubjectId);
+                // showLightboxModal(imageId, name, externalSubjectId); // code by IT 
                 return;
             }
         } else if (!hasImage) {
@@ -468,6 +463,7 @@
     
     document.addEventListener('DOMContentLoaded', () => {
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
+        window.localStorage.setItem('selectMode', 'true');
         window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
         const activeTabId = getActiveTabId();
@@ -643,8 +639,9 @@
         const selectModeBtn = document.querySelector('#btn-select-mode');
         let imgCheckboxes = document.querySelectorAll('.img-checkbox');
         if (enable) {
-            selectModeBtn.classList.add('hidden');
-            clearDownloadBtn.classList.remove('hidden');
+            if (selectModeBtn) {
+                selectModeBtn.classList.add('hidden');
+            }
             imgCheckboxes.forEach(checkbox => {
                 checkbox.classList.remove('hidden');
             });
@@ -652,8 +649,8 @@
             imgCheckboxes.forEach(checkbox => {
                 checkbox.classList.add('hidden');
             });
-            clearDownloadBtn.classList.add('hidden');
-            selectModeBtn.classList.remove('hidden');
+            if (clearDownloadBtn) clearDownloadBtn.classList.add('hidden');
+            if (selectModeBtn) selectModeBtn.classList.remove('hidden');
         }
     }
     

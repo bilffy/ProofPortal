@@ -19,6 +19,28 @@
     $season = $defaultSeasonId;
     $key = "photo-grid-portraits-$schoolKey";
 @endphp
+<!-- Code By IT -->
+<style>
+    #photography-root .select2-selection.select2-selection--multiple {
+        position: relative !important;
+        padding-right: 32px !important;
+        cursor: pointer !important;
+        min-height: 40px !important;
+    }
+    #photography-root .select2-selection.select2-selection--multiple::after {
+        content: "▼" !important;
+        position: absolute !important;
+        top: 50% !important;
+        right: 12px !important;
+        font-size: 10px !important;
+        color: #666 !important;
+        transform: translateY(-50%) !important;
+        pointer-events: none !important;
+        z-index: 1000 !important;
+        display: block !important;
+    }
+</style>
+<!-- Code By IT -->
 <div class="relative">
     <div class="flex flex-row gap-4">
         <div class="w-[200px]">
@@ -37,7 +59,18 @@
             </div> --}}
             <x-form.select context="portraits_year" :options="$yearOptions" class="mb-4" :disabled="$isSingleYear">Year</x-form.select>    
             <x-form.select context="portraits_view" :options="[]" class="mb-4">View</x-form.select>
-            <x-form.select context="portraits_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
+            <div class="mb-4">
+                <x-form.select context="portraits_class" :options="[]" class="mb-1" multiple>
+                    <div class="flex justify-between items-center w-full">
+                        <span>Class/Group</span>
+                        <button id="clear_portraits_class_btn" 
+                            class="text-xs text-neutral-500 bg-neutral-100 border border-neutral-300 hover:bg-neutral-200 hover:text-neutral-800 transition-colors px-2 py-[2px] rounded-md hidden inline-flex items-center" 
+                            onclick="event.preventDefault(); $('#select_portraits_class').val(null).trigger('change');">
+                            Deselect All
+                        </button>
+                    </div>
+                </x-form.select>
+            </div>
         </div>
         @if ($season)
             <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
@@ -70,27 +103,15 @@
             if (classValues.includes('all')) {
                 const allValues = $classSelect.find('option').map(function() {
                     const val = $(this).val();
-                    if (val !== 'all' && val !== 'none') return val;
+                    if (val !== 'all') return val;
                 }).get();
                 $classSelect.val(allValues).trigger('change');
                 return;
             }
 
-            if (classValues.includes('none')) {
-                $classSelect.val(null).trigger('change');
-                return;
-            }
-
-            const hasNone = $classSelect.find('option[value="none"]').length > 0;
-            if (classValues.length > 0 && !hasNone) {
-                $classSelect.prepend(new Option('Deselect All', 'none'));
-            } else if (classValues.length === 0 && hasNone) {
-                $classSelect.find('option[value="none"]').remove();
-            }
-
             const availableOptions = $classSelect.find('option').filter(function() {
                 const val = $(this).val();
-                return val !== 'all' && val !== 'none';
+                return val !== 'all';
             });
             const hasAll = $classSelect.find('option[value="all"]').length > 0;
             const isAllSelected = availableOptions.length > 0 && classValues.length === availableOptions.length;
@@ -104,9 +125,15 @@
             classValues = $classSelect.val() || [];
         }
 
+        if (classValues.length > 0) {
+            $('#clear_portraits_class_btn').removeClass('hidden');
+        } else {
+            $('#clear_portraits_class_btn').addClass('hidden');
+        }
+
         const selectedYear = $('#select_portraits_year').val();
         const selectedView = $('#select_portraits_view').val();
-        const selectedClass = classValues.filter(v => v !== 'all' && v !== 'none');
+        const selectedClass = classValues.filter(v => v !== 'all');
         
         resetImages();
         Livewire.dispatch('EV_UPDATE_FILTER', {year: selectedYear, view: selectedView, class: selectedClass, category: category});
