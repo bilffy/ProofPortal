@@ -98,6 +98,8 @@
                             src="data:{{$mimeType}};base64,{{$img}}"
                             alt=""
                             class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                            oncontextmenu="return false;"
+                            draggable="false"
                             />
                         @endif 
                         {{--code by Chromedia--}}
