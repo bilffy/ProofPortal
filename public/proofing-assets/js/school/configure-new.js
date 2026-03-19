@@ -616,7 +616,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (hasVisible) {
             return $(`<div class="flex justify-between items-center w-full">
                         <span>${job.text}</span>
-                        <i class="fa fa-check text-success ml-2" title="Folders with visible portraits"></i>
+                        <i class="fa fa-check" title="Folders with visible portraits" style="color: #FFD700;"></i>
                       </div>`);
         }
         return job.text;
@@ -626,7 +626,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!job.id) return job.text;
         const hasVisible = $(job.element).data('has-visible');
         if (hasVisible) {
-            return $(`<span>${job.text} <i class="fa fa-check text-success" title="Folders with visible portraits"></i></span>`);
+            return $(`<span>${job.text} <i class="fa fa-check" title="Folders with visible portraits" style="color: #FFD700;"></i></span>`);
         }
         return job.text;
     };

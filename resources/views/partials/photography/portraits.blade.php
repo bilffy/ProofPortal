@@ -63,11 +63,12 @@
                 <x-form.select context="portraits_class" :options="[]" class="mb-1" multiple>
                     <div class="flex justify-between items-center w-full">
                         <span>Class/Group</span>
-                        <button id="clear_portraits_class_btn" 
-                            class="text-xs text-neutral-500 bg-neutral-100 border border-neutral-300 hover:bg-neutral-200 hover:text-neutral-800 transition-colors px-2 py-[2px] rounded-md hidden inline-flex items-center" 
-                            onclick="event.preventDefault(); $('#select_portraits_class').val(null).trigger('change');">
-                            Deselect All
-                        </button>
+                            <button id="clear_portraits_class_btn" 
+                                class="text-xs text-primary bg-neutral-100 border border-neutral-300 hover:bg-neutral-200 hover:text-neutral-800 transition-colors px-2 py-[2px] rounded-md hidden inline-flex items-center" 
+                                onclick="event.preventDefault(); $('#select_portraits_class').val(null).trigger('change');">
+
+                                <span class="font-semibold">Deselect All</span>
+                            </button>
                     </div>
                 </x-form.select>
             </div>

@@ -20,12 +20,13 @@
 
     $isUser = $userId == auth()->id();
     $isNotActiveOtherUser = !$isUser && $status != User::STATUS_ACTIVE;
-    $canInvite = PermissionHelper::toPermission(PermissionHelper::ACT_INVITE, subject: $role);
+    $canInvitePermission = PermissionHelper::toPermission(PermissionHelper::ACT_INVITE, subject: $role);
+    $hasInvitePermission = auth()->user()->can($canInvitePermission);
     $canEdit = auth()->user()->canInvite($userId);
     $canImpersonate = PermissionHelper::canImpersonate($userId);
     $canDisable = auth()->user()->canDisable($userId) && $status != User::STATUS_DISABLED;
 
-    $disableOptions = $isUser || !($canDisable || $canImpersonate || $canEdit || ($canInvite && $isNotActiveOtherUser));
+    $disableOptions = $isUser || !($canDisable || $canImpersonate || $canEdit || ($hasInvitePermission && $isNotActiveOtherUser));
 @endphp
 
 <div id="options_{{$userId}}" @if($disableOptions) class="hidden" @endif>
@@ -34,7 +35,7 @@
     </x-button.link>
     <!-- Dropdown menu -->
     <x-form.dropdownPanel id={{$dropDownId}}>
-        @can ($canInvite)
+        @can ($canInvitePermission)
             @if ($isNotActiveOtherUser)
                 <li>
                     <x-button.dropdownLink
