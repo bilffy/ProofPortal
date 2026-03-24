@@ -6,14 +6,9 @@
             $width = $height = 0;
             $artifactNameCrypt = (isset($artifact) && isset($artifact->name)) ? Crypt::encryptString($artifact->name) : '';
 
-            if(isset($artifact) && isset($artifact->name)) {
-                $imagePath = storage_path('app/public/groupImages/'.$artifact->name);
-                if (file_exists($imagePath)) {
-                    $scaledImageUrl = route('image.show', $artifactNameCrypt);
-                    list($width, $height) = getimagesize($imagePath);
-                }
+            if(!empty($artifactNameCrypt)) {
+                $scaledImageUrl = route('image.show', ['filename' => $artifactNameCrypt]);
             }
-            
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
@@ -21,7 +16,7 @@
                     <div class="row">
                         <div class="group-image-holder col-12 ml-auto mr-auto">
                             <div class="click-box-wrapper">
-                                @if(file_exists(storage_path('app/public/groupImages/'.$artifact->name ?? '')))
+                                @if(!empty($artifactNameCrypt))
                                     <img src="{{ $scaledImageUrl }}"
                                         class="mx-auto d-block group-image"
                                         style="max-width: 100%;"

@@ -346,6 +346,7 @@ $(document).ready(function () {
 
 
     $('.group-image').on("click", function (event) {
+        if ($('.group-image-zoom-instructions').hasClass('d-none')) return;
 
         var windowsScrollLeft = $(window).scrollLeft();
         var windowsScrollTop = $(window).scrollTop();
@@ -362,9 +363,10 @@ $(document).ready(function () {
         var imgClientSizeW = this.clientWidth;
         var imgClientSizeH = this.clientHeight;
 
-        var imgNativeSizeW = $(this).data('native-width');
-        var imgNativeSizeH = $(this).data('native-height');
-        var artifactNameCrypt = $(this).data('artifact-name');
+        var imgNativeSizeW = $(this).data('native-width') || this.naturalWidth;
+        var imgNativeSizeH = $(this).data('native-height') || this.naturalHeight;
+
+        if (!imgNativeSizeW || !imgNativeSizeH) return;
 
         var mousePosPercentX = mousePosInsideImgX / imgClientSizeW;
         var mousePosPercentY = mousePosInsideImgY / imgClientSizeH;
@@ -375,18 +377,20 @@ $(document).ready(function () {
         var boxPosX = Math.floor(mousePosInsideImgX - (boxWidth / 2));
         var boxPosY = Math.floor(mousePosInsideImgY - (boxHeight / 2));
 
-        var zoomedImageUrl = base_url + "/franchise/zoom?imgClientSizeW=" + encodeURIComponent(imgClientSizeW) +
-            "&imgClientSizeH=" + encodeURIComponent(imgClientSizeH) +
-            "&mousePosPercentX=" + encodeURIComponent(mousePosPercentX) +
-            "&mousePosPercentY=" + encodeURIComponent(mousePosPercentY) +
-            "&artifactNameCrypt=" + artifactNameCrypt;
-
         $('.click-box').css({
             'top': boxPosY + 'px',
             'left': boxPosX + 'px',
             'width': boxWidth + 'px',
             'height': boxHeight + 'px'
-        });
+        }).removeClass('d-none').show();
+
+        var artifactNameCrypt = $(this).data('artifact-name');
+
+        var zoomedImageUrl = base_url + "/franchise/zoom?imgClientSizeW=" + encodeURIComponent(imgClientSizeW) +
+            "&imgClientSizeH=" + encodeURIComponent(imgClientSizeH) +
+            "&mousePosPercentX=" + encodeURIComponent(mousePosPercentX) +
+            "&mousePosPercentY=" + encodeURIComponent(mousePosPercentY) +
+            "&artifactNameCrypt=" + artifactNameCrypt;
 
         // Update the src of the zoomed image
         $('#group-image-zoom-placeholder').attr('src', zoomedImageUrl);

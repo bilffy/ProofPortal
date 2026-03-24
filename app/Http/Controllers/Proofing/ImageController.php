@@ -44,7 +44,28 @@ class ImageController extends Controller
             $yPercent = $request->query('mousePosPercentY');
             $artifactImage = Crypt::decryptString($request->query('artifactNameCrypt'));
             
-            $image = Image::make(storage_path('app/public/groupImages/'.$artifactImage));
+            $imageContent = null; // Initialize imageContent
+
+            $folderKey = pathinfo($artifactImage, PATHINFO_FILENAME);
+            $extension = pathinfo($artifactImage, PATHINFO_EXTENSION) ?: 'jpg';
+                
+            $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+            if ($folder && $folder->job) {
+                $job = $folder->job;
+                $char1 = $folderKey[0];
+                $char2 = $folderKey[1];
+                $sftpPath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+
+                if (Storage::disk('sftp')->exists($sftpPath)) {
+                    $imageContent = Storage::disk('sftp')->get($sftpPath);
+                }
+            }
+            
+            if (!$imageContent) {
+                return response()->json(['error' => 'Image not found'], 404);
+            }
+
+            $image = Image::make($imageContent);
 
             // Calculate crop coordinates
             $xPosition = intval($image->width() * $xPercent);
@@ -137,17 +158,26 @@ class ImageController extends Controller
             
             $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
 
-            // 3. Fetch the image while bypassing SSL verification
+            // 3. Try HTTP first (Proxy)
             $response = Http::timeout(15)
                 ->withoutVerifying() // FIXES: cURL error 60
                 ->get($imageUrl);
 
-            // 4. If successful, stream the image back
             if ($response->successful()) {
                 return response($response->body(), 200)
                     ->header('Content-Type', $response->header('Content-Type', 'image/jpeg'))
                     ->header('Cache-Control', 'public, max-age=86400');
             }
+
+            // 4. Try SFTP Fallback
+            $sftpPath = "{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
+            if (Storage::disk('sftp')->exists($sftpPath)) {
+                $imageContent = Storage::disk('sftp')->get($sftpPath);
+                return response($imageContent, 200)
+                    ->header('Content-Type', 'image/jpeg')
+                    ->header('Cache-Control', 'public, max-age=86400');
+            }
+
             return $this->serveFallback();
 
         } catch (\Exception $e) {
@@ -211,7 +241,7 @@ class ImageController extends Controller
             //     abort(404);
             $deCryptfilename = Crypt::decryptString($filename);
             $folderKey = pathinfo($deCryptfilename, PATHINFO_FILENAME);
-            $extension = pathinfo($deCryptfilename, PATHINFO_EXTENSION);
+            $extension = pathinfo($deCryptfilename, PATHINFO_EXTENSION) ?: 'jpg';
             
             // Try SFTP first
             $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
