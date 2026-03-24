@@ -205,16 +205,42 @@ class ImageController extends Controller
     public function showgroupImage($filename)
     {
         try {
-            $path = 'groupImages/' . Crypt::decryptString($filename);
+            // $path = 'groupImages/' . Crypt::decryptString($filename);
 
-            if (!Storage::disk('public')->exists($path)) {
-                abort(404);
+            // if (!Storage::disk('public')->exists($path)) {
+            //     abort(404);
+            $deCryptfilename = Crypt::decryptString($filename);
+            $folderKey = pathinfo($deCryptfilename, PATHINFO_FILENAME);
+            $extension = pathinfo($deCryptfilename, PATHINFO_EXTENSION);
+            
+            // Try SFTP first
+            $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+            if ($folder && $folder->job) {
+                $job = $folder->job;
+                $seasonCode = $job->seasons->code;
+                $schoolKey = $job->ts_schoolkey;
+                $jobKey = $job->ts_jobkey;
+                
+                $char1 = $folderKey[0];
+                $char2 = $folderKey[1];
+                $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+
+                if (Storage::disk('sftp')->exists($sftpPath)) {
+                    $file = Storage::disk('sftp')->get($sftpPath);
+                    $type = Storage::disk('sftp')->mimeType($sftpPath);
+                    return response($file, Response::HTTP_OK)->header('Content-Type', $type);
+                }
             }
 
-            $file = Storage::disk('public')->get($path);
-            $type = Storage::disk('public')->mimeType($path);
+            // Fallback to local
+            $path = 'groupImages/' . $deCryptfilename;
+            if (Storage::disk('public')->exists($path)) {
+                $file = Storage::disk('public')->get($path);
+                $type = Storage::disk('public')->mimeType($path);
+                return response($file, Response::HTTP_OK)->header('Content-Type', $type);
+            }
 
-            return response($file, Response::HTTP_OK)->header('Content-Type', $type);
+            abort(404);
         } catch (\Exception $e) {
             Log::error('Error showing group image: ' . $e->getMessage());
             abort(404);
@@ -288,19 +314,41 @@ class ImageController extends Controller
         $artifactToFolderMap = json_decode($request->input('artifact-to-folder-map'), true);
         $folderPath = $request->input('upload_session');
     
+        $jobKeyContext = null;
+        $seasonCode = null;
+        $schoolKey = null;
+
+        if ($request->has('jobHash')) {
+            $jobKeyContext = Crypt::decryptString($request->input('jobHash'));
+            $selectedJob = $this->jobService->getJobByJobKey($jobKeyContext)->first();
+            if ($selectedJob) {
+                $seasonCode = $selectedJob->seasons->code ?? null;
+                $schoolKey = $selectedJob->ts_schoolkey;
+            }
+        }
+
         // Now you can process this mapping as needed
         foreach ($artifactToFolderMap as $artifact => $folderKey) {
             // Check if folderKey is not 'discard_image' or 'no_match'
             if ($folderKey !== "discard_image" && $folderKey !== "no_match") {
                 $extension = pathinfo($artifact, PATHINFO_EXTENSION); // Get the file extension
+                // $newPath = 'groupImages/' . $folderKey . '.' . $extension; // Ensure you're placing it in a folder
+                // Construct SFTP path: seasoncode/schoolkey/Jobkey/Folderkey[0]/Folderkey[1]/folderkey.jpg
+                if ($seasonCode && $schoolKey && $jobKeyContext) {
+                    $char1 = $folderKey[0];
+                    $char2 = $folderKey[1];
+                    $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
-                $newPath = 'groupImages/' . $folderKey . '.' . $extension; // Ensure you're placing it in a folder
-    
-                // Check if the artifact exists before moving
-                if (Storage::disk('public')->exists($artifact)) {
-                    // Move the file to the new location
-                    Storage::disk('public')->move($artifact, $newPath);
-                    $this->imageService->createGroupImage($folderKey, $extension);
+                    if (Storage::disk('public')->exists($artifact)) {
+                        // Storage::disk('public')->move($artifact, $newPath);
+                        $fileContent = Storage::disk('public')->get($artifact);
+                        Storage::disk('sftp')->put($sftpPath, $fileContent);
+                        $this->imageService->createGroupImage($folderKey, $extension);
+                        Storage::disk('public')->delete($artifact);
+                    }
+                } else {
+                    // Fallback to local if context is missing? (Better to log error)
+                    Log::error("Missing job context for group image upload to SFTP: " . $folderKey);
                 }
             } else {
                 Storage::disk('public')->delete($artifact);
@@ -318,42 +366,83 @@ class ImageController extends Controller
     public function groupImageUploadFile(Request $request)
     {
         // Validate the request for a file
-            $request->validate([
-                'file' => 'image|mimes:jpeg,png,jpg|max:15360', // Restrict to image files only
-                'folder_key' => 'required|string',
-                'folder_name' => 'required|string',
-            ]);
+        $request->validate([
+            'file' => 'image|mimes:jpeg,png,jpg|max:15360', // Restrict to image files only
+            'folder_key' => 'required|string',
+            'folder_name' => 'required|string',
+        ]);
 
         // Retrieve the uploaded file
-            $file = $request->file('file');
+        $file = $request->file('file');
+        $folderKey = $request->input('folder_key');
+        $extension = $file->getClientOriginalExtension();
+        // // Define the file name as folder_key.extension
+        //     $fileName = $folderKey . '.' . $extension;
             
-        // Get the folder_key and file extension
-            $folderKey = $request->input('folder_key');
-            $extension = $file->getClientOriginalExtension();
+        // // Store the file in the 'groupImages' folder in the public disk
+        //     $filePath = $file->storeAs('groupImages', $fileName, 'public');
+        $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+        if ($folder && $folder->job) {
+            $job = $folder->job;
+            $seasonCode = $job->seasons->code;
+            $schoolKey = $job->ts_schoolkey;
+            $jobKey = $job->ts_jobkey;
             
-        // Define the file name as folder_key.extension
-            $fileName = $folderKey . '.' . $extension;
+            $char1 = $folderKey[0];
+            $char2 = $folderKey[1];
+            $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+
+            $result = Storage::disk('sftp')->put($sftpPath, file_get_contents($file));
             
-        // Store the file in the 'groupImages' folder in the public disk
-            $filePath = $file->storeAs('groupImages', $fileName, 'public');
-            $this->imageService->createGroupImage($folderKey, $extension);
-            $encryptedFilename = Crypt::encryptString($fileName);
-            
-        // Respond with success and the full URL of the uploaded file
-            return response()->json([
-                'message' => 'Image uploaded successfully',
-                'full_url' => route('image.show', ['filename' => $encryptedFilename]),
-            ]);
+            if ($result) {
+                $this->imageService->createGroupImage($folderKey, $extension);
+                // $encryptedFilename = Crypt::encryptString($fileName);
+                $encryptedFilename = Crypt::encryptString($folderKey . '.' . $extension);
+                
+                return response()->json([
+                    'message' => 'Image uploaded successfully to SFTP',
+                    'full_url' => route('image.show', ['filename' => $encryptedFilename]),
+                ]);
+            }
+        }
+
+        Log::error("Failed to upload group image to SFTP for folder: " . $folderKey);
+        return response()->json(['message' => 'Upload failed'], 500);
     }
 
     public function groupImageDeleteFile(Request $request)
     {
         $folderKey = $request->input('folder_key');
+        
+        // Find path for SFTP deletion
+        $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+        if ($folder && $folder->job) {
+            $job = $folder->job;
+            $seasonCode = $job->seasons->code;
+            $schoolKey = $job->ts_schoolkey;
+            $jobKey = $job->ts_jobkey;
+            
+            // We need the extension to delete the file
+            $imageRecord = \App\Models\Image::where('keyvalue', $folderKey)->first();
+            if ($imageRecord) {
+                $extension = pathinfo($imageRecord->name, PATHINFO_EXTENSION) ?: 'jpg';
+                $char1 = $folderKey[0];
+                $char2 = $folderKey[1];
+                $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                
+                if (Storage::disk('sftp')->exists($sftpPath)) {
+                    Storage::disk('sftp')->delete($sftpPath);
+                }
+            }
+        }
+
         $fileName = $this->imageService->deleteGroupImage($folderKey);
 
         if ($fileName) {
-            // Correct usage of relative path with 'Storage::delete'
-            Storage::disk('public')->delete('groupImages/' . $fileName);
+            // Check public too for backward compatibility
+            if (Storage::disk('public')->exists('groupImages/' . $fileName)) {
+                Storage::disk('public')->delete('groupImages/' . $fileName);
+            }
             
             return response()->json([
                 'message' => 'Image deleted successfully',

@@ -551,7 +551,6 @@ class ImageService
 
             //CODE BY Chromedia
             // $dimensions = getimagesizefromstring($fileContent); 
-
             // if ($isSubject) {
             //     $subject = Subject::where('ts_subjectkey', $image->$key)->first();
             //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->portal_ts_foldername, $image->year ?? null);
@@ -667,25 +666,25 @@ class ImageService
             $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
 
             $portraitUrls = [
-                "{$baseImage}_800.jpg",
+                "{$baseImage}_400.jpg",
                 "{$baseImage}_1600.jpg",
             ];
 
             if ($resolutionId == 1) { // High Quality
                 $portraitUrls = ["{$baseImage}_1600.jpg"];
             } else if ($resolutionId == 2) { // Low Quality
-                $portraitUrls = ["{$baseImage}_800.jpg"];
+                $portraitUrls = ["{$baseImage}_400.jpg"];
             }
 
             $groupUrls = [
-                "{$baseGroup}_800.jpg",
+                "{$baseGroup}_400.jpg",
                 "{$baseGroup}_1600.jpg",
             ];
 
             if ($resolutionId == 1) { // High Quality
                 $groupUrls = ["{$baseGroup}_1600.jpg"];
             } else if ($resolutionId == 2) { // Low Quality
-                $groupUrls = ["{$baseGroup}_800.jpg"];
+                $groupUrls = ["{$baseGroup}_400.jpg"];
             }
 
             // 1 represents the Portrait category or the PORTRAITS tab
@@ -754,9 +753,9 @@ class ImageService
     
     //     // List of possible image paths
     //     $imagePaths = [
-    //         "{$baseImagePath}_800.jpg",
+    //         "{$baseImagePath}_400.jpg",
     //         "{$baseImagePath}_1600.jpg",
-    //         "{$baseGroupPath}_800.jpg",
+    //         "{$baseGroupPath}_400.jpg",
     //         "{$baseGroupPath}_1600.jpg",
     //     ];
     
@@ -782,9 +781,9 @@ class ImageService
 
     //     // Possible image file paths
     //     $imagePaths = [
-    //         "{$baseImagePath}_800.jpg",
+    //         "{$baseImagePath}_400.jpg",
     //         "{$baseImagePath}_1600.jpg",
-    //         "{$baseGroupPath}_800.jpg",
+    //         "{$baseGroupPath}_400.jpg",
     //         "{$baseGroupPath}_1600.jpg",
     //     ];
 

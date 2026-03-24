@@ -10,6 +10,7 @@ use App\Services\Proofing\EmailService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class JobService
@@ -247,52 +248,62 @@ class JobService
 
     public function deleteJob($tsJobKey)
     {                    
-        $job = Job::where('ts_jobkey', $tsJobKey)->firstOrFail();
+        $job = Job::with('seasons')->where('ts_jobkey', $tsJobKey)->firstOrFail();
         $tsJobId = $job->ts_job_id;
+        $tsSchoolKey = $job->ts_schoolkey;
+        $seasonCode = $job->seasons->code ?? null;
                                                     
         $tsFolderIds = $job->folders()->pluck('ts_folder_id')->toArray();                                                                
-                                                                    
-        if (!empty($tsFolderIds)) {
-                            
-            \DB::table('subjects')
-                ->whereIn('ts_folder_id', $tsFolderIds)
-                ->delete();
-                                                        
-            \DB::table('folder_users')
-                ->whereIn('ts_folder_id', $tsFolderIds)
-                ->delete();
+        
+        \DB::beginTransaction();
 
-            \DB::table('folder_subjects')
-                ->whereIn('ts_folder_id', $tsFolderIds)
-                ->delete();
-                
-            \DB::table('images')
-                ->where('ts_job_id', $tsJobId) 
-                ->delete();
+        try {
+            if (!empty($tsFolderIds)) {
+                \DB::table('subjects')->whereIn('ts_folder_id', $tsFolderIds)->delete();
+                \DB::table('folder_users')->whereIn('ts_folder_id', $tsFolderIds)->delete();
+                \DB::table('folder_subjects')->whereIn('ts_folder_id', $tsFolderIds)->delete();
+                \DB::table('images')->where('ts_job_id', $tsJobId)->delete();
+                \DB::table('changelogs')->where('ts_jobkey', $tsJobKey)->delete();
+            }
 
-            \DB::table('changelogs')
-                ->where('ts_jobkey', $tsJobKey)
-                ->delete();
+            $job->folders()->delete();
+            $job->jobUsers()->delete();
+            $job->groupPositions()->delete(); 
+            // \DB::table('emails')->where('ts_jobkey', $tsJobKey)->delete(); //2026 Dec Enhancement
+
+            $job->update([
+                'jobsync_status_id' => $this->statusService->sync,
+                'foldersync_status_id' => $this->statusService->pending,
+                'job_status_id' => $this->statusService->deleted,
+                'imagesync_status_id' => $this->statusService->unsync,
+                'proof_start' => null,
+                'proof_warning' => null,
+                'proof_due' => null,
+                'proof_catchup' => null,
+                'force_sync' => null,
+                'notifications_enabled' => null,
+                'notifications_matrix' => null
+            ]);
+
+            \DB::commit();
+            
+            if ($seasonCode && $tsSchoolKey && $tsJobKey) {
+                $jobPathOnSftp = "{$seasonCode}/{$tsSchoolKey}/{$tsJobKey}";
+                try {
+                    if (Storage::disk('sftp')->exists($jobPathOnSftp)) {
+                        Storage::disk('sftp')->deleteDirectory($jobPathOnSftp);
+                        \Log::info("Deleted SFTP directory for Job: " . $jobPathOnSftp);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Failed to delete SFTP directory for Job {$tsJobKey}: " . $e->getMessage());
+                }
+            }
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error("Delete Job Error: " . $e->getMessage());
+            throw $e;
         }
-
-        $job->folders()->delete();
-        $job->jobUsers()->delete();
-        $job->groupPositions()->delete(); 
-        // \DB::table('emails')->where('ts_jobkey', $tsJobKey)->delete(); //2026 Dec Enhancement
-
-        $job->update([
-            'jobsync_status_id' => $this->statusService->sync,
-            'foldersync_status_id' => $this->statusService->pending,
-            'job_status_id' => $this->statusService->deleted,
-            'imagesync_status_id' => $this->statusService->unsync,
-            'proof_start' => null,
-            'proof_warning' => null,
-            'proof_due' => null,
-            'proof_catchup' => null,
-            'force_sync' => null,
-            'notifications_enabled' => null,
-            'notifications_matrix' => null
-        ]);
     }
 
     protected function queryJobs($franchiseCode = null, $schoolkey = null)

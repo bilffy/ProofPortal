@@ -40,7 +40,7 @@ class ImageService
     {
         Image::updateOrCreate(
             [
-                // ✅ Proper uniqueness (prevents duplicates)
+                // Proper uniqueness (prevents duplicates)
                 'keyorigin'   => 'Subject',
                 'keyvalue'    => $data['ts_subjectkey'],
                 'ts_imagekey' => $data['ts_imagekey'],
