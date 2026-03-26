@@ -496,6 +496,7 @@ class ImageService
             ->orderBy('year')
             ->orderBy('subjects.portal_lastname')
             ->orderBy('subjects.portal_firstname')
+            ->orderBy('subjects.ts_subjectkey')
             ->get();
     }
 
