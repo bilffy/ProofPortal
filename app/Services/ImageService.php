@@ -592,11 +592,6 @@ class ImageService
             if ($this->urlExists($url)) {
                 $binary = @file_get_contents($url);
                 if ($binary !== false) {
-                    if ($watermark) {
-                        $image = InterventionImage::make($binary);
-                        $this->applyWatermark($image);
-                        return base64_encode((string) $image->encode('jpg', 80));
-                    }
                     return base64_encode($binary); // ✅ no watermark for downloads
                 }
             }
@@ -857,60 +852,6 @@ class ImageService
             ->select('id', 'display_name')
             ->orderBy('id', 'asc')
             ->get();
-    }
-
-    /**
-     * Applies watermark to the image.
-     * 
-     * @param \Intervention\Image\Image $image
-     * @return void
-     */
-
-    private function applyWatermark(&$image)
-    {
-        static $watermark = null;
-
-        if ($watermark === null) {
-            $watermarkPath = public_path('proofing-assets/img/msp_watermark.png');
-            if (!file_exists($watermarkPath)) return;
-
-            $watermark = InterventionImage::make($watermarkPath);
-            $watermark->resize(35, null, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
-            $watermark->opacity(25);
-        }
-
-        $imgWidth = $image->width();
-        $imgHeight = $image->height();
-        $wmWidth = $watermark->width();
-        $wmHeight = $watermark->height();
-
-        $hSpacing = 60;
-        $vSpacing = 25;
-        $padding = 25;
-
-        // 1. TOP ROW (Only one row at the very top)
-        $yTop = $padding;
-        for ($x = 0; $x < $imgWidth; $x += ($wmWidth + $hSpacing)) {
-            $image->insert($watermark, 'top-left', $x, $yTop);
-        }
-
-        // 2. BOTTOM ROWS (3 rows at the very bottom)
-        $y1 = $imgHeight - $wmHeight - $padding;
-        $y2 = $y1 - $wmHeight - $vSpacing;
-        $y3 = $y2 - $wmHeight - $vSpacing;
-
-        foreach ([$y1, $y2, $y3] as $index => $y) {
-            // Safety: Don't allow watermark into the middle 40% of the image
-            if ($y < ($imgHeight * 0.6)) continue; 
-
-            $offset = ($index % 2 === 0) ? 0 : intval(($wmWidth + $hSpacing) / 2);
-            for ($x = -$offset; $x < $imgWidth; $x += ($wmWidth + $hSpacing)) {
-                $image->insert($watermark, 'top-left', $x, $y);
-            }
-        }
     }
 
 }
