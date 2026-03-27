@@ -287,17 +287,17 @@ class JobService
 
             \DB::commit();
             
-            if ($seasonCode && $tsSchoolKey && $tsJobKey) {
-                $jobPathOnSftp = "{$seasonCode}/{$tsSchoolKey}/{$tsJobKey}";
-                try {
-                    if (Storage::disk('sftp')->exists($jobPathOnSftp)) {
-                        Storage::disk('sftp')->deleteDirectory($jobPathOnSftp);
-                        \Log::info("Deleted SFTP directory for Job: " . $jobPathOnSftp);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error("Failed to delete SFTP directory for Job {$tsJobKey}: " . $e->getMessage());
-                }
-            }
+            // if ($seasonCode && $tsSchoolKey && $tsJobKey) {
+            //     $jobPathOnSftp = "{$seasonCode}/{$tsSchoolKey}/{$tsJobKey}";
+            //     try {
+            //         if (Storage::disk('sftp')->exists($jobPathOnSftp)) {
+            //             Storage::disk('sftp')->deleteDirectory($jobPathOnSftp);
+            //             \Log::info("Deleted SFTP directory for Job: " . $jobPathOnSftp);
+            //         }
+            //     } catch (\Exception $e) {
+            //         \Log::error("Failed to delete SFTP directory for Job {$tsJobKey}: " . $e->getMessage());
+            //     }
+            // }
 
         } catch (\Exception $e) {
             \DB::rollBack();

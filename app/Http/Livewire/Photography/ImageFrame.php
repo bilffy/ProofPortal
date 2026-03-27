@@ -15,7 +15,7 @@ class ImageFrame extends Component
     public $hasImage = false;
     public $isLightbox = false;
     public $isUploaded = false;
-    public $image = '';
+    // public $image = ''; //code by chromedia
     public $externalSubjectId = null;
     public $category = null;
 
@@ -39,8 +39,9 @@ class ImageFrame extends Component
 
     public function placeholder()
     {
-        $this->image = '';
-        return view('livewire.photography.image-frame');
+        // $this->image = ''; //code by chromedia
+        // return view('livewire.photography.image-frame'); //code by chromedia
+        return view('livewire.photography.image-frame', ['image' => '']); //code by IT
     }
 
     public function updateImage($key)
@@ -66,22 +67,27 @@ class ImageFrame extends Component
         $this->dispatch('image-frame-updated', ['imageId' => $this->imageId, 'isLightbox' => $this->isLightbox]);
     }
 
+    // code by chromedia
+    // public function render()
+    // {
+    //     $imageService = new ImageService();
+    //     $key = base64_decode(base64_decode($this->imageId));
+    //     $imageContent = $imageService->getImageContent($key);
+    //     $this->image = base64_encode($imageContent);
+
+    //     return view('livewire.photography.image-frame');   
+    // }
+    // code by chromedia
+
+    // code by IT
     public function render()
     {
-        $imageService = new ImageService();
-        $key = base64_decode(base64_decode($this->imageId));
-        $imageContent = $imageService->getImageContent($key, null, $this->category); //code by IT
-        
-        if ($imageContent) {
-            $binaryImage = base64_decode($imageContent);
-            $dimensions = getimagesizefromstring($binaryImage);
-            if ($dimensions) {
-                $this->landscape = $dimensions[0] > $dimensions[1];
-            }
-        }
-        
-        $this->image = ($imageContent);
-
-        return view('livewire.photography.image-frame');
+        // Image content fetching has been removed from Livewire to prevent base64
+        // from leaking into the DOM. Image is now securely fetched via AJAX.
+        return view('livewire.photography.image-frame', [
+            'image' => 'READY',
+            'category' => $this->category,
+        ]);
     }
+    // code by IT
 }

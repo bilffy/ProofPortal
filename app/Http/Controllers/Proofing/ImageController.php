@@ -54,11 +54,11 @@ class ImageController extends Controller
                 $job = $folder->job;
                 $char1 = $folderKey[0];
                 $char2 = $folderKey[1];
-                $sftpPath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                // $sftpPath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
-                if (Storage::disk('sftp')->exists($sftpPath)) {
-                    $imageContent = Storage::disk('sftp')->get($sftpPath);
-                }
+                // if (Storage::disk('sftp')->exists($sftpPath)) {
+                //     $imageContent = Storage::disk('sftp')->get($sftpPath);
+                // }
             }
             
             if (!$imageContent) {
@@ -170,13 +170,13 @@ class ImageController extends Controller
             }
 
             // 4. Try SFTP Fallback
-            $sftpPath = "{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
-            if (Storage::disk('sftp')->exists($sftpPath)) {
-                $imageContent = Storage::disk('sftp')->get($sftpPath);
-                return response($imageContent, 200)
-                    ->header('Content-Type', 'image/jpeg')
-                    ->header('Cache-Control', 'public, max-age=86400');
-            }
+            // $sftpPath = "{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
+            // if (Storage::disk('sftp')->exists($sftpPath)) {
+            //     $imageContent = Storage::disk('sftp')->get($sftpPath);
+            //     return response($imageContent, 200)
+            //         ->header('Content-Type', 'image/jpeg')
+            //         ->header('Cache-Control', 'public, max-age=86400');
+            // }
 
             return $this->serveFallback();
 
@@ -253,13 +253,13 @@ class ImageController extends Controller
                 
                 $char1 = $folderKey[0];
                 $char2 = $folderKey[1];
-                $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                // $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
-                if (Storage::disk('sftp')->exists($sftpPath)) {
-                    $file = Storage::disk('sftp')->get($sftpPath);
-                    $type = Storage::disk('sftp')->mimeType($sftpPath);
-                    return response($file, Response::HTTP_OK)->header('Content-Type', $type);
-                }
+                // if (Storage::disk('sftp')->exists($sftpPath)) {
+                //     $file = Storage::disk('sftp')->get($sftpPath);
+                //     $type = Storage::disk('sftp')->mimeType($sftpPath);
+                //     return response($file, Response::HTTP_OK)->header('Content-Type', $type);
+                // }
             }
 
             // Fallback to local
@@ -367,15 +367,15 @@ class ImageController extends Controller
                 if ($seasonCode && $schoolKey && $jobKeyContext) {
                     $char1 = $folderKey[0];
                     $char2 = $folderKey[1];
-                    $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                    // $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
-                    if (Storage::disk('public')->exists($artifact)) {
-                        // Storage::disk('public')->move($artifact, $newPath);
-                        $fileContent = Storage::disk('public')->get($artifact);
-                        Storage::disk('sftp')->put($sftpPath, $fileContent);
-                        $this->imageService->createGroupImage($folderKey, $extension);
-                        Storage::disk('public')->delete($artifact);
-                    }
+                    // if (Storage::disk('public')->exists($artifact)) {
+                    //     // Storage::disk('public')->move($artifact, $newPath);
+                    //     $fileContent = Storage::disk('public')->get($artifact);
+                    //     Storage::disk('sftp')->put($sftpPath, $fileContent);
+                    //     $this->imageService->createGroupImage($folderKey, $extension);
+                    //     Storage::disk('public')->delete($artifact);
+                    // }
                 } else {
                     // Fallback to local if context is missing? (Better to log error)
                     Log::error("Missing job context for group image upload to SFTP: " . $folderKey);
@@ -420,20 +420,20 @@ class ImageController extends Controller
             
             $char1 = $folderKey[0];
             $char2 = $folderKey[1];
-            $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+            // $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
-            $result = Storage::disk('sftp')->put($sftpPath, file_get_contents($file));
+            // $result = Storage::disk('sftp')->put($sftpPath, file_get_contents($file));
             
-            if ($result) {
-                $this->imageService->createGroupImage($folderKey, $extension);
-                // $encryptedFilename = Crypt::encryptString($fileName);
-                $encryptedFilename = Crypt::encryptString($folderKey . '.' . $extension);
+            // if ($result) {
+            //     $this->imageService->createGroupImage($folderKey, $extension);
+            //     // $encryptedFilename = Crypt::encryptString($fileName);
+            //     $encryptedFilename = Crypt::encryptString($folderKey . '.' . $extension);
                 
-                return response()->json([
-                    'message' => 'Image uploaded successfully to SFTP',
-                    'full_url' => route('image.show', ['filename' => $encryptedFilename]),
-                ]);
-            }
+            //     return response()->json([
+            //         'message' => 'Image uploaded successfully to SFTP',
+            //         'full_url' => route('image.show', ['filename' => $encryptedFilename]),
+            //     ]);
+            // }
         }
 
         Log::error("Failed to upload group image to SFTP for folder: " . $folderKey);
@@ -458,11 +458,11 @@ class ImageController extends Controller
                 $extension = pathinfo($imageRecord->name, PATHINFO_EXTENSION) ?: 'jpg';
                 $char1 = $folderKey[0];
                 $char2 = $folderKey[1];
-                $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                // $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
                 
-                if (Storage::disk('sftp')->exists($sftpPath)) {
-                    Storage::disk('sftp')->delete($sftpPath);
-                }
+                // if (Storage::disk('sftp')->exists($sftpPath)) {
+                //     Storage::disk('sftp')->delete($sftpPath);
+                // }
             }
         }
 

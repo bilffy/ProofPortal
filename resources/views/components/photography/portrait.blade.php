@@ -11,6 +11,7 @@
     'isLightbox' => false,
     'isUploaded' => false,
     'externalSubjectId' => null,
+    'category' => null, {{-- code by IT --}}
 ])
 
 @php
@@ -60,6 +61,8 @@
             @if ('' == $img)
                 <x-spinner.image />
             @else
+            {{-- code by chromedia --}}
+            {{--
                 <template x-if="showSpinner">
                     <x-spinner.image />
                 </template>
@@ -75,36 +78,59 @@
                             $imageInfo = getimagesizefromstring($imageData);
                             $mimeType = $imageInfo['mime'] ?? 'image/jpeg';
                         @endphp
-                        {{--code by IT--}}
-                        {{-- @if ($img)
-                            <img
-                                src="data:image/jpeg;base64,{{ $img }}"
-                                alt=""
-                                loading="lazy"
-                                class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                            />
-                        @else
-                            <img
-                                src="{{ asset('msp/images/not_found.jpg') }}"
-                                loading="lazy"
-                                class="w-full max-w-none"
-                            />
-                        @endif --}}
-                        {{--code by IT--}}
-
-                        {{--code by Chromedia--}}
-                        @if ($img)
-                            <img 
+                        <img 
                             src="data:{{$mimeType}};base64,{{$img}}"
                             alt=""
                             class="w-full max-w-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
-                            oncontextmenu="return false;"
-                            draggable="false"
-                            />
-                        @endif 
-                        {{--code by Chromedia--}}
+                        />
                     </div>
                 </template>
+            --}}
+            {{-- code by chromedia --}}
+
+            {{-- code by IT --}}
+                <div x-data="{ src: '', fetchSpinner: true }" x-init="
+                    let url = '{{ route('photography.image') }}?id={{urlencode($id)}}&category={{$category ?? ''}}';
+
+                    fetch(url, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Fetch failed');
+                        return res.blob();
+                    })
+                    .then(blob => { 
+                        src = URL.createObjectURL(blob); 
+                        fetchSpinner = false; 
+                    })
+                    .catch(() => { 
+                        fetchSpinner = false; 
+                    });
+                " class="h-full w-full">
+                    <template x-if="fetchSpinner">
+                        <x-spinner.image />
+                    </template>
+                    <template x-if="!fetchSpinner">
+                        <div class="flex items-center h-full bg-[#E6E7E8] group {{ $hasImage ? 'hover:scale-[1.05] hover:transition-all' : '' }}">
+                            @if ($isLightbox && $noImage)
+                                <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
+                                    <span class="text-white font-semibold text-xl">+ Add Photo</span>
+                                </div>
+                            @endif
+                            <div class="w-full flex items-center justify-center h-full">
+                                <img 
+                                x-bind:src="src"
+                                alt=""
+                                class="w-full max-w-none pointer-events-none select-none {{ ($isLightbox && $noImage) ? 'group-hover:brightness-[70%]' : '' }}"
+                                oncontextmenu="return false;"
+                                draggable="false"
+                                x-show="src !== ''"
+                                />
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            {{-- code by IT --}}
             @endif
         </div>
     </div>

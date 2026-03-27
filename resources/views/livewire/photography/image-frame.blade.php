@@ -8,4 +8,5 @@
     isLightbox="{{$isLightbox}}"
     isUploaded="{{$isUploaded}}"
     externalSubjectId="{{$externalSubjectId}}"
+    category="{{$category ?? ''}}"     {{-- code by IT --}}
 />

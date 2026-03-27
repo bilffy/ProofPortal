@@ -14,7 +14,6 @@
                     $isFolder = $image['category'] == 'FOLDER';
                     // $imageId = $image['id']; // No longer needed, accessed directly
                     // $name = $isFolder ? $image['classGroup'] : $image['portal_firstname'] . ' ' . $image['portal_lastname']; //CODE BY Chromedia
-                    // $name = ''; //CODE BY IT // No longer needed, accessed directly
                     // $folderName = $image['year']; // No longer needed, accessed directly
                     // $landscape = !$image['isPortrait']; // No longer needed, accessed directly
                     // $key = "img-lb_{{$imageId}}"; // No longer needed, wire:key used

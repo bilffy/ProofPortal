@@ -82,6 +82,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::post('/photography/request-download-nonce', [PhotographyController::class, 'execNonce'])->name('photography.request-download-nonce');
         Route::post('/photography/upload-image', [PhotographyController::class, 'uploadImage'])->name('photography.upload-image');
         Route::post('/photography/remove-image', [PhotographyController::class, 'removeImage'])->name('photography.remove-image');
+        Route::get('/photography/image', [PhotographyController::class, 'servePhotographyImage'])->name('photography.image'); // CODE BY IT
     });
     
     // Schools routes

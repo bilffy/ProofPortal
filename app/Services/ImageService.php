@@ -12,12 +12,12 @@ use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Cache; // code by IT
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image as InterventionImage;
+use Illuminate\Support\Facades\Storage; // code by IT
 class ImageService
 {   
+    // code by IT
     protected static $urlCache = [];
     protected static $existenceCache = [];
 
@@ -26,6 +26,7 @@ class ImageService
         self::$urlCache = [];
         self::$existenceCache = [];
     }
+    // code by IT
     /**
      * Get all the years.
      *
@@ -35,7 +36,7 @@ class ImageService
     {
         return DB::table('seasons')
             ->select('id', 'ts_season_id', 'code as Year')
-            ->where('is_default', 1)
+            ->where('is_default', 1) // code by IT
             ->orderBy('code', direction: 'desc')
             ->get();
     }
@@ -52,8 +53,8 @@ class ImageService
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-                $visibilityColumn = 'is_visible_for_group';
-                break;
+                $visibilityColumn = 'is_visible_for_group'; // code by IT
+                break; // code by IT
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
                 $visibilityColumn = 'is_visible_for_portrait';
@@ -67,7 +68,7 @@ class ImageService
             ->join('jobs', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->where('jobs.ts_schoolkey', $schoolKey)
-            ->whereNotNull('folders.ts_folderkey')
+            ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where(function ($q) use ($visibilityColumn) {
                 if (empty($visibilityColumn)) {
                     $q->where('folders.is_visible_for_group', 1)
@@ -76,7 +77,7 @@ class ImageService
                     $q->where("folders.$visibilityColumn", 1);
                 }
             })
-            ->where('seasons.is_default', 1);
+            ->where('seasons.is_default', 1); // code by IT
         
         return $query
             ->select('seasons.id', 'seasons.ts_season_id', 'seasons.code as Year')
@@ -99,7 +100,7 @@ class ImageService
             ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
             ->where('jobs.ts_schoolkey', $schoolKey)
-            ->whereNotNull('folders.ts_folderkey')
+            ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where(function ($query) use ($operator, $folderTag) {
                 $query->where('folders.folder_tag', $operator, $folderTag)
                     ->orWhereNull('folders.folder_tag');
@@ -126,16 +127,18 @@ class ImageService
             ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
             ->where('jobs.ts_schoolkey', $schoolKey)
-            ->whereNotNull('folders.ts_folderkey');
+            ->whereNotNull('folders.ts_folderkey'); // code by IT
             
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
+                 // code by IT
                 $nullName = 'Class';
                 $query->where(function ($q) {
                     $q->where('folder_tags.external_name', '!=', 'Family')
                         ->orWhereNull('folders.folder_tag');
                 });
                 break;
+                 // code by IT
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
@@ -172,9 +175,11 @@ class ImageService
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
+                 // code by IT
                 $visibilityColumn = 'is_visible_for_group';
                 $nullTag = "Class";
                 break;
+                 // code by IT
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
@@ -189,7 +194,7 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_season_id', $seasonId)
             ->where("folders.$visibilityColumn", 1)
-            ->whereNotNull('folders.ts_folderkey');
+            ->whereNotNull('folders.ts_folderkey'); // code by IT
 
             if ($schoolKey) {
                 $query->where('jobs.ts_schoolkey', $schoolKey);
@@ -224,8 +229,8 @@ class ImageService
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
-        ->whereNotNull('subjects.ts_subjectkey')
-        ->whereNotNull('folders.ts_folderkey');
+        ->whereNotNull('subjects.ts_subjectkey') // code by IT
+        ->whereNotNull('folders.ts_folderkey'); // code by IT
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
@@ -254,7 +259,7 @@ class ImageService
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->leftJoin('folder_subjects', function ($join) {
             $join->on('folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-                 ->where('folder_subjects.is_deleted', 0);
+                 ->where('folder_subjects.is_deleted', 0); // code by IT
         })
         ->join('subjects', function ($join) {
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
@@ -263,8 +268,8 @@ class ImageService
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
-        ->whereNotNull('subjects.ts_subjectkey')
-        ->whereNotNull('folders.ts_folderkey');
+        ->whereNotNull('subjects.ts_subjectkey') // code by IT
+        ->whereNotNull('folders.ts_folderkey'); // code by IT
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -323,7 +328,7 @@ class ImageService
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
-        ->whereNotNull('folders.ts_folderkey')
+        ->whereNotNull('folders.ts_folderkey') // code by IT
         // ->where('images.keyorigin', 'Folder')
         ;
         
@@ -371,8 +376,8 @@ class ImageService
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-                $images = $this->getFoldersCollection($seasonId, $schoolKey, $folderKeys, $search);
-                break;
+                $images = $this->getFoldersCollection($seasonId, $schoolKey, $folderKeys, $search); // code by IT
+                break; // code by IT
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
@@ -380,8 +385,8 @@ class ImageService
                 break;
         }
 
-        // return $images->get();   //CODE BY IT
-        return $images->paginate($perPage, ['*'], 'page', $page);
+        // return $images->get();   //CODE BY CHROMEDIA
+        return $images->paginate($perPage, ['*'], 'page', $page); // code by IT
     }
 
 
@@ -399,7 +404,7 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->where('folders.is_visible_for_group', 1)
-            ->whereNotNull('folders.ts_folderkey');
+            ->whereNotNull('folders.ts_folderkey'); // code by IT
 
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -444,7 +449,7 @@ class ImageService
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->leftJoin('folder_subjects', function ($join) {
             $join->on('folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
-                 ->where('folder_subjects.is_deleted', 0);
+                 ->where('folder_subjects.is_deleted', 0); // code by IT
         })
         ->join('subjects', function ($join) {
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
@@ -452,8 +457,8 @@ class ImageService
         })
         ->where('jobs.ts_schoolkey', $schoolKey)
         ->where('folders.is_visible_for_portrait', 1)
-        ->whereNotNull('subjects.ts_subjectkey')
-        ->whereNotNull('folders.ts_folderkey');
+        ->whereNotNull('subjects.ts_subjectkey') // code by IT
+        ->whereNotNull('folders.ts_folderkey'); // code by IT
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -496,7 +501,7 @@ class ImageService
             ->orderBy('year')
             ->orderBy('subjects.portal_lastname')
             ->orderBy('subjects.portal_firstname')
-            ->orderBy('subjects.ts_subjectkey')
+            ->orderBy('subjects.ts_subjectkey') // code by IT
             ->get();
     }
 
@@ -506,13 +511,14 @@ class ImageService
      * @param Collection
      * @return Collection
      */
+    //CODE BY IT
     public function getImagesAsBase64($images, $tab = PhotographyHelper::TAB_PORTRAITS): Collection
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-                $key = 'ts_folderkey';
-                $category = 'FOLDER';
-                break;
+                $key = 'ts_folderkey'; // code by IT
+                $category = 'FOLDER'; // code by IT
+                break; // code by IT
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
@@ -549,23 +555,11 @@ class ImageService
             }
             // Skip full image network download during initial grid compilation for massive speed boost
             $isPortrait = $isSubject; // Default portrait for subjects, landscape for folders
-            //CODE BY IT
-
-            //CODE BY Chromedia
-            // $dimensions = getimagesizefromstring($fileContent); 
-            // if ($isSubject) {
-            //     $subject = Subject::where('ts_subjectkey', $image->$key)->first();
-            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->portal_ts_foldername, $image->year ?? null);
-            // } else {
-            //     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->portal_ts_foldername, $image->year ?? null);
-            // }
-            //CODE BY Chromedia
 
             return [
                 'id' => base64_encode(base64_encode($image->$key)),
                 'firstname' => $isSubject ? $image->portal_firstname : '',
                 'lastname' => $isSubject ? $image->portal_lastname : '',
-                // 'isPortrait' => $dimensions[0] <= $dimensions[1], //CODE BY Chromedia
                 'isPortrait' => $isPortrait,
                 'classGroup' => $classGroup,
                 'year' => $image->year ?? 0,
@@ -578,7 +572,7 @@ class ImageService
 
         return $images->map($toData);
     }
-    //CODE BY IT
+
     public function getImageContent(string $key, $resolutionId = null, $tab = '', bool $watermark = true): ?string
     {
         $imageRecordExists = Image::where('keyvalue', $key)->exists();
@@ -654,48 +648,40 @@ class ImageService
         });
     }
 
-    /**
-     * Generate possible URLs for a key
-     */
     private function getImageUrls(string $key, $resolutionId = null, $tab = ''): array
     {
         $upperTab = strtoupper((string)($tab ?? ''));
         $resKey = (string)($resolutionId ?? 'any');
         $cacheKey = "photography_urls_{$key}_{$resKey}_{$upperTab}";
         
-        return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab, $resKey) {
+        return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab) {
             $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
             $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
 
-            $portraitUrls = [
-                "{$baseImage}_400.jpg",
-                "{$baseImage}_1600.jpg",
-            ];
-
+            // --- DEFINE PORTRAIT URLS ---
             if ($resolutionId == 1) { // High Quality
                 $portraitUrls = ["{$baseImage}_1600.jpg"];
-            } else if ($resolutionId == 2) { // Low Quality
+            } else { 
+                // Default to 400 if resolutionId is 2 OR null
                 $portraitUrls = ["{$baseImage}_400.jpg"];
             }
 
-            $groupUrls = [
-                "{$baseGroup}_400.jpg",
-                "{$baseGroup}_1600.jpg",
-            ];
-
+            // --- DEFINE GROUP URLS ---
             if ($resolutionId == 1) { // High Quality
                 $groupUrls = ["{$baseGroup}_1600.jpg"];
-            } else if ($resolutionId == 2) { // Low Quality
+            } else { 
+                // Default to 400 if resolutionId is 2 OR null
                 $groupUrls = ["{$baseGroup}_400.jpg"];
             }
 
-            // 1 represents the Portrait category or the PORTRAITS tab
-            if ($resolutionId == 1 || $upperTab === PhotographyHelper::TAB_PORTRAITS) {
-                 $result = $portraitUrls;
-            } else if ($resolutionId == 2 || $upperTab === PhotographyHelper::TAB_GROUPS) {
-                 $result = $groupUrls;
+            // --- FINAL FILTERING BASED ON TAB ---
+            if ($upperTab === PhotographyHelper::TAB_PORTRAITS) {
+                $result = $portraitUrls;
+            } else if ($upperTab === PhotographyHelper::TAB_GROUPS) {
+                $result = $groupUrls;
             } else {
-                 $result = array_merge($portraitUrls, $groupUrls);
+                // If no specific tab, show the 400px versions of both
+                $result = array_merge($portraitUrls, $groupUrls);
             }
 
             return $result;
@@ -726,6 +712,73 @@ class ImageService
      * @return string|null
      */
     //CODE BY Chromedia
+    // public function getImagesAsBase64($images, $tab = PhotographyHelper::TAB_PORTRAITS): Collection
+    // {
+    //     switch ($tab) {
+    //         case PhotographyHelper::TAB_GROUPS:
+    //         case PhotographyHelper::TAB_OTHERS:
+    //             $key = 'ts_folderkey';
+    //             $category = 'FOLDER';
+    //             break;
+    //         case PhotographyHelper::TAB_PORTRAITS:
+    //         default:
+    //             $key = 'ts_subjectkey';
+    //             $category = 'SUBJECT';
+    //             break;
+    //     }
+
+    //     $toData = function ($image) use ($key, $category) {
+    //         $isSubject = $category != 'FOLDER';
+    //         $imgKey = $image->$key;
+    //         if ($isSubject) {
+    //             $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+    //             if ($subject) {
+    //                 $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
+    //                 $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+    //             } else {
+    //                 $uploaded = false;
+    //             }
+    //         } else {
+    //             $folder = Folder::where('ts_folderkey', $image->$key)->first();
+    //             if ($folder) {
+    //                 $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();
+    //                 $uploaded = $uploadExists && $this->getIsImageFound($imgKey);
+    //             } else {
+    //                 $uploaded = false;
+    //             }
+    //         }
+    //         $fileContent = $this->getImageContent($imgKey);
+            
+    //         $dimensions = getimagesizefromstring($fileContent);
+
+    //         if ($isSubject) {
+    //             $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+    //             $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->ts_foldername, $image->year ?? null);
+    //         } else {
+    //             $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->ts_foldername, $image->year ?? null);
+    //         }
+
+    //         return [
+    //             'id' => base64_encode(base64_encode($image->$key)),
+    //             'firstname' => $isSubject ? $image->firstname : '',
+    //             'lastname' => $isSubject ? $image->lastname : '',
+    //             'isPortrait' => $dimensions[0] <= $dimensions[1],
+    //             'classGroup' => $classGroup,
+    //             'year' => $image->year ?? 0,
+    //             'category' => $category,
+    //             'isUploaded' => $uploaded,
+    //             'externalSubjectId' => $isSubject ? $image->external_subject_id : null,
+    //         ];
+    //     };
+
+    //     return $images->map($toData);
+    // }
+
+    // /**
+    //  * Get File Content based on $key value
+    //  * @param string $key
+    //  * @return string|null
+    //  */
     // public function getImageContent($key)
     // {
     //     $path = ImageHelper::getImagePath($key);
@@ -739,7 +792,7 @@ class ImageService
     //  * @return boolean
     //  */
     // public function getIsImageFound($key)
-    // {♠
+    // {
     //     $path = ImageHelper::getImagePath($key);
     //     if ($path === '') {
     //         return false;
@@ -747,58 +800,6 @@ class ImageService
     //     return Storage::disk('local')->exists($path);
     // }
     //CODE BY Chromedia
-    //CODE BY IT
-    // public function getImageContent($key)
-    // {
-    //     $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
-    //     $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
-    
-    //     // List of possible image paths
-    //     $imagePaths = [
-    //         "{$baseImagePath}_400.jpg",
-    //         "{$baseImagePath}_1600.jpg",
-    //         "{$baseGroupPath}_400.jpg",
-    //         "{$baseGroupPath}_1600.jpg",
-    //     ];
-    
-    //     // Iterate over possible paths and return the first readable file
-    //     foreach ($imagePaths as $path) {
-    //         if (file_exists($path) && is_readable($path)) {
-    //             return file_get_contents($path);
-    //         }
-    //     }
-    
-    //     // Return fallback image if no valid image is found
-    //     try {
-    //         return Storage::disk('local')->get('not_found.jpg');
-    //     } catch (\Exception $e) {
-    //         return null;
-    //     }
-    // }
-
-    // public function getIsImageFound($key)
-    // {
-    //     $baseImagePath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
-    //     $baseGroupPath = "\\\\Filestore.msp.local\\keyimage_store_uat\\{$key[0]}\\{$key[1]}\\{$key}";
-
-    //     // Possible image file paths
-    //     $imagePaths = [
-    //         "{$baseImagePath}_400.jpg",
-    //         "{$baseImagePath}_1600.jpg",
-    //         "{$baseGroupPath}_400.jpg",
-    //         "{$baseGroupPath}_1600.jpg",
-    //     ];
-
-    //     // Check if any file exists and is readable
-    //     foreach ($imagePaths as $path) {
-    //         if (file_exists($path) && is_readable($path)) {
-    //             return true;
-    //         }
-    //     }
-
-    //     return false;
-    // }
-    //CODE BY IT
     /**
      * This method is used to get the path of the image.
      * The directory is defined in the .env file.

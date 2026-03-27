@@ -306,8 +306,7 @@ class PhotographyController extends Controller
             // Query the Image model to get the image data
 
             //CODE BY CHROMEDIA
-            // $image = Image::where('keyvalue', $key)
-            //         ->first();
+            // $image = Image::where('keyvalue', $key)->first();
             //CODE BY CHROMEDIA
 
             //CODE BY IT
@@ -356,6 +355,8 @@ class PhotographyController extends Controller
             // UPDATED: Refer to filesystems' disks configuration for the path
             // $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
             $imageOption = ImageOptions::where('id', $selectedFilters['resolution'])->first();
+
+            //CODE BY chromedia
             $files = ImageHelper::findImageFiles($key);
             // check if the file exists in the print_quality
             if (!empty($files)) {
@@ -372,8 +373,34 @@ class PhotographyController extends Controller
             } else {
                 $path = '';
             }
-            // $fileExtension = File::extension($path); //CODE BY Chromedia
-            $fileExtension = 'jpg'; //CODE BY IT
+            $fileExtension = File::extension($path);
+            //CODE BY chromedia
+
+            //CODE BY IT
+            // Construct the real file path exactly like ImageService does
+            $tabFolder = $request->input('tab');
+            $isGroup = ($tabFolder === PhotographyHelper::TAB_GROUPS || $tabFolder === PhotographyHelper::TAB_OTHERS);
+            $baseLoc = $isGroup ? env('GROUPIMAGELOCATION') : env('PORTRAITIMAGELOCATION');
+            
+            // Generate the proper physical paths for high res / low res
+            $basePath = rtrim($baseLoc, '/\\') . DIRECTORY_SEPARATOR . $key[0] . DIRECTORY_SEPARATOR . $key[1] . DIRECTORY_SEPARATOR . $key;
+            
+            $potentialPaths = [
+                $basePath . "_1600.jpg",
+                $basePath . "_400.jpg"
+            ];
+
+            $path = '';
+            foreach ($potentialPaths as $p) {
+                if (file_exists($p)) {
+                    $path = $p;
+                    break;
+                }
+            }
+            
+            $fileExtension = pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg';
+            //CODE BY IT
+
             // and make sure to resizeImage if the long_edge option is set
             if ($imageOption->long_edge) {
                 return $this->resizeImage($path, $imageOption->long_edge, $filename, $fileExtension);
@@ -424,11 +451,6 @@ class PhotographyController extends Controller
                 $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
                 $existingImages = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->get();
                 $origin = 'subject';
-                //CODE BY CHROMEDIA
-                // $image = Image::where('keyvalue', $key)
-                //     ->where('keyorigin', $origin)->first();
-                //CODE BY CHROMEDIA
-
                 //CODE BY IT   
                 $image = Image::where('keyvalue', $key)
                     ->where('keyorigin', $origin)
@@ -443,9 +465,9 @@ class PhotographyController extends Controller
                 }
                 $existingImages = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->get();
                 $origin = 'folder';
-                $image = Image::where('keyvalue', $key)
-                    ->where('keyorigin', $origin)->first();
             }
+            $image = Image::where('keyvalue', $key)
+                ->where('keyorigin', $origin)->first();
             // If there is an existing uploaded image, delete previous image
             if ($existingImages->count() > 0) {
                 foreach ($existingImages as $existingImage) {
@@ -512,12 +534,7 @@ class PhotographyController extends Controller
             $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
             $image = SchoolPhotoUpload::where('subject_id', $subject->id)
                 ->where('folder_id', $folder->id)->whereNull('deleted_at');
-            $origin = 'subject';       
-            //CODE BY CHROMEDIA
-            // $img = Image::where('keyvalue', $key)
-            // ->where('keyorigin', $origin)->first();
-            //CODE BY CHROMEDIA
-
+            $origin = 'subject';     
             //CODE BY IT
             $img = Image::where('keyvalue', $key)
                 ->where('keyorigin', $origin)
@@ -533,9 +550,9 @@ class PhotographyController extends Controller
             $image = SchoolPhotoUpload::where('folder_id', $folder->id)
                 ->where('subject_id', null)->whereNull('deleted_at');
             $origin = 'folder';  
-            $img = Image::where('keyvalue', $key)
-            ->where('keyorigin', $origin)->first();
         }
+        $img = Image::where('keyvalue', $key)
+            ->where('keyorigin', $origin)->first();
 
 
         // Find the latest uploaded image
@@ -600,4 +617,32 @@ class PhotographyController extends Controller
             'extension' => $fileExtension
         ]);
     }
+
+    //CODE BY IT
+    public function servePhotographyImage(Request $request)
+    {
+        if (!$request->ajax() && !$request->wantsJson()) {
+            abort(403, 'Direct access to image source is forbidden.');
+        }
+
+        $id = $request->query('id');
+        $category = $request->query('category');
+        
+        $key = base64_decode(base64_decode($id));
+        
+        // This unified call already seamlessly falls back to 
+        // getFallbackAbsentImage() or getFallbackNotFoundImage() if needed
+        $imageContent = $this->imageService->getImageContent($key, null, $category);
+        
+        if ($imageContent) {
+            $binaryImage = base64_decode($imageContent);
+            $mimeType = getimagesizefromstring($binaryImage)['mime'] ?? 'image/jpeg';
+            return response($binaryImage, 200)
+                ->header('Content-Type', $mimeType)
+                ->header('Cache-Control', 'private, max-age=86400, must-revalidate');
+        }
+        
+        return response()->json(['error' => 'Image not found.'], 404);
+    }
+    //CODE BY IT
 }
