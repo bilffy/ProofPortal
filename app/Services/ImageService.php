@@ -573,7 +573,7 @@ class ImageService
         return $images->map($toData);
     }
 
-    public function getImageContent(string $key, $resolutionId = null, $tab = '', bool $watermark = true): ?string
+    public function getImageContent(string $key, $resolutionId = null, $tab = ''): ?string
     {
         $imageRecordExists = Image::where('keyvalue', $key)->exists();
 
@@ -587,7 +587,7 @@ class ImageService
             if ($this->urlExists($url)) {
                 $binary = @file_get_contents($url);
                 if ($binary !== false) {
-                    return base64_encode($binary); // ✅ no watermark for downloads
+                    return base64_encode($binary);
                 }
             }
         }
