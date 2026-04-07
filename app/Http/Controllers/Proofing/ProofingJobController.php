@@ -199,6 +199,7 @@ class ProofingJobController extends Controller
             if (!$selectedJob) {
                 // Sync Job first
                 $jobResponse = $client->get("{$baseUrl}/jobs/sync/{$jobKey}");
+                $this->jobService->updateJobData($jobKey, 'show_portal', 1);
                 
                 if ($jobResponse->successful()) {
                     // IMPORTANT: Fetch the newly created job
@@ -224,7 +225,7 @@ class ProofingJobController extends Controller
             // Validate
             if ($selectedJob && $folderResponse?->successful()) {
                 SyncImagesToSftp::dispatch($jobKey);
-                
+
                 $userId = Auth::id();
                 
                 // Ensure permissions and visibility
