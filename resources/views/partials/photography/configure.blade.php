@@ -42,7 +42,7 @@
     }
     $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
     $encryptedPath = $selectedSchool->school_logo ? Crypt::encryptString($filePath) : '';
-    $seasons = $seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
+    $seasons = $seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
     $syncJobsbySchoolkey =  $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
     $selectedFolders = [];
 

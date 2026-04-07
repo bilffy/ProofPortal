@@ -49,11 +49,11 @@ class JobService
         $completedStatus = $this->statusService->completed;
         $totalSchoolCount = $this->queryJobs($franchiseCode, $selectedSchoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
             ->where('job_users.user_id', Auth::user()->id)->count();
-        $seasons = $this->seasonService->getAllSeasonData('code', 'is_default', 'ts_season_id')->get();
+        $seasons = $this->seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
         
         // Check if there is a default season
-        $defaultSeason = $seasons->where('is_default', 1)->first();
+        $defaultSeason = $seasons->where('show_in_portal', 1)->first();
         $defaultSeasonJobs = [];
         if ($defaultSeason) {
             $defaultSeasonJobs = $this->getDefaultSeasonJobs($defaultSeason->ts_season_id, $franchiseCode);

@@ -19,6 +19,7 @@ class Season extends Model
     protected $fillable = [
         'ts_season_id',
         'code',
+        'show_in_portal',
         'is_default',
     ];
     
