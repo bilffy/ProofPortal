@@ -212,7 +212,7 @@
                             <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
                                 <div class="col-12">
                                     <span class="lead m-0 mr-2">
-                                        {!! __("You are currently working on <strong>:job</strong> in the <strong>:season</strong> Season", ['job' => $selectedJob['ts_jobname'], 'season' => $selectedSeason['code']]) !!}
+                                        {!! __("You are currently working on TNJ - <strong>:job</strong> in the <strong>:season</strong> Season", ['job' => $selectedJob['ts_jobname'], 'season' => $selectedSeason['code']]) !!}
                                         <a href="{{route('dashboard.closeJob')}}">[Close Job]</a>                            
                                     </span>
                                 </div>
@@ -262,7 +262,7 @@
                             <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
                                 <div class="col-12">
                                     <span class="lead m-0 mr-2">
-                                        {!! __("You are currently working on <strong>:job</strong> in the <strong>:season</strong> Season", [
+                                        {!! __("You are currently working on TNJ - <strong>:job</strong> in the <strong>:season</strong> Season", [
                                             'job' => $selectedJob['ts_jobname'],
                                             'season' => $selectedSeason['code']
                                         ]) !!}

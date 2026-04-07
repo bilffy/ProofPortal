@@ -7,6 +7,9 @@ use App\Services\Proofing\SubjectService;
 use App\Services\Proofing\ProofingDescriptionService;
 use App\Services\Proofing\EncryptDecryptService;
 use App\Services\Proofing\EmailService;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class FolderService
@@ -221,6 +224,11 @@ class FolderService
 
     public function updateFolderStatus($folderIds, $status)
     {
+        $rootUserId = Auth::id();
+        ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
+            'folder_ids' => $folderIds,
+            'status' => $status
+        ], $rootUserId);
         // Update folder statuses in bulk
         Folder::whereIn('ts_folder_id', $folderIds)
             ->update(['status_id' => $status]);

@@ -17,6 +17,10 @@
     div.dataTables_wrapper div.dataTables_length select{
         width:75px;
     }
+    #searchData thead th, 
+    .card-header strong {
+        color: #595b5d;
+    }
 </style>
 @stop
 

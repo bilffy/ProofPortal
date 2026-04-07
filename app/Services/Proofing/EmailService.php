@@ -250,8 +250,12 @@ class EmailService
     
             $processedContent = $this->replaceTemplateVariables($templateContent, $data);
     
-            $emailMessage = $this->generateEmail($authUser, $user, $template->template_subject, $processedContent, $sentDate);
-
+            //update the subject with the job name
+            $templateSubject = $template->template_subject;
+            if (strpos($template->template_subject, 'JOB_NAME') !== false) {
+                $templateSubject = str_replace('JOB_NAME', $selectedJob->ts_jobname, $template->template_subject);
+            }
+            $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $sentDate);
             $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
             $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $decryptedJobKey);
@@ -345,11 +349,14 @@ class EmailService
                 ];
     
                 $processedContent = $this->replaceTemplateVariables($templateContent, $data);
-                $emailMessage = $this->generateEmail($authUser, $user, $template->template_subject, $processedContent, $date);
+                //update the subject with the job name
+                $templateSubject = $template->template_subject;
+                if (strpos($template->template_subject, 'JOB_NAME') !== false) {
+                    $templateSubject = str_replace('JOB_NAME', $selectedJob->ts_jobname, $template->template_subject);
+                }
+                $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $date);
     
                 $emlContent = MessageConverter::toEmail($emailMessage)->toString();
-    
-
     
                 // Save email record per user
                 $emailRecord = Email::where([
@@ -467,8 +474,6 @@ class EmailService
 
             $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $date);
             $emlContent = MessageConverter::toEmail($emailMessage)->toString();
-    
-
 
             $this->storeEmailRecord($authUser, $selectedFolder->job, $user, $template, $date, $emlContent, $selectedFolder->job->ts_jobkey);
         }
@@ -546,6 +551,12 @@ class EmailService
         if (strpos($templateSubject, 'INVITEE_LAST_NAME') !== false) {
             $templateSubject = str_replace('INVITEE_LAST_NAME', $inviteUser->lastname, $templateSubject);
         }
+
+        if (strpos($templateSubject, 'JOB_NAME') !== false) {
+            $jobName = $folderUsers->first()->folder->job->ts_jobname ?? 'Unknown Job'; // Fallback if job name is null
+            $templateSubject = str_replace('JOB_NAME', $jobName, $templateSubject);
+        }
+
 
         $emailMessage = $this->generateEmail($authUser, $inviteUser, $templateSubject, $processedContent, $date);
 

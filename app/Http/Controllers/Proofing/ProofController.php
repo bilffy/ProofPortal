@@ -13,6 +13,8 @@ use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\EmailService;
 use App\Services\Proofing\JobService;
 use Illuminate\Support\Facades\Crypt;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use App\Models\Subject;
@@ -115,6 +117,7 @@ class ProofController extends Controller
                  }
             }
 
+            $rootUserId = Auth::id();
             $displayStatusId = $folder->status_id;
             $isManuallyModified = 0;
 
@@ -124,10 +127,18 @@ class ProofController extends Controller
                 $displayStatusId = $this->statusService->modified;
                 
                 // Perform updates
+                ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
+                    'folderkey' => $folder->ts_folderkey,
+                    'status' => $this->statusService->modified
+                ], $rootUserId);
                 $folder->update(['status_id' => $this->statusService->modified]);
                 
                 // If the job itself wasn't already modified, update it and send job notification
                 if ($selectedJob->job_status_id != $this->statusService->modified) {
+                    ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
+                        'jobkey' => $selectedJob->ts_jobkey,
+                        'status' => $this->statusService->modified
+                    ], $rootUserId);
                     $selectedJob->update(['job_status_id' => $this->statusService->modified]);
                     $this->emailService->saveEmailContent($selectedJob->ts_jobkey, 'job_status_modified', Carbon::now(), $this->statusService->modified);
                 }
@@ -453,6 +464,7 @@ class ProofController extends Controller
     
         $hash = Crypt::encryptString($folder->job->ts_jobkey);
         $location = URL::signedRoute('my-folders-list', ['hash' => $hash]);
+        $rootUserId = Auth::id();
     
         $isSaveForLater = $request->submitProof === 'save-for-later';
         $isMarkAsComplete = $request->submitProof === 'mark-as-complete';
@@ -464,6 +476,10 @@ class ProofController extends Controller
     
         if ($isSaveForLater || $isMarkAsComplete) {
             $folder->is_locked = !$isSaveForLater;
+            ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
+                'folderkey' => $folder->ts_folderkey,
+                'status' => $isSaveForLater ? $this->statusService->modified : $this->statusService->completed
+            ], $rootUserId);
             $folder->status_id = $isSaveForLater ? $this->statusService->modified : $this->statusService->completed;
             $folder->save();
             
@@ -477,6 +493,10 @@ class ProofController extends Controller
                 $jobStatus = $this->statusService->incomplete;
             }
 
+            ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
+                'jobkey' => $job->ts_jobkey,
+                'status' => $jobStatus
+            ], $rootUserId);
             $job->update(['job_status_id' => $jobStatus]);
 
             if ($jobStatus === $this->statusService->completed) {

@@ -1,5 +1,5 @@
 @extends('proofing.layouts.master')
-@section('title', 'Invitations')
+@section('title', 'Access')
 
 @section('css')
     <link href="{{ URL::asset('proofing-assets/plugins/select2/css/select2.min.css')}}" rel="stylesheet" />
@@ -46,7 +46,7 @@
                 <div class="users">
                     <div class="card">
                         <div class="card-header">
-                            <legend>{{ __('Invite :title to :school', ['title' => $title, 'school' => $selectedJob->ts_jobname]) }}</legend>
+                            <legend>{{ __('Assign :title to :school', ['title' => $title, 'school' => $selectedJob->ts_jobname]) }}</legend>
                         </div>
 
                         <form action="{{ route('invitations.inviteSend') }}" method="POST">
@@ -188,7 +188,7 @@
 
                             <div class="card-footer">
                                 <button type="submit" id="submitButton" class="btn btn-primary" disabled>
-                                    {{ __('Send invitation to join :school', ['school' => $selectedJob->ts_jobname]) }}
+                                    {{ __('Assign to :school', ['school' => $selectedJob->ts_jobname]) }}
                                 </button>
                             </div>
 
@@ -208,7 +208,8 @@
         // Initialize Select2
         $('#emailSelect').select2({
             placeholder: "-- Select Email --",
-            allowClear: true
+            allowClear: true,
+            width: '100%'
         });
 
         // When email selected → autofill names

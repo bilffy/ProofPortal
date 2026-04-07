@@ -1,5 +1,5 @@
 @extends('proofing.layouts.master')
-@section('title', 'Invitations')
+@section('title', 'Access')
 
 @section('css')
 @stop
@@ -13,7 +13,7 @@
         <div class="row mt-4">
             <div class="col-12">
                 <p class="display-4">
-                    Who would you like to invite?
+                    Who would you like to assign?
                 </p>
             </div>
             <div class="col-12 mb-3">
@@ -105,26 +105,26 @@
                         <div class="card">
                             <div class="card-header">
                                 @if($role === 'photocoordinator')
-                                    <legend>Invite a Photo-Coordinator</legend>
+                                    <legend>Assign a Photo-Coordinator</legend>
                                 @elseif($role === 'teacher')
-                                    <legend>Invite a Teacher</legend>
+                                    <legend>Assign a Teacher</legend>
                                 @endif
                             </div>
                             <div class="card-body">
                                 @if($role === 'photocoordinator')
                                     <p>
-                                        Create a new User as a Photo-Coordinator for a School.
+                                        Assign a Photo-Coordinator for a School.
                                         As a Member of that School, a Photo-Coordinator can
-                                        perform Administration tasks such as inviting Teachers and viewing Subjects.
-                                        Use the 'Single Invitation' button to invite one Photo-Coordinator.
-                                        Use the 'Multi Invitation' button to copy-and-paste from an Excel document.
+                                        perform Administration tasks such as assigning Teachers and viewing Subjects.
+                                        Use the 'Single' button to assign one Photo-Coordinator.
+                                        Use the 'Multi' button to copy-and-paste from an Excel document.
                                     </p>
                                 @elseif($role === 'teacher')
                                     <p>
-                                        Create a new User as a Teacher for a School.
+                                        Assign a Teacher for a School.
                                         As a Member of that School, a Teacher can review Student photos and spelling.
-                                        Use the 'Single Invitation' button to invite one Teacher.
-                                        Use the 'Multi Invitation' button to copy-and-paste from an Excel document.
+                                        Use the 'Single' button to assign one Teacher.
+                                        Use the 'Multi' button to copy-and-paste from an Excel document.
                 
                                     </p>
                                 @endif

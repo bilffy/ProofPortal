@@ -7,6 +7,8 @@ use App\Services\Proofing\StatusService;
 use App\Services\Proofing\SchoolService;
 use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\EmailService;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Crypt;
@@ -158,6 +160,13 @@ class JobService
         }
 
         $oldStatusId = $job->job_status_id;
+
+        $rootUserId = Auth::id();
+        ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
+            'jobkey' => $job->ts_jobkey,
+            'status' => $newStatusId
+        ], $rootUserId);
+        
         $job->update(['job_status_id' => $newStatusId]);
     
         $statusFields = [
@@ -270,6 +279,12 @@ class JobService
             $job->jobUsers()->delete();
             $job->groupPositions()->delete(); 
             // \DB::table('emails')->where('ts_jobkey', $tsJobKey)->delete(); //2026 Dec Enhancement
+
+            $rootUserId = Auth::id();
+            ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
+                'jobkey' => $job->ts_jobkey,
+                'status' => $this->statusService->deleted
+            ], $rootUserId);
 
             $job->update([
                 'jobsync_status_id' => $this->statusService->sync,

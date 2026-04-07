@@ -11,6 +11,8 @@ use App\Services\Proofing\SchoolService;
 use Illuminate\Support\Facades\Session;
 use App\Services\Proofing\JobService;
 use App\Services\Proofing\TimestoneTableService;
+use App\Helpers\ActivityLogHelper;
+use App\Helpers\Constants\LogConstants;
 use Illuminate\Http\Request;
 use App\Models\FranchiseUser;
 use App\Models\JobUser;
@@ -54,6 +56,10 @@ class ProofingJobController extends Controller
         }else{
             $jobKey = $request->query('jobKey');
             if(isset($jobKey)){
+                $rootUserId = Auth::id();
+                ActivityLogHelper::log(LogConstants::JOB_OPENED, [
+                    'jobkey' => $this->getDecryptData($jobKey),
+                ], $rootUserId);
                 $selectedJob = $this->jobService->getJobByJobKey($this->getDecryptData($jobKey))->first(); 
             }else{
                 return redirect()->route('proofing');
@@ -203,6 +209,11 @@ class ProofingJobController extends Controller
             } else {
                 // Re-activate if deleted
                 if ($selectedJob->job_status_id == $this->statusService->deleted) {
+                    $rootUserId = Auth::id();
+                    ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
+                        'jobkey' => $jobKey,
+                        'status' => $this->statusService->none
+                    ], $rootUserId);
                     $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
                     $selectedJob->refresh(); // Sync the model instance with the DB
                 }

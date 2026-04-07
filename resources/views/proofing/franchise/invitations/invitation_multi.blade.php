@@ -1,5 +1,5 @@
 @extends('proofing.layouts.master')
-@section('title', 'Invitations')
+@section('title', 'Access')
 
 @section('css')
     <link rel="stylesheet" href="{{ asset('proofing-assets/vendors/jexcel-1.3.4/dist/css/jquery.jexcel.css') }}">
@@ -26,49 +26,47 @@
 @endif
 
 @if(Session::has('selectedJob') && Session::has('selectedSeason'))
-
-<div class="row">
-    <div class="col-12 mb-3">
-        @php
-            $btnAttrCancel = "btn btn-primary float-right pl-4 pr-4";
-            $urlDone = route('invitation.index', ['role' => $role]);
-            $title = $role === 'photocoordinator' ? 'Photo-Coordinator' : 'Teacher';
-        @endphp
-        <a href="{{ $urlDone }}" class="{{ $btnAttrCancel }}">Back</a>
+    <div class="row">
+        <div class="col-12 mb-3">
+            @php
+                $btnAttrCancel = "btn btn-primary float-right pl-4 pr-4";
+                $urlDone = route('invitation.index', ['role' => $role]);
+                $title = $role === 'photocoordinator' ? 'Photo-Coordinator' : 'Teacher';
+            @endphp
+            <a href="{{ $urlDone }}" class="{{ $btnAttrCancel }}">Back</a>
+        </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-12 col-xl-8 m-xl-auto">
-        <form method="POST" action="{{ route('invitations.inviteSend') }}">
-            @csrf
-            <div class="card">
-                <div class="card-header">
-                    <legend>Invite {{ $title }} to {{ $selectedJob->ts_jobname }}</legend>
+    <div class="row">
+        <div class="col-md-12 col-xl-8 m-xl-auto">
+            <form method="POST" action="{{ route('invitations.inviteSend') }}">
+                @csrf
+                <div class="card">
+                    <div class="card-header">
+                        <legend>Assign {{ $title }} to {{ $selectedJob->ts_jobname }}</legend>
+                    </div>
+
+                    <div class="mt-4 mr-4 ml-4">
+                        Type directly into the Spreadsheet below or copy-and-paste from Excel.
+                    </div> 
+                    
+                    <div class="mt-4 mb-4 ml-4" id="invite-spreadsheet"></div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary" id="submitButton" disabled>
+                            Assign to {{ $selectedJob->ts_jobname }}
+                        </button>
+
+                        <input type="hidden" name="people">
+                        <input type="hidden" name="job_key" value="{{ $selectedJob->ts_jobkey }}">
+                        <input type="hidden" name="role" value="{{ $role }}">
+                        <input type="hidden" name="model_name" value="Folders">
+                        <input type="hidden" name="model_field_name" value="ts_folderkey">
+                    </div>
                 </div>
-
-                <div class="mt-4 mr-4 ml-4">
-                    Type directly into the Spreadsheet below or copy-and-paste from Excel.
-                </div> 
-                
-                <div class="mt-4 mb-4 ml-4" id="invite-spreadsheet"></div>
-
-                <div class="card-footer">
-                    <button type="submit" class="btn btn-primary">
-                        Send invitation to join {{ $selectedJob->ts_jobname }}
-                    </button>
-
-                    <input type="hidden" name="people">
-                    <input type="hidden" name="job_key" value="{{ $selectedJob->ts_jobkey }}">
-                    <input type="hidden" name="role" value="{{ $role }}">
-                    <input type="hidden" name="model_name" value="Folders">
-                    <input type="hidden" name="model_field_name" value="ts_folderkey">
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
-
 @else
     @include('proofing.franchise.flash-error')
 @endif
@@ -115,6 +113,12 @@
             var change = function (instance, cell, value) {
                 var data = $('#invite-spreadsheet').jexcel('getData');
                 $("input[name='people']").val(JSON.stringify(data));
+
+                // Enable button if at least one email is present in column 2
+                var hasEmail = data.some(function(row) {
+                    return row[2] && row[2].trim() !== "";
+                });
+                $('#submitButton').prop('disabled', !hasEmail);
             };
         
             jQuery.noConflict();

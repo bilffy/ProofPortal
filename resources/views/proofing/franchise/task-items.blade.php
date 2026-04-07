@@ -178,7 +178,7 @@
         <div class="row mt-4 invitation-section">
             <div class="col-12">
                 <p class="lead">
-                    You can invite the following People...
+                    You can assign the following People...
                 </p>
             </div>
             <div class="col-12">
@@ -188,7 +188,7 @@
                             <div class="card">
                                 <div class="card-body p-3 clearfix">
                                     <i class="fa fa-plus-circle bg-primary p-3 font-2xl mr-3 float-left"></i>
-                                    <div class="h5 text-primary mb-0 mt-3">Invite a Photo-Coordinator</div>
+                                    <div class="h5 text-primary mb-0 mt-3">Assign a Photo-Coordinator</div>
                                 </div>
                             </div>
                         </a>
@@ -199,7 +199,7 @@
                             <div class="card">
                                 <div class="card-body p-3 clearfix">
                                     <i class="fa fa-plus-circle bg-primary p-3 font-2xl mr-3 float-left"></i>
-                                    <div class="h5 text-primary mb-0 mt-3">Invite a Teacher</div>
+                                    <div class="h5 text-primary mb-0 mt-3">Assign a Teacher</div>
                                 </div>
                             </div>
                         </a>

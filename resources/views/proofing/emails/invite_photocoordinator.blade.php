@@ -55,7 +55,7 @@
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         <strong>SENDER_FIRST_NAME SENDER_LAST_NAME</strong> from FRANCHISE_NAME
-                                        has invited you to use the MSP Photography Online Proofing system to manage the
+                                        has assigned you to use the MSP Photography Online Proofing system to manage the
                                         distribution and collection of proofs for <b>JOB_NAME</b>.
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
@@ -69,7 +69,7 @@
                                         Please note that these proofs must be completed by <b>REVIEW_DUE</b>.
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        MSP Photography Online Proofing allows you to invite Photo Co-ordinators and
+                                        MSP Photography Online Proofing allows you to assign Photo Co-ordinators and
                                         Teachers to review their proofs and monitor each school's progress to ensure
                                         they meet the due date.
                                     </p>

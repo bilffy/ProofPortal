@@ -114,7 +114,7 @@
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         <strong>{SENDER_FIRST_NAME} {SENDER_LAST_NAME}</strong> from {JOB_NAME} has
-                                        invited you to use the MSP Photography Online Proofing system to manage the distribution and
+                                        assigned you to use the MSP Photography Online Proofing system to manage the distribution and
                                         collection of proofs for <b>{JOB_NAME}</b>.
                                         <br/>
                                         <br/>
