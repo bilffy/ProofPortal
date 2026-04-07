@@ -1,7 +1,7 @@
 <?php
 
-namespace App\Services;
-use App\Services\StatusService;
+namespace App\Services\Proofing;
+use App\Services\Proofing\StatusService;
 use App\Models\Image;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

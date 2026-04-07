@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\ExportImageService;
+use App\Services\Proofing\ExportImageService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
