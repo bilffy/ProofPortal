@@ -20,6 +20,7 @@ use App\Models\FolderUser;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\SchoolContextHelper;
 use Illuminate\Support\Facades\URL;
+use App\Jobs\SyncImagesToSftp;
 use Auth;
 
 class ProofingJobController extends Controller
@@ -222,6 +223,8 @@ class ProofingJobController extends Controller
     
             // Validate
             if ($selectedJob && $folderResponse?->successful()) {
+                SyncImagesToSftp::dispatch($jobKey);
+                
                 $userId = Auth::id();
                 
                 // Ensure permissions and visibility
