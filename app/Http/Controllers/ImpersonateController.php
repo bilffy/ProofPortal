@@ -18,21 +18,7 @@ class ImpersonateController extends Controller
         // Retrieve the user by ID
         /** @var User $user */
         $user = User::findOrFail($id);
-        //code by IT
-        session()->forget([
-            'job-season-flag',
-            'selectedJob',
-            'selectedSeason',
-            'openJob',
-            'selectedSeasonDashboard',
-            'openSeason',
-            'approvedSubjectChangesCount',
-            'awaitApprovalSubjectChangesCount'
-        ]);
-    
-        // Force save then regenerate ID so the browser receives a fresh session cookie
-        session()->save();
-        //code by IT
+
         if (!session()->has('root_user_id')) {
             session()->put('root_user_id', Auth::id());
         }
@@ -49,7 +35,7 @@ class ImpersonateController extends Controller
         if (SchoolContextHelper::isSchoolContext()) {
             SchoolContextHelper::removeSchoolContext();
         }
-                //code by IT
+        //code by IT
         session()->forget([
             'job-season-flag',
             'selectedJob',

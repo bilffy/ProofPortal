@@ -21,7 +21,7 @@
                     <strong>{{ $otp }}</strong></p>
                     <p style="font-size: 14px; color: #666666; line-height: 1.3;">
                     <br/>
-                    This code will expire in {{ $expiration }} minutes. Do not share it with anyone. 
+                    This code will expire in {{ $expiration }} minutes. 
                 </p>
                 <p style="font-weight: 400; font-size: 14px; color: #8a8a8a; line-height: 1.3;">
                     <br/>

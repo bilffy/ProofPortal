@@ -84,7 +84,7 @@
 </head>
 <body bgcolor="#e8ecf1">
 <div style="display: none; max-height: 0px; overflow: hidden;">
-    MSP Photography Online Proofing Reminder Notification
+    MSP Portal Online Proofing Reminder Notification
 </div>
 <!-- bcn -->
 <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center"

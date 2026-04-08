@@ -1,19 +1,19 @@
 @component('mail::message', ['franchise' => $franchise])
     <div style="display: none; max-height: 0px; overflow: hidden;">
-        Invitation to MSP Photography Portal
+        Invitation to MSP Portal
     </div>
     <x-email-wrapper :franchiseName="$franchise->getBusinessName()" :franchisePhone="$franchise->phone" :franchiseEmail="$franchise->email">
         <tr>
             <td colspan="2" style="padding: 0px 40px 0px 40px">
                 <p style="font-weight: 700; font-size: 21px; color: #00b3e0;">
-                    Welcome to the MSP Photography Portal
+                    Welcome to the MSP Portal
                     <br/>
                 </p>
                 <p style="font-size: 14px; color: #6d6e71; line-height: 1.3;">
                     Hi {{ $user->firstname }},
                     <br/><br/>
                     {{ $sender->name }} from {{ $senderOrgName }}
-                    has invited you to access the MSP&nbsp;Photography&nbsp;Portal for <b>{{ $userOrgName }}</b>.
+                    has invited you to access the MSP&nbsp;Portal for <b>{{ $userOrgName }}</b>.
                     </p>
                 </p>
                 <p style="font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.3;">

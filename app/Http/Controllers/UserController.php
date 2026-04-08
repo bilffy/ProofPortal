@@ -168,6 +168,7 @@ class UserController extends Controller
                 'status' => User::STATUS_NEW, // initialize user with NEW status
                 'password' => Hash::make(str()->random(7)), // random value for user creation
                 'active_status_id' => $status->id,
+                'email_verified_at' => now(), // Auto-verify for immediate access
             ]);
     
             $role = Role::findOrFail($decrypted['role'])->name;

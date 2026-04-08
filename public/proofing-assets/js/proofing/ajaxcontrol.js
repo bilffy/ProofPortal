@@ -1446,7 +1446,7 @@ $(document).ready(function () {
     }
 
     function completeProofAlert() {
-        var popMsg = "Please ensure you take care when accepting your proofs. It is important to check for typographical, spelling and grammatical errors.\n\nYour acceptance of this proof provides your authority to proceed. MSP Photography cannot accept responsibility for the costs of re-prints once your approval has been granted.\n\nPlease contact MSP Photography for any clarification.";
+        var popMsg = "Please ensure you take care when accepting your proofs. It is important to check for typographical, spelling and grammatical errors.\n\nYour acceptance of this proof provides your authority to proceed. MSP Portal cannot accept responsibility for the costs of re-prints once your approval has been granted.\n\nPlease contact MSP Portal for any clarification.";
         var r = confirm(popMsg);
         if (r === true) {
             //submit

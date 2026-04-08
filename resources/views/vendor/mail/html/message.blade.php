@@ -35,7 +35,7 @@
 								{{$franchise->address}}, {{$franchise->state}} {{$franchise->postcode}}
 							@endif
 							<br/><br/>
-							&copy;MSP Photography 2025. All rights reserved.
+							&copy;MSP Portal 2026. All rights reserved.
 						</p>
                     </x-mail::footer>
                 </td>

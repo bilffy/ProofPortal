@@ -40,7 +40,7 @@ class UserInviteMail extends Mailable
         $uOrgName = $this->user->getSchoolOrFranchise(true);
         $sOrgName = $sender->getSchoolOrFranchise(true);
         return $this->markdown('emails.user_invite')
-            ->subject('Welcome to the MSP School Portal - Let’s get you started')
+            ->subject('Welcome to the MSP Portal - Let’s get you started')
             ->with([
                 'user' => $this->user,
                 'sender' => $sender,

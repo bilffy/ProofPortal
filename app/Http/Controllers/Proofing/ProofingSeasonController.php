@@ -79,7 +79,11 @@ class ProofingSeasonController extends Controller
         $user = Auth::user();
 
         $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
-        $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)->where('show_proofing', 1)->pluck('ts_jobkey');
+        $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)
+            ->where('job_users.user_id', $user->id)
+            ->where('show_proofing', 1)
+            ->pluck('ts_jobkey');
+
         $filteredTsJobs = $tsJobs->reject(function ($tsJob) use ($bpJobs) {
             return $bpJobs->contains($tsJob->JobKey);
         });

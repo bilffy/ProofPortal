@@ -84,7 +84,7 @@
 </head>
 <body bgcolor="#e8ecf1">
 <div style="display: none; max-height: 0px; overflow: hidden;">
-    MSP Photography Online Proofing Commencement Notification
+    MSP Portal Online Proofing Commencement Notification
 </div>
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="document">
     <tr>

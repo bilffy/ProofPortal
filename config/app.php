@@ -214,7 +214,7 @@ return [
         'photography' => [
             'no_jobs' => [
                 'franchise_level' => 'Please go to the Configure tab to enable Jobs & Folders for viewing in the portal',
-                'school_level' => 'Your MSP Photography representative will notify you when your Digital Photos become available on the portal.',
+                'school_level' => 'Your MSP Portal representative will notify you when your Digital Photos become available on the portal.',
             ],
             'image_upload' => [
                 'replace_or_remove_title' => 'Replace or Remove Photo',

@@ -12,7 +12,7 @@
             @if(!$isLightbox) {{-- CODE BY IT --}}
                 <div class="flex justify-between items-center">
                     <h3 class="text-sm text-gray-900 font-semibold dark:text-white">
-                        MSP Photography Timeline
+                        MSP Portal Timeline
                     </h3>
                     <div id="lb-download-section" class="h-full flex align-middle justify-center items-center gap-4">
                         <x-button.primary-inverse id="btn-lb-download-clear" hollow class="border-none hidden transition-none hover:transition-none" onclick="resetImages(true)">Cancel Selection</x-button.primary-inverse>
