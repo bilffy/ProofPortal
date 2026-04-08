@@ -8,7 +8,7 @@
                 <p class="mb-0">
                     Visible for Proofing
                 </p>
-                <ul>
+                <ul class="list-disc pl-5">
                     <li>
                         Selecting this option will show/hide the Folder from Photo Coordinators and Teachers.
                     </li>
@@ -20,7 +20,7 @@
                 <p class="mb-0">
                     Show Portraits Step
                 </p>
-                <ul>
+                <ul class="list-disc pl-5">
                     <li>
                         Selecting this option will show/hide the Portrait Photos wizard step.
                     </li>
@@ -32,7 +32,7 @@
                 <p class="mb-0">
                     Show Group Step
                 </p>
-                <ul>
+                <ul class="list-disc pl-5">
                     <li>
                         Selecting this option will show/hide the Group Photo wizard step.
                     </li>
@@ -44,7 +44,7 @@
                 <p class="mb-0">
                     Has Group Names
                 </p>
-                <ul>
+                <ul class="list-disc pl-5">
                     <li>
                         If a Traditional Group Photo is uploaded, selecting this option will allow Photo
                         Coordinators and Teachers to view/edit the Group Names.
@@ -60,7 +60,7 @@
                 <p class="mb-0">
                     Show Group Image
                 </p>
-                <ul>
+                <ul class="list-disc pl-5">
                     <li>
                         Upload a Traditional Group Photo for each Folder as required.
                     </li>
@@ -75,7 +75,7 @@
                 <p class="mb-0">
                     Has Principal/Deputy/Teacher
                 </p>
-                <ul>
+                <ul class="list-disc pl-5">
                     <li>
                         Selecting this option will show/hide the Principal/Deputy/Teacher fields.
                     </li>

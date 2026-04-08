@@ -12,7 +12,7 @@
                         @php
                             $purgeMonths = '12';
                         @endphp
-                        <ul>
+                        <ul class="list-disc pl-5">
                             <li>The will effectively mark the Proofing process as complete.</li>
                             <li>The Job will be removed from your Dashboard list of active Jobs.</li>
                             <li>Photo Coordinators and Teachers will no longer be able to make changes.</li>
@@ -43,7 +43,7 @@
                 <div class="row">
                     <div class="col-9 m-auto">
                         <p class="lead mb-0"><strong>Delete this Job</strong></p>
-                        <ul>
+                        <ul class="list-disc pl-5">
                             <li>Once you delete a Job, there is no going back. Please be certain.</li>
                             <li>All changes made by Photo Coordinators and Teachers will be lost.</li>
                             <li>After deletion, you can add this Job back via the Dashboard but you will need to re-invite Photo Coordinators and Teachers.</li>

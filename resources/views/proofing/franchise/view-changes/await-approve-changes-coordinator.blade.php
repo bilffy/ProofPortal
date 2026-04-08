@@ -49,7 +49,7 @@
                     <div class="card-body">
                         <p class="mb-0">Most changes are automatically approved, however, the following types of changes
                             need the approval of a Photo Coordinator:</p>
-                        <ul>
+                        <ul class="list-disc pl-5">
                             <li>Moving a Person between Classes or Groups</li>
                             <li>Removal of a photo due to a Person leaving the School</li>
                             <li>Removal of a photo for reasons such as infringement or child protection</li>

@@ -51,7 +51,7 @@
                                         $uploadMaxFilesize = ini_get('upload_max_filesize');
                                     @endphp
                                     <p class="mb-0">Upload Instructions</p>
-                                    <ul>
+                                    <ul class="list-disc pl-5">
                                         <li>Drag multiple files from Windows Explorer or OSX Finder.</li>
                                         <li>JPG and PNG images only - other files will be rejected including zip files.</li>
                                         <li>There is a {{ $uploadMaxFilesize }} size limit per image.</li>
@@ -91,7 +91,7 @@
                                 </div>
                                 <div class="card-body">
                                     <p class="mb-0">Matching Instructions</p>
-                                    <ul>
+                                    <ul class="list-disc pl-5">
                                         <li>Pattern matching finds the closest match between Group Image and Folder names.</li>
                                         <li>Select a Folder for each Group Image.</li>
                                         <li>New Group Images will replace previously uploaded ones.</li>

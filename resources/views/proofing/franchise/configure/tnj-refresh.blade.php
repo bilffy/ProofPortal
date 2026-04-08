@@ -8,7 +8,7 @@
 <div class="row">
     <div class="col-9 m-auto">
         <p class="lead mb-0"><strong>{{ __('Update Images of People') }}</strong></p>
-        <ul>
+        <ul class="list-disc pl-5">
             @if($imageCount['totalTSSubjectImages'] != $imageCount['totalBPSubjectImages'])
                 <li>
                     <span class="text-danger">
@@ -56,7 +56,7 @@
 <div class="row">
     <div class="col-9 m-auto">
         <p class="lead mb-0"><strong>{{ __('Update Person Folder Attachments') }}</strong></p>
-        <ul>
+        <ul class="list-disc pl-5">
             <li>{{ __('This will reattach People into their Folders.') }}</li>
             <li>{{ __('Use this when you have moved a Person between Folders in the TNJ.') }}</li>
             <li>{!! __('This will <strong>NOT</strong> refresh Personal details such as First and Last names.') !!}</li>
@@ -81,7 +81,7 @@
     <div class="row">
         <div class="col-9 m-auto">
             <p class="lead mb-0"><strong>{{ __('Merge Duplicate Folders') }}</strong></p>
-            <ul>
+            <ul class="list-disc pl-5">
                 <li><span class="text-danger">
                     {{ __('We have found :count Duplicate Folders in this School.', ['count' => $compiledFolderDuplicates->count()]) }}
                 </span></li>
@@ -110,7 +110,7 @@
     <div class="row">
         <div class="col-9 m-auto">
             <p class="lead mb-0"><strong>{{ __('Merge Duplicate People') }}</strong></p>
-            <ul>
+            <ul class="list-disc pl-5">
                 <li><span class="text-danger">
                     {{ __('We have found :count Duplicate People in this School.', ['count' => $compiledSubjectDuplicates->count()]) }}
                 </span></li>

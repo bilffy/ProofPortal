@@ -112,7 +112,7 @@
                         </table>
                     
                         <div class="paginator">
-                            <ul class="pagination">
+                            <ul class="pagination list-disc pl-5">
                                 {{ $reports->links('proofing.layouts.pagination-custom') }} <!-- Use the custom pagination view -->
                             </ul>
                         

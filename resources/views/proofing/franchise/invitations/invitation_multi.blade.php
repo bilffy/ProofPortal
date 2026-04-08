@@ -14,7 +14,7 @@
 
 @if(session('errors'))
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <ul>
+        <ul class="list-disc pl-5">
             @foreach(session('errors') as $error)
                 <li>{{ $error }}</li>
             @endforeach

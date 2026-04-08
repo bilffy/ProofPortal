@@ -69,7 +69,7 @@
                             You are linked to the following Schools, however, they are all marked as inactive for Proofing.
                             Please contact MSP if you believe this to be an issue.
                         </p>
-                        <ul>
+                        <ul class="list-disc pl-5">
                             @foreach ($mySchools as $mySchool)
                                 <li>{{ $mySchool->name }} <strong>{{ in_array($mySchool->id, $allActiveSchools) ? '' : '(Inactive)' }}</strong></li>
                             @endforeach
@@ -81,7 +81,7 @@
                             You are linked to the following Schools, however, some are marked as inactive for Proofing.
                             Please contact MSP if you believe this to be an issue.
                         </p>
-                        <ul>
+                        <ul class="list-disc pl-5">
                             @foreach ($mySchools as $mySchool)
                                 <li>{{ $mySchool->name }} <strong>{{ in_array($mySchool->id, $allActiveSchools) ? '' : '(Inactive)' }}</strong></li>
                             @endforeach
