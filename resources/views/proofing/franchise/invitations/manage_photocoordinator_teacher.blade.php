@@ -107,7 +107,7 @@
                                 <span class="alert alert-warning p-1">
                                     {{ __('You must have at least 1 Photo-Coordinator in a Job to approve Subjects.') }} 
                                     <a href="{{route('invitation.index', ['role' => 'photocoordinator'])}}">
-                                        {{ __('Invite a Photo-Coordinator here') }}
+                                        {{ __('Assign a Photo-Coordinator here') }}
                                     </a>
                                 </span>
                             @endif
@@ -194,7 +194,7 @@
                                 <p class="mb-0">
                                     {{ __('No Teachers that you can manage.') }} 
                                     <a href="{{route('invitation.index', ['role' => 'teacher'])}}">
-                                        {{ __('Invite a Teacher here') }}
+                                        {{ __('Assign a Teacher here') }}
                                     </a>
                                 </p>
                             @endif
