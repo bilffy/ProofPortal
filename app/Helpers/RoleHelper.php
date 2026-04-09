@@ -46,6 +46,7 @@ class RoleHelper
                 $allowedRoles = [
                     self::ROLE_SCHOOL_ADMIN,
                     self::ROLE_PHOTO_COORDINATOR,
+                    self::ROLE_TEACHER,
                 ];
                 break;
             case self::ROLE_SCHOOL_ADMIN:
