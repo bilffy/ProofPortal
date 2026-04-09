@@ -6,6 +6,7 @@ use App\Models\Image;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\SyncImagesToSftp;
 use Exception;
 use finfo;
 
@@ -25,31 +26,37 @@ class ExportImageService
 
     public function getAllUnsyncJobsImages($jobkey)
     {
-        $query = $this->getAllUnsyncImagesQuery($jobkey);
-        
-        // 1. We only want to process 100 images in this execution
-        $totalCount = $query->count();
-        if ($totalCount === 0) {
-            return ['message' => 'Nothing to sync'];
-        }
-
+        // Disable logs to save RAM
         DB::connection('timestone')->disableQueryLog();
         DB::disableQueryLog();
 
-        try {
-            // 2. Fetch 100 total, but process them in internal chunks of 35
-            $query->limit(100)->chunkById(100, function ($images) {
-                $imageKeys = $images->pluck('ts_imagekey')->filter()->unique()->toArray();
-                
-                if (!empty($imageKeys)) {
-                    // Pass the new chunk size (35) to the next function
-                    $this->saveArtifactByImageKeyUsingMassInjection($imageKeys, 35);
-                }
-                
-                return false; // Exit chunk after the first 100 are handled
-            }, 'ts_image_id');
+        $query = $this->getAllUnsyncImagesQuery($jobkey);
+        
+        // 1. Grab exactly 100 image keys to work on
+        $images = $query->limit(100)->get();
 
-            return ['success' => true, 'processed' => 100];
+        if ($images->isEmpty()) {
+            Log::info("Sync Complete for Job: $jobkey");
+            return ['message' => 'Sync Complete'];
+        }
+
+        $imageKeys = $images->pluck('ts_imagekey')->toArray();
+
+        try {
+            // 2. Process this batch of 100
+            $this->saveArtifactByImageKeyUsingMassInjection($imageKeys, 10);
+
+            // 3. CHECK: Are there more images left?
+            $remainingCount = $this->getAllUnsyncImagesQuery($jobkey)->count();
+
+            if ($remainingCount > 0) {
+                // This triggers the NEXT 100 automatically
+                dispatch(new SyncImagesToSftp($jobkey)); 
+                Log::info("Dispatched next batch for $jobkey. Remaining: $remainingCount");
+            }
+
+            return ['success' => true, 'processed' => count($imageKeys)];
+
         } catch (Exception $e) {
             Log::error("Image Export Error: " . $e->getMessage());
             throw $e;
@@ -74,60 +81,54 @@ class ExportImageService
             ]);
     }
 
-    public function saveArtifactByImageKeyUsingMassInjection(array $imageKeys = [], $internalChunk = 35)
+    public function saveArtifactByImageKeyUsingMassInjection(array $imageKeys = [], $internalChunk = 10)
     {
         if (empty($imageKeys)) return false;
-
-        $query = $this->findImageMatchesByImageKeys($imageKeys);
         
-        // Increase time limit for the 100 files + sleep overhead
-        set_time_limit(300); 
+        // Use cursor to stream 1 image at a time from the DB
+        $images = $this->findImageMatchesByImageKeys($imageKeys)->cursor();
+        
+        $successfullyUploadedKeys = [];
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
 
-        // 3. Process in chunks of 35 as requested
-        $query->chunk($internalChunk, function ($images) {
-            $successfullyUploadedKeys = [];
-            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        foreach ($images as $image) {
+            if (!$image->Thumbnail) continue;
+                
+            $mimeType = $fileInfo->buffer($image->Thumbnail);
+            $extension = $this->getExtensionFromMimeType($mimeType);
+            $sKey = (string)$image->SubjectKey;
 
-            foreach ($images as $image) {
-                if (!$image->Thumbnail) continue;
-            
-                $mimeType = $fileInfo->buffer($image->Thumbnail);
-                $extension = $this->getExtensionFromMimeType($mimeType);
-
-                // Pathing using the 6-character SubjectKey logic
-                $sKey = (string)$image->SubjectKey;
-                $fullPath = sprintf(
-                    '%s/%s/%s/%s/%s/%s.%s',
-                    $image->Code,
-                    $image->SchoolKey,
-                    $image->JobKey,
-                    $sKey[0], // First Char
-                    $sKey[1], // Second Char
-                    $sKey,    // SubjectKey
-                    $extension
-                );
-            
-                try {
-                    $result = Storage::disk('sftp')->put($fullPath, $image->Thumbnail);
+            $fullPath = sprintf(
+                '%s/%s/%s/%s/%s/%s.%s',
+                $image->Code, $image->SchoolKey, $image->JobKey,
+                $sKey[0], $sKey[1], $sKey, $extension
+            );
+                
+            try {
+                $result = Storage::disk('sftp')->put($fullPath, $image->Thumbnail);
+                
+                if ($result) {
+                    $successfullyUploadedKeys[] = $image->ImageKey;
                     
-                    if ($result) {
-                        $successfullyUploadedKeys[] = $image->ImageKey;
-                        
-                        // 4. Add the 200ms delay to throttle the injection
-                        usleep(200000); 
+                    // Update DB every 10 images to show progress and free RAM
+                    if (count($successfullyUploadedKeys) >= 10) {
+                        Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
+                        $successfullyUploadedKeys = []; 
+                        gc_collect_cycles(); // Force PHP to empty the "trash"
                     }
-                } catch (Exception $e) {
-                    Log::error("SFTP Error: " . $e->getMessage());
+                    usleep(200000); // 200ms breath for the SFTP server
                 }
-            }
-
-            // Update database for this chunk of 35
-            if (!empty($successfullyUploadedKeys)) {
-                Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
+            } catch (Exception $e) {
+                Log::error("SFTP Error: " . $e->getMessage());
             }
             
-            unset($images);
-        });
+            unset($image); // Clear the binary data from the variable
+        }
+
+        // Final update for any remaining keys (the last 1-9 images)
+        if (!empty($successfullyUploadedKeys)) {
+            Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
+        }
 
         return true;
     }
