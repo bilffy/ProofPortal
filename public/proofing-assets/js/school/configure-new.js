@@ -513,9 +513,10 @@ document.getElementById('schoolLogo').addEventListener('change', function (event
     // TODO: Use the ImageHelper to get valid image extensions from backend
     const validExtensions = ['jpg', 'jpeg', 'png', 'bmp'];
     const validExtensionsUpper = validExtensions.map(ext => ext.toUpperCase());
-    const prefixExtensions = validExtensions.map(ext => 'image/' + ext);
+    const fileExtension = file ? file.name.split('.').pop().toLowerCase() : '';
+    
     // Check if the file type is in the list of valid extensions
-    if (file && prefixExtensions.includes(file.type)) {
+    if (file && validExtensions.includes(fileExtension)) {
         // Use FormData to handle file uploads
         const formData = new FormData();
         formData.append('schoolLogo', file);
@@ -537,9 +538,15 @@ document.getElementById('schoolLogo').addEventListener('change', function (event
                     // deleteLink.classList.remove('d-none');
                 };
                 reader.readAsDataURL(file); // Convert the file to a data URL
+                window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'success', message: response.message || 'School logo uploaded successfully.' } }));
             },
-            error: function () {
-                console.error('Failed to upload the school logo.');
+            error: function (xhr) {
+                console.error('Failed to upload the school logo.', xhr);
+                let msg = 'Failed to upload the school logo.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'error', message: msg } }));
             }
         });
     } else {
