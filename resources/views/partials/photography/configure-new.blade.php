@@ -286,5 +286,5 @@
 <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>
 {{-- <script src="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/js/bootstrap-multiselect.js') }}"></script> --}}
 <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
-<script src="{{ URL::asset('proofing-assets/js/school/configure-new.js') }}"></script>
+<script src="{{ URL::asset('proofing-assets/js/school/configure-new.js') }}?v={{ filemtime(public_path('proofing-assets/js/school/configure-new.js')) }}"></script>
 @endpush
