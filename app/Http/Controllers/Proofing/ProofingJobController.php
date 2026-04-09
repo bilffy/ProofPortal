@@ -224,7 +224,7 @@ class ProofingJobController extends Controller
     
             // Validate
             if ($selectedJob && $folderResponse?->successful()) {
-                SyncImagesToSftp::dispatch($jobKey);
+                // SyncImagesToSftp::dispatch($jobKey);
 
                 $userId = Auth::id();
                 
