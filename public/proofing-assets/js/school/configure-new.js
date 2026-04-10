@@ -524,29 +524,41 @@ document.getElementById('schoolLogo').addEventListener('change', function (event
         formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
 
         $.ajax({
-            url: base_url + '/config-school/upload-school-logo',
+            // Force absolute URL to prevent internal redirects
+            url: window.location.origin + '/config-school/upload-school-logo',
             method: 'POST',
             data: formData,
-            processData: false, // Required for FormData
-            contentType: false, // Required for FormData
+            processData: false, 
+            contentType: false, 
+            xhrFields: {
+                withCredentials: true // FORCE cookies to be sent even if the WAF is acting up
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest', 
+                'Accept': 'application/json' 
+            },
             success: function (response) {
-                // Display the uploaded image as a preview if the upload is successful
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     preview.src = e.target.result;
                     preview.style.display = 'block';
-                    // deleteLink.classList.remove('d-none');
                 };
-                reader.readAsDataURL(file); // Convert the file to a data URL
+                reader.readAsDataURL(file); 
                 window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'success', message: response.message || 'School logo uploaded successfully.' } }));
             },
             error: function (xhr) {
-                console.error('Failed to upload the school logo.', xhr);
-                let msg = 'Failed to upload the school logo.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    msg = xhr.responseJSON.message;
+                console.error('Upload error details:', xhr);
+                
+                // If the server returns HTML instead of JSON, it's the Cloudflare Challenge
+                if (xhr.responseText && xhr.responseText.includes('Enable JavaScript')) {
+                     window.dispatchEvent(new CustomEvent('show-toast-message', { 
+                        detail: { status: 'error', message: 'Security check failed. Please try a different browser.' } 
+                    }));
+                } else {
+                    let msg = xhr.responseJSON?.message || 'Failed to upload the school logo.';
+                    window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'error', message: msg } }));
                 }
-                window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'error', message: msg } }));
             }
         });
     } else {

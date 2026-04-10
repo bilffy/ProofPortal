@@ -104,12 +104,21 @@
                                     </tbody>
                                 </table>
                             @else
-                                <span class="alert alert-warning p-1">
-                                    {{ __('You must have at least 1 Photo-Coordinator in a Job to approve Subjects.') }} 
-                                    <a href="{{route('invitation.index', ['role' => 'photocoordinator'])}}">
-                                        {{ __('Assign a Photo-Coordinator here') }}
-                                    </a>
-                                </span>
+                                @if(Auth::user()->isPhotoCoordinator())
+                                    <p class="mb-0">
+                                        {{ __('No Photo-Coordinators that you can manage.') }} 
+                                        <a href="{{route('invitation.index', ['role' => 'photocoordinator'])}}">
+                                            {{ __('Assign a Photo-Coordinator here') }}
+                                        </a>
+                                    </p>
+                                @else
+                                    <span class="alert alert-warning p-1">
+                                        {{ __('You must have at least 1 Photo-Coordinator in a Job to approve Subjects.') }} 
+                                        <a href="{{route('invitation.index', ['role' => 'photocoordinator'])}}">
+                                            {{ __('Assign a Photo-Coordinator here') }}
+                                        </a>
+                                    </span>
+                                @endif
                             @endif
                         </div>
                     </div>

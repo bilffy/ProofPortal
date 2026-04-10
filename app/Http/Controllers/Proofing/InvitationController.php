@@ -67,18 +67,25 @@ class InvitationController extends Controller
 
         $photocoordinators = [];
         $teachers = [];
-        $otherList = [];
+        $otherList = []; 
+        
+        $currentUser = Auth::user();
+
         foreach ($users as $user) {
-            if ($user->hasRole('Photo Coordinator')) {
-                $photocoordinators[] = $user; // Add to photocoordinators array
-            } elseif ($user->hasRole('Teacher')) {
-                $teachers[] = $user; // Add to teachers array
-            }else{
-                $otherList[] = $user; // Add to teachers array
+            if (!$currentUser->canDisable($user->id)) {
+                $otherList[] = $user;
+            } else {
+                if ($user->hasRole('Photo Coordinator')) {
+                    $photocoordinators[] = $user; // Add to photocoordinators array
+                } elseif ($user->hasRole('Teacher')) {
+                    $teachers[] = $user; // Add to teachers array
+                } else {
+                    $otherList[] = $user; // Add to other array
+                }
             }
         }
 
-        $user = Auth::user();
+        $user = $currentUser;
         return view('proofing.franchise.invitations.manage_photocoordinator_teacher', [
             'selectedJob' => $selectedJob,
             'photocoordinators' => $photocoordinators,
