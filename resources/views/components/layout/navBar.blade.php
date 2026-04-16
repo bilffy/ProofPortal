@@ -40,24 +40,15 @@
     @hasanyrole(implode("|", $nonSchoolLevelRoles))
         @if ($SchoolContextHelper->isSchoolContext())
             <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
-            
-            @if ($proofingMenuValue)
-                <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
-            @endif
         @endif
     @endhasanyrole
     
-    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
-        @unlessrole($RoleHelper::ROLE_FRANCHISE)
-            {{--Proofing are not yet implemented, hide for now until the blueprint implemented into the system--}}
-            <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
-        @endunlessrole
-    @endcan
 
+    {{--
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Ordering</x-layout.navItem>
     @endcan
-    
+    --}}   
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
         @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
@@ -69,6 +60,12 @@
     @if ($user->isAdmin())
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageSettings" navIcon="cogs" href="{{ route('settings.main') }}">App Settings</x-layout.navItem>
     @endif
+
+    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
+        @if (!$user->hasRole($RoleHelper::ROLE_FRANCHISE) || ($proofingMenuValue && $SchoolContextHelper->isSchoolContext()))
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+        @endif
+    @endcan
 
 </div>
 

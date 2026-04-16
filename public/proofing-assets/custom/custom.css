@@ -196,7 +196,7 @@ START: Override CoreUI Styles to align with MSP Branding
     font-family:var(--fa-style-family, "Font Awesome 6 Free");font-weight:var(--fa-style, 900)
 }
 
-.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+.h1, .h2, .h4, .h5, .h6, h1, h2, h4, h5, h6 {
     font-weight: 700;
     line-height: 1.2;
     margin: .25em 0 1em
@@ -213,7 +213,7 @@ START: Override CoreUI Styles to align with MSP Branding
     color: #00B3DF
 }
 
-.h3, .h4, h3, h4 {
+.h4 , h4 {
     font-size: 18px;
     color: #005C91;
     margin: 0 0 20px

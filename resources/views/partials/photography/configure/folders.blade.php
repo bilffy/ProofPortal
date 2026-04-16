@@ -28,58 +28,82 @@
             </thead>
             <tbody>
                 @if($selectedFolders && count($selectedFolders) > 0)
-                    @foreach($selectedFolders as $folder)
-                        @php
-                            $folderName = $folder['ts_foldername'];
-                            $fIdHash = Crypt::encryptString($folder['ts_folder_id']);
-                            $allowPortraitVisible = isset($folder['is_visible_for_portrait']) && $folder['is_visible_for_portrait'] == 1;
-                            $allowGroupVisible = isset($folder['is_visible_for_group']) && $folder['is_visible_for_group'] == 1;
-                        @endphp
-                        <tr id="{{ $folder['tag'] }}" class="folder-row" @if($folder['tag'] !== 'Speciality Group') data-tagid="portrait" @elseif($folder['tag'] === 'Speciality Group') data-tagid="special_group" @endif>
-                            <x-table.cell><?= $folderName ?></x-table.cell>
-                            <x-table.cell class="flex items-center">
-                                <input type="checkbox"
-                                    class="folder-details-is-visible-for-portrait mr-1"
-                                    id="is-visible-for-portrait"
-                                    name="is-visible-for-portrait-{{ $folderName }}"
-                                    data-folder-id="{{ $fIdHash }}"
-                                    data-folder-name="{{ $folderName }}"
-                                    data-value="{{$folder['is_visible_for_portrait']}}"
-                                    {{ $allowPortraitVisible ? 'checked' : '' }}
-                                >
-                                <div class="column-1">
-                                    <div>
-                                        <label class="ml-1 mb-0" for="">
-                                            {{$folder['students'] + $folder['attached']}} Portraits
-                                        </label>
-                                    </div>
-                                    <div class="flex justify-between text-neutral-500 text-[13px]">
-                                        <label class="ml-1 mb-0" for="Home folder" data-toggle="tooltip" title="Home folder">
-                                            <x-icon icon="user" class="pe-1 fa-xs" /> {{$folder['students']}}
-                                        </label>
-                                        <label class="ml-1 mb-0" for="Attached to folder" data-toggle="tooltip" title="Attached to folder">
-                                            <x-icon icon="paperclip" class="pe-1 fa-xs" /> {{$folder['attached']}}
-                                        </label>
-                                    </div>
-                                </div>
-                            </x-table.cell>
-                            @if($groupsTabValue)
-                                <x-table.cell class=" items-center">
+                    @php
+                        $nonFamily = [];
+                        $family = [];
+                        foreach($selectedFolders as $folder) {
+                            if(isset($folder['tag']) && $folder['tag'] === 'Family') {
+                                $family[] = $folder;
+                            } else {
+                                $nonFamily[] = $folder;
+                            }
+                        }
+                        $groupedFolders = [
+                            ['type' => 'nonFamily', 'items' => $nonFamily],
+                            ['type' => 'family', 'items' => $family]
+                        ];
+                    @endphp
+                    @foreach($groupedFolders as $group)
+                        @if($group['type'] === 'family' && count($group['items']) > 0)
+                            <tr>
+                                <td colspan="{{ $groupsTabValue ? 3 : 2 }}" class="text-center p-2 text-neutral-500" style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
+                                    Franchise Access Folders
+                                </td>
+                            </tr>
+                        @endif
+                        @foreach($group['items'] as $folder)
+                            @php
+                                $folderName = $folder['ts_foldername'];
+                                $fIdHash = Crypt::encryptString($folder['ts_folder_id']);
+                                $allowPortraitVisible = isset($folder['is_visible_for_portrait']) && $folder['is_visible_for_portrait'] == 1;
+                                $allowGroupVisible = isset($folder['is_visible_for_group']) && $folder['is_visible_for_group'] == 1;
+                            @endphp
+                            <tr id="{{ $folder['tag'] }}" class="folder-row" @if($folder['tag'] !== 'Speciality Group') data-tagid="portrait" @elseif($folder['tag'] === 'Speciality Group') data-tagid="special_group" @endif>
+                                <x-table.cell><?= $folderName ?></x-table.cell>
+                                <x-table.cell class="flex items-center">
                                     <input type="checkbox"
-                                        class="folder-details-is-visible-for-group mr-1"
-                                        id="is-visible-for-group"
-                                        name="is-visible-for-group-{{ $folderName }}"
+                                        class="folder-details-is-visible-for-portrait mr-1"
+                                        id="is-visible-for-portrait"
+                                        name="is-visible-for-portrait-{{ $folderName }}"
                                         data-folder-id="{{ $fIdHash }}"
                                         data-folder-name="{{ $folderName }}"
-                                        data-value="{{$folder['is_visible_for_group']}}"
-                                        {{ $allowGroupVisible ? 'checked' : '' }}
+                                        data-value="{{$folder['is_visible_for_portrait']}}"
+                                        {{ $allowPortraitVisible ? 'checked' : '' }}
                                     >
-                                    <label class="ml-1 mb-0" for="">
-                                        {{$folder['groupCount']}} Group Photo
-                                    </label>
+                                    <div class="column-1">
+                                        <div>
+                                            <label class="ml-1 mb-0" for="">
+                                                {{$folder['students'] + $folder['attached']}} Portraits
+                                            </label>
+                                        </div>
+                                        <div class="flex justify-between text-neutral-500 text-[13px]">
+                                            <label class="ml-1 mb-0" for="Home folder" data-toggle="tooltip" title="Home folder">
+                                                <x-icon icon="user" class="pe-1 fa-xs" /> {{$folder['students']}}
+                                            </label>
+                                            <label class="ml-1 mb-0" for="Attached to folder" data-toggle="tooltip" title="Attached to folder">
+                                                <x-icon icon="paperclip" class="pe-1 fa-xs" /> {{$folder['attached']}}
+                                            </label>
+                                        </div>
+                                    </div>
                                 </x-table.cell>
-                            @endif
-                        </tr>
+                                @if($groupsTabValue)
+                                    <x-table.cell class=" items-center">
+                                        <input type="checkbox"
+                                            class="folder-details-is-visible-for-group mr-1"
+                                            id="is-visible-for-group"
+                                            name="is-visible-for-group-{{ $folderName }}"
+                                            data-folder-id="{{ $fIdHash }}"
+                                            data-folder-name="{{ $folderName }}"
+                                            data-value="{{$folder['is_visible_for_group']}}"
+                                            {{ $allowGroupVisible ? 'checked' : '' }}
+                                        >
+                                        <label class="ml-1 mb-0" for="">
+                                            {{$folder['groupCount']}} Group Photo
+                                        </label>
+                                    </x-table.cell>
+                                @endif
+                            </tr>
+                        @endforeach
                     @endforeach
                 @endif
             </tbody>

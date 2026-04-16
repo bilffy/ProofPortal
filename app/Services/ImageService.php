@@ -147,6 +147,13 @@ class ImageService
                     $q->where('folders.folder_tag', '!=', 'SP')
                         ->orWhereNull('folders.folder_tag');
                 });
+                
+                if (auth()->check() && auth()->user()->isSchoolLevel()) {
+                    $query->where(function ($q) {
+                        $q->where('folder_tags.external_name', '!=', 'Family')
+                          ->orWhereNull('folder_tags.external_name');
+                    });
+                }
                 break;
         }
 
@@ -166,9 +173,14 @@ class ImageService
      */
     public function getFoldersByTag(int $seasonId, string|null $schoolKey, array $selectedTags, string $tab)
     {
-        $folderTags = DB::table('folder_tags')
-            ->whereIn('external_name', $selectedTags)
-            ->select('tag')
+        $folderTagsQuery = DB::table('folder_tags')
+            ->whereIn('external_name', $selectedTags);
+            
+        if (auth()->check() && auth()->user()->isSchoolLevel()) {
+            $folderTagsQuery->where('external_name', '!=', 'Family');
+        }
+
+        $folderTags = $folderTagsQuery->select('tag')
             ->get()
             ->pluck('tag')
             ->toArray();

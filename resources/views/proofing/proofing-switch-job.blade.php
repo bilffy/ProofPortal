@@ -12,12 +12,16 @@
             use Illuminate\Support\Facades\Crypt;
         @endphp
 
-        <div class="row">
+        <!-- <div class="row">
             <div class="col-lg-12"> 
                 <h1 class="page-header">
                     <span class="display-4">{{ __("Hello ") }} @if(isset($user)) {{ $user['firstname'] }}! @endif {{ __("Let's get you started.") }}</span>
                 </h1>
             </div>
+        </div> -->
+        
+        <div class="py-4 flex items-center justify-between">
+            <h3 class="text-2xl">Proofing</h3>
         </div>
         
         @if(count($jobs) > 0)
