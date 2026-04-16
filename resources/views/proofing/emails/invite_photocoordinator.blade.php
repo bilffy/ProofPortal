@@ -30,7 +30,7 @@
 </head>
 <body bgcolor="#e8ecf1">
 <div style="display: none; max-height: 0px; overflow: hidden;">
-    Welcome to MSP Portal Online Proofing
+    Welcome to MSP Portal Proofing
 </div>
 <!-- bcn -->
 <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center" class="document">
@@ -48,14 +48,14 @@
                             <tr>
                                 <td colspan="2" style="padding: 0px 40px 0px 40px">
                                     <p style="font-weight: 700; font-size: 21px; color: #00b3e0;">
-                                        WELCOME TO MSP PORTAL ONLINE PROOFING
+                                        Welcome to MSP Portal Proofing
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         Hi INVITEE_FIRST_NAME,
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         <strong>SENDER_FIRST_NAME SENDER_LAST_NAME</strong> from FRANCHISE_NAME
-                                        has assigned you to use the MSP Portal Online Proofing system to manage the
+                                        has assigned you to use the MSP Portal Proofing system to manage the
                                         distribution and collection of proofs for <b>JOB_NAME</b>.
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
@@ -69,7 +69,7 @@
                                         Please note that these proofs must be completed by <b>REVIEW_DUE</b>.
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        MSP Portal Online Proofing allows you to assign Photo Co-ordinators and
+                                        MSP Portal Proofing allows you to assign Photo Co-ordinators and
                                         Teachers to review their proofs and monitor each school's progress to ensure
                                         they meet the due date.
                                     </p>

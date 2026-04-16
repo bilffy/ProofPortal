@@ -84,7 +84,7 @@
 </head>
 <body bgcolor="#e8ecf1">
     <div style="display: none; max-height: 0px; overflow: hidden;">
-        MSP Portal Online Proofing - Change in School Status
+        MSP Portal Proofing - Change in School Status
     </div>
     <!-- bcn -->
     <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center" class="document">

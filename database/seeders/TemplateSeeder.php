@@ -18,7 +18,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'proof_start',
                 'template_location' => 'proof_start_template',
-                'template_subject' => 'MSP Portal Online Proofing Commencement Notification',
+                'template_subject' => 'MSP Portal Proofing Commencement Notification',
                 'template_format' => '.blade.php',
                 'email_category_id' => 2,
                 'created_at' => Carbon::now(),
@@ -26,7 +26,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'proof_warning',
                 'template_location' => 'proof_warning_template',
-                'template_subject' => 'MSP Portal Online Proofing Reminder Notification',
+                'template_subject' => 'MSP Portal Proofing Reminder Notification',
                 'template_format' => '.blade.php',
                 'email_category_id' => 2,
                 'created_at' => Carbon::now(),
@@ -34,7 +34,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'proof_due',
                 'template_location' => 'proof_due_template',
-                'template_subject' => 'MSP Portal Online Proofing Due Notification',
+                'template_subject' => 'MSP Portal Proofing Due Notification',
                 'template_format' => '.blade.php',
                 'email_category_id' => 2,
                 'created_at' => Carbon::now(),
@@ -42,7 +42,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'proof_catchup',
                 'template_location' => 'proof_catchup_template',
-                'template_subject' => 'MSP Portal Online Proofing Catchup Day Notification',
+                'template_subject' => 'MSP Portal Proofing Catchup Day Notification',
                 'template_format' => '.blade.php',
                 'email_category_id' => 2,
                 'created_at' => Carbon::now(),

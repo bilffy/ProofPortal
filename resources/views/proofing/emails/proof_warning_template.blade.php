@@ -84,7 +84,7 @@
 </head>
 <body bgcolor="#e8ecf1">
 <div style="display: none; max-height: 0px; overflow: hidden;">
-    MSP Portal Online Proofing Reminder Notification
+    MSP Portal Proofing Reminder Notification
 </div>
 <!-- bcn -->
 <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center"
@@ -105,7 +105,7 @@
                             <tr>
                                 <td colspan="2" style="padding: 0px 40px 0px 40px">
                                     <p style="font-weight: 700; font-size: 21px; color: #00b3e0;">
-                                        Proofing Reminder Notification
+                                        MSP Portal Proofing Reminder Notification
                                         <br/>
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
