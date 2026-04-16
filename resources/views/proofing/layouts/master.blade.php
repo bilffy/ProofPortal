@@ -25,11 +25,11 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" integrity="sha512-aD9ophpFQ61nFZP6hXYu4Q/b/USW7rpLCQLX6Bi0WJHXNO7Js/fUENpBQf/+P4NtpzNX0jSgR5zVvPOJp+W2Kg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <!-- Icons -->
         {{-- <link href="{{ asset('proofing-assets/vendors/css/font-awesome.min.css') }}" rel="stylesheet"> --}}
-        {{-- <link href="{{ asset('proofing-assets/css/montserrat_font_css.css') }}" rel="stylesheet"> --}}
+        {{-- <link href="{{ asset('proofing-assets/css/montserrat_font_css.css') }}?v={{ filemtime(public_path('proofing-assets/css/montserrat_font_css.css')) }}" rel="stylesheet"> --}}
         <link href="{{ asset('proofing-assets/vendors/css/simple-line-icons.min.css') }}" rel="stylesheet">
-        <link href="{{ asset('proofing-assets/css/style.css') }}" rel="stylesheet">
-        <link href="{{ asset('proofing-assets/custom/custom.css') }}" rel="stylesheet">
-        <link href="{{ asset('proofing-assets/custom/table-columns.css') }}" rel="stylesheet"> 
+        <link href="{{ asset('proofing-assets/css/style.css') }}?v={{ filemtime(public_path('proofing-assets/css/style.css')) }}" rel="stylesheet">
+        <link href="{{ asset('proofing-assets/custom/custom.css') }}?v={{ filemtime(public_path('proofing-assets/custom/custom.css')) }}" rel="stylesheet">
+        <link href="{{ asset('proofing-assets/custom/table-columns.css') }}?v={{ filemtime(public_path('proofing-assets/custom/table-columns.css')) }}" rel="stylesheet"> 
 
         @yield('css')
         <script>
