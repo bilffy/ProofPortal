@@ -43,7 +43,7 @@ class EmailService
         $dateTime = Carbon::parse($sentDate);
         $email = (new SymfonyEmail())
             // ->from(new Address($authUser->email, $authUser->name))
-            ->from(new Address('noreply@msp.com.au', 'MSP Portal Blueprint - Do Not Reply'))
+            ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
             ->to(new Address($recipient->email, $recipient->name))
             ->subject($subject)
             ->setBody($htmlPart)

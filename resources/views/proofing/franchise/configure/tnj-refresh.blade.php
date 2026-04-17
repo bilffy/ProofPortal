@@ -12,7 +12,7 @@
             @if($imageCount['totalTSSubjectImages'] != $imageCount['totalBPSubjectImages'])
                 <li>
                     <span class="text-danger">
-                        {{ __('There are :tnj thumbnails in the TNJ and :bp thumbnails in Blueprint. It might be a good idea to Update Images of People.', [
+                        {{ __('There are :tnj thumbnails in the TNJ and :bp thumbnails in Portal. It might be a good idea to Update Images of People.', [
                             'tnj' => $imageCount['totalTSSubjectImages'], 
                             'bp' => $imageCount['totalBPSubjectImages']
                         ]) }}

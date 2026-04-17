@@ -98,7 +98,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'photocordinator_invitation',
                 'template_location' => 'invite_photocoordinator_reminder',
-                'template_subject' => 'Invitation for INVITEE_FIRST_NAME INVITEE_LAST_NAME to join Blueprint',
+                'template_subject' => 'Invitation for INVITEE_FIRST_NAME INVITEE_LAST_NAME to access Proofing',
                 'template_format' => '.blade.php',
                 'email_category_id' => 1,
                 'created_at' => Carbon::now(),
@@ -106,7 +106,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'teacher_invitation',
                 'template_location' => 'invite_teacher_reminder',
-                'template_subject' => 'Invitation for INVITEE_FIRST_NAME INVITEE_LAST_NAME to join Blueprint',
+                'template_subject' => 'Invitation for INVITEE_FIRST_NAME INVITEE_LAST_NAME to access Proofing',
                 'template_format' => '.blade.php',
                 'email_category_id' => 1,
                 'created_at' => Carbon::now(),
