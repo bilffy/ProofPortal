@@ -23,10 +23,14 @@
         color: #fff;
     }
 </style>
-<div class="row">
+<!-- <div class="row">
     <div class="col-lg-12">
         <h1 class="page-header">{{ __('Jobs') }}</h1>
     </div>
+</div> -->
+
+<div class="py-4 flex items-center justify-between">
+    <h3 class="text-2xl">Jobs</h3>
 </div>
 
 {{-- Filter Section --}}

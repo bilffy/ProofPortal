@@ -30,9 +30,10 @@
                             $v = last(explode('.', $currentReportParam['valueField']));
                         @endphp
 
-                        <h3>
+                        <div class="report-text">
                             {{ __('Please select a :param', ['param' => $currentReportParam['name']]) }}
-                        </h3>
+                        </div>
+                        
 
                         <div class="row mb-4">
                             <div class="col-12">

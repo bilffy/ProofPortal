@@ -34,6 +34,11 @@
         </div>
     </div> -->
 
+    
+    <div class="py-4 flex items-center justify-between">
+        <h3 class="text-2xl">Proofing</h3>
+    </div>
+
     <div class="row mt-2">
         <div class="col-12">
             <p class="lead">

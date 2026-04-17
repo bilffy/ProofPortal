@@ -5,12 +5,15 @@
 @php
     use Illuminate\Support\Facades\Crypt;
 @endphp
-<div class="row">
+<!-- <div class="row">
     <div class="col-lg-12">
         <h1 class="page-header">
             {{ __('Seasons') }}
         </h1>
     </div>
+</div> -->
+<div class="py-4 flex items-center justify-between">
+    <h3 class="text-2xl">Seasons</h3>
 </div>
 
 <div class="row">

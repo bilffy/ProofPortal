@@ -12,9 +12,10 @@
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
         <div class="row mt-4">
             <div class="col-12">
-                <p class="display-4">
+                <!-- <p class="display-4">
                     Who would you like to assign?
-                </p>
+                </p> -->
+                <h3 class="text-2xl">Who would you like to assign?</h3>
             </div>
             <div class="col-12 mb-3">
                 @php

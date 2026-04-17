@@ -660,6 +660,12 @@
                     var isEditPrincipalCheckbox;
                     var isEditDeputyCheckbox;
                     var isEditTeacherCheckbox;
+                    var isEditSalutationCheckbox;
+                    var isEditJobTitleCheckbox;
+                    var showSalutationPortraitCheckbox;
+                    var showSalutationGroupCheckbox;
+                    var showPrefixSuffixPortraitCheckbox;
+                    var showPrefixSuffixGroupCheckbox;
         
                     var i;
                     for (i = 0; i < folderKeys.length; ++i) {
@@ -673,9 +679,12 @@
                         isEditPrincipalCheckbox = $("#is-edit-principal-" + folderKey);
                         isEditDeputyCheckbox = $("#is-edit-deputy-" + folderKey);
                         isEditTeacherCheckbox = $("#is-edit-teacher-" + folderKey);
-                        isEditTeacherCheckbox = $("#is-edit-salutation-" + folderKey);
-                        isEditTeacherCheckbox = $("#is-edit-job-title-" + folderKey);
-        
+                        isEditSalutationCheckbox = $("#is-edit-salutation-" + folderKey);
+                        isEditJobTitleCheckbox = $("#is-edit-job-title-" + folderKey);
+                        showSalutationPortraitCheckbox = $("#is-edit-job-show-salutation-portrait-" + folderKey);
+                        showSalutationGroupCheckbox = $("#is-edit-job-show-salutation-group-" + folderKey);
+                        showPrefixSuffixPortraitCheckbox = $("#is-edit-job-prefix-suffix-portrait-" + folderKey);
+                        showPrefixSuffixGroupCheckbox = $("#is-edit-job-prefix-suffix-group-" + folderKey);
         
                         //main isVisibleForProofing Checkbox
                         var isVisibleForProofingCheckboxTicked = isVisibleForProofingCheckbox.prop('checked');

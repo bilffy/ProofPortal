@@ -20,10 +20,14 @@
 
 @section('content')
 
-    <div class="row">
+    <!-- <div class="row">
         <div class="col-lg-12">
             <h1 class="page-header">{{ __('Reports') }}</h1>
         </div>
+    </div> -->
+
+    <div class="py-4 flex items-center justify-between">
+        <h3 class="text-2xl">{{ __('Reports') }}</h3>
     </div>
 
     @if(session('awaitApprovalSubjectChangesCount') > 0)

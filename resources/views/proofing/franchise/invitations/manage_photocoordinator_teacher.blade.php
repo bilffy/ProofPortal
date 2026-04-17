@@ -10,12 +10,16 @@
         use App\Models\Folder;
     @endphp
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
-        <div class="row">
+        <!-- <div class="row">
             <div class="col-lg-12">
                 <h1 class="page-header">
                     {{ __(':school_name Photo-Coordinators and Teachers', ['school_name' => $selectedJob->ts_jobname]) }}
                 </h1>
             </div>
+        </div> -->
+
+        <div class="py-4 flex items-center justify-between">
+            <h3 class="text-2xl">{{ __(':school_name Photo-Coordinators and Teachers', ['school_name' => $selectedJob->ts_jobname]) }}</h3>
         </div>
 
         <div class="row mb-3">
