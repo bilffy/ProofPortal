@@ -682,7 +682,7 @@
 
     function updateSchoolConfig() {
         $('#configure-tab').text('Configure*');
-        $('#configure-new-tab').text('Configure-new*');
+        $('#configure-new-tab').text('Configure');
         window.localStorage.setItem('reloadPhotography', true);
     }
 

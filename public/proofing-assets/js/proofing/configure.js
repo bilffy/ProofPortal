@@ -314,19 +314,52 @@
                 //Is Visible for Proofing
                 $("#set-is-visible-for-proofing-all").click(function () {
                     $("input[id^='is-visible-for-proofing-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', true);
+
                     processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
+                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-visible-for-proofing-none").click(function () {
                     $("input[id^='is-visible-for-proofing-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', false);
+
                     processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
+                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-visible-for-proofing-']").change(function () {
-                   processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
-                   applyEditCapabilities();
+                    // var folderKey = $(this).data('folder-key');
+                    // var isChecked = $(this).is(':checked');
+
+                    // $("#is-edit-job-show-salutation-portrait-" + folderKey).prop('checked', isChecked);
+                    // $("#is-edit-job-prefix-suffix-portrait-" + folderKey).prop('checked', isChecked);
+                    // $("#is-edit-job-show-salutation-group-" + folderKey).prop('checked', isChecked);
+                    // $("#is-edit-job-prefix-suffix-group-" + folderKey).prop('checked', isChecked);
+
+                    processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
+                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+
+                    applyEditCapabilities();
                 });
                 //==============================================================
         
@@ -334,18 +367,39 @@
                 //Is Edit Portraits
                 $("#set-is-edit-portraits-all").click(function () {
                     $("input[id^='is-edit-portraits-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', true);
+
                     processCheckboxes('is-edit-portraits-','is_edit_portraits');
+                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-edit-portraits-none").click(function () {
                     $("input[id^='is-edit-portraits-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', false);
+
                     processCheckboxes('is-edit-portraits-','is_edit_portraits');
+                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-edit-portraits-']").change(function () {
+                    // var folderKey = $(this).data('folder-key');
+                    // var isChecked = $(this).is(':checked');
+
+                    // $("#is-edit-job-show-salutation-portrait-" + folderKey).prop('checked', isChecked);
+                    // $("#is-edit-job-prefix-suffix-portrait-" + folderKey).prop('checked', isChecked);
+
                     processCheckboxes('is-edit-portraits-','is_edit_portraits');
+                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
+                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
+
                     applyEditCapabilities();
                 });
                 //==============================================================
@@ -354,18 +408,39 @@
                 //Is Edit Group
                 $("#set-is-edit-group-all").click(function () {
                     $("input[id^='is-edit-group-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', true);
+                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', true);
+
                     processCheckboxes('is-edit-group-','is_edit_groups');
+                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-edit-group-none").click(function () {
                     $("input[id^='is-edit-group-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', false);
+                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', false);
+
                     processCheckboxes('is-edit-group-','is_edit_groups');
+                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-edit-group-']").change(function () {
+                    // var folderKey = $(this).data('folder-key');
+                    // var isChecked = $(this).is(':checked');
+
+                    // $("#is-edit-job-show-salutation-group-" + folderKey).prop('checked', isChecked);
+                    // $("#is-edit-job-prefix-suffix-group-" + folderKey).prop('checked', isChecked);
+
                     processCheckboxes('is-edit-group-','is_edit_groups');
+                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
+                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
+
                     applyEditCapabilities();
                 });
         
@@ -698,6 +773,8 @@
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-salutation--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-title--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
                         } else {
                             $(".is-edit-portraits--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-group--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
@@ -708,12 +785,24 @@
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-salutation--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-title--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                         }
         
         
-                        //isEditGroup Checkbox
-                        var isEditGroupCheckboxTicked = isEditGroupCheckbox.prop('checked');
-                        if (isEditGroupCheckboxTicked && isVisibleForProofingCheckboxTicked) {
+                         //isEditPortraits Checkbox
+                         var isEditPortraitsCheckboxTicked = isEditPortraitsCheckbox.prop('checked');
+                         if (isEditPortraitsCheckboxTicked && isVisibleForProofingCheckboxTicked) {
+                             $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                             $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                         } else {
+                             $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                             $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                         }
+        
+                         //isEditGroup Checkbox
+                         var isEditGroupCheckboxTicked = isEditGroupCheckbox.prop('checked');
+                         if (isEditGroupCheckboxTicked && isVisibleForProofingCheckboxTicked) {
                             $(".is-subject-list-allowed--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".traditional-photo-upload--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-principal--" + folderKey).css('pointer-events', '').css('opacity', 1);
@@ -721,6 +810,8 @@
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-salutation--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-title--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            $(".is-edit-job-show-salutation-group--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            $(".is-edit-job-prefix-suffix-group--" + folderKey).css('pointer-events', '').css('opacity', 1);
                         } else {
                             $(".is-subject-list-allowed--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".traditional-photo-upload--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
@@ -729,6 +820,8 @@
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-salutation--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-title--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            $(".is-edit-job-show-salutation-group--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            $(".is-edit-job-prefix-suffix-group--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                         }
         
                     }
