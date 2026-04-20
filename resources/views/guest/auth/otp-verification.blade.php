@@ -41,13 +41,15 @@
             const resendButton = $('#resend-button');
             let endTime; // Variable to store the exact end time
             let timeLeft;
-            let enabledResendTime = 120; // Enable the resend button when there are 180 seconds left (3 minutes) 
+            let timerInterval;
+            let enabledResendTime = 180; // Enable the resend button when there are 180 seconds left (2 minutes passed assuming 5m total)
             
             function startCountdown() {
-                resendButton.prop('disabled', true); // Disable the button initially
+                if (timerInterval) clearInterval(timerInterval);
+                resendButton.prop('disabled', true).addClass('opacity-50').removeClass('cursor-pointer'); // Disable initially
                 endTime = Date.now() + countdownTime * 1000; // Calculate the exact end time
 
-                const timerInterval = setInterval(() => {
+                timerInterval = setInterval(() => {
                     const now = Date.now();
                     timeLeft = Math.round((endTime - now) / 1000); // Calculate remaining seconds
 
@@ -64,9 +66,6 @@
                         clearInterval(timerInterval); // Stop the timer when it reaches 0
                         // reload the page
                         location.reload();
-                    }
-                    else {
-                        
                     }
                 }, 1000);
             }
