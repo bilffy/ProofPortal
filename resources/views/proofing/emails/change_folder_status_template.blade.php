@@ -141,7 +141,7 @@
                                 <tr>
                                     <td colspan="2" bgcolor="#00b3e0" style="padding: 20px 40px 20px 40px;">
                                         <p style="font-size: 12px; color: #ffffff; line-height: 1.3; text-align: center;">
-                                            <strong>Please note:</strong> This is an automated email, and the mailbox is unable to receive replies. We're happy to help you with any questions or concerns you may have, please contact our team directly:
+                                            <strong>Please note:</strong> This is an automated email, and the mailbox is unable to receive replies. We're happy to help you with any questions or concerns you may have, please contact your local MSP expert:
                                         </p>
                                     </td>
                                 </tr>
