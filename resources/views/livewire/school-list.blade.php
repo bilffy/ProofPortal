@@ -26,6 +26,7 @@
             <tr>
                 <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}" >School Key</x-table.headerCell>
                 <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">School Name</x-table.headerCell>
+                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('suburb')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">Suburb</x-table.headerCell>
                 <x-table.headerCell class="{{ $hideFranchise ? 'hidden' : '' }}" id="franchise_name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">Franchise</x-table.headerCell>
             </tr>
         </thead>
@@ -44,6 +45,7 @@
                             </a>
                         @endif    
                     </x-table.cell>
+
                     <x-table.cell>
                         @if ($isAdmin)
                             <a href="{{ route('users', ['search' => $school->name]) }}">
@@ -56,6 +58,20 @@
                             </a>
                         @endif    
                     </x-table.cell>
+
+                    <x-table.cell>
+                        @if ($isAdmin)
+                            <a href="{{ route('users', ['search' => $school->suburb]) }}">
+                                {{ $school->suburb }}
+                            </a>
+                        @else    
+                            {{-- <a href="{{ route('school.view', ['hashedId' => $school->getHashedIdAttribute()]) }}"> code by chromedia --}}
+                            <a href="{{ route('school.view', ['hashedId' => $school->getCryptedIdAttribute()]) }}"> {{-- code by IT --}}
+                                {{ $school->suburb }}
+                            </a>
+                        @endif    
+                    </x-table.cell>
+
                     <x-table.cell  class="{{ $hideFranchise ? 'hidden' : '' }}">
                         @if ($isAdmin)
                             <a href="{{ route('users', ['search' => $school->franchise_name]) }}">

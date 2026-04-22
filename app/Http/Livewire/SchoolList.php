@@ -91,7 +91,8 @@ class SchoolList extends Component
             ->select('schools.*', 'franchises.name as franchise_name')
             ->where(function($query) use ($user) {
                 $query->where('schools.name', 'like', '%' . $this->search . '%')
-                    ->orWhere('schools.schoolkey', 'like', '%' . $this->search . '%');
+                    ->orWhere('schools.schoolkey', 'like', '%' . $this->search . '%')
+                    ->orWhere('schools.suburb', 'like', '%' . $this->search . '%');
 
                 if (!$user->isFranchiseLevel()) {
                     $query->orWhere('franchises.name', 'like', '%' . $this->search . '%');        

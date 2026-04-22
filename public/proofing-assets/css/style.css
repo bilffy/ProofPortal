@@ -249,17 +249,17 @@ sup {
     top: -.5em;
 }
 
-a {
+/* a {
     color: rgb(0, 88, 144);
     text-decoration: none;
     background-color: transparent;
     -webkit-text-decoration-skip: objects;
-}
+} */
 
-a:hover {
+/* a:hover {
     color: #007693;
     text-decoration: underline;
-}
+} */
 
 a:not([href]):not([tabindex]) {
     color: inherit;
@@ -303,7 +303,7 @@ svg:not(:root) {
     overflow: hidden;
 }
 
-a,
+/* a, */
 area,
 button,
 [role="button"],
@@ -4130,7 +4130,7 @@ tbody.collapse.show {
     color: rgba(0, 0, 0, 0.5);
 }
 
-.navbar-light .navbar-text a {
+.navbar-light .navbar-text a{
     color: rgba(0, 0, 0, 0.9);
 }
 
