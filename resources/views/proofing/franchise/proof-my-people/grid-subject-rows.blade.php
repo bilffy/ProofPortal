@@ -66,6 +66,26 @@
             <img class="lazyloadgrid" data-src="{{ $image_url }}" width="100" height="100">
         </div>
     </td>
+    <td class="idx-first-name p-0">
+        <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-first-name"
+            id="{{ $skHash }}-grid-spelling-first-name"
+            name="{{ $skHash }}_grid_spelling_first_name"
+            value="{{ $firstname }}"
+            data-original-value="{{ $firstname }}"
+            data-old-value="{{ $firstname }}"
+            data-skhash="{{ $skHash }}"
+            data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
+    </td>
+    <td class="idx-last-name p-0">
+        <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-last-name"
+            id="{{ $skHash }}-grid-spelling-last-name"
+            name="{{ $skHash }}_grid_spelling_last_name"
+            value="{{ $lastname }}"
+            data-original-value="{{ $lastname }}"
+            data-old-value="{{ $lastname }}"
+            data-skhash="{{ $skHash }}"
+            data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
+    </td>
     @if ($currentFolder->is_edit_salutation)
         <td class="idx-salutation p-0">
             <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-salutation"
@@ -85,26 +105,6 @@
             value="{{ $subject['prefix'] }}"
             data-original-value="{{ $subject['prefix'] }}"
             data-old-value="{{ $subject['prefix'] }}"
-            data-skhash="{{ $skHash }}"
-            data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
-    </td>
-    <td class="idx-first-name p-0">
-        <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-first-name"
-            id="{{ $skHash }}-grid-spelling-first-name"
-            name="{{ $skHash }}_grid_spelling_first_name"
-            value="{{ $firstname }}"
-            data-original-value="{{ $firstname }}"
-            data-old-value="{{ $firstname }}"
-            data-skhash="{{ $skHash }}"
-            data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
-    </td>
-    <td class="idx-last-name p-0">
-        <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-last-name"
-            id="{{ $skHash }}-grid-spelling-last-name"
-            name="{{ $skHash }}_grid_spelling_last_name"
-            value="{{ $lastname }}"
-            data-original-value="{{ $lastname }}"
-            data-old-value="{{ $lastname }}"
             data-skhash="{{ $skHash }}"
             data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
     </td>

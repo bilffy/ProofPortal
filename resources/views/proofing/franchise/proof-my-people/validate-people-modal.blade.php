@@ -287,13 +287,13 @@
                                         <a href="#" class="small people-photos-hide d-inline">(Hide)</a>
                                         <a href="#" class="small people-photos-show d-none">(Show)</a>
                                     </th>
-        
+                                    <th class="idx-first-name" scope="col">First Name</th>
+                                    <th class="idx-last-name" scope="col">Last Name</th>
+
                                     @if ($currentFolder->is_edit_salutation)
                                         <th class="idx-salutation" scope="col">Salutation</th>
                                     @endif
                                     <th class="idx-prefix" scope="col">Prefix</th>
-                                    <th class="idx-first-name" scope="col">First Name</th>
-                                    <th class="idx-last-name" scope="col">Last Name</th>
                                     <th class="idx-suffix" scope="col">Suffix</th>
         
                                     @if ($currentFolder->is_edit_job_title)
