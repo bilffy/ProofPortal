@@ -115,8 +115,8 @@ class PermissionHelper
             return false;
         }
         
-        if ($user->status != User::STATUS_ACTIVE) {
-        // if (!in_array($user->status, [User::STATUS_ACTIVE, User::STATUS_NEW, User::STATUS_INVITED])) {
+        //if ($user->status != User::STATUS_ACTIVE) {
+        if (!in_array($user->status, [User::STATUS_ACTIVE, User::STATUS_NEW, User::STATUS_INVITED])) {
             return false;
         }
         
