@@ -375,8 +375,19 @@ class InvitationController extends Controller
         // --- 6. FLASH MESSAGES ---
         if ($errorMessages) {
             session()->flash('errors', array_unique($errorMessages));
-        } else {
-            session()->flash('success', 'Invitations sent successfully.');
+        }
+
+        $successDetails = [];
+        foreach (array_unique($inviteUsers) as $inviteUserId) {
+            $u = \App\Models\User::find($inviteUserId);
+            if ($u) {
+                $successDetails[] = "{$u->firstname} {$u->lastname} <{$u->email}>";
+            }
+        }
+
+        if (!empty($successDetails)) {
+            $inviteeList = implode(', ', $successDetails);
+            session()->flash('success', "Success, Job is asssigned to: {$inviteeList}");
         }
 
         return redirect()->back();

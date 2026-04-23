@@ -35,6 +35,47 @@ th.actions {
     min-width: 150px;
 }
 
+#BreadcrumbSelectSchool {
+    width: 15rem !important; /* w-60 */
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#BreadcrumbSelectSchool .p-3 {
+    padding: 0.75rem !important; /* Override style.css's 1rem to match Tailwind's 0.75rem */
+}
+
+#BreadcrumbSelectSchool input {
+    font-size: 0.875rem !important; /* text-sm */
+}
+
+#BreadcrumbSelectSchool ul {
+    height: 12rem !important; /* h-48 */
+    font-size: 0.875rem !important; /* text-sm */
+    margin-bottom: 0 !important;
+    padding-left: 0.75rem !important; /* Match Tailwind px-3 */
+    padding-right: 0.75rem !important; /* Match Tailwind px-3 */
+    padding-bottom: 0.75rem !important; /* Match Tailwind pb-3 */
+}
+
+#BreadcrumbSelectSchool ul li label {
+    font-size: 0.875rem !important; /* text-sm */
+    line-height: 1.25rem !important; /* text-sm */
+    margin-bottom: 0 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+#BreadcrumbSelectSchool a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+#BreadcrumbSelectSchool a:hover {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
 .mnw-200 {
     min-width: 200px;
 }

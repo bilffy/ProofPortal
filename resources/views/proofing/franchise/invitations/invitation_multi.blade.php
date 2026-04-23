@@ -12,19 +12,6 @@
 
 @section('content')
 
-@if(session('errors'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <ul class="list-disc pl-5">
-            @foreach(session('errors') as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-        <button type="button" class="close" data-dismiss="alert">
-            <span>&times;</span>
-        </button>
-    </div>
-@endif
-
 @if(Session::has('selectedJob') && Session::has('selectedSeason'))
     <div class="row">
         <div class="col-12 mb-3">

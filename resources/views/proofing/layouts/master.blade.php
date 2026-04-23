@@ -252,7 +252,7 @@
                     </main> --}}
 
                     <main class="{{ \Illuminate\Support\Arr::toCssClasses([
-                        'w-full bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4',
+                        'w-full bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden',
                         'p-4' => !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false,
                     ]) }}">
                         
@@ -294,13 +294,30 @@
                         @endif
 
                         <div id="flash-container">
-                            @if ($msg = session()->pull('message'))
-                                @include('proofing.franchise.flash-success', ['message' => $msg])
+                            @if ($msg = session('message') ?? session('success'))
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    {!! $msg !!}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                             @endif
                         
-                            @if ($err = session()->pull('error'))
-                                @include('proofing.franchise.flash-error', ['message' => $err])
+                            @if ($err = session('error'))
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    {!! $err !!}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                             @endif
+
+                            {{-- Generic alert for AJAX success messages (handled by ajaxcontrol.js) --}}
+                            <div class="alert alert-success alert-dismissible fade show d-none" role="alert">
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="container3 p-4">
