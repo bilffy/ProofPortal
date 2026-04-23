@@ -124,6 +124,28 @@
                                         </p>
                                     </th>
                                     <th class="text-center">
+                                        Show Salutation in Portraits
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-show-salutation-portrait-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-show-salutation-portrait-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center">
+                                        Show Prefix & Suffix in Portraits
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-prefix-suffix-portrait-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-prefix-suffix-portrait-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center">
                                         Show Group Step
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
@@ -201,28 +223,6 @@
                                             <span class="font-weight-normal"> | </span>
                                             <span class="font-weight-light"
                                                 id="set-is-edit-job-title-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Show Salutation in Portraits
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-job-show-salutation-portrait-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-job-show-salutation-portrait-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Show Prefix & Suffix in Portraits
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-job-prefix-suffix-portrait-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-job-prefix-suffix-portrait-none">None</span>
                                         </p>
                                     </th>
                                     <th class="text-center">
@@ -330,6 +330,74 @@
                                                 </div> --}}
                                             </div>
                                         </td>
+                                        <td>
+                                            <div class="row is-edit-job-show-salutation-portrait is-edit-job-show-salutation-portrait--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        // Default settings
+                                                        $isEditJobShowSalutationPortrait = true;
+                                                        $isEditJobShowSalutationPortraitDisabled = false;
+                                        
+                                                        // Logic for handling the job-title flag
+                                                        if (isset($isEditJobShowSalutationPortraitList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobShowSalutationPortraitList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobShowSalutationPortrait = false;
+                                                            } elseif ($isEditJobShowSalutationPortraitList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobShowSalutationPortrait = false;
+                                                                $isEditJobShowSalutationPortraitDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-show-salutation-portrait text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-show-salutation-portrait-{{ $folderKey }}"
+                                                               name="is-edit-job-show-salutation-portrait-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobShowSalutationPortrait ? 'checked' : '' }}
+                                                               {{ $isEditJobShowSalutationPortraitDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
+                                        <td>
+                                            <div class="row is-edit-job-prefix-suffix-portrait is-edit-job-prefix-suffix-portrait--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        // Default settings
+                                                        $isEditJobPrefixSuffixPortrait = true;
+                                                        $isEditJobPrefixSuffixPortraitDisabled = false;
+                                        
+                                                        // Logic for handling the job-title flag
+                                                        if (isset($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobPrefixSuffixPortrait = false;
+                                                            } elseif ($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobPrefixSuffixPortrait = false;
+                                                                $isEditJobPrefixSuffixPortraitDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-prefix-suffix-portrait text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-prefix-suffix-portrait-{{ $folderKey }}"
+                                                               name="is-edit-job-prefix-suffix-portrait-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobPrefixSuffixPortrait ? 'checked' : '' }}
+                                                               {{ $isEditJobPrefixSuffixPortraitDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
                                         <td>
                                             <div class="row is-edit-group is-edit-group--{{ $folderKey }}">
                                                 <div class="col-12">
@@ -439,7 +507,7 @@
                                                                         <label for="{{ $folderKey }}" class="custom-file-label btn btn-secondary">
                                                                             Upload File
                                                                         </label>
-                                                                        <input type="file"
+                                                                        <input type="file" accept="image/jpeg, image/png, image/jpg"
                                                                             class="form-control-file traditional-photo-upload d-none"
                                                                             id="{{ $folderKey }}"
                                                                             name="{{ $folderName }}">
@@ -614,74 +682,6 @@
                                                                data-folder-id="{{ $folder->ts_folder_id }}"
                                                                {{ $isEditJobTitle ? 'checked' : '' }}
                                                                {{ $isEditJobTitleDisabled ? 'disabled' : '' }}>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td> 
-                                        <td>
-                                            <div class="row is-edit-job-show-salutation-portrait is-edit-job-show-salutation-portrait--{{ $folderKey }}">
-                                                <div class="col-12">
-                                                    @php
-                                                        // Default settings
-                                                        $isEditJobShowSalutationPortrait = true;
-                                                        $isEditJobShowSalutationPortraitDisabled = false;
-                                        
-                                                        // Logic for handling the job-title flag
-                                                        if (isset($isEditJobShowSalutationPortraitList[$folder->ts_folder_id])) {
-                                                            if ($isEditJobShowSalutationPortraitList[$folder->ts_folder_id] == false) {
-                                                                $isEditJobShowSalutationPortrait = false;
-                                                            } elseif ($isEditJobShowSalutationPortraitList[$folder->ts_folder_id] == null) {
-                                                                $isEditJobShowSalutationPortrait = false;
-                                                                $isEditJobShowSalutationPortraitDisabled = true;
-                                                            }
-                                                        }
-                                                    @endphp
-                                        
-                                                    <div class="form-group text-center">
-                                                        <!-- Checkbox -->
-                                                        <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-job-show-salutation-portrait text-center mt-2 ml-0 mr-0"
-                                                               id="is-edit-job-show-salutation-portrait-{{ $folderKey }}"
-                                                               name="is-edit-job-show-salutation-portrait-{{ $folderName }}"
-                                                               data-folder-key="{{ $folderKey }}"
-                                                               data-folder-name="{{ $folderName }}"
-                                                               data-folder-id="{{ $folder->ts_folder_id }}"
-                                                               {{ $isEditJobShowSalutationPortrait ? 'checked' : '' }}
-                                                               {{ $isEditJobShowSalutationPortraitDisabled ? 'disabled' : '' }}>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td> 
-                                        <td>
-                                            <div class="row is-edit-job-prefix-suffix-portrait is-edit-job-prefix-suffix-portrait--{{ $folderKey }}">
-                                                <div class="col-12">
-                                                    @php
-                                                        // Default settings
-                                                        $isEditJobPrefixSuffixPortrait = true;
-                                                        $isEditJobPrefixSuffixPortraitDisabled = false;
-                                        
-                                                        // Logic for handling the job-title flag
-                                                        if (isset($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id])) {
-                                                            if ($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id] == false) {
-                                                                $isEditJobPrefixSuffixPortrait = false;
-                                                            } elseif ($isEditJobPrefixSuffixPortraitList[$folder->ts_folder_id] == null) {
-                                                                $isEditJobPrefixSuffixPortrait = false;
-                                                                $isEditJobPrefixSuffixPortraitDisabled = true;
-                                                            }
-                                                        }
-                                                    @endphp
-                                        
-                                                    <div class="form-group text-center">
-                                                        <!-- Checkbox -->
-                                                        <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-job-prefix-suffix-portrait text-center mt-2 ml-0 mr-0"
-                                                               id="is-edit-job-prefix-suffix-portrait-{{ $folderKey }}"
-                                                               name="is-edit-job-prefix-suffix-portrait-{{ $folderName }}"
-                                                               data-folder-key="{{ $folderKey }}"
-                                                               data-folder-name="{{ $folderName }}"
-                                                               data-folder-id="{{ $folder->ts_folder_id }}"
-                                                               {{ $isEditJobPrefixSuffixPortrait ? 'checked' : '' }}
-                                                               {{ $isEditJobPrefixSuffixPortraitDisabled ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
                                             </div>

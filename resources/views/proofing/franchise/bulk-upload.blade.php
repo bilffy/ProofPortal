@@ -33,14 +33,14 @@
 
             <div class="row mb-3">
                 <div class="col-12 m-auto">
-                                            <a href="#" id="cancel-upload" class="btn btn-secondary float-right pl-4 pr-4"
-                                            data-cancel="true" 
-                                            data-upload_session="{{ $uploadSession }}"
-                                            data-redirect-url="{{ URL::signedRoute('proofing.dashboard', ['hash' => $jobHash]) }}">
-                                                {{ __('Cancel') }}
-                                            </a>
-                                        </div>
-                                    </div>
+                    <a href="#" id="cancel-upload" class="btn btn-secondary float-right pl-4 pr-4"
+                        data-cancel="true" 
+                        data-upload_session="{{ $uploadSession }}"
+                        data-redirect-url="{{ URL::signedRoute('proofing.dashboard', ['hash' => $jobHash]) }}">
+                        {{ __('Cancel') }}
+                    </a>
+                </div>
+            </div>
 
             @if($step === 'upload')
                 <div class="row">
@@ -173,6 +173,25 @@
 @section('js')
     <script src="{{ asset('proofing-assets/vendors/dropzone-5.7.0/dist/min/dropzone.min.js') }}"></script>
     <script>
+        Dropzone.options.dropzoneBulkUpload = {
+            acceptedFiles: ".jpg,.jpeg,.png",
+
+            init: function () {
+                this.on("error", function (file, message) {
+                    alert("Only JPG and PNG images are allowed.");
+                    this.removeFile(file);
+                });
+
+                this.on("addedfile", function (file) {
+                    let ext = file.name.split('.').pop().toLowerCase();
+
+                    if (!["jpg", "jpeg", "png"].includes(ext)) {
+                        this.removeFile(file);
+                        alert("Invalid file type. Only JPG and PNG allowed.");
+                    }
+                });
+            }
+        };
         $(document).ready(function () {
             $('#folder-matching-form').on('submit', function (e) {
                 e.preventDefault(); // Prevent default form submission
