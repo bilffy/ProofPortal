@@ -71,6 +71,7 @@ class ExportImageService
         return Image::query()
             ->join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
             ->where('images.exportStatus', 0)
+            ->where('images.keyorigin', 'Folder')
             ->where('jobs.imagesync_status_id', $this->statusService->unsync)
             ->when($jobkey, function ($query) use ($jobkey) {
                 return $query->where('jobs.ts_jobkey', $jobkey);
