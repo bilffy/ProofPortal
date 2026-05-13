@@ -22,8 +22,6 @@
         use Illuminate\Support\Facades\URL;
         use Illuminate\Support\Facades\Crypt;
         use Carbon\Carbon;
-        $activeText = '<span class="text-success"><i class="fa fa-check fa-lg"></i></span> School is marked for Active Syncing. Data is updated from Timestone every hour.';
-        $inactiveText = '<span class="text-warning"><i class="fa fa-exclamation-triangle fa-lg"></i></span> School is not marked for Active Syncing.';
     @endphp
 
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
@@ -50,12 +48,6 @@
                             <div class="card">
                                 <div class="card-header">
                                     <legend>{{ sprintf('%s (%s)', $selectedJob->ts_jobname, $selectedSeason->code) }}</legend>
-                                    @if($selectedJob->jobsync_status_id == $syncStatus)
-                                        {!! $activeText !!}
-
-                                    @elseif($selectedJob->jobsync_status_id == $unsyncStatus)
-                                        {!! $inactiveText !!}
-                                    @endif
                                 </div>
                                 <div class="card-body">
                                     <div class="row">

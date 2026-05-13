@@ -12,7 +12,7 @@ class Folder extends Model
     use HasFactory, BelongsToFranchise;
 
     protected $table = 'folders';
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -41,6 +41,7 @@ class Folder extends Model
         'is_edit_principal',
         'is_edit_deputy',
         'is_edit_teacher',
+        'is_deleted',
     ];
 
     public function folderTag()

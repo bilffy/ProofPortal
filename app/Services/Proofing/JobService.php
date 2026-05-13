@@ -59,6 +59,12 @@ class JobService
             $defaultSeasonJobs = $this->getDefaultSeasonJobs($defaultSeason->ts_season_id, $franchiseCode);
         }
 
+        $folderStatusCounts = \App\Models\Folder::whereIn('ts_job_id', $activeSyncJobs->pluck('ts_job_id'))
+            ->select('ts_job_id', 'status_id', \DB::raw('count(*) as count'))
+            ->groupBy('ts_job_id', 'status_id')
+            ->get()
+            ->groupBy('ts_job_id');
+
         return compact(
             'activeSyncJobs', 
             'totalSchoolCount', 
@@ -66,7 +72,8 @@ class JobService
             'statuses', 
             'seasons', 
             'defaultSeasonJobs',
-            'schools'
+            'schools',
+            'folderStatusCounts'
         );
     }
     
@@ -218,43 +225,6 @@ class JobService
         return Job::where('ts_jobkey',$jobkey)->update([$column => $value]);
     }
 
-    // public function deleteJob($tsJobId){
-    //     $job = Job::where('ts_job_id', $tsJobId)->firstOrFail();
-
-    //     $job->update([
-    //         'jobsync_status_id' => $this->statusService->sync,
-    //         'foldersync_status_id' => $this->statusService->pending,
-    //         'job_status_id' => $this->statusService->deleted,
-    //         'imagesync_status_id' => $this->statusService->unsync,
-    //         'proof_start' => null,
-    //         'proof_warning' => null,
-    //         'proof_due' => null,
-    //         'proof_catchup' => null,
-    //         'force_sync' => null,
-    //         'notifications_enabled' => null,
-    //         'notifications_matrix' => null
-    //     ]);
-
-    //     $job->folders()->each(function ($folder) {
-    //         // Delete associated subjects, images in folders
-    //         $folder->subjects()->each(function ($subject) {
-    //             $subject->images()->delete(); // Delete images associated with the subject
-    //         });
-    //         $folder->folderUsers()->delete(); // Delete users associated with the folder
-    //         $folder->images()->delete(); // Delete images associated with the folder
-    //         $folder->subjects()->delete(); // Delete subjects associated with the folder
-    //         $folder->attachedsubjects()->delete(); // Delete attached subjects from folder_subject table
-    //     });
-
-    //     $job->folders()->delete(); // Delete folders associated with the job
-    //     $job->jobUsers()->delete(); // Delete job users associated with the job
-    
-    //     // Delete group positions, changelogs, emails associated with the job via ts_jobkey
-    //     $job->groupPositions()->delete(); // Delete group positions associated with the job
-    //     $job->proofingChangelogs()->delete(); // Delete changelogs associated with the job
-    //     // $job->email()->delete(); // Delete emails associated with the job  - (2026 Dec Enhancement)
-    // }
-
     public function deleteJob($tsJobKey)
     {                    
         $job = Job::with('seasons')->where('ts_jobkey', $tsJobKey)->firstOrFail();
@@ -302,17 +272,7 @@ class JobService
 
             \DB::commit();
             
-            // if ($seasonCode && $tsSchoolKey && $tsJobKey) {
-            //     $jobPathOnSftp = "{$seasonCode}/{$tsSchoolKey}/{$tsJobKey}";
-            //     try {
-            //         if (Storage::disk('sftp')->exists($jobPathOnSftp)) {
-            //             Storage::disk('sftp')->deleteDirectory($jobPathOnSftp);
-            //             \Log::info("Deleted SFTP directory for Job: " . $jobPathOnSftp);
-            //         }
-            //     } catch (\Exception $e) {
-            //         \Log::error("Failed to delete SFTP directory for Job {$tsJobKey}: " . $e->getMessage());
-            //     }
-            // }
+            // Delete Group Image
 
         } catch (\Exception $e) {
             \DB::rollBack();
@@ -329,9 +289,7 @@ class JobService
         ->leftjoin('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
         ->when($franchiseCode, fn($query) => $query->where('franchises.alphacode', $franchiseCode))
         ->when($schoolkey, fn($query) => $query->where('jobs.ts_schoolkey', $schoolkey))
-        ->with(['reviewStatuses', 'folders' => function ($query) {
-            $query->select('folders.ts_job_id', 'folders.id', 'folders.is_locked', 'folders.status_id');
-        }])     
+        ->with(['reviewStatuses'])
         ->select(
             'jobs.id',
             'jobs.ts_job_id',

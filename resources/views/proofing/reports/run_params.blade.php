@@ -5,12 +5,7 @@
 
     @php
         $currentReportParam = $reportParams[$passedParamCount];
-  
-        // Load necessary session data
         $choiceFilerValue = '';
-        if ($currentReportParam['keyField'] == 'ts_job_id') {
-            $choiceFilerValue = Session::get('selectedJob')->ts_jobname;
-        }
         // // Reverse routing logic for links
         $urlArray = request()->route()->parameters();
     @endphp
@@ -69,7 +64,7 @@
                                 @foreach($query as $record)
                                     @php
                                         $title = isset($record->ts_season_id)
-                                            ? __(':name (:season)', ['name' => $record->$v, 'season' => $seasonList[$record->ts_season_id]])
+                                            ? __(':name (:season)', ['name' => $record->$v, 'season' => $seasonList[$record->ts_season_id] ?? ''])
                                             : __(':name', ['name' => $record->$v]);
 
                                         // Encrypt the parameter value for security

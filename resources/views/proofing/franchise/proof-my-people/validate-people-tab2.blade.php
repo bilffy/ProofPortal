@@ -28,7 +28,7 @@
                                     </div>
                                 </div>
                             @endif
-                            <div class="row" id="subject_thumbnails">
+                            <div class="row d-flex flex-wrap pb-4" style="gap: 15px; justify-content: flex-start; margin-left: 0; margin-right: 0;" id="subject_thumbnails">
                                 @php
                                     $formattedSubjectsWithChanges = ProofingChangelog::where([['ts_jobkey', $selectedJob->ts_jobkey]])->get()->groupBy('keyvalue'); // Eager load and key by keyvalue for efficient lookup
                                 @endphp
@@ -89,70 +89,77 @@
                                             $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                                         }
                                     @endphp
-                                    <div class="dynamic-subjects col-xs-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+                                    <div class="dynamic-subjects" style="width: 186px; flex-shrink: 0;">
                                         <div class="subjects validate">
-                                            <div class="card">
-                                                <div class="card-header lead">
-                                                    <i class="fa d-inline-flex"></i>
-                                                    <div id="{{ $skHash }}_history_edits_button" class="{{ $historyEditsCss }}" data-route="{{$location}}">
-                                                        <a href="#" data-toggle="modal" data-target="#HistoryEdits_Modal" data-skhash="{{ $skHash }}">
-                                                            <i class="fa fa-history fa-lg text-{{ $iconColour }}" data-toggle="tooltip" data-placement="top" title="Click here to view changes"></i>
-                                                        </a>
-                                                    </div>
+                                            <div class="portrait-img d-flex flex-column position-relative justify-content-center" style="margin: 0 auto; user-select: none;">
+                                                <!-- HIDDEN ELEMENTS FOR JS TO TARGET -->
+                                                <div style="display:none;">
                                                     <div id="{{ $skHash }}_history_edits_name_populate" class="d-none">
                                                         {!! $fullNameWrapped !!}
                                                     </div>
-                                                    <div style="display:none;">
-                                                        <span id="{{ $skHash }}_picture"></span>
-                                                        <span id="{{ $skHash }}_folder"></span>
-                                                    </div>
-                                                    <div class="card-actions">
-                                                        @if ($subject->is_locked)
-                                                            @if ($showLockUnlockIcons)
-                                                                <button id="{{ $skHash }}_lock_button_msg" type="button"
-                                                                        class="btn-setting">
-                                                                    <i id="{{ $skHash }}_lock_icon" class="fa fa-lock"></i>
-                                                                </button>
-                                                            @endif
-                                                        @else
-                                                            @if ($showLockUnlockIcons)
-                                                                <button id="{{ $skHash }}_lock_button" type="button"
-                                                                        class="btn-setting">
-                                                                    <i id="{{ $skHash }}_lock_icon" class="fa fa-unlock"></i>
-                                                                </button>
-                                                            @endif
-                                                            <button id="{{ $skHash }}_issue_button" type="button"
-                                                                    class="btn-setting"
-                                                                    data-toggle="modal"
-                                                                    data-target="#{{ $skHash }}_Modal">
-                                                                Edit
+                                                    <span id="{{ $skHash }}_picture"></span>
+                                                    @if ($subject->is_locked)
+                                                        @if ($showLockUnlockIcons)
+                                                            <button id="{{ $skHash }}_lock_button_msg" type="button" class="btn-setting">
+                                                                <i id="{{ $skHash }}_lock_icon" class="fa fa-lock"></i>
                                                             </button>
                                                         @endif
+                                                    @else
+                                                        @if ($showLockUnlockIcons)
+                                                            <button id="{{ $skHash }}_lock_button" type="button" class="btn-setting">
+                                                                <i id="{{ $skHash }}_lock_icon" class="fa fa-unlock"></i>
+                                                            </button>
+                                                        @endif
+                                                    @endif
+                                                </div>
+
+                                                <!-- IMAGE BLOCK -->
+                                                <div class="position-relative overflow-hidden rounded transition-all" style="height: 229px; background-color: #E6E7E8; display: flex; align-items: center; justify-content: center;">
+                                                    <img style="object-fit: cover;" class="lazyload mx-auto d-block w-100 h-100 pointer-events-none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" data-src="{{ $image_url }}" alt="Photo-Image">
+                                                    
+                                                    <!-- EDIT BUTTON AND HISTORY ICON -->
+                                                    <div class="position-absolute d-flex justify-content-between align-items-center w-100" style="top: 0; padding: 10px; z-index: 10;">
+                                                        @if (!$subject->is_locked)
+                                                            <a href="javascript:void(0)" 
+                                                            id="{{ $skHash }}_issue_button" 
+                                                            class="text-truncate badge badge-light" 
+                                                            data-toggle="modal" 
+                                                            data-target="#{{ $skHash }}_Modal" 
+                                                            style="text-decoration: none; cursor: pointer; color: #374151; font-size: 11px; opacity: 0.9; padding: 4px 8px;">
+                                                                Edit
+                                                            </a>
+                                                        @else
+                                                            <span class="text-truncate badge badge-secondary" style="font-size: 11px; opacity: 0.9; padding: 4px 8px;"><i class="fa fa-lock"></i> Locked</span>
+                                                        @endif
+                                                        
+                                                        <div id="{{ $skHash }}_history_edits_button" class="{{ $historyEditsCss }}" data-route="{{$location}}">
+                                                            <a href="#" data-toggle="modal" data-target="#HistoryEdits_Modal" data-skhash="{{ $skHash }}" style="text-decoration: none;">
+                                                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 18px; height: 18px; opacity: 0.95;">
+                                                                    <i class="fa fa-history text-{{ $iconColour }}" data-toggle="tooltip" data-placement="top" title="Click here to view changes"></i>
+                                                                </div>
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div class="card-body">
-                                                    <div class="col-12 p-2" style="background-color: #EFEFEF">
-                                                        <img style="width:128px;height:170px;" class="lazyload mx-auto d-block" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" data-src="{{ $image_url }}" alt="Photo-Image">
-                                                    </div>
 
-                                                    {{--                                               
-                                                    <div class="col-12 p-2" style="background-color: #EFEFEF">
-                                                        @if (isset($subjectArtifactListingByTokenAndUrl[sha1($subject->subject_key)]))
-                                                            <img src="{{ $subjectArtifactListingByTokenAndUrl[sha1($subject->subject_key)] }}" {{ $imageOptions }}>
+                                                <!-- INFO BLOCK -->
+                                                <div class="d-flex flex-column" style="font-size: 14px; text-align: left; padding-top: 6px; line-height: 1.35;">
+                                                    <div id="{{ $skHash }}_info" class="w-100">
+                                                        <div id="{{ $skHash }}_full_name" class="text-truncate" style="width: 100%; font-weight: 600; font-size: 14px; color: #374151;" data-toggle="tooltip" title="{{ strip_tags($fullNameWrappedText) }}">
+                                                            {!! $fullNameWrapped !!}
+                                                        </div>
+                                                        
+                                                        @if($currentFolder->is_edit_job_title)
+                                                        <div id="{{ $skHash }}_title" class="text-truncate" style="width: 100%; font-size: 13px; color: #6B7280; min-height: 20px;">
+                                                            {!! $jobTitleWrapped !!}
+                                                        </div>
                                                         @else
-                                                            <img src="{{ $subjectImagePlaceholder->full_url }}" {{ $imageOptions }}>
+                                                        <div id="{{ $skHash }}_title" class="d-none"></div>
                                                         @endif
-                                                    </div>
-                                                    --}}
-                                                    <div id="{{ $skHash }}_info" class="mt-3 lead">
-                                                        <div id="{{ $skHash }}_full_name" class="text-center">
-                                                            <strong>{!! $fullNameWrapped !!}</strong>
-                                                        </div>
-                                                        <div id="{{ $skHash }}_title" class="text-center">
-                                                            <strong>{!! $jobTitleWrapped !!}</strong>
-                                                        </div>
-                                                        <div id="{{ $skHash }}_school"></div>
-                                                        <div id="{{ $skHash }}_folder"></div>
+
+                                                        <div id="{{ $skHash }}_school" class="d-none"></div>
+                                                        <div id="{{ $skHash }}_folder" class="d-none"></div>
+
                                                     </div>
                                                 </div>
                                             </div>

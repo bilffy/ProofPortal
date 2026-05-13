@@ -171,16 +171,21 @@ class JobConfigureController extends Controller
     public function folderConfigAll(Request $request){
         if ($request->has(['field', 'active_ids', 'inactive_ids'])) {
             $field = $request->input('field');
-            $activeIds = json_decode($request->input('active_ids'), true);
-            $inactiveIds = json_decode($request->input('inactive_ids'), true);
+            $originalActiveIds = json_decode($request->input('active_ids'), true) ?? [];
+            $originalInactiveIds = json_decode($request->input('inactive_ids'), true) ?? [];
 
-            $activeIds = empty($activeIds) ? [0] : $activeIds;
-            $inactiveIds = empty($inactiveIds) ? [0] : $inactiveIds;
+            // Calculate exact counts meant for the frontend BEFORE overriding with [0]
+            $activeCount = count($originalActiveIds);
+            $inactiveCount = count($originalInactiveIds);
 
-            $isActiveCount = $this->folderService->updateFolderData($activeIds, $field, true);
-            $isInactiveCount = $this->folderService->updateFolderData($inactiveIds, $field, false);
+            // Safe fallback for whereIn queries
+            $activeIds = empty($originalActiveIds) ? [0] : $originalActiveIds;
+            $inactiveIds = empty($originalInactiveIds) ? [0] : $originalInactiveIds;
 
-            return response()->json([$isActiveCount, $isInactiveCount]);
+            $this->folderService->updateFolderData($activeIds, $field, true);
+            $this->folderService->updateFolderData($inactiveIds, $field, false);
+
+            return response()->json([$activeCount, $inactiveCount]);
         }else{
             return response()->json(false);
         }
@@ -216,34 +221,8 @@ class JobConfigureController extends Controller
                 break;
 
             case 'update-subject-associations':
-                // $this->configureService->updateSubjectAssociations($selectedJob->ts_job_id);
-                $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(30);
-                // $baseUrl = config('services.bpsync.url');
-                $baseUrl = 'http://bpsync.msp.local/index.php/';
-                $jobKey = $selectedJob->ts_jobkey;
-                $this->jobService->updateJobData($jobKey, 'force_sync', 1);
-                $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
-                // Log::info($folderResponse);
+                $this->configureService->updateSubjectAssociations($selectedJob->ts_job_id);
                 $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
-                
-                $folderSuccess = $folderResponse && $folderResponse->successful();
-                if ($folderSuccess && $selectedJob) {
-                    $franchise = $selectedJob->franchises;
-        
-                    if ($franchise) {
-                        $franchiseUserIds = FranchiseUser::where('franchise_id', $franchise->id)->pluck('user_id');
-                        $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
-        
-                        foreach ($franchiseUserIds as $userId) {
-                            foreach ($folderIds as $folderId) {
-                                FolderUser::firstOrCreate([
-                                    'user_id'      => $userId,
-                                    'ts_folder_id' => $folderId
-                                ]);
-                            }
-                        }
-                    }
-                }
                 break;
 
             case 'update-people-images':

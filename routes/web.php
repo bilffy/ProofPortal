@@ -133,6 +133,27 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     $permissionCanProofChange = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOF_CHANGE;
     $permissionCanBulkUpload = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_BULK_UPLOAD;
     $permissionCanReport = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_REPORTS;
+    Route::group(['middleware' => ["permission:{$permissionCanReport}", CheckUserRestriction::class]], function () {
+        //Reports
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+        //Report - Run
+        Route::get('/reports/{query}/{tsJobId?}/{tsFolderId?}', [ReportController::class, 'run'])->name('reports.run');
+        //Report - Download
+        Route::post('/reports/download', [ReportController::class, 'downloadReport'])->name('report.download');
+        
+        // Redirect routes for backward compatibility
+        Route::get('/proofing/reports', function () {
+            return redirect()->route('reports');
+        });
+        
+        Route::get('/proofing/reports/{query}/{tsJobId?}/{tsFolderId?}', function ($query, $tsJobId = null, $tsFolderId = null) {
+            return redirect()->route('reports.run', [
+                'query' => $query,
+                'tsJobId' => $tsJobId,
+                'tsFolderId' => $tsFolderId
+            ]);
+        });
+    });
 
     Route::middleware(['proofing_menu'])->group(function () use ($permissionCanProof, $permissionCanConfigProof, $permissionCanManageInvite, $permissionCanProofChange, $permissionCanBulkUpload, $permissionCanReport) {
         Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class]], function () {
@@ -157,6 +178,8 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             Route::get('/franchise/zoom', [ImageController::class, 'zoom'])->name('zoom');    
             //Proof-my-people - Image Preview of subject in proofing - second page
             Route::get('network-image/{filename}/{jobKey}', [ImageController::class, 'serveImage'])->name('serve.image');
+            //groupImage Show
+            Route::get('/image/{filename}', [ImageController::class, 'showgroupImage'])->name('image.show');
 
             //Fetch Constants
             Route::get('/constants', [ConstantsController::class, 'getConstants']);
@@ -223,8 +246,6 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             Route::post('franchise/bulk-upload/groupImageDelete', [ImageController::class, 'groupImageDelete'])->name('groupImage.delete');
             //Bulk Upload - Folder Allocation
             Route::post('franchise/bulk-upload/groupImageSubmit', [ImageController::class, 'groupImageSubmit'])->name('groupImage.submit'); 
-            //groupImage Show
-            Route::get('/image/{filename}', [ImageController::class, 'showgroupImage'])->name('image.show');
         });
 
         Route::group(['middleware' => ["permission:{$permissionCanConfigProof}", CheckUserRestriction::class, CheckJobSession::class]], function () {
@@ -280,28 +301,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             Route::get('/proofing/access/multiple/{role}/{hash}', [InvitationController::class, 'inviteMulti'])->name('invitations.inviteMulti')->middleware('signed');
         });
 
-        Route::group(['middleware' => ["permission:{$permissionCanReport}", CheckUserRestriction::class]], function () {
-            //Reports
-                Route::get('/proofing/reports', [ReportController::class, 'index'])->name('reports');
-            //Report - Run
-                Route::get('/proofing/reports/{query}/{tsJobId?}/{tsFolderId?}', [ReportController::class, 'run'])->name('reports.run');
-            //Report - Download
-                Route::post('/proofing/reports/download', [ReportController::class, 'downloadReport'])->name('report.download');
-            
-            // Redirect routes for backward compatibility (auto-add /proofing prefix)
-            // This allows users to access /reports/* and automatically redirects to /proofing/reports/*
-                Route::get('/reports', function () {
-                    return redirect()->route('reports');
-                });
-                
-                Route::get('/reports/{query}/{tsJobId?}/{tsFolderId?}', function ($query, $tsJobId = null, $tsFolderId = null) {
-                    return redirect()->route('reports.run', [
-                        'query' => $query,
-                        'tsJobId' => $tsJobId,
-                        'tsFolderId' => $tsFolderId
-                    ]);
-                });
-        });    
+
 
         Route::group(['middleware' => ["permission:{$permissionCanConfigProof}"]], function () {
             //sync Job & associations

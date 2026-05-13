@@ -389,15 +389,6 @@ class User extends Authenticatable
         }
         
         if ($this->isPhotoCoordinator()) {
-            if ($user->isAdmin() || $user->isFranchiseLevel() || $user->isSchoolAdmin() || $user->isPhotoCoordinator()) {
-                return false;
-            }
-            
-            // check if $user belongs to the same school
-            if ($this->schools()->where('schools.id', $user->getSchool()->id)->exists()) {
-                return true;
-            }
-            
             return false;
         }
         

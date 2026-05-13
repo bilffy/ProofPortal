@@ -48,6 +48,7 @@ class UserInviteMail extends Mailable
                 'senderOrgName' => $sender->isSchoolLevel() ? $sOrgName : "MSP " . $sOrgName,
                 'franchise' => $sender->getOrganization(),
                 'inviteLink' => $this->inviteLink,
+                'userRole' => $this->user->getRole(),
             ]);
     }
 }

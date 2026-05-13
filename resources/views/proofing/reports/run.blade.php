@@ -54,28 +54,28 @@ $reportUrl = [
     'csv' => SqlServerReportingServices::makeSsrsUrl([
         'ssrsServer' => config('settings.ssrs_server'),
         'ssrsFolder' => config('settings.ssrs_folder'),
-        'ssrsReport' => str_replace(" ", "", $report->name),
+        'ssrsReport' => $report->query,
         'format' => 'CSV',
         'params' => $ssrsParams,
     ]),
     'pdf' => SqlServerReportingServices::makeSsrsUrl([
         'ssrsServer' => config('settings.ssrs_server'),
         'ssrsFolder' => config('settings.ssrs_folder'),
-        'ssrsReport' => str_replace(" ", "", $report->name),
+        'ssrsReport' => $report->query,
         'format' => 'PDF',
         'params' => $ssrsParams,
     ]),
     'xlsx' => SqlServerReportingServices::makeSsrsUrl([
         'ssrsServer' => config('settings.ssrs_server'),
         'ssrsFolder' => config('settings.ssrs_folder'),
-        'ssrsReport' => str_replace(" ", "", $report->name),
+        'ssrsReport' => $report->query,
         'format' => 'EXCELOPENXML',
         'params' => $ssrsParams,
     ]),
     'xls' => SqlServerReportingServices::makeSsrsUrl([
         'ssrsServer' => config('settings.ssrs_server'),
         'ssrsFolder' => config('settings.ssrs_folder'),
-        'ssrsReport' => str_replace(" ", "", $report->name),
+        'ssrsReport' => $report->query,
         'format' => 'EXCEL',
         'params' => $ssrsParams,
     ]),
@@ -109,7 +109,7 @@ $ssrsPassword = config('settings.ssrs_password');
                                 <form action="{{ route('report.download') }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="format" value="CSV">
-                                    <input type="hidden" name="report" value="{{str_replace(" ", "", $report->name)}}">
+                                    <input type="hidden" name="report" value="{{ $report->query }}">
                                     <input type="hidden" name="params" value="{{ $ssrsParamsEncrypt }}">
                                     <input type="hidden" name="reportName" value="{{ $downloadNameBuilder }}">
                                     <input type="hidden" name="reportExtension" value="csv">
@@ -118,7 +118,7 @@ $ssrsPassword = config('settings.ssrs_password');
                                 <form action="{{ route('report.download') }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="format" value="PDF">
-                                    <input type="hidden" name="report" value="{{str_replace(" ", "", $report->name)}}">
+                                    <input type="hidden" name="report" value="{{ $report->query }}">
                                     <input type="hidden" name="params" value="{{ $ssrsParamsEncrypt }}">
                                     <input type="hidden" name="reportName" value="{{ $downloadNameBuilder }}">
                                     <input type="hidden" name="reportExtension" value="pdf">
@@ -127,7 +127,7 @@ $ssrsPassword = config('settings.ssrs_password');
                                 <form action="{{ route('report.download') }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="format" value="EXCELOPENXML">
-                                    <input type="hidden" name="report" value="{{str_replace(" ", "", $report->name)}}">
+                                    <input type="hidden" name="report" value="{{ $report->query }}">
                                     <input type="hidden" name="params" value="{{ $ssrsParamsEncrypt }}">
                                     <input type="hidden" name="reportName" value="{{ $downloadNameBuilder }}">
                                     <input type="hidden" name="reportExtension" value="xlsx">
@@ -136,7 +136,7 @@ $ssrsPassword = config('settings.ssrs_password');
                                 <form action="{{ route('report.download') }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="format" value="EXCEL">
-                                    <input type="hidden" name="report" value="{{str_replace(" ", "", $report->name)}}">
+                                    <input type="hidden" name="report" value="{{ $report->query }}">
                                     <input type="hidden" name="params" value="{{ $ssrsParamsEncrypt }}">
                                     <input type="hidden" name="reportName" value="{{ $downloadNameBuilder }}">
                                     <input type="hidden" name="reportExtension" value="xls">

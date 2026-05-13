@@ -314,51 +314,18 @@
                 //Is Visible for Proofing
                 $("#set-is-visible-for-proofing-all").click(function () {
                     $("input[id^='is-visible-for-proofing-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', true);
-
                     processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
-                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
-                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
-                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
-                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
-
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-visible-for-proofing-none").click(function () {
                     $("input[id^='is-visible-for-proofing-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', false);
-
                     processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
-                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
-                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
-                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
-                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
-
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-visible-for-proofing-']").change(function () {
-                    // var folderKey = $(this).data('folder-key');
-                    // var isChecked = $(this).is(':checked');
-
-                    // $("#is-edit-job-show-salutation-portrait-" + folderKey).prop('checked', isChecked);
-                    // $("#is-edit-job-prefix-suffix-portrait-" + folderKey).prop('checked', isChecked);
-                    // $("#is-edit-job-show-salutation-group-" + folderKey).prop('checked', isChecked);
-                    // $("#is-edit-job-prefix-suffix-group-" + folderKey).prop('checked', isChecked);
-
                     processCheckboxes('is-visible-for-proofing-','is_visible_for_proofing');
-                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
-                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
-                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
-                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
-
                     applyEditCapabilities();
                 });
                 //==============================================================
@@ -367,80 +334,37 @@
                 //Is Edit Portraits
                 $("#set-is-edit-portraits-all").click(function () {
                     $("input[id^='is-edit-portraits-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', true);
-
                     processCheckboxes('is-edit-portraits-','is_edit_portraits');
-                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
-                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
-
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-edit-portraits-none").click(function () {
                     $("input[id^='is-edit-portraits-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-show-salutation-portrait-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-prefix-suffix-portrait-']").prop('checked', false);
-
                     processCheckboxes('is-edit-portraits-','is_edit_portraits');
-                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
-                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
-
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-edit-portraits-']").change(function () {
-                    // var folderKey = $(this).data('folder-key');
-                    // var isChecked = $(this).is(':checked');
-
-                    // $("#is-edit-job-show-salutation-portrait-" + folderKey).prop('checked', isChecked);
-                    // $("#is-edit-job-prefix-suffix-portrait-" + folderKey).prop('checked', isChecked);
-
                     processCheckboxes('is-edit-portraits-','is_edit_portraits');
-                    // processCheckboxes('is-edit-job-show-salutation-portrait-','show_salutation_portraits');
-                    // processCheckboxes('is-edit-job-prefix-suffix-portrait-','show_prefix_suffix_portraits');
-
                     applyEditCapabilities();
                 });
                 //==============================================================
         
-        
                 //Is Edit Group
                 $("#set-is-edit-group-all").click(function () {
                     $("input[id^='is-edit-group-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', true);
-                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', true);
-
                     processCheckboxes('is-edit-group-','is_edit_groups');
-                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
-                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
-
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-edit-group-none").click(function () {
                     $("input[id^='is-edit-group-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-show-salutation-group-']").prop('checked', false);
-                    // $("input[id^='is-edit-job-prefix-suffix-group-']").prop('checked', false);
-
                     processCheckboxes('is-edit-group-','is_edit_groups');
-                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
-                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
-
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-edit-group-']").change(function () {
-                    // var folderKey = $(this).data('folder-key');
-                    // var isChecked = $(this).is(':checked');
-
-                    // $("#is-edit-job-show-salutation-group-" + folderKey).prop('checked', isChecked);
-                    // $("#is-edit-job-prefix-suffix-group-" + folderKey).prop('checked', isChecked);
-
                     processCheckboxes('is-edit-group-','is_edit_groups');
-                    // processCheckboxes('is-edit-job-show-salutation-group-','show_salutation_groups');
-                    // processCheckboxes('is-edit-job-prefix-suffix-group-','show_prefix_suffix_groups');
-
                     applyEditCapabilities();
                 });
         
@@ -828,104 +752,77 @@
                 }
         
         
-                function processCheckboxes(selector,fieldName) {
-                    //var folderDetailTmpField;
-                    var folderDetailTmpId;
-                    //var folderDetailTmpName;
-                    var folderDetailTmpIsChecked;
-        
-                    //var activeFolderListsField = [];
-                    var activeFolderListsIds = [];
-                    //var activeFolderListsNames = [];
-                    //var inactiveFolderListsField = [];
-                    var inactiveFolderListsIds = [];
-                    //var inactiveFolderListsNames = [];
-        
-        
-                    $("input[id^='" + selector + "']").each(function () {
-        
-                        //folderDetailTmpField = $(this).attr('name');
-                        folderDetailTmpId = $(this).data('folder-id');
-                        //folderDetailTmpName = $(this).data('folder-name');
-                        folderDetailTmpIsChecked = $(this).is(':checked');
-        
-                        if (folderDetailTmpIsChecked) {
-                            //activeFolderListsField.push(folderDetailTmpField);
-                            activeFolderListsIds.push(folderDetailTmpId);
-                            //activeFolderListsNames.push(folderDetailTmpName);
-                        } else {
-                            //inactiveFolderListsField.push(folderDetailTmpField);
-                            inactiveFolderListsIds.push(folderDetailTmpId);
-                            //inactiveFolderListsNames.push(folderDetailTmpName);
-                        }
-        
-                    });
-        
-                    if (activeFolderListsIds.length > 0 || inactiveFolderListsIds.length > 0) {
-                        var targetUrl = base_url+"/franchise/config-job/folder-config/update/all";
-                        var csrfToken = $('meta[name="csrf-token"]').attr('content');
-                        var formData = new FormData();
-        
-                        formData.append('field', fieldName);
-        
-                        //formData.append("active_fields", JSON.stringify(activeFolderListsField));
-                        formData.append("active_ids", JSON.stringify(activeFolderListsIds));
-                        //formData.append("active_names", JSON.stringify(activeFolderListsNames));
-        
-                        //formData.append("inactive_fields", JSON.stringify(inactiveFolderListsField));
-                        formData.append("inactive_ids", JSON.stringify(inactiveFolderListsIds));
-                        //formData.append("inactive_names", JSON.stringify(inactiveFolderListsNames));
-        
-                        $.ajax({
-                            type: "POST",
-                            url: targetUrl,
-                            async: true,
-                            data: formData,
-                            cache: false,
-                            contentType: false,
-                            processData: false,
-                            headers: {
-                                'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
-                            },
-                            timeout: 60000,
-        
-                            success: function (response) {
-                               //console.log(response);
-                                var newData = response;
-                                var level;
-                                var activeCount;
-                                var inactiveCount;
-        
-                                if (newData) {
-                                    level = 'success';
-                                    activeCount = newData[0];
-                                    inactiveCount = newData[1];
-                                } else {
-                                    level = 'error';
-                                    activeCount = '';
-                                    inactiveCount = '';
-                                }
-        
-                                //flashAlert(level, msg);
-        
-                                var selectorActive = "[data-count=" + selector + "active]";
-                                var selectorInactive = "[data-count=" + selector + "inactive]";
-        
-                                $(selectorActive).removeClass('d-none').html(activeCount);
-                                $(selectorInactive).removeClass('d-none').html(inactiveCount);
-        
-                            },
-                            error: function (e) {
-                                //alert("An error occurred: " + e.responseText.message);
-                               //console.log(e);
-                            }
-                        })
+                function processCheckboxes(selector, fieldName) {
+                    if (typeof window.checkboxTimers === 'undefined') window.checkboxTimers = {};
+                    if (typeof window.checkboxAjax === 'undefined') window.checkboxAjax = {};
+
+                    if (window.checkboxTimers[selector]) {
+                        clearTimeout(window.checkboxTimers[selector]);
                     }
-                   //console.log(activeFolderListsIds);
-                   //console.log(inactiveFolderListsIds);
-        
-                    //console.log(activefolderListsField, activeFolderListsIds, activeFolderListsNames);
-                    //console.log(inactivefolderListsField, inactiveFolderListsIds, inactiveFolderListsNames);
+
+                    window.checkboxTimers[selector] = setTimeout(function() {
+                        var folderDetailTmpId;
+                        var folderDetailTmpIsChecked;
+                        var activeFolderListsIds = [];
+                        var inactiveFolderListsIds = [];
+
+                        $("input[id^='" + selector + "']").each(function () {
+                            folderDetailTmpId = $(this).data('folder-id');
+                            folderDetailTmpIsChecked = $(this).is(':checked');
+
+                            if (folderDetailTmpIsChecked) {
+                                activeFolderListsIds.push(folderDetailTmpId);
+                            } else {
+                                inactiveFolderListsIds.push(folderDetailTmpId);
+                            }
+                        });
+
+                        if (activeFolderListsIds.length > 0 || inactiveFolderListsIds.length > 0) {
+                            var targetUrl = base_url+"/franchise/config-job/folder-config/update/all";
+                            var csrfToken = $('meta[name="csrf-token"]').attr('content');
+                            var formData = new FormData();
+
+                            formData.append('field', fieldName);
+                            formData.append("active_ids", JSON.stringify(activeFolderListsIds));
+                            formData.append("inactive_ids", JSON.stringify(inactiveFolderListsIds));
+
+                            // Abort any ongoing request for this specific selector to prevent race conditions
+                            if (window.checkboxAjax[selector]) {
+                                window.checkboxAjax[selector].abort();
+                            }
+
+                            window.checkboxAjax[selector] = $.ajax({
+                                type: "POST",
+                                url: targetUrl,
+                                async: true,
+                                data: formData,
+                                cache: false,
+                                contentType: false,
+                                processData: false,
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
+                                },
+                                timeout: 60000,
+
+                                success: function (response) {
+                                    var newData = response;
+                                    var activeCount = newData ? newData[0] : '';
+                                    var inactiveCount = newData ? newData[1] : '';
+
+                                    var selectorActive = "[data-count=" + selector + "active]";
+                                    var selectorInactive = "[data-count=" + selector + "inactive]";
+
+                                    $(selectorActive).removeClass('d-none').html(activeCount);
+                                    $(selectorInactive).removeClass('d-none').html(inactiveCount);
+                                },
+                                error: function (e) {
+                                    if (e.statusText !== 'abort') {
+                                        // console.log(e);
+                                    }
+                                }
+                            });
+                        }
+                    }, 400); // 400ms debounce
                 }
         
             // });

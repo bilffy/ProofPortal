@@ -52,7 +52,7 @@
         <div class="mt-4 mb-4 flex justify-center">
             <div>
                 @if (count($paginatedImages) == 0)
-                    No images found
+                    Your MSP Photos are still being processed and will be displayed here soon.
                 @else
                     {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }} {{-- code by IT --}}
                     {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}} {{-- code by chromedia --}}
@@ -88,7 +88,7 @@
         <div class="mt-4 mb-4 flex justify-center">
             <div>
                 @if (count($paginatedImages) == 0)
-                    No images found
+                    Your MSP Photos are still being processed and will be displayed here soon.
                 @else
                     {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }}
                 @endif

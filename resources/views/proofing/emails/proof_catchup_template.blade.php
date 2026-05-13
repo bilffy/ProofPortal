@@ -113,16 +113,16 @@
                                         <br/><br/>
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        We’ve noticed you haven’t completed your proofs for <b>{JOB_NAME}</b> yet.
+                                        We’ve noticed you haven’t completed your proofs for <strong style="font-weight: 700;">{JOB_NAME}</strong> yet.
                                         <br/>
-                                        Please note that these proofs must be completed by <b>{REVIEW_DUE}</b>.
+                                        Please note that these proofs must be completed by <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
                                         <br/><br/>
                                         Please complete your proofs for the following classes:
                                         <br/>
                                         {{#FOLDERS}}
                                         <br/><br/>
                                         To complete your proofs click here:
-                                        <b><a href="{APP_URL}">{APP_URL}</a></b>
+                                        <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>
                                         <br/><br/>
                                     </p>
                                 </td>

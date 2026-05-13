@@ -160,7 +160,7 @@
                     </a>
                 </div>
                 @endif
-                @if ($user->hasRole('Franchise'))
+                <!-- @if ($user->hasRole('Franchise'))
                     <div class="col-6 col-lg-3">
                         <a href="{{ route('reports') }}">
                             <div class="card">
@@ -171,7 +171,7 @@
                             </div>
                         </a>
                     </div>
-                @endif
+                @endif -->
             </div>
         </div>
     </div>

@@ -10,7 +10,10 @@ use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\SchoolService;
 use Illuminate\Support\Facades\Session;
 use App\Services\Proofing\JobService;
+use App\Services\Proofing\TimestoneTableService;
+use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\UserResource;
+use App\Helpers\RoleHelper;
 use Auth;
 
 class ProofingDashboardController extends Controller
@@ -20,8 +23,9 @@ class ProofingDashboardController extends Controller
     protected $schoolService;
     protected $seasonService;
     protected $proofingChangelogService;
+    protected $timestoneTableService;
 
-    public function __construct(JobService $jobService, SchoolService $schoolService, EncryptDecryptService $encryptDecryptService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService)
+    public function __construct(JobService $jobService, SchoolService $schoolService, EncryptDecryptService $encryptDecryptService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService, TimestoneTableService $timestoneTableService)
     {
 
         $this->jobService = $jobService;
@@ -29,6 +33,7 @@ class ProofingDashboardController extends Controller
         $this->schoolService = $schoolService;
         $this->seasonService = $seasonService;
         $this->proofingChangelogService = $proofingChangelogService;
+        $this->timestoneTableService = $timestoneTableService;
     }
 
     private function getDecryptData($hash){
@@ -86,11 +91,29 @@ class ProofingDashboardController extends Controller
             // Get the dashboard data
             $franchiseCode = $user->getSchoolOrFranchiseDetail()->alphacode;
             $data = $this->jobService->getDashboardData($franchiseCode, Session::get('school_context-sid'));
+            $user = Auth::user();
+            $getSeason = $this->seasonService
+                        ->getAllSeasonData('ts_season_id')
+                        ->pluck('ts_season_id')
+                        ->toArray();
+            $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
+            $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)
+                ->where('job_users.user_id', $user->id)
+                ->where('show_proofing', 1)
+                ->pluck('ts_jobkey');
+                
+            $activeJobKeys = isset($data['activeSyncJobs']) ? $data['activeSyncJobs']->pluck('ts_jobkey') : collect([]);
+            $allSyncedJobKeys = $bpJobs->merge($activeJobKeys)->unique()->flip();
+    
+            $filteredTsJobs = $tsJobs->reject(function ($tsJob) use ($allSyncedJobKeys) {
+                return $allSyncedJobKeys->has($tsJob->JobKey);
+            });
         
             // Pass both $user and $data to the view
             return view('proofing.proofing-home', [
                 'user' => new UserResource($user), // Passing the authenticated user
                 'data' => $data, // Passing the dashboard data
+                'tsJobs' => $filteredTsJobs
             ]);
         } elseif($user->hasRole('Photo Coordinator') || $user->hasRole('Teacher')) {
             if(Session::has('school_context-sid')) {
@@ -108,11 +131,40 @@ class ProofingDashboardController extends Controller
             } else {
                 $jobs = collect(); // empty collection
             }
-                    
-            return view('proofing.proofing-switch-job', [
-                'user' => new UserResource($user), // Passing the authenticated user
-                'jobs' => $jobs, // Passing the dashboard data
-            ]);
+            if($jobs->count() === 1 && ($user->hasRole(RoleHelper::ROLE_PHOTO_COORDINATOR) || $user->hasRole(RoleHelper::ROLE_TEACHER))) {
+                $selectedJob = $jobs->first();
+                $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
+                session([
+                    'selectedJob' => $selectedJob,
+                    'selectedSeason' => $selectedSeason,
+                    'openJob' => true
+                ]);
+                session()->save();
+                // Logic for Task Items (Job Dashboard)
+                $approvedSubjectChanges = $this->proofingChangelogService->getAllApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
+                $approvedFolderGroupChangesCount = $this->proofingChangelogService->getAllApprovedFolderGroupChangeByJobKey($selectedJob->ts_jobkey);
+                $awaitApprovalSubjectChanges = $this->proofingChangelogService->getAllAwaitApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
+                $approvedSubjectChangesCount = isset($approvedSubjectChanges['subjectChanges']) ? $approvedSubjectChanges['subjectChanges']->count() : 0;
+                $awaitApprovalSubjectChangesCount = isset($awaitApprovalSubjectChanges['subjectChanges']) ? $awaitApprovalSubjectChanges['subjectChanges']->count() : 0;
+
+                // Store session data
+                session([
+                    'approvedSubjectChangesCount' => $approvedSubjectChangesCount + $approvedFolderGroupChangesCount,
+                    'awaitApprovalSubjectChangesCount' => $awaitApprovalSubjectChangesCount
+                ]);
+            
+                // Save session
+                session()->save(); 
+                
+                return view('proofing.franchise.task-items', [
+                    'user' => new UserResource($user)
+                ]);
+            } else {
+                return view('proofing.proofing-switch-job', [
+                    'user' => new UserResource($user), // Passing the authenticated user
+                    'jobs' => $jobs, // Passing the dashboard data
+                ]);
+            }  
         }  
     }
 }

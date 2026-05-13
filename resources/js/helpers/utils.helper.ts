@@ -1,7 +1,7 @@
 import { NAV_TABS } from "./constants.helper";
 
 export const getCurrentNav = (): string => {
-    const { HOME, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS} = NAV_TABS;
+    const { HOME, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS, REPORTS} = NAV_TABS;
     const path = window.location.pathname.split('/')[1];
     
     switch(path) {
@@ -20,13 +20,15 @@ export const getCurrentNav = (): string => {
             return ORDER;    
         case 'settings':
             return APP_SETTINGS;
+        case 'reports':
+            return REPORTS;
         default:
           return '';
     }
 };
 
 export const getNavTabId = (tab: string): string => {
-    const { HOME, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS} = NAV_TABS;
+    const { HOME, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS, REPORTS} = NAV_TABS;
 
     switch(tab) {
         case '':
@@ -36,6 +38,8 @@ export const getNavTabId = (tab: string): string => {
             return 'tabManageUsers';
         case PROOFING:
             return 'tabProofing';
+        case REPORTS:
+            return 'tabReports';
         case CONFIG_SCHOOL:
             return 'tabSchoolConfig';
         case PHOTOGRAPHY:

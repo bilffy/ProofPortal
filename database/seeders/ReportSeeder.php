@@ -124,8 +124,9 @@ class ReportSeeder extends Seeder
             ],
             [
                 'name' => 'Proofing Full Change List',
-                'description' => 'Runs 3 x Reports of all the Changes in a School. Developed by Ken.',
-                'query' => 'blueprintFullChangeList',
+                'description' => 'Runs 3 x Reports of all the Changes in a School.',
+                // 'query' => 'blueprintFullChangeList',
+                'query' => 'BlueprintFullChangeList -Portal',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
             ],
         ]);

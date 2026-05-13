@@ -69,6 +69,7 @@ class ImageService
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->whereNotNull('folders.ts_folderkey') // code by IT
+            ->where('folders.is_deleted', 0)
             ->where(function ($q) use ($visibilityColumn) {
                 if (empty($visibilityColumn)) {
                     $q->where('folders.is_visible_for_group', 1)
@@ -101,6 +102,7 @@ class ImageService
             ->where('jobs.ts_season_id', $seasonId)
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->whereNotNull('folders.ts_folderkey') // code by IT
+            ->where('folders.is_deleted', 0)
             ->where(function ($query) use ($operator, $folderTag) {
                 $query->where('folders.folder_tag', $operator, $folderTag)
                     ->orWhereNull('folders.folder_tag');
@@ -127,7 +129,8 @@ class ImageService
             ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
             ->where('jobs.ts_schoolkey', $schoolKey)
-            ->whereNotNull('folders.ts_folderkey'); // code by IT
+            ->whereNotNull('folders.ts_folderkey') // code by IT
+            ->where('folders.is_deleted', 0);
             
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
@@ -206,7 +209,8 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_season_id', $seasonId)
             ->where("folders.$visibilityColumn", 1)
-            ->whereNotNull('folders.ts_folderkey'); // code by IT
+            ->whereNotNull('folders.ts_folderkey') // code by IT
+            ->where('folders.is_deleted', 0);
 
             if ($schoolKey) {
                 $query->where('jobs.ts_schoolkey', $schoolKey);
@@ -242,7 +246,9 @@ class ImageService
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
         ->whereNotNull('subjects.ts_subjectkey') // code by IT
-        ->whereNotNull('folders.ts_folderkey'); // code by IT
+        ->whereNotNull('folders.ts_folderkey') // code by IT
+        ->where('folders.is_deleted', 0)
+        ->where('subjects.is_deleted', 0);
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
@@ -281,7 +287,9 @@ class ImageService
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
         ->whereNotNull('subjects.ts_subjectkey') // code by IT
-        ->whereNotNull('folders.ts_folderkey'); // code by IT
+        ->whereNotNull('folders.ts_folderkey') // code by IT
+        ->where('folders.is_deleted', 0)
+        ->where('subjects.is_deleted', 0);
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -341,6 +349,7 @@ class ImageService
         ->where('jobs.ts_season_id', $seasonId)
         ->where('jobs.ts_schoolkey', $schoolKey)
         ->whereNotNull('folders.ts_folderkey') // code by IT
+        ->where('folders.is_deleted', 0)
         // ->where('images.keyorigin', 'Folder')
         ;
         
@@ -416,7 +425,8 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->where('folders.is_visible_for_group', 1)
-            ->whereNotNull('folders.ts_folderkey'); // code by IT
+            ->whereNotNull('folders.ts_folderkey') // code by IT
+            ->where('folders.is_deleted', 0);
 
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -470,7 +480,9 @@ class ImageService
         ->where('jobs.ts_schoolkey', $schoolKey)
         ->where('folders.is_visible_for_portrait', 1)
         ->whereNotNull('subjects.ts_subjectkey') // code by IT
-        ->whereNotNull('folders.ts_folderkey'); // code by IT
+        ->whereNotNull('folders.ts_folderkey') // code by IT
+        ->where('folders.is_deleted', 0)
+        ->where('subjects.is_deleted', 0);
         
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -543,7 +555,7 @@ class ImageService
             $isSubject = $category != 'FOLDER';
             $imgKey = $image->$key;
             if ($isSubject) {
-                $subject = Subject::where('ts_subjectkey', $image->$key)->first();
+                $subject = Subject::where('ts_subjectkey', $image->$key)->where('is_deleted', 0)->first();
                 if ($subject) {
                     $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
@@ -555,7 +567,7 @@ class ImageService
                     $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->portal_ts_foldername, $image->year ?? null); //CODE BY IT
                 }
             } else {
-                $folder = Folder::where('ts_folderkey', $image->$key)->first();
+                $folder = Folder::where('ts_folderkey', $image->$key)->where('is_deleted', 0)->first();
                 if ($folder) {
                     $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();

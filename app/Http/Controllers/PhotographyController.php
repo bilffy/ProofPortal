@@ -182,7 +182,7 @@ class PhotographyController extends Controller
                 $tab
             )->toArray();
         } else {
-            $folders = Folder::whereIn('ts_folderkey', $class)->get();
+            $folders = Folder::whereIn('ts_folderkey', $class)->where('is_deleted', 0)->get();
         }
         
         foreach ($folders as $folder) {
@@ -337,10 +337,10 @@ class PhotographyController extends Controller
             switch ($request->input('tab')) {
                 case PhotographyHelper::TAB_GROUPS:
                 case PhotographyHelper::TAB_OTHERS:
-                    $object = Folder::where('ts_folderkey', $key)->first();
+                    $object = Folder::where('ts_folderkey', $key)->where('is_deleted', 0)->first();
                     break;
                 case PhotographyHelper::TAB_PORTRAITS:
-                    $object = Subject::where('ts_subjectkey', $key)->first();
+                    $object = Subject::where('ts_subjectkey', $key)->where('is_deleted', 0)->first();
                     break;
             }
             
@@ -446,9 +446,9 @@ class PhotographyController extends Controller
             $img = $request->file('image');
             $imgKey = $request->input('image_key');
             $key = base64_decode(base64_decode($imgKey));
-            $subject = Subject::where('ts_subjectkey', $key)->first();
+            $subject = Subject::where('ts_subjectkey', $key)->where('is_deleted', 0)->first();
             if ($subject) {
-                $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
+                $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->where('is_deleted', 0)->first();
                 $existingImages = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->get();
                 $origin = 'subject';
                 //CODE BY IT   
@@ -459,7 +459,7 @@ class PhotographyController extends Controller
                     ->first();
                 //CODE BY IT
             } else {
-                $folder = Folder::where('ts_folderkey', $key)->first();
+                $folder = Folder::where('ts_folderkey', $key)->where('is_deleted', 0)->first();
                 if (!$folder) {
                     return response()->json(['success' => false, 'message' => 'Origin not found.'], 404);
                 }
@@ -529,9 +529,9 @@ class PhotographyController extends Controller
         $imgKey = $request->input('image_key');
         $key = base64_decode(base64_decode($imgKey));
 
-        $subject = Subject::where('ts_subjectkey', $key)->first();
+        $subject = Subject::where('ts_subjectkey', $key)->where('is_deleted', 0)->first();
         if ($subject) {
-            $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->first();
+            $folder = Folder::where('ts_folder_id', $subject->ts_folder_id)->where('is_deleted', 0)->first();
             $image = SchoolPhotoUpload::where('subject_id', $subject->id)
                 ->where('folder_id', $folder->id)->whereNull('deleted_at');
             $origin = 'subject';     
@@ -543,7 +543,7 @@ class PhotographyController extends Controller
                 ->first();
             //CODE BY IT
         } else {
-            $folder = Folder::where('ts_folderkey', $key)->first();
+            $folder = Folder::where('ts_folderkey', $key)->where('is_deleted', 0)->first();
             if (!$folder) {
                 return response()->json(['success' => false, 'message' => 'Origin not found.', 'key' => $key], 404);
             }

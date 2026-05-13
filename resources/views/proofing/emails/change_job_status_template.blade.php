@@ -114,8 +114,8 @@
                                         <br/>
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        The status of School <b>{JOB_NAME}</b> has been changed.<br/>
-                                        The status has changed to <b>{JOB_STATUS_NAME}</b>.
+                                        The status of School <strong style="font-weight: 700;">{JOB_NAME}</strong> has been changed.<br/>
+                                        The status has changed to <strong style="font-weight: 700;">{JOB_STATUS_NAME}</strong>.
                                         <br/>
                                         <br/>
                                         The following Folders are part of the School:
@@ -124,7 +124,7 @@
                                         <br/>
                                         <br/>
                                         To review these changes, please visit
-                                        <b><a href="{APP_URL}">{APP_URL}</a></b>
+                                        <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>
                                         <br/>
                                     </p>
                                 </td>

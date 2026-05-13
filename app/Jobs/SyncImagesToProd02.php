@@ -9,7 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class SyncImagesToSftp implements ShouldQueue
+class SyncImagesToProd02 implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -24,7 +24,7 @@ class SyncImagesToSftp implements ShouldQueue
     }
 
     public function handle(ExportImageService $exportImageService)
-    {
+    {\Log::info('started');
         // This calls your 100/35/200ms logic we wrote earlier
         $exportImageService->getAllUnsyncJobsImages($this->jobKey);
     }

@@ -6,6 +6,7 @@
     
     $highResDownloadOption = $AppSettingsHelper::getByPropertyKey('high_res_download_option');
     $lowResDownloadOption = $AppSettingsHelper::getByPropertyKey('low_res_download_option');
+    $screenQualityDownloadOption = $AppSettingsHelper::getByPropertyKey('screen_quality_download_option');
     $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
     $otherTab = $AppSettingsHelper::getByPropertyKey('other_tab');
     $configureTabV1 = $AppSettingsHelper::getByPropertyKey('configure_tab_v1');
@@ -13,13 +14,14 @@
     
     $highResDownloadOptionValue = $highResDownloadOption ? $highResDownloadOption->property_value === 'true' ? true : false : true; 
     $lowResDownloadOptionValue = $lowResDownloadOption ? $lowResDownloadOption->property_value === 'true' ? true : false : true;
+    $screenQualityDownloadOptionValue = $screenQualityDownloadOption ? $screenQualityDownloadOption->property_value === 'true' ? true : false : true;
     $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
     $otherTabValue = $otherTab ? $otherTab->property_value === 'true' ? true : false : true;
     $configureTabV1Value = $configureTabV1 ? $configureTabV1->property_value === 'true' ? true : false : true;
     $configureTabV2Value = $configureTabV2 ? $configureTabV2->property_value === 'true' ? true : false : true;
     
     // check if any of $highResDownloadOptionValue or $lowResDownloadOptionValue is false disable the resolution selection
-    $isDisabledResolution = !$highResDownloadOptionValue || !$lowResDownloadOptionValue;
+    $isDisabledResolution = !$highResDownloadOptionValue || !$lowResDownloadOptionValue || !$screenQualityDownloadOptionValue;
     
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';

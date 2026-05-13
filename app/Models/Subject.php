@@ -31,6 +31,7 @@ class Subject extends Model
         'ts_subject_id',
         'external_subject_id',
         'is_locked',
+        'is_deleted',
     ];
 
     public function folder(){

@@ -51,10 +51,6 @@
     --}}   
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
-        @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
-            {{-- Reports are not yet implemented, hide for now until the blueprint implemented into the system--}}
-            {{--<x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabReports" navIcon="list-ul" href="{{ route('dashboard') }}">Reports</x-layout.navItem>--}}
-        @endcan
     @endcan
 
     @if ($user->isAdmin())
@@ -64,6 +60,10 @@
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
         @if (!$user->hasRole($RoleHelper::ROLE_FRANCHISE) || ($proofingMenuValue && $SchoolContextHelper->isSchoolContext()))
             <x-layout.navItem visibility="{{ $visibility }}" id="tabProofing" navIcon="th" href="{{ route('proofing') }}">Proofing</x-layout.navItem>
+            @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_REPORTS))
+                {{-- Reports are not yet implemented, hide for now until the blueprint implemented into the system--}}
+                <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('reports') }}">Reports</x-layout.navItem>
+            @endcan
         @endif
     @endcan
 

@@ -175,7 +175,10 @@ class UsersList extends Component
         //     $schools = School::all();
         // }
         $this->roleOptions = $this->getRoleOptions($user->getRole());
-        // $this->orgOptions = $this->getOrgOptions($franchises, $schools);
+
+        if ($user->isPhotoCoordinator()) {
+            unset($this->statusOptions[User::STATUS_DISABLED]);
+        }
     }
     
     public function render()
@@ -219,6 +222,10 @@ class UsersList extends Component
                     ->whereIn('schools.id', $schools)
                     ->orWhere('franchises.id', $franchise->id);
             });
+        }
+
+        if ($user->isPhotoCoordinator()) {
+            $usersQuery->where('users.status', '!=', User::STATUS_DISABLED);
         }
         $queryService = new CollectionQueryService($usersQuery);
         $users = $queryService

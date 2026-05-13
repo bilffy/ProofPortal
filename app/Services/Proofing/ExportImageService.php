@@ -5,8 +5,8 @@ use App\Services\Proofing\StatusService;
 use App\Models\Image;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use App\Jobs\SyncImagesToSftp;
+use App\Services\Proofing\ImageUploader;
+use App\Jobs\SyncImagesToProd02;
 use Exception;
 use finfo;
 
@@ -25,7 +25,7 @@ class ExportImageService
     /* Export Image */
 
     public function getAllUnsyncJobsImages($jobkey)
-    {
+    {\Log::info($jobkey);
         // Disable logs to save RAM
         DB::connection('timestone')->disableQueryLog();
         DB::disableQueryLog();
@@ -51,7 +51,7 @@ class ExportImageService
 
             if ($remainingCount > 0) {
                 // This triggers the NEXT 100 automatically
-                dispatch(new SyncImagesToSftp($jobkey)); 
+                dispatch(new SyncImagesToProd02($jobkey)); 
                 Log::info("Dispatched next batch for $jobkey. Remaining: $remainingCount");
             }
 
@@ -91,6 +91,7 @@ class ExportImageService
         
         $successfullyUploadedKeys = [];
         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        $uploader = new ImageUploader();
 
         foreach ($images as $image) {
             if (!$image->Thumbnail) continue;
@@ -99,28 +100,29 @@ class ExportImageService
             $extension = $this->getExtensionFromMimeType($mimeType);
             $sKey = (string)$image->SubjectKey;
 
-            $fullPath = sprintf(
-                '%s/%s/%s/%s/%s/%s.%s',
-                $image->Code, $image->SchoolKey, $image->JobKey,
+            $prefix = config('services.proofing_cache_prefix');
+            $remotePath = sprintf(
+                '%s/%s/%s/%s/%s/%s/%s.%s',
+                $prefix, $image->Code, $image->SchoolKey, $image->JobKey,
                 $sKey[0], $sKey[1], $sKey, $extension
             );
+            $remotePath = ltrim($remotePath, '/');
+
+            $filename = sprintf('%s.%s', $sKey, $extension);
                 
             try {
-                $result = Storage::disk('sftp')->put($fullPath, $image->Thumbnail);
+                $uploader->upload($image->Thumbnail, $remotePath, $filename);
                 
-                if ($result) {
-                    $successfullyUploadedKeys[] = $image->ImageKey;
-                    
-                    // Update DB every 10 images to show progress and free RAM
-                    if (count($successfullyUploadedKeys) >= 10) {
-                        Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
-                        $successfullyUploadedKeys = []; 
-                        gc_collect_cycles(); // Force PHP to empty the "trash"
-                    }
-                    usleep(200000); // 200ms breath for the SFTP server
+                $successfullyUploadedKeys[] = $image->ImageKey;
+                
+                // Update DB every 10 images to show progress and free RAM
+                if (count($successfullyUploadedKeys) >= 10) {
+                    Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
+                    $successfullyUploadedKeys = []; 
+                    gc_collect_cycles(); // Force PHP to empty the "trash"
                 }
             } catch (Exception $e) {
-                Log::error("SFTP Error: " . $e->getMessage());
+                Log::error("Image Upload Error for {$image->ImageKey}: " . $e->getMessage());
             }
             
             unset($image); // Clear the binary data from the variable

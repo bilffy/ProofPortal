@@ -59,7 +59,7 @@
 @endphp
 
 <tr class="person-row {{ $skHash }}"
-    data-subject-name="{{ strtolower($displayName) }}">
+    data-subject-name="{{ strtolower($displayName . ' ' . ($subject->folder ? $subject->folder->ts_foldername : '')) }}">
 
     <td class="idx-artifact text-center pt-2 pb-1">
         <div class="person-pic-wrapper d-inline">
@@ -83,6 +83,16 @@
             value="{{ $lastname }}"
             data-original-value="{{ $lastname }}"
             data-old-value="{{ $lastname }}"
+            data-skhash="{{ $skHash }}"
+            data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
+    </td>
+    <td class="idx-class p-0">
+        <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-class"
+            id="{{ $skHash }}-grid-spelling-class"
+            name="{{ $skHash }}_grid_spelling_class"
+            value="{{ $subject->folder ? $subject->folder->ts_foldername : '' }}"
+            data-original-value="{{ $subject->folder ? $subject->folder->ts_foldername : '' }}"
+            data-old-value="{{ $subject->folder ? $subject->folder->ts_foldername : '' }}"
             data-skhash="{{ $skHash }}"
             data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
     </td>

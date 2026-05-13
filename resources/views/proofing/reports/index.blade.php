@@ -115,12 +115,10 @@
                             </tbody>
                         </table>
                     
-                        <div class="paginator">
-                            <ul class="pagination list-disc pl-5">
-                                {{ $reports->links('proofing.layouts.pagination-custom') }} <!-- Use the custom pagination view -->
-                            </ul>
+                        <div class="paginator mt-3">
+                            {{ $reports->links('proofing.layouts.pagination-custom') }} 
                         
-                            <p>
+                            <p class="mt-2 text-muted small">
                                 {{ __('Page :page of :pages, showing :current record(s) out of :count total', [
                                     'page' => $reports->currentPage(),
                                     'pages' => $reports->lastPage(),

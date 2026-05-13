@@ -20,7 +20,8 @@ use App\Models\FolderUser;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\SchoolContextHelper;
 use Illuminate\Support\Facades\URL;
-use App\Jobs\SyncImagesToSftp;
+use App\Jobs\SyncImagesToProd02;
+use Illuminate\Support\Carbon;
 use Auth;
 
 class ProofingJobController extends Controller
@@ -162,7 +163,7 @@ class ProofingJobController extends Controller
     public function toggleArchived(Request $request)
     {
         $includeArchived = filter_var($request->get('includeArchived'), FILTER_VALIDATE_BOOLEAN);
-        $schoolKey = SchoolContextHelper::getSchool()->schoolkey;
+        $schoolKey = SchoolContextHelper::getSchool()?->schoolkey;
         $franchiseCode = Auth::user()->getSchoolOrFranchiseDetail()->alphacode;
         $activeSyncJobs = $this->jobService->toggleArchivedJobs($franchiseCode, $schoolKey, $includeArchived);
         return response()->json(['data' => $activeSyncJobs]);
@@ -187,44 +188,62 @@ class ProofingJobController extends Controller
     public function proxySyncJob(Request $request)
     {
         $jobKey = $this->getDecryptData($request->input('jobKey'));
+        \Log::info('Proxy sync started', ['jobKey' => $jobKey]);
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
-        $baseUrl = 'http://bpsync.msp.local/index.php/';
+        // $baseUrl = 'http://bpsync.msp.local/index.php/';
+        $baseUrl = 'http://localhost/blueprint-sync/public';
     
         try {
             $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(60); // Increased timeout for sync
     
             $jobResponse = null;
             $folderResponse = null;
-    
-            if (!$selectedJob) {
-                // Sync Job first
-                $jobResponse = $client->get("{$baseUrl}/jobs/sync/{$jobKey}");
-                $this->jobService->updateJobData($jobKey, 'show_portal', 1);
-                
-                if ($jobResponse->successful()) {
-                    // IMPORTANT: Fetch the newly created job
-                    $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
-                }
-                
-                // Sync Folders
-                $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
-            } else {
+
+            $hasContent = $selectedJob ? ($selectedJob->folders()->exists() || $selectedJob->subjects()->exists()) : false;
+
+            if ($hasContent) {
+                $this->jobService->updateJobData($jobKey, 'force_sync', 1);
+            }
+            
+            $jobResponse = $client->get("{$baseUrl}/jobs/sync/{$jobKey}");
+
+            if ($jobResponse->successful()) {
+                // IMPORTANT: Fetch the newly created job
+                $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
+            }
+
+            if ($selectedJob) {
                 // Re-activate if deleted
                 if ($selectedJob->job_status_id == $this->statusService->deleted) {
                     $rootUserId = Auth::id();
                     ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
                         'jobkey' => $jobKey,
                         'status' => $this->statusService->none
-                    ], $rootUserId);
+                        ], $rootUserId);
                     $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
                     $selectedJob->refresh(); // Sync the model instance with the DB
                 }
-                $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
+
+                $this->jobService->updateJobData($jobKey, 'proof_start', Carbon::now()->addDays(20)->setTime(9, 0, 0));
+                $this->jobService->updateJobData($jobKey, 'proof_warning', Carbon::now()->addDays(25)->setTime(9, 0, 0));
+                $this->jobService->updateJobData($jobKey, 'proof_due', Carbon::now()->addDays(30)->setTime(9, 0, 0));
+                $this->jobService->updateJobData($jobKey, 'proof_catchup', Carbon::now()->addDays(40)->setTime(9, 0, 0));
+                \Log::info('Proof date updated', ['jobKey' => $jobKey]);
             }
+
+            $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
+            
+            \Log::info('Sync responses', [
+                'jobKey' => $jobKey,
+                'job_status' => $jobResponse?->status(),
+                'folder_status' => $folderResponse?->status(),
+                'folder_body' => $folderResponse?->body()
+            ]);
     
             // Validate
             if ($selectedJob && $folderResponse?->successful()) {
-                SyncImagesToSftp::dispatch($jobKey);
+                \Log::info("Dispatching SyncImagesToProd02 for Job: $jobKey");
+                SyncImagesToProd02::dispatch($jobKey);
 
                 $userId = Auth::id();
                 

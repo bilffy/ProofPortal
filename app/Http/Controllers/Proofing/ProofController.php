@@ -214,7 +214,7 @@ class ProofController extends Controller
             ->sortBy([['ts_folder_id', 'asc'], ['ts_subject_id', 'asc']])
             ->values();
         
-        $allSubjects = $attachedSubjects->merge($homedSubjects);
+        $allSubjects = $attachedSubjects->merge($homedSubjects)->sortBy('firstname');
         
         $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([
@@ -326,7 +326,10 @@ class ProofController extends Controller
                            ->orWhere('salutation', 'like', "%{$word}%")
                            ->orWhere('prefix', 'like', "%{$word}%")
                            ->orWhere('suffix', 'like', "%{$word}%")
-                           ->orWhere('title', 'like', "%{$word}%");
+                           ->orWhere('title', 'like', "%{$word}%")
+                           ->orWhereHas('folder', function($q3) use ($word) {
+                               $q3->where('ts_foldername', 'like', "%{$word}%");
+                           });
                     });
                 }
             });

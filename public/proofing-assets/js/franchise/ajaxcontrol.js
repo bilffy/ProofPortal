@@ -115,14 +115,15 @@ $(document).ready(function () {
     });
 
     jQuery.noConflict();
+    var searchDataTable;
     if ($('#searchData').length) {
-        var table = $('#searchData').DataTable({
+        searchDataTable = $('#searchData').DataTable({
             // "dom": 'Blfrtip',
             "paging": true,
-            "pageLength": 20,
+            "pageLength": 10,
             "lengthMenu": [
-                [20, 50, 100, 200, 500, -1],
-                [20, 50, 100, 200, 500, 'All']
+                [10, 20, 50, 100, 200, 500, -1],
+                [10, 20, 50, 100, 200, 500, 'All']
             ],
             "language": {
                 "lengthMenu": "Display _MENU_"
@@ -138,7 +139,34 @@ $(document).ready(function () {
 
     // Update search on input change
     $('#searchData_filter').on('keyup', function () {
-        table.search(this.value).draw();
+        if(searchDataTable) searchDataTable.search(this.value).draw();
+    });
+
+    var schoolsTable;
+    if ($('#schools-table').length) {
+        schoolsTable = $('#schools-table').DataTable({
+            // "dom": 'Blfrtip',
+            "paging": true,
+            "pageLength": 10,
+            "lengthMenu": [
+                [10, 20, 50, 100, 200, 500, -1],
+                [10, 20, 50, 100, 200, 500, 'All']
+            ],
+            "language": {
+                "lengthMenu": "Display _MENU_"
+            },
+            "lengthChange": true,
+            "searching": true, // Enable searching
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true
+        });
+    }
+
+    // Update search on input change
+    $('#schools-table_filter').on('keyup', function () {
+        if(schoolsTable) schoolsTable.search(this.value).draw();
     });
 
     // Hide and Show Archived Jobs
@@ -154,11 +182,11 @@ $(document).ready(function () {
         const url = $(this).data('toggle-url');
 
         // Always remove archived rows first
-        table.rows('.archived').remove().draw();
+        searchDataTable.rows('.archived').remove().draw();
 
         // If we are hiding archived, stop here
         if (isArchivedHidden) {
-            updateRowNumbers(table);
+            updateRowNumbers(searchDataTable);
             return;
         }
 
@@ -177,7 +205,7 @@ $(document).ready(function () {
                         .map(([statusName, count]) => `${statusName}: ${count}`)
                         .join('<br>');
 
-                    const newRow = table.row.add([
+                    const newRow = searchDataTable.row.add([
                         '',
                         job.ts_jobkey,
                         job.ts_jobname,
@@ -214,8 +242,8 @@ $(document).ready(function () {
                     }
                 });
 
-                table.draw();
-                updateRowNumbers(table);
+                searchDataTable.draw();
+                updateRowNumbers(searchDataTable);
             },
             error: function () {
                 console.error('Error fetching job data.');
@@ -258,10 +286,114 @@ $(document).ready(function () {
         }
     });
 
+    // === Open Job Button ===
+    $(document).on('click', '.openJobBtn', function (e) {
+        e.preventDefault();
+
+        const $btn = $(this);
+        const $row = $btn.closest('tr');
+        const jobId = $btn.data('job-id');
+        const jobKey = $btn.data('job-key');
+
+        const jobKeyText = $row.find('.idx-job-key').text() || jobKey;
+        const jobName = $row.find('.idx-name').text();
+        const season = $row.find('.idx-description').text();
+
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        const currentBaseUrl = typeof base_url !== 'undefined' ? base_url : window.location.origin;
+
+        // prevent double click
+        if ($btn.data('loading')) return;
+        $btn.data('loading', true);
+
+        // Grey transparent loading screen
+        let $overlay = $('#dynamic-loader-overlay');
+        if ($overlay.length === 0) {
+            $overlay = $('<div id="dynamic-loader-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center;"><i class="fa fa-spinner fa-spin fa-3x fa-fw text-light mb-3"></i><h4 class="text-light">Syncing & Opening Job...</h4></div>');
+            $('body').append($overlay);
+        }
+        $overlay.fadeIn(200);
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: currentBaseUrl + '/proxy-sync-job',
+            type: "POST",
+            data: { _token: csrfToken, jobKey: jobKey },
+            success: function (proxyResponse) {
+                if (proxyResponse.success) {
+
+                    // Slowly remove row
+                    $row.fadeOut(600, function () {
+
+                        // Reconstruct the 10 columns for DataTables to prevent <td> misalignment
+                        let searchDataTableInstance = $('#searchData').DataTable();
+                        let addedNode = searchDataTableInstance.row.add([
+                            '', // ID
+                            jobKeyText,
+                            jobName,
+                            season,
+                            'Syncing...', // Job Proofing Status
+                            'Syncing...', // Folder statuses
+                            '', // Start
+                            '', // Warning
+                            '', // Due
+                            '<span class="text-primary font-weight-bold"><i class="fa fa-spinner fa-spin"></i> Preparing...</span>'
+                        ]).draw(false).node();
+
+                        // Fade in the new Datatables node
+                        let $addedRow = $(addedNode);
+                        $addedRow.hide();
+                        $addedRow.fadeIn(600, function () {
+
+                            // Call OpenJob redirect
+                            $.ajax({
+                                url: currentBaseUrl + '/proofing/openJob',
+                                type: "GET",
+                                data: { jobKey: jobKey },
+                                success: function (response) {
+                                    if (response.success) {
+                                        if (response.redirectUrl) {
+                                            window.location.href = response.redirectUrl;
+                                        } else {
+                                            window.location.href = currentBaseUrl + '/proofing';
+                                        }
+                                    } else {
+                                        $overlay.fadeOut(200);
+                                        $btn.prop('disabled', false);
+                                        $btn.removeData('loading');
+                                        alert('Failed to open job: ' + (response.message || 'Unknown error'));
+                                    }
+                                },
+                                error: function (xhr, status, error) {
+                                    $overlay.fadeOut(200);
+                                    $btn.prop('disabled', false);
+                                    $btn.removeData('loading');
+                                    alert('Server error while opening job: ' + error);
+                                }
+                            });
+                        });
+                    });
+
+                } else {
+                    $overlay.fadeOut(200);
+                    $btn.prop('disabled', false);
+                    $btn.removeData('loading');
+                    alert('Sync failed: ' + (proxyResponse.message || 'Unknown error'));
+                }
+            },
+            error: function (xhr, status, error) {
+                $overlay.fadeOut(200);
+                $btn.prop('disabled', false);
+                $btn.removeData('loading');
+                alert('Server error during sync: ' + error);
+            }
+        });
+    });
+
 
     //Updating Row Numbers
-    function updateRowNumbers(table) {
-        table.rows().nodes().each(function (row, index) {
+    function updateRowNumbers(tbl) {
+        tbl.rows().nodes().each(function (row, index) {
             $('td:eq(0)', row).html(index + 1);
         });
     }

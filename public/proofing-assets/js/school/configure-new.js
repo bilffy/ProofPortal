@@ -337,7 +337,7 @@ jQuery(document).ready(function ($) {
 
             } else {
                 $('#digital_download').addClass('d-none');
-                $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please contact your local MSP Expert.</p>');
+                $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please set your Digital Download Date.</p>');
             }
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
             $.ajax({

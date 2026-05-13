@@ -163,13 +163,7 @@ class EmailService
          * --------------------------------------------
          */
         $users = User::whereHas('roles', fn ($q) => $q->whereIn('id', $roleIds))
-            ->where(function ($query) use ($selectedJob) {
-                $query->whereHas('schools', fn ($q) =>
-                    $q->where('schoolkey', $selectedJob->ts_schoolkey)
-                )->orWhereHas('franchises', fn ($q) =>
-                    $q->where('ts_account_id', $selectedJob->ts_account_id)
-                );
-            })
+            ->whereHas('jobs', fn ($q) => $q->where('jobs.ts_job_id', $selectedJob->ts_job_id))
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
     
@@ -309,10 +303,7 @@ class EmailService
             $roleIds = Role::whereIn('name', $roleNames)->pluck('id');
     
             $userIds = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
-                ->where(function ($query) use ($selectedJob) {
-                    $query->whereHas('schools', fn($q) => $q->where('schoolkey', $selectedJob->ts_schoolkey))
-                          ->orWhereHas('franchises', fn($q) => $q->where('ts_account_id', $selectedJob->ts_account_id));
-                })
+                ->whereHas('jobs', fn($q) => $q->where('jobs.ts_job_id', $selectedJob->ts_job_id))
                 ->pluck('id');
     
             $users = User::whereIn('id', $userIds)->select('id','name','email','firstname','lastname')->get();
@@ -396,7 +387,7 @@ class EmailService
         }
 
         $folderNamesArray = $selectedFolders->pluck('ts_foldername')->toArray();
-        $folderNames = implode(', ', $folderNamesArray);
+        $folderNames = implode(', ', $folderNamesArray); // kept for email subject
     
         $selectedFolder = $selectedFolders->first();
         if (!$selectedFolder || !$selectedFolder->job) {
@@ -417,10 +408,7 @@ class EmailService
         $roleIds = Role::whereIn('name', $mappedRoleNames)->pluck('id')->toArray();
 
         $users = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
-            ->where(function ($query) use ($selectedFolder) {
-                $query->whereHas('schools', fn($q) => $q->where('schoolkey', $selectedFolder->job->ts_schoolkey))
-                      ->orWhereHas('franchises', fn($q) => $q->where('ts_account_id', $selectedFolder->job->ts_account_id));
-            })
+            ->whereHas('jobs', fn($q) => $q->where('jobs.ts_job_id', $selectedFolder->job->ts_job_id))
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
 
@@ -434,10 +422,11 @@ class EmailService
     
         $statusName = Status::where('id', $status)->value('status_external_name') ?? '';
         $constantData = [
-            'JOB_NAME' => $selectedFolder->job->ts_jobname ?? '',
-            'FOLDER_NAME' => $folderNames ?? '',
+            'JOB_NAME'           => $selectedFolder->job->ts_jobname ?? '',
+            'FOLDER_NAME'        => $folderNames ?? '',   // used in email subject only
+            'FOLDER_NAMES'       => $folderNamesArray,    // used in template body as a list
             'FOLDER_STATUS_NAME' => $statusName,
-            'APP_URL' => Config::get('app.url'),
+            'APP_URL'            => Config::get('app.url'),
             'FRANCHISE_WEB_ADDRESS' => 'www.msp.com.au',
         ];
 
@@ -569,6 +558,84 @@ class EmailService
         $this->storeEmailRecord($authUser, $folderUsers->first()->folder->job, $inviteUser, $template, $date, $emlContent, $jobkey);
     }    
 
+    /**
+     * Re-render an existing invitation email's content with a new/updated folder list.
+     *
+     * @param Email   $pendingEmail     The existing email record
+     * @param User    $inviteUser       The recipient user
+     * @param array   $remainingFolders Folder names the user still has access to
+     * @param Job     $jobObj           The job the email is linked to
+     * @return string|null              The new .eml content, or null on failure
+     */
+    public function rebuildInvitationEmailContent($pendingEmail, $inviteUser, array $remainingFolders, $jobObj): ?string
+    {
+        $authUser = Auth::user();
+
+        // Resolve the template used by the original email record
+        $template = Template::find($pendingEmail->template_id);
+        if (!$template) {
+            return null;
+        }
+
+        $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
+        if (!File::exists($templatePath)) {
+            return null;
+        }
+
+        $templateContent = File::get($templatePath);
+
+        $data = [
+            'INVITEE_FIRST_NAME'   => $inviteUser->firstname ?? '',
+            'INVITEE_LAST_NAME'    => $inviteUser->lastname  ?? '',
+            'SENDER_FIRST_NAME'    => $authUser->firstname   ?? '',
+            'SENDER_LAST_NAME'     => $authUser->lastname    ?? '',
+            'JOB_NAME'             => $jobObj->ts_jobname    ?? '',
+            'FOLDERS'              => $remainingFolders,
+            'REVIEW_DUE'           => isset($jobObj->proof_due)
+                                        ? Carbon::parse($jobObj->proof_due)->format('l j F, Y')
+                                        : '',
+            'APP_URL'              => Config::get('app.url'),
+            'FRANCHISE_NAME'       => $authUser->getSchoolOrFranchiseDetail()->name     ?? '',
+            'FRANCHISE_PHONE'      => $authUser->getSchoolOrFranchiseDetail()->phone    ?? '',
+            'FRANCHISE_EMAIL'      => $authUser->getSchoolOrFranchiseDetail()->email    ?? '',
+            'FRANCHISE_WEB_ADDRESS'=> Config::get('app.franchise_web_address', 'www.msp.com.au'),
+            'FRANCHISE_ADDRESS1'   => $authUser->getSchoolOrFranchiseDetail()->address  ?? '',
+            'FRANCHISE_SUBURB'     => $authUser->getSchoolOrFranchiseDetail()->suburb   ?? '',
+            'FRANCHISE_STATE'      => $authUser->getSchoolOrFranchiseDetail()->state    ?? '',
+            'FRANCHISE_POSTCODE'   => $authUser->getSchoolOrFranchiseDetail()->postcode ?? '',
+        ];
+
+        $beforeProcessedContent = $this->replaceTemplateVariables($templateContent, $data);
+
+        // Apply any franchise-specific download instructions (mirrors saveInvitationContent logic)
+        if ($authUser->getSchoolOrFranchiseDetail()->name === 'Sydney West') {
+            $downloadInstructions = '
+                <tr>
+                    <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
+                        <b>Download Instructions for</b><br>
+                        <a href="https://www.msp.com.au/wp-content/uploads/blueprint/Online%20Proofing%20Guide%20Photo%20Coordinators.pdf" target="_blank">
+                            <img src="https://www.msp.com.au/wp-content/uploads/2019/10/photoco_btn.png" width="225">
+                        </a>
+                    </td>
+                </tr>
+            ';
+        } else {
+            $downloadInstructions = '';
+        }
+
+        $processedContent = str_replace("{DOWNLOAD_INSTRUCTIONS}", $downloadInstructions, $beforeProcessedContent);
+
+        // Rebuild the subject line
+        $templateSubject = $template->template_subject;
+        $templateSubject = str_replace('INVITEE_FIRST_NAME', $inviteUser->firstname ?? '', $templateSubject);
+        $templateSubject = str_replace('INVITEE_LAST_NAME',  $inviteUser->lastname  ?? '', $templateSubject);
+        $templateSubject = str_replace('JOB_NAME',           $jobObj->ts_jobname    ?? '', $templateSubject);
+
+        $emailMessage = $this->generateEmail($authUser, $inviteUser, $templateSubject, $processedContent, now());
+
+        return MessageConverter::toEmail($emailMessage)->toString();
+    }
+
     protected function replaceTemplateVariables(string $content, array $data): string
     {
         // Replace simple variables
@@ -582,17 +649,26 @@ class EmailService
         if (isset($data['FOLDERS'])) {
             $folderHtml = '';
             foreach ($data['FOLDERS'] as $folder) {
-                $folderHtml .= "<b>- {$folder}</b><br/>";
+                $folderHtml .= '<strong style="font-weight: 700;">- ' . $folder . '</strong><br/>';
             }
-            $content = str_replace("{{#FOLDERS}}", $folderHtml, $content);
+            $content = str_replace("{#FOLDERS}", $folderHtml, $content);
         }
         
         if (isset($data['ALLFOLDERS'])) {
             $folderHtml = '';
             foreach ($data['ALLFOLDERS'] as $folder) {
-                $folderHtml .= "<b>- {$folder}</b><br/>";
+                $folderHtml .= '<strong style="font-weight: 700;">- ' . $folder . '</strong><br/>';
             }
-            $content = str_replace("{{#ALLFOLDERS}}", $folderHtml, $content);
+            $content = str_replace("{#ALLFOLDERS}", $folderHtml, $content);
+        }
+
+        // Replace bulk folder status list (change_folder_status_template)
+        if (isset($data['FOLDER_NAMES'])) {
+            $folderHtml = '';
+            foreach ($data['FOLDER_NAMES'] as $folder) {
+                $folderHtml .= '<strong style="font-weight: 700;">- ' . $folder . '</strong><br/>';
+            }
+            $content = str_replace("{#FOLDER_NAMES}", $folderHtml, $content);
         }
     
         return $content;

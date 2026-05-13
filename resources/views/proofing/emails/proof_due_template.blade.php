@@ -114,7 +114,7 @@
                                         <br/>
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        We’ve noticed that the due date of your proofs for <b>{JOB_NAME}</b> has
+                                        We’ve noticed that the due date of your proofs for <strong style="font-weight: 700;">{JOB_NAME}</strong> has
                                         been reached and there are still outstanding classes to be completed.
                                         <br/>
                                         <br/>
@@ -124,7 +124,7 @@
                                         <br/>
                                         <br/>
                                         To ensure there are no delays in receiving your photos, please click here
-                                        <b><a href="{APP_URL}">{APP_URL}</a></b>
+                                        <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>
                                         to complete your proofs.
                                         <br/>
                                         <br/>

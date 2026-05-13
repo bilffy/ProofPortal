@@ -422,12 +422,14 @@ class ProofingChangelogService
 
         if (!$subjectData) return;
    
-        $currentValue = $newValue = $approvalStatus = $isResolved = $note = $result = '';
+        $currentValue = $newValue = $approvalStatus = $isResolved = $note = '';
+        $result = false;
         $currentfirstname = $subjectData->firstname;
         $currentlastname = $subjectData->lastname;
         $currentsalutation = $subjectData->salutation;
         $currentprefix = $subjectData->prefix;
         $currentsuffix = $subjectData->suffix;
+        $message = null;
         $replace = [];
         $responseData = [];
         
@@ -462,41 +464,48 @@ class ProofingChangelogService
         ->orderBy('id', 'DESC')->first();
 
         switch ($issue) {
+
             case 'SUBJECT_ISSUE_SPELLING':
-                $currentValue = "{$currentfirstname} {$currentlastname}";
-                $newValue = "{$requestData['new_first_name']} {$requestData['new_last_name']}";
-                $approvalStatus = $this->statusService->autoApproved;
-                $isResolved = $this->statusService->active;
-                $note = "{$issue}_NOTE";
-                $replace = [
-                    'OLDFIRSTNAME' => $currentfirstname,
-                    'OLDLASTNAME' => $currentlastname,
-                    'NEWFIRSTNAME' => $requestData['new_first_name'],
-                    'NEWLASTNAME' => $requestData['new_last_name']
-                ];
-                $subject->firstname = $requestData['new_first_name'];
-                $subject->lastname = $requestData['new_last_name'];
-
-                if(isset($groupsName)){
-                    // Perform the string replacement
-                    $updatedChangeTo = str_replace(
-                        [$currentfirstname .' '. $currentlastname],
-                        [$requestData['new_first_name'] .' '. $requestData['new_last_name']],
-                        $groupsName->change_to
-                    );
-                    // Update the 'change_to' field
-                    $groupsName->change_to = $updatedChangeTo;
-                    $groupsName->save(); // Save the changes to the database
-                }
-
-                $this->getGroupPositionService()->updateGroupPosition($subjectData->job->ts_jobkey, $subjectData->folder->ts_folderkey, $currentfirstname, $currentlastname, $requestData['new_first_name'], $requestData['new_last_name']);
-                
-                try{
-                    $result = $subject->save();
-                } catch (\Exception $e) {
-                    $message = $e->getMessage();
+                if (strlen($requestData['new_first_name']) > 128 || strlen($requestData['new_last_name']) > 128) {
                     $result = false;
+                    $message = "Character limit exceeded.";
+                } else {
+                    $currentValue = "{$currentfirstname} {$currentlastname}";
+                    $newValue = "{$requestData['new_first_name']} {$requestData['new_last_name']}";
+                    $approvalStatus = $this->statusService->autoApproved;
+                    $isResolved = $this->statusService->active;
+                    $note = "{$issue}_NOTE";
+                    $replace = [
+                        'OLDFIRSTNAME' => $currentfirstname,
+                        'OLDLASTNAME' => $currentlastname,
+                        'NEWFIRSTNAME' => $requestData['new_first_name'],
+                        'NEWLASTNAME' => $requestData['new_last_name']
+                    ];
+                    $subject->firstname = $requestData['new_first_name'];
+                    $subject->lastname = $requestData['new_last_name'];
+
+                    if(isset($groupsName)){
+                        // Perform the string replacement
+                        $updatedChangeTo = str_replace(
+                            [$currentfirstname .' '. $currentlastname],
+                            [$requestData['new_first_name'] .' '. $requestData['new_last_name']],
+                            $groupsName->change_to
+                        );
+                        // Update the 'change_to' field
+                        $groupsName->change_to = $updatedChangeTo;
+                        $groupsName->save(); // Save the changes to the database
+                    }
+
+                    $this->getGroupPositionService()->updateGroupPosition($subjectData->job->ts_jobkey, $subjectData->folder->ts_folderkey, $currentfirstname, $currentlastname, $requestData['new_first_name'], $requestData['new_last_name']);
+                    
+                    try{
+                        $result = $subject->save();
+                    } catch (\Exception $e) {
+                        $message = $e->getMessage();
+                        $result = false;
+                    }
                 }
+
                 if ($result) {
                     $htmlUpdates = [
                             "acknowledge" => __("Corrections have been saved. Make another correction or close."),
@@ -505,7 +514,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections could not be saved. Please try again."),
+                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
                             "full_name" => "<strong>{$subject->firstname} {$subject->lastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -552,53 +561,58 @@ class ProofingChangelogService
                 ];
                 break;
             case 'SUBJECT_ISSUE_JOBTITLE_SALUTATION':
-                $currentValue = "[Title: {$subjectData->title}] [Salutation: {$subjectData->salutation}]";
-                $newValue = "[Title: {$requestData['new_title']}] [Salutation: {$requestData['new_salutation']}]";
-                $approvalStatus = $this->statusService->autoApproved;
-                $isResolved = $this->statusService->active;
-                $note = 'SUBJECT_ISSUE_JOBTITLE_SALUTATION_NOTE';
-                $replace = [
-                    'TITLEFROM' => $subjectData->title,
-                    'SALUTATIONFROM' => $subjectData->salutation,
-                    'TITLETO' => $requestData['new_title'],
-                    'SALUTATIONTO' => $requestData['new_salutation']
-                ];
-                if ($requestData->has('new_title')) {
-                    if ($requestData->get('new_title') !== null) {
-                        $titleValue = $requestData->get('new_title');
-                    } else {
-                        $titleValue = '';
-                    }
-                }
-                if ($requestData->has('new_salutation')) {
-                    if ($requestData->get('new_salutation') !== null) {
-                        $salutationValue = $requestData->get('new_salutation');
-                        if(isset($groupsName)){
-                            // Perform the string replacement
-                            $updatedChangeTo = str_replace(
-                                [$subjectData->salutation],
-                                [$salutationValue],
-                                $groupsName->change_to
-                            );
-                            // Update the 'change_to' field
-                            $groupsName->change_to = $updatedChangeTo;
-                            $groupsName->save(); // Save the changes to the database
-                        }
-                    } else {
-                        $salutationValue = '';
-                    }
-                }
-                $title = $titleValue ?? $subjectData->title;
-                $salutation = $salutationValue ?? $subjectData->salutation;
-                $subject->title = $title;
-                $subject->salutation = $salutation;
-                try{
-                    $result = $subject->save();
-                } catch (\Exception $e) {
-                    $message = $e->getMessage();
+                if (strlen($requestData['new_title']) > 128 || strlen($requestData['new_salutation']) > 128) {
                     $result = false;
+                    $message = "Character limit exceeded.";
+                } else {
+                    $currentValue = "[Title: {$subjectData->title}] [Salutation: {$subjectData->salutation}]";
+                    $newValue = "[Title: {$requestData['new_title']}] [Salutation: {$requestData['new_salutation']}]";
+                    $approvalStatus = $this->statusService->autoApproved;
+                    $isResolved = $this->statusService->active;
+                    $note = 'SUBJECT_ISSUE_JOBTITLE_SALUTATION_NOTE';
+                    $replace = [
+                        'TITLEFROM' => $subjectData->title,
+                        'SALUTATIONFROM' => $subjectData->salutation,
+                        'TITLETO' => $requestData['new_title'],
+                        'SALUTATIONTO' => $requestData['new_salutation']
+                    ];
+                    if ($requestData->has('new_title')) {
+                        if ($requestData->get('new_title') !== null) {
+                            $titleValue = $requestData->get('new_title');
+                        } else {
+                            $titleValue = '';
+                        }
+                    }
+                    if ($requestData->has('new_salutation')) {
+                        if ($requestData->get('new_salutation') !== null) {
+                            $salutationValue = $requestData->get('new_salutation');
+                            if(isset($groupsName)){
+                                // Perform the string replacement
+                                $updatedChangeTo = str_replace(
+                                    [$subjectData->salutation],
+                                    [$salutationValue],
+                                    $groupsName->change_to
+                                );
+                                // Update the 'change_to' field
+                                $groupsName->change_to = $updatedChangeTo;
+                                $groupsName->save(); // Save the changes to the database
+                            }
+                        } else {
+                            $salutationValue = '';
+                        }
+                    }
+                    $title = $titleValue ?? $subjectData->title;
+                    $salutation = $salutationValue ?? $subjectData->salutation;
+                    $subject->title = $title;
+                    $subject->salutation = $salutation;
+                    try{
+                        $result = $subject->save();
+                    } catch (\Exception $e) {
+                        $message = $e->getMessage();
+                        $result = false;
+                    }
                 }
-                
+
                 if ($result) {
                     $htmlUpdates = [
                             "acknowledge" => __("Corrections have been saved. Make another correction or close."),
@@ -607,47 +621,52 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections could not be saved. Please try again."),
+                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
                 }
                 break;
             case 'SUBJECT_ISSUE_SALUTATION':
-                $currentValue = "[Salutation: {$subjectData->salutation}]";
-                $newValue = "[Salutation: {$requestData['new_salutation']}]";
-                $approvalStatus = $this->statusService->autoApproved;
-                $isResolved = $this->statusService->active;
-                $note = 'SUBJECT_ISSUE_SALUTATION_NOTE';
-                $replace = [
-                    'SALUTATIONFROM' => $subjectData->salutation,
-                    'SALUTATIONTO' => $requestData['new_salutation']
-                ];
-                if ($requestData->has('new_salutation')) {
-                    if ($requestData->get('new_salutation') !== null) {
-                        $salutationValue = $requestData->get('new_salutation');
-                        if(isset($groupsName)){
-                            // Perform the string replacement
-                            $updatedChangeTo = str_replace(
-                                [$subjectData->salutation],
-                                [$salutationValue],
-                                $groupsName->change_to
-                            );
-                            // Update the 'change_to' field
-                            $groupsName->change_to = $updatedChangeTo;
-                            $groupsName->save(); // Save the changes to the database
-                        }
-                    } else {
-                        $salutationValue = '';
-                    }
-                }
-                $salutation = $salutationValue ?? $subjectData->salutation;
-                $subject->salutation = $salutation;
-                try{
-                    $result = $subject->save();
-                } catch (\Exception $e) {
-                    $message = $e->getMessage();
+                if (strlen($requestData['new_salutation']) > 128) {
                     $result = false;
+                    $message = "Character limit exceeded.";
+                } else {
+                    $currentValue = "[Salutation: {$subjectData->salutation}]";
+                    $newValue = "[Salutation: {$requestData['new_salutation']}]";
+                    $approvalStatus = $this->statusService->autoApproved;
+                    $isResolved = $this->statusService->active;
+                    $note = 'SUBJECT_ISSUE_SALUTATION_NOTE';
+                    $replace = [
+                        'SALUTATIONFROM' => $subjectData->salutation,
+                        'SALUTATIONTO' => $requestData['new_salutation']
+                    ];
+                    if ($requestData->has('new_salutation')) {
+                        if ($requestData->get('new_salutation') !== null) {
+                            $salutationValue = $requestData->get('new_salutation');
+                            if(isset($groupsName)){
+                                // Perform the string replacement
+                                $updatedChangeTo = str_replace(
+                                    [$subjectData->salutation],
+                                    [$salutationValue],
+                                    $groupsName->change_to
+                                );
+                                // Update the 'change_to' field
+                                $groupsName->change_to = $updatedChangeTo;
+                                $groupsName->save(); // Save the changes to the database
+                            }
+                        } else {
+                            $salutationValue = '';
+                        }
+                    }
+                    $salutation = $salutationValue ?? $subjectData->salutation;
+                    $subject->salutation = $salutation;
+                    try{
+                        $result = $subject->save();
+                    } catch (\Exception $e) {
+                        $message = $e->getMessage();
+                        $result = false;
+                    }
                 }
                 
                 if ($result) {
@@ -658,39 +677,44 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections could not be saved. Please try again."),
+                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
                 }
                 break;
             case 'SUBJECT_ISSUE_JOBTITLE':
-                $currentValue = "[Title: {$subjectData->title}]";
-                $newValue = "[Title: {$requestData['new_title']}]";
-                $approvalStatus = $this->statusService->autoApproved;
-                $isResolved = $this->statusService->active;
-                $note = 'SUBJECT_ISSUE_JOBTITLE_NOTE';
-                $replace = [
-                    'TITLEFROM' => $subjectData->title,
-                    'TITLETO' => $requestData['new_title']
-                ];
-                if ($requestData->has('new_title')) {
-                    if ($requestData->get('new_title') !== null) {
-                        $titleValue = $requestData->get('new_title');
-                    } else {
-                        $titleValue = '';
+                if (strlen($requestData['new_title']) > 128) {
+                    $result = false;
+                    $message = "Character limit exceeded.";
+                } else {
+                    $currentValue = "[Title: {$subjectData->title}]";
+                    $newValue = "[Title: {$requestData['new_title']}]";
+                    $approvalStatus = $this->statusService->autoApproved;
+                    $isResolved = $this->statusService->active;
+                    $note = 'SUBJECT_ISSUE_JOBTITLE_NOTE';
+                    $replace = [
+                        'TITLEFROM' => $subjectData->title,
+                        'TITLETO' => $requestData['new_title']
+                    ];
+                    if ($requestData->has('new_title')) {
+                        if ($requestData->get('new_title') !== null) {
+                            $titleValue = $requestData->get('new_title');
+                        } else {
+                            $titleValue = '';
+                        }
+                    }
+                    $title = $titleValue ?? $subjectData->title;
+                    $subject = $this->subjectService->getSubjectById($subjectData->id);
+                    $subject->title = $title;
+                    try{
+                        $result = $subject->save();
+                    } catch (\Exception $e) {
+                        $message = $e->getMessage();
+                        $result = false;
                     }
                 }
-                $title = $titleValue ?? $subjectData->title;
-                $subject = $this->subjectService->getSubjectById($subjectData->id);
-                $subject->title = $title;
-                try{
-                    $result = $subject->save();
-                } catch (\Exception $e) {
-                    $message = $e->getMessage();
-                    $result = false;
-                }
-                
+
                 if ($result) {
                     $htmlUpdates = [
                             "acknowledge" => __("Corrections have been saved. Make another correction or close."),
@@ -699,69 +723,74 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections could not be saved. Please try again."),
+                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
                 }
                 break;
             case 'SUBJECT_ISSUE_PREFIX_SUFFIX':
-                $currentValue = "[Prefix: {$subjectData->prefix}] [Suffix: {$subjectData->suffix}]";
-                $newValue = "[Prefix: {$requestData['new_prefix']}] [Suffix: {$requestData['new_suffix']}]";
-                $approvalStatus = $this->statusService->autoApproved;
-                $isResolved = $this->statusService->active;
-                $note = 'SUBJECT_ISSUE_PREFIX_SUFFIX_NOTE';
-                $replace = [
-                    'PREFIXFROM' => $subjectData->prefix,
-                    'SUFFIXFROM' => $subjectData->suffix,
-                    'PREFIXTO' => $requestData['new_prefix'],
-                    'SUFFIXTO' => $requestData['new_suffix']
-                ];
-                if ($requestData->has('new_prefix')) {
-                    if ($requestData->get('new_prefix') !== null) {
-                        $prefixValue = $requestData->get('new_prefix');
-                        if(isset($groupsName)){
-                            // Perform the string replacement
-                            $updatedChangeTo = str_replace(
-                                [$subjectData->prefix],
-                                [$prefixValue],
-                                $groupsName->change_to
-                            );
-                            // Update the 'change_to' field
-                            $groupsName->change_to = $updatedChangeTo;
-                            $groupsName->save(); // Save the changes to the database
-                        }
-                    } else {
-                        $prefixValue = '';
-                    }
-                }
-                if ($requestData->has('new_suffix')) {
-                    if ($requestData->get('new_suffix') !== null) {
-                        $suffixValue = $requestData->get('new_suffix');
-                        if(isset($groupsName)){
-                            // Perform the string replacement
-                            $updatedChangeTo = str_replace(
-                                [$subjectData->suffix],
-                                [$suffixValue],
-                                $groupsName->change_to
-                            );
-                            // Update the 'change_to' field
-                            $groupsName->change_to = $updatedChangeTo;
-                            $groupsName->save(); // Save the changes to the database
-                        }
-                    } else {
-                        $suffixValue = '';
-                    }
-                }
-                $prefix = $prefixValue ?? $subjectData->prefix;
-                $suffix = $suffixValue ?? $subjectData->suffix;
-                $subject->prefix = $prefix;
-                $subject->suffix = $suffix;
-                try{
-                    $result = $subject->save();
-                } catch (\Exception $e) {
-                    $message = $e->getMessage();
+                if (strlen($requestData['new_prefix']) > 128 || strlen($requestData['new_suffix']) > 128) {
                     $result = false;
+                    $message = "Character limit exceeded.";
+                } else {
+                    $currentValue = "[Prefix: {$subjectData->prefix}] [Suffix: {$subjectData->suffix}]";
+                    $newValue = "[Prefix: {$requestData['new_prefix']}] [Suffix: {$requestData['new_suffix']}]";
+                    $approvalStatus = $this->statusService->autoApproved;
+                    $isResolved = $this->statusService->active;
+                    $note = 'SUBJECT_ISSUE_PREFIX_SUFFIX_NOTE';
+                    $replace = [
+                        'PREFIXFROM' => $subjectData->prefix,
+                        'SUFFIXFROM' => $subjectData->suffix,
+                        'PREFIXTO' => $requestData['new_prefix'],
+                        'SUFFIXTO' => $requestData['new_suffix']
+                    ];
+                    if ($requestData->has('new_prefix')) {
+                        if ($requestData->get('new_prefix') !== null) {
+                            $prefixValue = $requestData->get('new_prefix');
+                            if(isset($groupsName)){
+                                // Perform the string replacement
+                                $updatedChangeTo = str_replace(
+                                    [$subjectData->prefix],
+                                    [$prefixValue],
+                                    $groupsName->change_to
+                                );
+                                // Update the 'change_to' field
+                                $groupsName->change_to = $updatedChangeTo;
+                                $groupsName->save(); // Save the changes to the database
+                            }
+                        } else {
+                            $prefixValue = '';
+                        }
+                    }
+                    if ($requestData->has('new_suffix')) {
+                        if ($requestData->get('new_suffix') !== null) {
+                            $suffixValue = $requestData->get('new_suffix');
+                            if(isset($groupsName)){
+                                // Perform the string replacement
+                                $updatedChangeTo = str_replace(
+                                    [$subjectData->suffix],
+                                    [$suffixValue],
+                                    $groupsName->change_to
+                                );
+                                // Update the 'change_to' field
+                                $groupsName->change_to = $updatedChangeTo;
+                                $groupsName->save(); // Save the changes to the database
+                            }
+                        } else {
+                            $suffixValue = '';
+                        }
+                    }
+                    $prefix = $prefixValue ?? $subjectData->prefix;
+                    $suffix = $suffixValue ?? $subjectData->suffix;
+                    $subject->prefix = $prefix;
+                    $subject->suffix = $suffix;
+                    try{
+                        $result = $subject->save();
+                    } catch (\Exception $e) {
+                        $message = $e->getMessage();
+                        $result = false;
+                    }
                 }
                 
                 if ($result) {
@@ -772,7 +801,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections could not be saved. Please try again."),
+                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -804,30 +833,32 @@ class ProofingChangelogService
 
         $changeNote = count($replace) > 0 ? str_replace(array_keys($replace), $replace, $constants[$note]) : $note;
         if(!$result){
-            try{
-                $result = ProofingChangelog::insert([
-                    'ts_jobkey' => $subjectData->job->ts_jobkey,
-                    'keyvalue' => $subjectData->ts_subjectkey,
-                    'keyorigin' => 'Subject',
-                    'change_from' => $currentValue,
-                    'change_to' => $newValue,
-                    'user_id' => Auth::user()->id,
-                    'notes' => $changeNote,
-                    'issue_id' => $issueId,
-                    'resolved_status_id' => $isResolved,
-                    'change_datetime' => Carbon::now(),
-                    'approvalStatus' => $approvalStatus
-                ]);
-            } catch (\Exception $e) {
-                $message = $e->getMessage();
-                $result = false;
+            if ($message != "Character limit exceeded.") {
+                try{
+                    $result = ProofingChangelog::insert([
+                        'ts_jobkey' => $subjectData->job->ts_jobkey,
+                        'keyvalue' => $subjectData->ts_subjectkey,
+                        'keyorigin' => 'Subject',
+                        'change_from' => $currentValue,
+                        'change_to' => $newValue,
+                        'user_id' => Auth::user()->id,
+                        'notes' => $changeNote,
+                        'issue_id' => $issueId,
+                        'resolved_status_id' => $isResolved,
+                        'change_datetime' => Carbon::now(),
+                        'approvalStatus' => $approvalStatus
+                    ]);
+                } catch (\Exception $e) {
+                    $message = $e->getMessage();
+                    $result = false;
+                }
+                
+                $htmlUpdates = [
+                    "acknowledge" => $result ? __("The issue has been logged. Make another correction or close.") : __("Corrections have been saved. Make another correction or close."),
+                    "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong>",
+                    "alert" => $result ? "success" : "danger"
+                ];
             }
-            
-            $htmlUpdates = [
-                "acknowledge" => $result ? __("The issue has been logged. Make another correction or close.") : __("Corrections could not be saved. Please try again."),
-                "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong>",
-                "alert" => $result ? "success" : "danger"
-            ];
         }else{
             ProofingChangelog::insert([
                 'ts_jobkey' => $subjectData->job->ts_jobkey,
@@ -863,7 +894,7 @@ class ProofingChangelogService
         }
         
         if ($requestData->has('new_title')) {
-            if ($requestData->get('new_title') !== null) {
+            if ($requestData->get('new_title') !== null && strlen($requestData['new_title']) <= 128) {
                 $responseData['title'] = $requestData->get('new_title');
             } else {
                 $responseData['title'] = '';
@@ -871,7 +902,7 @@ class ProofingChangelogService
         }
         
         if ($requestData->has('new_salutation')) {
-            if ($requestData->get('new_salutation') !== null) {
+            if ($requestData->get('new_salutation') !== null && strlen($requestData['new_salutation']) <= 128) {
                 $responseData['salutation'] = $requestData->get('new_salutation');
             } else {
                 $responseData['salutation'] = '';
@@ -879,7 +910,7 @@ class ProofingChangelogService
         }
         
         if ($requestData->has('new_prefix')) {
-            if ($requestData->get('new_prefix') !== null) {
+            if ($requestData->get('new_prefix') !== null && strlen($requestData['new_prefix']) <= 128) {
                 $responseData['prefix'] = $requestData->get('new_prefix');
             } else {
                 $responseData['prefix'] = '';
@@ -887,7 +918,7 @@ class ProofingChangelogService
         }
         
         if ($requestData->has('new_suffix')) {
-            if ($requestData->get('new_suffix') !== null) {
+            if ($requestData->get('new_suffix') !== null && strlen($requestData['new_suffix']) <= 128) {
                 $responseData['suffix'] = $requestData->get('new_suffix');
             } else {
                 $responseData['suffix'] = '';
@@ -901,36 +932,22 @@ class ProofingChangelogService
             $responseData['resolved_status_id'] = 0;
         }
         
-        // Always add 'first_name', 'last_name', 'oldfirst_name', and 'oldlast_name'
+        // Re-load the subject to get the most accurate data after all potential updates
+        $subject = $this->subjectService->getSubjectById($subjectData->id);
+        
+        $responseData['first_name'] = trim($subject->firstname ?? '');
+        $responseData['last_name'] = trim($subject->lastname ?? '');
+        $responseData['title'] = trim($subject->title ?? '');
+        $responseData['salutation'] = trim($subject->salutation ?? '');
+        $responseData['prefix'] = trim($subject->prefix ?? '');
+        $responseData['suffix'] = trim($subject->suffix ?? '');
+        
         $responseData['oldfirst_name'] = trim($currentfirstname ?? '');
         $responseData['oldlast_name'] = trim($currentlastname ?? '');
         $responseData['title_old'] = trim($subjectData->title ?? '');
         $responseData['salutation_old'] = trim($currentsalutation ?? '');
         $responseData['prefix_old'] = trim($currentprefix ?? '');
         $responseData['suffix_old'] = trim($currentsuffix ?? '');
-        $responseData['first_name'] = trim(
-            $requestData->has('new_first_name') ? $requestData->get('new_first_name') : ($currentfirstname ?? '')
-        );
-        
-        $responseData['last_name'] = trim(
-            $requestData->has('new_last_name') ? $requestData->get('new_last_name') : ($currentlastname ?? '')
-        );
-        
-        $responseData['title'] = trim(
-            $requestData->has('new_title') ? $requestData->get('new_title') : ($subjectData->title ?? '')
-        );
-        
-        $responseData['salutation'] = trim(
-            $requestData->has('new_salutation') ? $requestData->get('new_salutation') : ($currentsalutation ?? '')
-        );
-        
-        $responseData['prefix'] = trim(
-            $requestData->has('new_prefix') ? $requestData->get('new_prefix') : ($currentprefix ?? '')
-        );
-        
-        $responseData['suffix'] = trim(
-            $requestData->has('new_suffix') ? $requestData->get('new_suffix') : ($currentsuffix ?? '')
-        );        
         
         $responseData['htmlUpdates'] = $htmlUpdates;
 
@@ -981,6 +998,7 @@ class ProofingChangelogService
         $responseData['fullNameOldGroup'] = implode(' ', $oldPartsGroup);
         $responseData['useSalutationPortrait'] = $useSalutationPortrait;
         $responseData['usePrefixSuffixPortrait'] = $usePrefixSuffixPortrait;
+        $responseData['status'] = (bool)$result;
 
         return $responseData;
 

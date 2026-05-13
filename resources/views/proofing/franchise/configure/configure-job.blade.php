@@ -40,7 +40,7 @@
         }
 
         .progress {
-            height: 30px;
+            height: 22px;
         }
         
         .progress-bar {
@@ -70,6 +70,31 @@
         .custom-file-label::after {
             display: none !important;
         }
+
+        /*table folder config adjustments*/
+        .fixed-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        /* Folder column */
+        .fixed-table th:first-child,
+        .fixed-table td:first-child {
+            width: 180px;
+        }
+
+        /* All checkbox columns */
+        .fixed-table th:not(:first-child):not(.group-image-col),
+        .fixed-table td:not(:first-child):not(.group-image-col) {
+            width: 90px;
+        }
+
+        /* Show Group Image column */
+        .fixed-table th.group-image-col,
+        .fixed-table td.group-image-col {
+            width: 200px; /* Increased to fit image + button side-by-side */
+        }
+        /*table folder config adjustments*/
 
     </style> 
 @stop
@@ -405,8 +430,28 @@
                         var $field = $(this);
                         $field.flatpickr({
                             enableTime: true,
-                            dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
+                            dateFormat: "d/m/Y h:i K", // 12-hour format with AM/PM
+                            time_24hr: false,
                             disableMobile: true,
+                            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                
+                                // Disable all past dates
+                                if (dayElem.dateObj < today) {
+                                    // But if this is the currently selected date, don't grey it out so it stays blue
+                                    var isSelected = fp.selectedDates.some(function(d) {
+                                        return d.getFullYear() === dayElem.dateObj.getFullYear() &&
+                                               d.getMonth() === dayElem.dateObj.getMonth() &&
+                                               d.getDate() === dayElem.dateObj.getDate();
+                                    });
+
+                                    if (!isSelected) {
+                                        dayElem.classList.add("flatpickr-disabled");
+                                        dayElem.setAttribute("aria-disabled", "true");
+                                    }
+                                }
+                            },
                             onClose: function (selectedDates, dateStr, instance) {
                                 if (dateStr) {
                                     var selectedDate = $field.val();
@@ -452,14 +497,19 @@
                     });
 
                     function convertTo24HourFormat(dateStr) {
+                        if (!dateStr) return '';
+                        
                         // Split the input string into date and time parts
-                        const dateParts = dateStr.split(' '); // ["26/11/2024", "03:43:11 PM"]
-                        const date = dateParts[0].split('/'); // ["26", "11", "2024"]
-                        let time = dateParts[1].split(':'); // ["03", "43", "11", "PM"]
-                        const hours = parseInt(time[0]); // 3 (hours part)
-                        const minutes = time[1]; // 43 (minutes part)
-                        const seconds = '00'; // 11 (seconds part)
-                        const ampm = time[3]; // PM or AM
+                        const dateParts = dateStr.split(' '); // Expected: ["04/05/2026", "09:34", "PM"]
+                        if (dateParts.length < 3) return dateStr; // Fallback if format is unexpected
+
+                        const date = dateParts[0].split('/'); // ["04", "05", "2026"]
+                        const time = dateParts[1].split(':'); // ["09", "34"]
+                        const ampm = dateParts[2].toUpperCase(); // "PM" or "AM"
+
+                        const hours = parseInt(time[0]); 
+                        const minutes = time[1]; 
+                        const seconds = '00'; 
                         
                         // Convert the hours to 24-hour format
                         let hour24 = hours;

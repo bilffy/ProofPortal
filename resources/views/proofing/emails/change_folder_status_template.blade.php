@@ -93,7 +93,6 @@
                 <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center" width="750" class="container">
                     <tr>
                         <td bgcolor="#ffffff">
-                            
                             <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center" width="750" class="container" style="border-collapse: collapse;">
                                 <tr>
                                     <td colspan="2">
@@ -111,11 +110,13 @@
                                             <br/><br/>
                                         </p>
                                         <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                            The status of Folder <b>{FOLDER_NAME}</b> in the School <b>{JOB_NAME}</b> has been changed.<br/>
-                                            The status has changed to <b>{FOLDER_STATUS_NAME}</b>.
+                                            The status of the following Folders in the School <strong style="font-weight: 700;">{JOB_NAME}</strong> has been changed:<br/><br/>
+                                            {#FOLDER_NAMES}
+                                            <br/>
+                                            The status has changed to <strong style="font-weight: 700;">{FOLDER_STATUS_NAME}</strong>.
                                             <br/><br/>
                                             To review these changes, please visit
-                                            <b><a href="{APP_URL}">{APP_URL}</a></b>
+                                            <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>
                                             <br/><br/>
                                         </p>
                                     </td>
@@ -167,7 +168,6 @@
                         </td>
                     </tr>
                 </table>
-                
             </td>
         </tr>
     </table>

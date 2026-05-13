@@ -18,7 +18,7 @@ class Report extends Model
     use HasFactory;
     
     protected $table = "reports";
-    protected $fillable = ['id', 'name', 'description', 'query', 'params'];
+    protected $fillable = ['id', 'name', 'description', 'query', 'params', 'is_deleted'];
 
     /**
      * Get the repository instance
@@ -274,6 +274,27 @@ class Report extends Model
     public static function blueprintFullChangeList($tsJobId = null)
     {
         return self::mySchools();
+    }
+
+    // ========================================================================
+    // MAGIC METHODS
+    // ========================================================================
+
+    /**
+     * Handle dynamic static method calls into the model.
+     * Maps invalid PHP method names required for SSRS endpoints to valid PHP methods.
+     *
+     * @param  string  $method
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public static function __callStatic($method, $parameters)
+    {
+        if ($method === 'BlueprintFullChangeList -Portal') {
+            return self::blueprintFullChangeList(...$parameters);
+        }
+
+        return parent::__callStatic($method, $parameters);
     }
 
     // ========================================================================

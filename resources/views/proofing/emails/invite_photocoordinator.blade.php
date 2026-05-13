@@ -56,17 +56,17 @@
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         <strong>SENDER_FIRST_NAME SENDER_LAST_NAME</strong> from FRANCHISE_NAME
                                         has assigned you to use the MSP Portal Proofing system to manage the
-                                        distribution and collection of proofs for <b>JOB_NAME</b>.
+                                        distribution and collection of proofs for <strong style="font-weight: 700;">JOB_NAME</strong>.
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         You have been allocated to proof the following Folders:
                                         <br/>
                                         @foreach($FOLDERS as $FOLDER)
-                                            <b>- FOLDER_NAME</b><br/>
+                                            <strong style="font-weight: 700;">- FOLDER_NAME</strong><br/>
                                         @endforeach
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        Please note that these proofs must be completed by <b>REVIEW_DUE</b>.
+                                        Please note that these proofs must be completed by <strong style="font-weight: 700;">REVIEW_DUE</strong>.
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                                         MSP Portal Proofing allows you to assign Photo Co-ordinators and
@@ -89,7 +89,7 @@
                             @if ($FRANCHISE_NAME === 'MSP Sydney West')
                                 <tr>
                                     <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
-                                        <b>Download Instructions for</b><br>
+                                        <strong style="font-weight: 700;">Download Instructions for</strong><br>
                                         <a href="https://www.msp.com.au/wp-content/uploads/blueprint/Online%20Proofing%20Guide%20Photo%20Coordinators.pdf"
                                            target="_blank">
                                             <img src="https://www.msp.com.au/wp-content/uploads/2019/10/photoco_btn.png"

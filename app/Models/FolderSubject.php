@@ -10,7 +10,7 @@ class FolderSubject extends Model
     use HasFactory;
     protected $table = "folder_subjects";
 
-    protected $fillable = ['ts_folder_id','ts_subject_id'];
+    protected $fillable = ['ts_folder_id','ts_subject_id','is_deleted'];
 
     public function subject(){
         return $this->belongsTo('App\Models\Subject', 'ts_subject_id', 'ts_subject_id');

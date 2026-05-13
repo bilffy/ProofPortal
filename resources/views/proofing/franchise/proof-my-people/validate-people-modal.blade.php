@@ -289,6 +289,7 @@
                                     </th>
                                     <th class="idx-first-name" scope="col">First Name</th>
                                     <th class="idx-last-name" scope="col">Last Name</th>
+                                    <th class="idx-class" scope="col" width="20%">Folder Name</th>
 
                                     @if ($currentFolder->is_edit_salutation)
                                         <th class="idx-salutation" scope="col">Salutation</th>

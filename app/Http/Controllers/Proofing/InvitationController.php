@@ -16,7 +16,9 @@ use App\Models\FolderUser;
 use App\Models\Franchise;
 use App\Models\JobUser;
 use App\Models\Folder;
+use App\Models\Job;
 use App\Models\User;
+use App\Models\Email;
 use App\Models\School;
 use Carbon\Carbon;
 use Session;
@@ -66,34 +68,68 @@ class InvitationController extends Controller
         ->get();
 
         $photocoordinators = [];
-        $teachers = [];
-        $otherList = []; 
-        
-        $currentUser = Auth::user();
+        $teachers          = [];
+        $otherList         = [];
+        $canDisableMap     = [];
+
+        $currentUser      = Auth::user();
+        $currentUserLevel = $currentUser->getRoleId();
 
         foreach ($users as $user) {
-            if (!$currentUser->canDisable($user->id)) {
-                $otherList[] = $user;
+            // Build canDisableMap inline by role-of-viewer rules (no changes needed in User.php)
+            if ($currentUser->isFranchiseLevel()) {
+                // Franchise can revoke both PCs and Teachers
+                $canDisableMap[$user->id] = $user->hasRole('Photo Coordinator') || $user->hasRole('Teacher');
+            } elseif ($currentUser->isPhotoCoordinator()) {
+                // Photo Coordinator can revoke Teachers only
+                $canDisableMap[$user->id] = $user->hasRole('Teacher');
             } else {
+                $canDisableMap[$user->id] = $currentUser->canDisable($user->id);
+            }
+
+            // Bucket by current user's role
+            if ($currentUser->isFranchiseLevel()) {
+                // Franchise: PCs → photocoordinators, Teachers → teachers, everyone else (franchise-level incl. self) → otherList
                 if ($user->hasRole('Photo Coordinator')) {
-                    $photocoordinators[] = $user; // Add to photocoordinators array
+                    $photocoordinators[] = $user;
                 } elseif ($user->hasRole('Teacher')) {
-                    $teachers[] = $user; // Add to teachers array
+                    $teachers[] = $user;
                 } else {
-                    $otherList[] = $user; // Add to other array
+                    $otherList[] = $user;
+                }
+            } elseif ($currentUser->isPhotoCoordinator()) {
+                // Photo Coordinator: other PCs (incl. self) → otherList, Teachers → teachers, higher roles hidden
+                if ($user->hasRole('Photo Coordinator')) {
+                    $otherList[] = $user;
+                } elseif ($user->hasRole('Teacher')) {
+                    $teachers[] = $user;
+                }
+            } else {
+                // Fallback for other roles (School Admin, RcUser, etc.)
+                if ($user->hasRole('Photo Coordinator')) {
+                    $photocoordinators[] = $user;
+                } elseif ($user->hasRole('Teacher')) {
+                    $teachers[] = $user;
+                } else {
+                    $userLevel = $user->getRoleId();
+                    if ($canDisableMap[$user->id] || $userLevel == $currentUserLevel) {
+                        $otherList[] = $user;
+                    }
                 }
             }
         }
 
         $user = $currentUser;
         return view('proofing.franchise.invitations.manage_photocoordinator_teacher', [
-            'selectedJob' => $selectedJob,
+            'selectedJob'       => $selectedJob,
             'photocoordinators' => $photocoordinators,
-            'teachers' => $teachers,
-            'otherList' => $otherList,
-            'user' => new UserResource($user)
+            'teachers'          => $teachers,
+            'otherList'         => $otherList,
+            'canDisableMap'     => $canDisableMap,
+            'user'              => new UserResource($user)
         ]);
     }
+
 
     public function showInvitation()
     {
@@ -162,6 +198,7 @@ class InvitationController extends Controller
             ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
             // Prefixing with 'users.' prevents ambiguity and 'distinct()' prevents duplicates
             ->select('users.firstname', 'users.lastname', 'users.email')
+            ->whereIn('users.status', [User::STATUS_ACTIVE, User::STATUS_INVITED])
             ->distinct() 
             ->get();
     
@@ -266,6 +303,7 @@ class InvitationController extends Controller
             ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
             // Prefixing with 'users.' prevents ambiguity and 'distinct()' prevents duplicates
             ->select('users.firstname', 'users.lastname', 'users.email')
+            ->whereIn('users.status', [User::STATUS_ACTIVE, User::STATUS_INVITED])
             ->distinct() 
             ->get();
     
@@ -509,6 +547,17 @@ class InvitationController extends Controller
     
         // Delete JobUser record using decrypted values
         JobUser::where([['ts_job_id', $job], ['user_id', $user]])->delete();
+        
+        // Delete the entry in emails table
+        $userObj = User::find($user);
+        $jobObj = Job::where('ts_job_id', $job)->first();
+        
+        if ($userObj && $jobObj) {
+            Email::where('status_id', $this->statusService->pending)
+                ->where('email_to', $userObj->email)
+                ->where('ts_jobkey', $jobObj->ts_jobkey)
+                ->delete();
+        }
     
         // Redirect back to the previous page
         return redirect()->back();
@@ -527,6 +576,43 @@ class InvitationController extends Controller
                 $query->where('ts_job_id', $job);
             })
             ->delete();
+
+        // Update pending invitation email with the user's remaining accessible folders
+        $userObj = User::find($user);
+        $jobObj  = Job::where('ts_job_id', $job)->first();
+
+        if ($userObj && $jobObj) {
+            $pendingEmail = Email::where('status_id', $this->statusService->pending)
+                ->where('email_to', $userObj->email)
+                ->where('ts_jobkey', $jobObj->ts_jobkey)
+                ->first();
+
+            if ($pendingEmail) {
+                // Fetch remaining folder names for this user on this job (after deletion)
+                $remainingFolders = \App\Models\FolderUser::where('user_id', $user)
+                    ->whereHas('folder.job', function ($q) use ($job) {
+                        $q->where('ts_job_id', $job);
+                    })
+                    ->with('folder')
+                    ->get()
+                    ->pluck('folder.ts_foldername')
+                    ->filter()
+                    ->values()
+                    ->toArray();
+
+                // Re-render the email content with updated folder list
+                $updatedContent = $this->emailService->rebuildInvitationEmailContent(
+                    $pendingEmail,
+                    $userObj,
+                    $remainingFolders,
+                    $jobObj
+                );
+
+                if ($updatedContent) {
+                    $pendingEmail->update(['email_content' => $updatedContent]);
+                }
+            }
+        }
     
         // Redirect back to the previous page
         return redirect()->back();

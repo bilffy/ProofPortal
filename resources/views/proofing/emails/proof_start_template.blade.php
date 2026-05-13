@@ -111,8 +111,8 @@
                                         <br/>
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                        Proofing of <b>{JOB_NAME}</b> has commenced and must be completed by
-                                        <b>{REVIEW_DUE}</b>.
+                                        Proofing of <strong style="font-weight: 700;">{JOB_NAME}</strong> has commenced and must be completed by
+                                        <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
                                         <br/>
                                         <br/>
                                         Please complete your proofs for the following classes:
@@ -121,7 +121,7 @@
                                         <br/>
                                         <br/>
                                         To start proofing your classes please click here:
-                                        <b><a href="{APP_URL}">{APP_URL}</a></b>
+                                        <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>
                                         <br/>
                                         <br/>
                                     </p>

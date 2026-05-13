@@ -27,6 +27,18 @@ class ImpersonateController extends Controller
         // Log IMPERSONATE_USER activity
         ActivityLogHelper::log(LogConstants::IMPERSONATE_USER, ['impersonated_user' => $user->id], $rootUserId);
 
+        // Security: Clear any existing proofing job session data when starting impersonation
+        session()->forget([
+            'job-season-flag',
+            'selectedJob',
+            'selectedSeason',
+            'openJob',
+            'selectedSeasonDashboard',
+            'openSeason',
+            'approvedSubjectChangesCount',
+            'awaitApprovalSubjectChangesCount'
+        ]);
+
         return redirect()->route('dashboard')->with('success', 'You are logged in as ' . $user->email);
     }
 

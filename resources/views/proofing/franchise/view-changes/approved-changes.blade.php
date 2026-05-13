@@ -49,7 +49,7 @@
                                 <p class="mb-3">The following is a list of changes to all Classes. Changes are grouped by class and
                                     listed in chronological order - most recent changes at the bottom.</p>
             
-                                <table class="table table-bordered table-sm">
+                                <table id="classes-table" class="table table-bordered table-sm">
                                     <thead>
                                         <!-- Table Headings-->
                                         <tr>
@@ -100,6 +100,9 @@
                                                 </td>
                                             </tr>
                                         @endforeach
+                                        <tr id="no-classes-changes-msg" class="d-none">
+                                            <td colspan="5" class="text-center py-3 text-muted fw-semibold">{{ __('No Changes Found...') }}</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -126,7 +129,7 @@
                                 @endforeach
                             </p>
             
-                            <table class="table table-bordered table-striped table-sm mt-3">
+                            <table id="people-table" class="table table-bordered table-striped table-sm mt-3">
                                 <thead>
                                     <tr>
                                         <th scope="col">Class</th>
@@ -169,6 +172,9 @@
                                         <td>{{ $subjectChange->user->firstname }} {{ $subjectChange->user->lastname }}</td>
                                     </tr>
                                     @endforeach
+                                    <tr id="no-people-changes-msg" class="d-none">
+                                        <td colspan="7" class="text-center py-3 text-muted fw-semibold">{{ __('No Changes Found...') }}</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -215,9 +221,25 @@
 
             if (filterByText === 'all') {
                 $(".folder-filter").removeClass("d-none");
+                $("#no-classes-changes-msg").addClass("d-none");
+                $("#no-people-changes-msg").addClass("d-none");
             } else {
                 $(".folder-filter").addClass("d-none");
                 $("[data-folder-key*='" + filterByText + "']").removeClass("d-none");
+
+                var visibleClasses = $('#classes-table tbody tr.folder-filter:not(.d-none)').length;
+                if(visibleClasses === 0) {
+                    $('#no-classes-changes-msg').removeClass("d-none");
+                } else {
+                    $('#no-classes-changes-msg').addClass("d-none");
+                }
+
+                var visiblePeople = $('#people-table tbody tr.folder-filter:not(.d-none)').length;
+                if(visiblePeople === 0) {
+                    $('#no-people-changes-msg').removeClass("d-none");
+                } else {
+                    $('#no-people-changes-msg').addClass("d-none");
+                }
             }
         }
     });

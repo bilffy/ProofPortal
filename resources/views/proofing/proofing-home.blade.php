@@ -48,7 +48,7 @@
         </div>
 
 
-        <div class="row mt-4">
+        {{-- <div class="row mt-4">
             <div class="col-12">
                 <p class="lead">
                     You can perform the following Tasks...
@@ -74,12 +74,103 @@
                     </div>
                 </div>
             </div>
+        </div> --}}
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <p class="lead">
+                    <?php echo __('Your Unsynced Jobs...'); ?>
+                </p>
+            </div>
+            <div class="col-12">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                There are
+                                <strong>@if($tsJobs){{$tsJobs->count()}}@endif</strong>
+                                Jobs to be synced.
+                                <div class="row mt-3 mb-3">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <input type="search" class="form-control" id="schools-table_filter" placeholder="Start typing a Job name to filter by...">
+                                        </div>
+                                        <div id="school-name-filter-feedback">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <p>Click headings to sort by that column.</p>
+                                        @if (count($tsJobs) > 0)
+                                            <table id="schools-table" class="table table-bordered table-striped table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">
+                                                            <i class="fa fa-sort"></i> Job Key
+                                                        </th>
+                                                        <th scope="col">
+                                                            <i class="fa fa-sort"></i> Name
+                                                        </th>
+                                                        <th scope="col">
+                                                            <i class="fa fa-sort"></i> Season
+                                                        </th>
+                                                        <th scope="col">
+                                                            Actions
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                        @foreach ($tsJobs as $tsJob)
+                                                            @php
+                                                                $hash = Crypt::encryptString($tsJob->JobKey);
+                                                            @endphp
+                                                            <tr
+                                                                id="{{ $tsJob->JobKey }}"
+                                                                class="school"
+                                                                data-job-key="{{ $tsJob->JobKey }}"
+                                                                data-school-name="{{ strtolower(__($tsJob->Name . ' (' . $tsJob->code ?? '' . ')')) }}"
+                                                            >
+                                                                <td class="idx-job-key">{{ $tsJob->JobKey }}</td>
+                                                                <td class="idx-name">{{ $tsJob->Name }}</td>
+                                                                <td class="idx-description">{{ $tsJob->code }}</td>
+                                                                <td class="actions">
+                                                                    <form action="#" method="POST" target="syncFrame" class="syncForm">
+                                                                        @csrf
+                                                                        <input type="hidden" name="job_key_hash" value="{{ $hash }}">
+                                                                        <button 
+                                                                        type="button" 
+                                                                        class="btn btn-link p-0 openJobBtn" 
+                                                                        data-job-id="{{ Crypt::encryptString($tsJob->JobID) }}" data-job-key="{{ Crypt::encryptString($tsJob->JobKey) }}">
+                                                                            {{ __('Sync Job') }}
+                                                                        </button>
+                                                                    </form>
+                                                                    <iframe name="syncFrame" style="display:none;"></iframe>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                </tbody>
+                                            </table>
+                                        @else
+                                            <div class="text-center py-3 text-muted fw-semibold">
+                                                {{ __('No Jobs Found...') }}
+                                            </div> 
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row mt-4">
             <div class="col-12">
                 <p class="lead">
-                    <?php echo __('Your Active Jobs...'); ?>
+                    <?php echo __('Your Synced Jobs...'); ?>
                 </p>
             </div>
             <div class="col-12">
@@ -152,11 +243,16 @@
                                                         $jobFolderStatusCounts[$activeSyncJob->id] = [];
                                                         $jobKeyHash = Crypt::encryptString($activeSyncJob->ts_jobkey);
                                                         $jobIdHash = Crypt::encryptString($activeSyncJob->ts_job_id);
+                                                        
+                                                        // Get pre-calculated folder status counts from dashbaord data
+                                                        $folderStatusCounts = $data['folderStatusCounts'][$activeSyncJob->ts_job_id] ?? collect([]);
                                                 
                                                         // Loop through each status
                                                         foreach ($data['statuses'] as $status) {
-                                                            // Get the count of folders with this status for the current job
-                                                            $folderCount = $activeSyncJob->folders->where('status_id', $status->id)->count();
+                                                            // Find the count for this status
+                                                            $statusData = $folderStatusCounts->firstWhere('status_id', $status->id);
+                                                            $folderCount = $statusData ? $statusData->count : 0;
+                                                            
                                                             // Store the folder count for this status
                                                             if ($folderCount !== 0) {
                                                                 $jobFolderStatusCounts[$activeSyncJob->id][$status->status_external_name] = $folderCount;

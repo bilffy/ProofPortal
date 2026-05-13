@@ -24,7 +24,7 @@
             <h3 class="text-2xl">Proofing</h3>
         </div>
         
-        @if(count($jobs) > 0)
+        @if(count($jobs) > 1)
             <div class="row mt-4">
                 <div class="col-12">
                     <p class="lead">
@@ -50,6 +50,14 @@
                             </div>
                         @endforeach
                     </div>
+                </div>
+            </div>
+        @else
+            <div class="row mt-4">
+                <div class="col-12">
+                    <p class="lead text-center">
+                        You have no active proofing job to complete
+                    </p>
                 </div>
             </div>
         @endif

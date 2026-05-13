@@ -23,22 +23,51 @@ class CheckUserRestriction
         $user = Auth::user();
 
         // dd($request);
-        if ($user && $user->getRole() === RoleHelper::ROLE_FRANCHISE) {
-            $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
-            // Redirect or abort if the user doesn't meet the condition
-            if (is_null($schoolContext)) {
-                return redirect('/')->with('error', 'You have not selected a School.');
+        if ($user && !$user->isAdmin()) {
+            $selectedJob = Session::get('selectedJob');
+            
+            // SECURITY: If a job is open in the session, ensure the current user still has access to it.
+            // This prevents issues where one user's open job context is carried over to an impersonated user,
+            // or where a job remains open after access has been revoked.
+            if ($selectedJob) {
+                $isAssigned = $user->jobs()->where('jobs.ts_job_id', $selectedJob->ts_job_id)->exists();
+
+                // Franchise users have access to any job within their franchise ts_account_id
+                if (!$isAssigned && $user->isFranchiseLevel()) {
+                    $franchise = $user->getFranchise();
+                    if ($franchise && $selectedJob->ts_account_id === $franchise->ts_account_id) {
+                        $isAssigned = true;
+                    }
+                }
+
+                if (!$isAssigned) {
+                    Session::forget([
+                        'job-season-flag',
+                        'selectedJob',
+                        'selectedSeason',
+                        'openJob',
+                        'selectedSeasonDashboard',
+                        'openSeason',
+                        'approvedSubjectChangesCount',
+                        'awaitApprovalSubjectChangesCount'
+                    ]);
+                    
+                    // If the user was trying to access a specific job-related page, redirect them with an error
+                    if ($request->is('proofing/*') || $request->is('franchise/*') || $request->is('subjects/*')) {
+                        return redirect()->route('proofing')->with('error', 'Unauthorized access to this job.');
+                    }
+                }
             }
 
-            if ($request->is('proofing/reports*') || $request->is('proofing/invitations*')) {
-                $selectedJob = Session::get('selectedJob');
-                if ($selectedJob) {
-                    $isAssigned = $selectedJob->jobUsers->contains('user_id', $user->id);
-                    if (!$isAssigned || $selectedJob->ts_account_id !== $user->getFranchise()->ts_account_id ) {
-                        abort(403, 'Unauthorized access to this job.');
-                    }
-                } else {
-                        abort(403, 'Unauthorized access to this job.');
+            // Specific check for invitation management routes (legacy logic maintained but improved)
+            if ($request->is('proofing/invitations*') && $user->isFranchiseLevel()) {
+                if (!$selectedJob) {
+                    abort(403, 'Unauthorized access to this job.');
+                }
+                
+                $franchise = $user->getFranchise();
+                if ($selectedJob->ts_account_id !== $franchise->ts_account_id) {
+                    abort(403, 'Unauthorized access to this job.');
                 }
             }
         }

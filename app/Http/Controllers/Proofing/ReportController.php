@@ -55,6 +55,7 @@ class ReportController extends Controller
             ->whereHas('report_roles', function ($query) {
                 $query->whereIn('role_id', Auth::user()->roles->pluck('id'));
             })
+            ->where('is_deleted',0)
             ->select('id', 'name', 'description', 'query');
     
         // Apply record filters if any
@@ -80,7 +81,6 @@ class ReportController extends Controller
 
     public function run($reportName = null, $tsJobId = null, $tsFolderId = null)
     {
-        
         $user = Auth::user();
         if (is_null($reportName)) {
             session()->flash('error', __('Sorry, please select a Report and try again.'));
@@ -173,8 +173,15 @@ class ReportController extends Controller
         $data['requiredParamCount'] = $requiredParamCount;
    
         // If not enough parameters, show parameter capture view
-        if ($passedParamCount < $requiredParamCount) {
-            return view('proofing.reports.run_params', $data);
+        while ($passedParamCount < $requiredParamCount) {
+             $nextParam = $reportParams[$passedParamCount];
+             if ($nextParam['query']->isEmpty()) {
+                 // If there's nothing to select for the next parameter, 
+                 // we skip it and proceed to run the report or gather more params.
+                 $passedParamCount++;
+                 continue;
+             }
+             return view('proofing.reports.run_params', $data);
         }
 
         // Run the report
@@ -271,6 +278,7 @@ class ReportController extends Controller
                     ->header('Content-Disposition', 'attachment; filename="' .$reportName. '.'.$reportExtension.'"');
         } else {
             // Handle any errors
+            \Illuminate\Support\Facades\Log::error('SSRS Failed to download', ['url' => $ssrsUrl, 'status' => $response->status(), 'body' => mb_substr($response->body(), 0, 1000)]);
             return back()->with('error', 'Failed to download report. Please try again.');
         }
     }

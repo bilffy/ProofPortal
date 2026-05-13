@@ -25,7 +25,31 @@
                         Selecting this option will show/hide the Portrait Photos wizard step.
                     </li>
                     <li class="" data-count="is-edit-portraits">
-                       <span data-count="is-edit-portraits-active">{{$isEditPortraitsCounter['true']}}</span> Folders marked as having Group Names, <span data-count="is-edit-portraits-inactive">{{$isEditPortraitsCounter['false']}}</span> Folders marked as not having Group Names.
+                       <span data-count="is-edit-portraits-active">{{$isEditPortraitsCounter['true']}}</span> Folders marked as having Portrait Photos wizard step, <span data-count="is-edit-portraits-inactive">{{$isEditPortraitsCounter['false']}}</span> Folders marked as not having Portrait Photos wizard step.
+                    </li>
+                </ul>
+
+                <p class="mb-0">
+                    Show Salutation in Portraits
+                </p>
+                <ul class="list-disc pl-5">
+                    <li>
+                        Selecting this option will show/hide the Salutation in Portrait Photos wizard step.
+                    </li>
+                    <li class="" data-count="is-edit-job-show-salutation-portrait">
+                       <span data-count="is-edit-job-show-salutation-portrait-active">{{$isEditJobShowSalutationPortraitCounter['true']}}</span> Folders marked as having Salutation in Portrait Photos wizard step, <span data-count="is-edit-job-show-salutation-portrait-inactive">{{$isEditJobShowSalutationPortraitCounter['false']}}</span> Folders marked as not having Salutation in Portrait Photos wizard step.
+                    </li>
+                </ul>
+
+                <p class="mb-0">
+                    Show Prefix & Suffix in Portraits
+                </p>
+                <ul class="list-disc pl-5">
+                    <li>
+                        Selecting this option will show/hide the Prefix & Suffix in Portrait Photos wizard step.
+                    </li>
+                    <li class="" data-count="is-edit-job-prefix-suffix-portrait">
+                       <span data-count="is-edit-job-prefix-suffix-portrait-active">{{$isEditJobPrefixSuffixPortraitCounter['true']}}</span> Folders marked as having Prefix & Suffix in Portrait Photos wizard step, <span data-count="is-edit-job-prefix-suffix-portrait-inactive">{{$isEditJobPrefixSuffixPortraitCounter['false']}}</span> Folders marked as not having Prefix & Suffix in Portrait Photos wizard step.
                     </li>
                 </ul>
 
@@ -37,7 +61,7 @@
                         Selecting this option will show/hide the Group Photo wizard step.
                     </li>
                     <li class="" data-count="is-edit-group">
-                       <span data-count="is-edit-group-active">{{$isEditGroupCounter['true']}}</span> Folders marked as having Group Names, <span data-count="is-edit-group-inactive">{{$isEditGroupCounter['false']}}</span> Folders marked as not having Group Names.
+                       <span data-count="is-edit-group-active">{{$isEditGroupCounter['true']}}</span> Folders marked as having Group Photo wizard step, <span data-count="is-edit-group-inactive">{{$isEditGroupCounter['false']}}</span> Folders marked as not having Group Photo wizard step.
                     </li>
                 </ul>
 
@@ -55,7 +79,7 @@
                 </ul>
 
                 <?php
-                    $uploadMaxFilesize = ini_get('upload_max_filesize');
+                    // $uploadMaxFilesize = ini_get('upload_max_filesize');
                 ?>
                 <p class="mb-0">
                     Show Group Image
@@ -65,7 +89,10 @@
                         Upload a Traditional Group Photo for each Folder as required.
                     </li>
                     <li>
-                        There is a {{$uploadMaxFilesize}} size limit per photo.
+                        There is a 
+                        {{-- {{$uploadMaxFilesize}}  --}}
+                        15M
+                        size limit per photo.
                     </li>
                     <li>
                         Click thumbnails to view a larger image.
@@ -90,6 +117,45 @@
                     </li>
                 </ul>
 
+                <p class="mb-0">
+                    Has Salutation/Job Title
+                </p>
+                <ul class="list-disc pl-5">
+                    <li>
+                        Selecting this option will show/hide the Salutation/Job Title fields.
+                    </li>
+                    <li>
+                       <span data-count="is-edit-salutation-active">{{$isEditSalutationCounter['true']}}</span> Folders marked as having Salutation field editable, <span data-count="is-edit-salutation-inactive">{{$isEditSalutationCounter['false']}}</span> Folders marked as Salutation field not editable.
+                    </li>
+                    <li>
+                       <span data-count="is-edit-job-title-active">{{$isEditJobTitleCounter['true']}}</span> Folders marked as having Job Title field editable, <span data-count="is-edit-job-title-inactive">{{$isEditJobTitleCounter['false']}}</span> Folders marked Job Title field not editable.
+                    </li>
+                </ul>
+
+                <p class="mb-0">
+                    Show Salutation in Groups
+                </p>
+                <ul class="list-disc pl-5">
+                    <li>
+                        Selecting this option will show/hide the Salutation in Group Photo wizard step.
+                    </li>
+                    <li class="" data-count="is-edit-job-show-salutation-group">
+                       <span data-count="is-edit-job-show-salutation-group-active">{{$isEditJobShowSalutationGroupCounter['true']}}</span> Folders marked as having Salutation in Group Photo wizard step, <span data-count="is-edit-job-show-salutation-group-inactive">{{$isEditJobShowSalutationGroupCounter['false']}}</span> Folders marked as not having Salutation in Group Photo wizard step.
+                    </li>
+                </ul>
+
+                <p class="mb-0">
+                    Show Prefix & Suffix in Groups
+                </p>
+                <ul class="list-disc pl-5">
+                    <li>
+                        Selecting this option will show/hide the Prefix & Suffix in Group Photo wizard step.
+                    </li>
+                    <li class="" data-count="is-edit-job-prefix-suffix-group">
+                       <span data-count="is-edit-job-prefix-suffix-group-active">{{$isEditJobPrefixSuffixGroupCounter['true']}}</span> Folders marked as having Prefix & Suffix in Group Photo wizard step, <span data-count="is-edit-job-prefix-suffix-group-inactive">{{$isEditJobPrefixSuffixGroupCounter['false']}}</span> Folders marked as not having Prefix & Suffix in Group Photo wizard step.
+                    </li>
+                </ul>
+
                 <div class="row ">
                     <div class="col-md-12">
                         <div id="ajax-response-readable" class="alert" role="alert" style="display: none;"></div>
@@ -97,7 +163,7 @@
                 </div>
                 <div class="row">
                     <div class="col-12 table-fixed-header">
-                        <table class="table table-responsive-sm table-sm table-bordered">
+                        <table class="table table-responsive-sm table-sm table-bordered fixed-table">
                             <thead>
                                 <tr class="bg-light">
                                     <th>Folder</th>
@@ -167,7 +233,7 @@
                                                 id="is-subject-list-allowed-none">None</span>
                                         </p>
                                     </th>
-                                    <th class="text-center">
+                                    <th class="text-center group-image-col">
                                         Show Group Image
                                     </th>
                                     <th class="text-center">
@@ -462,13 +528,13 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td class="group-image-col">
                                             <div class="row">
                                                 <div class="col-12">
                                                     <div class="row traditional-photo-upload traditional-photo-upload--{{ $folderKey }}">
                                                         <div class="col-12 text-center">
-                                                            <div class="row">
-                                                                <div class="col-4 text-center">
+                                                                <div class="row no-gutters align-items-start justify-content-center flex-nowrap">
+                                                                    <div class="col-auto text-center pr-2">
                                                                     @php
                                                                         $imageData = $folder->images;
                                                                         
@@ -481,12 +547,12 @@
                                                                         }
 
                                                                     @endphp
-                                                                    <img loading="lazy" src="{{ $imageUrl }}" 
-                                                                        class="mx-auto d-block modal-thumb" 
-                                                                        style="max-width: 100%; max-height: 200px; height: auto;" 
-                                                                        id="{{ $folderKey }}-image"
-                                                                        data-modal-title="{{ $folder->ts_foldername }}" 
-                                                                        data-modal-src="{{ $imageUrl }}">
+                                                                     <img loading="lazy" src="{{ $imageUrl }}" 
+                                                                         class="mx-auto d-block modal-thumb" 
+                                                                         style="width: 100px; height: auto; object-fit: contain;" 
+                                                                         id="{{ $folderKey }}-image"
+                                                                         data-modal-title="{{ $folder->ts_foldername }}" 
+                                                                         data-modal-src="{{ $imageUrl }}">
                                                                 
                                                                     @php
                                                                         $deleteClass = $deleteLinkVisible ? 'delete-artifact mx-auto d-block' : 'delete-artifact mx-auto d-none';
@@ -502,29 +568,29 @@
                                                                 </div>
                                                                 
                                         
-                                                                <div class="col-8">
-                                                                    <div class="form-group text-center">
-                                                                        <label for="{{ $folderKey }}" class="custom-file-label btn btn-secondary">
-                                                                            Upload File
-                                                                        </label>
-                                                                        <input type="file" accept="image/jpeg, image/png, image/jpg"
-                                                                            class="form-control-file traditional-photo-upload d-none"
-                                                                            id="{{ $folderKey }}"
-                                                                            name="{{ $folderName }}">
-                                                                    </div> 
-                                        
-                                                                    <div id="{{ $folderKey }}-bar" class="d-none">
-                                                                        <div id="progress-wrp-{{ $folderKey }}" class="progress mt-2 mb-2">
-                                                                            <div class="progress-bar" role="progressbar"
-                                                                                 style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                                    <div class="col-auto text-left d-flex flex-column align-items-start" style="gap: 5px;">
+                                                                        <div class="form-group mb-0">
+                                                                            <label for="{{ $folderKey }}" class="btn btn-secondary btn-sm mb-0" style="padding: 4px 10px; white-space: nowrap; cursor: pointer;">
+                                                                                Upload File
+                                                                            </label>
+                                                                            <input type="file" accept="image/jpeg, image/png, image/jpg"
+                                                                                class="form-control-file traditional-photo-upload d-none"
+                                                                                id="{{ $folderKey }}"
+                                                                                name="{{ $folderName }}">
+                                                                        </div> 
+                                            
+                                                                        <div id="{{ $folderKey }}-bar" class="d-none w-100">
+                                                                            <div id="progress-wrp-{{ $folderKey }}" class="progress" style="height: 18px; font-size: 10px; line-height: 18px;">
+                                                                                <div class="progress-bar bg-success" role="progressbar"
+                                                                                     style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                                                </div>
                                                                             </div>
                                                                         </div>
+                                            
+                                                                        <div id="{{ $folderKey }}-error" class="alert alert-danger d-none p-1 mb-0" style="font-size: 11px;">
+                                                                            Error MSG
+                                                                        </div>
                                                                     </div>
-                                        
-                                                                    <div id="{{ $folderKey }}-error" class="alert alert-danger d-none p-1 mt-2 mb-2">
-                                                                        Error MSG
-                                                                    </div>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>

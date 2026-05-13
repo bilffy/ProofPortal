@@ -15,6 +15,9 @@
         <div class="relative mb-8 gap-4">
             @livewire('settings.role-permission')
         </div>
+        <div class="relative mb-8 gap-4">
+            @livewire('settings.proofing-season-enable')
+        </div>
     </div>
 @endsection
 

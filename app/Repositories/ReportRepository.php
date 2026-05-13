@@ -43,11 +43,14 @@ class ReportRepository
                 'jobs.id',
                 'jobs.ts_job_id',
                 'jobs.ts_jobname',
-                'jobs.ts_season_id'
+                'jobs.ts_season_id',
+                'status.status_external_name as sync_status'
             )
             ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
             ->join('users', 'users.id', '=', 'job_users.user_id')
+            ->join('status', 'status.id', '=', 'jobs.jobsync_status_id')
             ->where('users.id', $userId)
+            ->where('status.status_internal_name', 'SYNC')
             ->orderBy('jobs.ts_jobname', 'asc')
             ->get();
     }
@@ -85,6 +88,7 @@ class ReportRepository
     {
         return Folder::select('ts_folder_id', 'ts_foldername')
             ->where('ts_job_id', $tsJobId)
+            ->orderBy('ts_foldername', 'asc')
             ->get();
     }
 
@@ -125,11 +129,14 @@ class ReportRepository
                 'jobs.id',
                 'jobs.ts_jobkey',
                 'jobs.ts_jobname',
-                'jobs.ts_season_id'
+                'jobs.ts_season_id',
+                'status.status_external_name as sync_status'
             )
             ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
             ->join('users', 'users.id', '=', 'job_users.user_id')
+            ->join('status', 'status.id', '=', 'jobs.jobsync_status_id')
             ->where('users.id', $userId)
+            ->where('status.status_internal_name', 'SYNC')
             ->orderBy('jobs.ts_jobname', 'asc')
             ->get();
     }

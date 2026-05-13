@@ -13,7 +13,7 @@
                     Hi {{ $user->firstname }},
                     <br/><br/>
                     {{ $sender->name }} from {{ $senderOrgName }}
-                    has invited you to access the MSP&nbsp;Portal for <b>{{ $userOrgName }}</b>.
+                    has invited you as a <b>{{ $userRole }}</b> to access the MSP&nbsp;Portal for <b>{{ $userOrgName }}</b>.
                     </p>
                 </p>
                 <p style="font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.3;">

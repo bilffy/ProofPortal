@@ -35,7 +35,7 @@ class SqlServerReportingServices
         
         // Include folder and report in the URL
         $url .= urlencode(self::makeStartsWithAndEndsWith($opts['ssrsFolder'], "/", "/"));
-        $url .= urlencode(trim($opts['ssrsReport'], "/"));
+        $url .= rawurlencode(trim($opts['ssrsReport'], "/"));
 
         // Add format to the URL if present
         if ($opts['format']) {
