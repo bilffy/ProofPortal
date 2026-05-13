@@ -33,5 +33,4 @@ Schedule::call(function () {
     }
 })
 ->everyFiveMinutes()
-->runInBackground()
 ->withoutOverlapping();
