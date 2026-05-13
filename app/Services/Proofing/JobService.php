@@ -261,6 +261,7 @@ class JobService
                 'foldersync_status_id' => $this->statusService->pending,
                 'job_status_id' => $this->statusService->deleted,
                 'imagesync_status_id' => $this->statusService->unsync,
+                'show_proofing' => null,
                 'proof_start' => null,
                 'proof_warning' => null,
                 'proof_due' => null,
