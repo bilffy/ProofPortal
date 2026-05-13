@@ -32,5 +32,6 @@ Schedule::call(function () {
         SyncImagesToProd02::dispatch($job->ts_jobkey);
     }
 })
+->name('sync_images_scheduler')
 ->everyFiveMinutes()
 ->withoutOverlapping();
