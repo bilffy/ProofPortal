@@ -69,7 +69,7 @@ class ProofController extends Controller
             abort(404);
         }
 
-        if ($selectedJob->job_status_id == $this->statusService->archived && (Auth::user()->hasRole('Teacher') || Auth::user()->hasRole('Photo Coordinator'))) {
+        if ($selectedJob->job_status_id == $this->statusService->archived) {
             abort(403, 'This job has been archived and is no longer accessible.');
         }
 
@@ -199,7 +199,7 @@ class ProofController extends Controller
 
         if (!$currentFolder) abort(404);
 
-        if ($currentFolder->job->job_status_id == $this->statusService->archived && (Auth::user()->hasRole('Teacher') || Auth::user()->hasRole('Photo Coordinator'))) {
+        if ($currentFolder->job->job_status_id == $this->statusService->archived) {
             abort(403, 'This job has been archived and is no longer accessible.');
         }
           

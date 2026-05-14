@@ -72,7 +72,7 @@ class ProofingJobController extends Controller
             abort(404); 
         }
 
-        if ($selectedJob->job_status_id == $this->statusService->archived && (Auth::user()->hasRole('Teacher') || Auth::user()->hasRole('Photo Coordinator'))) {
+        if ($selectedJob->job_status_id == $this->statusService->archived) {
             abort(403, 'This job has been archived and is no longer accessible.');
         }
 

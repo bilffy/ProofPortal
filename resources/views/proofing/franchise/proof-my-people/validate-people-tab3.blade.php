@@ -22,7 +22,8 @@
                                         style="max-width: 100%;"
                                         data-native-width="{{ $width }}"
                                         data-native-height="{{ $height }}"
-                                        data-artifact-name="{{ $artifactNameCrypt }}">
+                                        data-artifact-name="{{ $artifactNameCrypt }}"
+                                        oncontextmenu="return false;">
                                 @endif
                                 <div class="click-box d-none"></div>
                             </div>
@@ -31,14 +32,14 @@
                         <div class="group-image-zoom-holder col-6 ml-auto d-none">
                             <img src="{{ $image_url }}"
                                 class="mx-auto d-block group-image-zoom-placeholder"
-                                style="max-width: 100%;" id="group-image-zoom-placeholder">
+                                style="max-width: 100%;" id="group-image-zoom-placeholder" oncontextmenu="return false;">
                         </div>
 
                         <div class="group-image-zoom-pz-holder col-12 m-auto p-0 d-none"
                             style="width: 100%; height: 400px;">
                             <img id="group-image" src="{{ $scaledImageUrl }}"
                                 class="mx-auto d-block group-image-zoom-pz"
-                                style="max-width: 100%;">
+                                style="max-width: 100%;" oncontextmenu="return false;">
                         </div>
                     </div>
 
