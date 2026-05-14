@@ -10,6 +10,7 @@ use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\SchoolService;
 use Illuminate\Support\Facades\Session;
 use App\Services\Proofing\JobService;
+use App\Services\Proofing\StatusService;
 use App\Services\Proofing\TimestoneTableService;
 use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\UserResource;
@@ -24,8 +25,9 @@ class ProofingDashboardController extends Controller
     protected $seasonService;
     protected $proofingChangelogService;
     protected $timestoneTableService;
+    protected $statusService;
 
-    public function __construct(JobService $jobService, SchoolService $schoolService, EncryptDecryptService $encryptDecryptService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService, TimestoneTableService $timestoneTableService)
+    public function __construct(JobService $jobService, SchoolService $schoolService, EncryptDecryptService $encryptDecryptService, SeasonService $seasonService, ProofingChangelogService $proofingChangelogService, TimestoneTableService $timestoneTableService, StatusService $statusService)
     {
 
         $this->jobService = $jobService;
@@ -34,6 +36,7 @@ class ProofingDashboardController extends Controller
         $this->seasonService = $seasonService;
         $this->proofingChangelogService = $proofingChangelogService;
         $this->timestoneTableService = $timestoneTableService;
+        $this->statusService = $statusService;
     }
 
     private function getDecryptData($hash){
@@ -52,6 +55,10 @@ class ProofingDashboardController extends Controller
             
             if (!$selectedJob) {
                 abort(404); 
+            }
+
+            if ($selectedJob->job_status_id == $this->statusService->archived && ($user->hasRole('Teacher') || $user->hasRole('Photo Coordinator'))) {
+                abort(403, 'This job has been archived and is no longer accessible.');
             }
             
             // Maintain session compatibility for now, but prioritize URL param
@@ -127,6 +134,7 @@ class ProofingDashboardController extends Controller
                 $jobs = $user->jobs()
                     ->select('jobs.ts_job_id', 'ts_jobname', 'ts_season_id', 'ts_schoolkey', 'ts_jobkey')
                     ->where('ts_schoolkey', $currentSchool->schoolkey)
+                    ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $this->statusService->deleted, $this->statusService->tnjNotFound])
                     ->get();
             } else {
                 $jobs = collect(); // empty collection

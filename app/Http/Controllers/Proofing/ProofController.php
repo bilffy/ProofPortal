@@ -69,6 +69,10 @@ class ProofController extends Controller
             abort(404);
         }
 
+        if ($selectedJob->job_status_id == $this->statusService->archived && (Auth::user()->hasRole('Teacher') || Auth::user()->hasRole('Photo Coordinator'))) {
+            abort(403, 'This job has been archived and is no longer accessible.');
+        }
+
         $selectedSeason = $selectedJob->seasons;
         return $this->renderFolderProofingView($selectedJob, $selectedSeason, $selectedJob->ts_job_id);
     }
@@ -194,6 +198,10 @@ class ProofController extends Controller
                         ->first();
 
         if (!$currentFolder) abort(404);
+
+        if ($currentFolder->job->job_status_id == $this->statusService->archived && (Auth::user()->hasRole('Teacher') || Auth::user()->hasRole('Photo Coordinator'))) {
+            abort(403, 'This job has been archived and is no longer accessible.');
+        }
           
         $subQuerySubjects = $this->subjectService->getByJobId($currentFolder->ts_job_id, 'ts_folder_id')
                             ->distinct()

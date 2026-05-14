@@ -47,7 +47,7 @@ class JobService
         $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode, $selectedSchoolkey);
         $statuses = $this->statusService->getAllStatusData('id', 'status_internal_name', 'status_external_name')->get();
         $completedStatus = $this->statusService->completed;
-        $totalSchoolCount = $this->queryJobs($franchiseCode, $selectedSchoolkey)->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
+        $totalSchoolCount = $this->queryJobs($franchiseCode, $selectedSchoolkey)->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
             ->where('job_users.user_id', Auth::user()->id)->count();
         $seasons = $this->seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
@@ -90,7 +90,7 @@ class JobService
         return $this->queryJobs($franchiseCode, $targetSchoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->where('job_users.user_id', Auth::user()->id)
-            ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
+            ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
             ->orderBy('jobs.id', 'asc')
             ->get();
     }
@@ -101,7 +101,7 @@ class JobService
         $deleted = $this->statusService->deleted;
         return $this->queryJobs(null,$schoolkey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
-            ->whereNotIn('jobs.job_status_id', [$tnjNotFound, $deleted])
+            ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
             ->orderBy('jobs.id', 'asc')
             ->get();
     }
