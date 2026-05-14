@@ -36,8 +36,8 @@ return [
     ],
 
     'bpsync' => [
-        'url' => env('BPSync_URL'),
-        'verify_ssl' => env('BPSync_VERIFY_SSL', true),
+        'url' => env('BPSYNC_URL'),
+        'verify_ssl' => env('BPSYNC_VERIFY_SSL', true),
     ],
     
     'exportImageLocation' => env('EXPORTIMAGELOCATION'),

@@ -190,8 +190,7 @@ class ProofingJobController extends Controller
         $jobKey = $this->getDecryptData($request->input('jobKey'));
         \Log::info('Proxy sync started', ['jobKey' => $jobKey]);
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
-        // $baseUrl = 'http://bpsync.msp.local/index.php/';
-        $baseUrl = 'http://localhost/blueprint-sync/public';
+        $baseUrl = config('services.bpsync.url', 'http://bpsync.msp.local/index.php');
     
         try {
             $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(60); // Increased timeout for sync
