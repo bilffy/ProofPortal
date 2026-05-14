@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schedule;
 use App\Models\Job;
 use App\Jobs\SyncImagesToProd02;
 use Illuminate\Support\Carbon;
+use App\Services\Proofing\StatusService;
 
 // $logsPath = storage_path('logs/clean_uploaded_images.log');
 
@@ -21,7 +22,9 @@ use Illuminate\Support\Carbon;
 //     ->appendOutputTo($logsPath);
 
 Schedule::call(function () {
+    $statusService = app(StatusService::class);
     $jobs = Job::where('proof_start', '>', Carbon::today())
+        ->where('imagesync_status_id', $statusService->unsync)
         ->whereHas('images', function ($query) {
             $query->where('exportStatus', 0)
                   ->where('keyorigin', 'Subject');

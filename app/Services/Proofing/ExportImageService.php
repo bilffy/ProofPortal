@@ -3,6 +3,7 @@
 namespace App\Services\Proofing;
 use App\Services\Proofing\StatusService;
 use App\Models\Image;
+use App\Models\Job;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\Proofing\ImageUploader;
@@ -36,6 +37,7 @@ class ExportImageService
         $images = $query->limit(100)->get();
 
         if ($images->isEmpty()) {
+            Job::where('ts_jobkey', $jobkey)->update(['imagesync_status_id' => $this->statusService->sync]);
             Log::info("Sync Complete for Job: $jobkey");
             return ['message' => 'Sync Complete'];
         }
