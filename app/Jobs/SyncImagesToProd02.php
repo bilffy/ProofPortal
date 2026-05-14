@@ -10,7 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 
-class SyncImagesToProd02 implements ShouldQueue, ShouldBeUnique
+class SyncImagesToProd02 implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -18,14 +18,6 @@ class SyncImagesToProd02 implements ShouldQueue, ShouldBeUnique
 
     // Give the job plenty of time to run (5 minutes)
     public $timeout = 300;
-
-    /**
-     * The unique ID of the job.
-     */
-    public function uniqueId(): string
-    {
-        return $this->jobKey;
-    }
 
     public function __construct($jobKey = null)
     {
