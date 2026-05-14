@@ -475,7 +475,7 @@
         });
     </script>
 
-<script src="{{ URL::asset('proofing-assets/js/proofing/ajaxcontrol.js') }}"></script>
+<script src="{{ URL::asset('proofing-assets/js/proofing/ajaxcontrol.js') }}?v={{ filemtime(public_path('proofing-assets/js/proofing/ajaxcontrol.js')) }}"></script>
 <script src="{{ URL::asset('proofing-assets/js/wizard-scripts.js')}}"></script>
 <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
 <script src="{{ URL::asset('proofing-assets/js/views/typeahead.bundle.min.js')}}"></script>
