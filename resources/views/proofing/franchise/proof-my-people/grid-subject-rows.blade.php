@@ -1,5 +1,6 @@
 @foreach ($subjects as $subject)
 @php
+    $image_url = asset('proofing-assets/img/subject-image.png');  
     $skHash = sha1($subject->ts_subjectkey);
     $skEncrypted = Crypt::encryptString($subject->ts_subjectkey);
     $folderkeyEncrypted = Crypt::encryptString($currentFolder->ts_folderkey);
@@ -17,8 +18,10 @@
         $full_path = implode(DIRECTORY_SEPARATOR, $sub_dirs);
         $imageName = DIRECTORY_SEPARATOR . $full_path . DIRECTORY_SEPARATOR . $encryptImageKey . '.jpg';
         $newimageName = Str::replace('\\', '-', $imageName);
-        // Generate a signed URL for the image
-        $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+        if($subject->images){
+            // Generate a signed URL for the image
+            $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+        }
 
         $useSalutation = $currentFolder->is_edit_salutation;
         $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;

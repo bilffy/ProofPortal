@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Cache;
 
 class SyncImagesToProd02 implements ShouldQueue
 {
@@ -25,8 +25,20 @@ class SyncImagesToProd02 implements ShouldQueue
     }
 
     public function handle(ExportImageService $exportImageService)
-    {\Log::info('started');
-        // This calls your 100/35/200ms logic we wrote earlier
-        $exportImageService->getAllUnsyncJobsImages($this->jobKey);
+    {
+        // Try to get a lock for this specific job key for 5 minutes.
+        $lock = Cache::lock('sync_images_prod_' . $this->jobKey, 300);
+
+        if ($lock->get()) {
+            try {
+                \Log::info('started SyncImagesToProd02 for ' . $this->jobKey);
+                $exportImageService->getAllUnsyncJobsImages($this->jobKey);
+            } finally {
+                // Ensure the lock is released when the processing is done
+                $lock->release();
+            }
+        } else {
+            \Log::info('Skipped SyncImagesToProd02: Already running for ' . $this->jobKey);
+        }
     }
 }

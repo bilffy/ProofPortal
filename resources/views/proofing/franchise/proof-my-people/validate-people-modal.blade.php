@@ -2,14 +2,14 @@
     use App\Helpers\Helper;
     use Illuminate\Support\Facades\Crypt;
     use App\Models\ProofingChangelog;
-    use Illuminate\Support\Str;
-    $image_url = asset('proofing-assets/img/subject-image.png');              
+    use Illuminate\Support\Str;            
 @endphp
 
     @if ($currentFolder->is_edit_portraits)
         <div id="modals">
             @foreach($allSubjects as $subject)
             @php
+                $image_url = asset('proofing-assets/img/subject-image.png');  
                 $skHash = sha1($subject->ts_subjectkey);
                 $skEncrypted = Crypt::encryptString($subject->ts_subjectkey);
                 $folderkeyEncrypted = Crypt::encryptString($currentFolder->ts_folderkey);
@@ -18,22 +18,10 @@
                 $wrongclassTemplateID = 0;
 
                 if ($subject->ts_subjectkey != '' && $selectedJob->ts_jobkey != '') {
-                    $combined_key = $subject->ts_subjectkey . $selectedJob->ts_jobkey;
-                    $encryptImageKey = sprintf("%08x", crc32($combined_key));
-                    $hashed_key = hash('sha256', $combined_key);
-                    $sub_dirs = [];
-
-                    for ($i = 0; $i < strlen($hashed_key); $i += 5) {
-                        $sub_dirs[] = substr($hashed_key, $i, 3);
+                    if($subject->images){
+                        // Generate a signed URL for the image
+                        $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                     }
-
-                    // Generate the directory structure and filename using DIRECTORY_SEPARATOR
-                    $full_path = implode(DIRECTORY_SEPARATOR, $sub_dirs);
-                    $imageName = DIRECTORY_SEPARATOR . $full_path . DIRECTORY_SEPARATOR . $encryptImageKey . '.jpg';
-                    $newimageName = str_replace('\\', '-', $imageName);
-                    $newimageName = Str::replace('\\', '-', $imageName);
-                    // Generate a signed URL for the image
-                    $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                     $salutation = '';
                     $prefix     = '';
                     $suffix     = '';

@@ -85,7 +85,7 @@
                                         $historyEditsCss = $hasChanges ? 'd-inline-block' : 'd-none';
                                         $location = URL::signedRoute('my-subject-change', ['hash' => $skEncrypted]);
 
-                                        if ($subject->ts_subjectkey != '' && $selectedJob->ts_jobkey != '') {
+                                        if ($subject->ts_subjectkey != '' && $selectedJob->ts_jobkey != '' && $subject->images) {
                                             $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                                         }
                                     @endphp

@@ -24,17 +24,20 @@ use App\Services\Proofing\StatusService;
 Schedule::call(function () {
     $statusService = app(StatusService::class);
     $jobs = Job::where('proof_start', '>', Carbon::today())
-        ->where('imagesync_status_id', $statusService->unsync)
-        ->whereHas('images', function ($query) {
-            $query->where('exportStatus', 0)
-                  ->where('keyorigin', 'Subject');
-        })
-        ->get();
+    ->where('imagesync_status_id', $statusService->unsync)
+    ->whereHas('images', function ($query) {
+        $query->where('exportStatus', 0)
+              ->where('keyorigin', 'Subject');
+    })
+    ->chunkById(50, function ($jobs) {
+        foreach ($jobs as $job) {
+            SyncImagesToProd02::dispatch($job->ts_jobkey);
+        }
+    });
 
-    foreach ($jobs as $job) {
-        SyncImagesToProd02::dispatch($job->ts_jobkey);
-    }
 })
 ->name('sync_images_scheduler')
-->everyFiveMinutes()
+->everyMinute()
 ->withoutOverlapping();
+
+

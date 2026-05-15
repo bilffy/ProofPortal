@@ -26,7 +26,8 @@ class ExportImageService
     /* Export Image */
 
     public function getAllUnsyncJobsImages($jobkey)
-    {\Log::info($jobkey);
+    {
+        \Log::info($jobkey);
         // Disable logs to save RAM
         DB::connection('timestone')->disableQueryLog();
         DB::disableQueryLog();
@@ -53,7 +54,7 @@ class ExportImageService
 
             if ($remainingCount > 0) {
                 // This triggers the NEXT 100 automatically
-                dispatch(new SyncImagesToProd02($jobkey)); 
+                dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addSeconds(3))); 
                 Log::info("Dispatched next batch for $jobkey. Remaining: $remainingCount");
             }
 
