@@ -226,7 +226,7 @@ class JobConfigureController extends Controller
                 break;
 
             case 'update-people-images':
-                $this->configureService->updatePeopleImage($selectedJob->ts_job_id);
+                $this->configureService->updatePeopleImage($selectedJob->ts_job_id, $selectedJob->ts_jobkey);
                 $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
                 break;
 

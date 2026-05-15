@@ -11,6 +11,7 @@ use App\Services\Proofing\ProofingChangelogService;
 use App\Services\Proofing\FolderSubjectService;
 use App\Services\Proofing\EmailService;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\SyncImagesToProd02;
 
 class ConfigureService
 {
@@ -220,7 +221,10 @@ class ConfigureService
         // Timestone
         $tsSubjects = $this->timestoneTableService->getAllTimestoneSubjectsByJobID($tsJobId); // Format subjects by SubjectKey
 
-        // Blueprint
+        // Blueprint Folders (Pre-fetch all to eliminate N+1 lookup)
+        $bpFolders = $this->folderService->getFolderByJobId($tsJobId)->pluck('ts_folder_id', 'ts_folderkey');
+
+        // Blueprint Subjects
         $bpSubjects = $this->subjectService->getByJobId($tsJobId, 'id', 'ts_folder_id', 'ts_subjectkey', 'ts_subject_id')
                 ->orderBy('ts_subjectkey', 'asc')
                 ->get();
@@ -228,72 +232,105 @@ class ConfigureService
         $bpSubjectsUpdated = [];
         foreach ($bpSubjects as $bpSubject) {
             if (isset($tsSubjects[$bpSubject->ts_subjectkey])) {
-                // Convert TS to BP folder_id
                 $folderKey = $tsSubjects[$bpSubject->ts_subjectkey]->FolderKey;
 
-                // Fetch the single folder ID using first()
-                $bpFolder = $this->folderService->getFolderByJobIdAndFolderKey($tsJobId,$folderKey)->first(); // Use first() to fetch a single record
-        
-                // Check if we have a result and if ts_folder_id is different
-                if ($bpFolder && $bpSubject->ts_folder_id != $bpFolder->ts_folder_id) {
-                    $bpSubject->ts_folder_id = $bpFolder->ts_folder_id;
+                // Memory map lookup instead of a database hit
+                if (isset($bpFolders[$folderKey]) && $bpSubject->ts_folder_id != $bpFolders[$folderKey]) {
+                    $bpSubject->ts_folder_id = $bpFolders[$folderKey];
                     $bpSubjectsUpdated[] = $bpSubject;
                 }
             }
         }
 
-        // Save the updated subjects
+        // Save the updated subjects natively
         foreach ($bpSubjectsUpdated as $updatedSubject) {
-            $updatedSubject->save(); // Save the updated record
+            $updatedSubject->save(); 
         }
 
-        // Update FoldersSubjects table from Timestone
-        $this->recastTimestoneLinksOfSubjectsToFolders($bpSubjects->pluck('ts_subject_id'));
+        // Update FoldersSubjects table from Timestone using Bulk queries
+        $this->recastTimestoneLinksOfSubjectsToFolders($bpSubjects->pluck('ts_subject_id'), $bpFolders->values()->toArray());
     }
     
 
-    private function recastTimestoneLinksOfSubjectsToFolders($tsSubjectIds = null)
+    private function recastTimestoneLinksOfSubjectsToFolders($tsSubjectIds = null, $validBpFolderIds = [])
     {
-        //Timestone
+        // Timestone
         $tsFolderSubjectPairs = $this->timestoneTableService->getAllTimestoneSubjectFolders($tsSubjectIds);
 
-        //Blueprint
+        // Blueprint
         $bpFolderSubjectPairs = $this->folderSubjectService->getAllBlueprintSubjectFolders($tsSubjectIds);
         
-        // Group Timestone data by SubjectID for easier comparison
         $tsPairsGrouped = $tsFolderSubjectPairs->groupBy('SubjectID');
-
-        // Group Blueprint data by ts_subject_id for easier comparison
         $bpPairsGrouped = $bpFolderSubjectPairs->groupBy('ts_subject_id');
 
-        // Loop through Blueprint folder-subject pairs
-        foreach ($bpPairsGrouped as $subjectId => $bpPairs) {
-            $bpFolderIds = $bpPairs->pluck('ts_folder_id')->toArray(); // Get all FolderIDs for this SubjectID
+        $subjectsToDeleteLinks = [];
+        $linksToInsert = [];
 
-            // Check if the subject exists in Timestone
-            if (isset($tsPairsGrouped[$subjectId])) {
-                $tsFolderIds = $tsPairsGrouped[$subjectId]->pluck('FolderID')->toArray(); // Get all associated ts_folder_ids from Timestone
+        // Check TS vs BP mappings (Iterate TS to catch entirely new mappings)
+        foreach ($tsPairsGrouped as $subjectId => $tsPairs) {
+            $tsFolderIds = $tsPairs->pluck('FolderID')->unique()->toArray();
+            
+            // Only attempt to link folders that actually currently exist securely in Blueprint
+            if (!empty($validBpFolderIds)) {
+                $tsFolderIds = array_values(array_intersect($tsFolderIds, $validBpFolderIds));
+            }
+            sort($tsFolderIds);
 
-                // Sort arrays to ensure comparison works correctly
+            if (isset($bpPairsGrouped[$subjectId])) {
+                $bpFolderIds = $bpPairsGrouped[$subjectId]->pluck('ts_folder_id')->unique()->toArray();
                 sort($bpFolderIds);
-                sort($tsFolderIds);
 
-                // Compare the arrays of folder IDs
-                if ($bpFolderIds !== $tsFolderIds) {
-                    // If they are different, update Blueprint records
-                    // First, delete old Blueprint records for this subject
-                    $this->folderSubjectService->deleteFolderSubjectBySubjectId($subjectId);
-
-                    // Insert new FolderSubject records from Timestone
+                // If identical, we don't need to do anything
+                if ($tsFolderIds !== $bpFolderIds) {
+                    $subjectsToDeleteLinks[] = $subjectId;
                     foreach ($tsFolderIds as $folderId) {
-                        $this->folderSubjectService->createFolderSubject($folderId,$subjectId);
+                        $linksToInsert[] = [
+                            'ts_folder_id'  => $folderId,
+                            'ts_subject_id' => $subjectId,
+                            'created_at'    => \Carbon\Carbon::now(),
+                            'updated_at'    => \Carbon\Carbon::now()
+                        ];
                     }
                 }
+                
+                // Remove from bp array to evaluate stranded bp links
+                unset($bpPairsGrouped[$subjectId]);
+            } else {
+                // Not in blueprint at all, need to insert all
+                foreach ($tsFolderIds as $folderId) {
+                    $linksToInsert[] = [
+                        'ts_folder_id'  => $folderId,
+                        'ts_subject_id' => $subjectId,
+                        'created_at'    => \Carbon\Carbon::now(),
+                        'updated_at'    => \Carbon\Carbon::now()
+                    ];
+                }
+            }
+        }
+
+        // Any remaining items in bpPairsGrouped have NO links in TS! They should be cleared completely.
+        foreach ($bpPairsGrouped as $subjectId => $bpPairs) {
+            $subjectsToDeleteLinks[] = $subjectId;
+        }
+
+        // Perform Massive Bulk Operations To DB
+
+        if (!empty($subjectsToDeleteLinks)) {
+            // Bulk delete all mismatched links
+            foreach (array_chunk($subjectsToDeleteLinks, 1000) as $chunk) {
+                \App\Models\FolderSubject::whereIn('ts_subject_id', $chunk)->delete();
+            }
+        }
+
+        if (!empty($linksToInsert)) {
+            // Bulk insert all proper links
+            foreach (array_chunk($linksToInsert, 500) as $chunk) {
+                \App\Models\FolderSubject::insert($chunk);
             }
         }
     }
 
-    public function updatePeopleImage($tsJobId)
+    public function updatePeopleImage($tsJobId, $tsJobKey)
     {
         DB::beginTransaction();
     
@@ -307,8 +344,15 @@ class ConfigureService
                 ->getAllTimestoneHomeSubjectsByJobID($tsJobId);
     
             $this->updateImage($tsSubjectImages, $bpSubjectImages);
-    
+
+            // Re-flag the umbrella Job so the cron scheduler knows it needs attention as a fallback
+            $statusService = app(\App\Services\Proofing\StatusService::class);
+            \App\Models\Job::where('ts_job_id', $tsJobId)->update(['imagesync_status_id' => $statusService->unsync]);
+            
             DB::commit();
+
+            // Fire queue ONLY after ALL nested database transactions officially record the changes on disk
+            SyncImagesToProd02::dispatch($tsJobKey)->afterCommit();
         } catch (\Throwable $e) {
             DB::rollBack(); // NOTHING SAVES if error occurs
             throw $e;
@@ -330,57 +374,112 @@ class ConfigureService
 
     private function updateImage($tsSubjectImages, $bpSubjectImages)
     {
+        // 1. Get all subject keys we care about
+        $bpSubjectKeys = collect($bpSubjectImages)->pluck('ts_subjectkey')->filter()->unique()->toArray();
+        if (empty($bpSubjectKeys)) return;
+
+        // 2. Fetch ALL existing blueprint images for these subjects in ONE query to eliminate the N+1 problem.
+        $existingBpImages = \App\Models\Image::where('keyorigin', 'Subject')
+            ->whereIn('keyvalue', $bpSubjectKeys)
+            ->get()
+            ->groupBy('keyvalue'); // Fast hash-map locally grouped by subject key
+
+        $imagesToInsert = [];
+        $imagesToUpdate = [];
+        $idsToDelete = [];
+
         foreach ($bpSubjectImages as $bpSubjectImage) {
-    
             $tsSubjectId  = $bpSubjectImage['ts_subject_id'];
             $tsSubjectKey = $bpSubjectImage['ts_subjectkey'];
-    
-            // Get all Blueprint images for this subject
-            $existingBpImages = $this->imageService
-                ->getImagesBySubjectKey($tsSubjectKey);
-    
-            $existingBpImageKeys = $existingBpImages->pluck('ts_imagekey')->toArray();
-    
-            // If no images exist in Timestone → delete all Blueprint images
+
+            // Get existing images for this subject from our pre-fetched collection
+            $subjectExistingImages = $existingBpImages->get($tsSubjectKey, collect());
+            $existingBpImageKeys = $subjectExistingImages->pluck('ts_imagekey')->toArray();
+
+            // If no images exist in Timestone → mark all for deletion
             if (!isset($tsSubjectImages[$tsSubjectId])) {
-    
-                $this->imageService->deleteImageBytsSubjectKey($tsSubjectKey);
+                $idsToDelete = array_merge($idsToDelete, $subjectExistingImages->pluck('id')->toArray());
                 continue;
             }
-    
+
             $tsImages = $tsSubjectImages[$tsSubjectId];
-    
             $tsImageKeys = [];
-    
+
             foreach ($tsImages as $tsImage) {
-    
                 $imageKey       = $tsImage->ImageKey;
                 $imageID        = $tsImage->ImageID;
                 $imageIsPrimary = $tsImage->IsPrimary;
-    
+
                 $tsImageKeys[] = $imageKey;
-    
-                // Add or update image
-                $this->imageService->updateOrCreateImageRecord([
-                    'ts_subjectkey' => $tsSubjectKey,
-                    'ts_subject_id' => $tsSubjectId,
-                    'ts_imagekey'   => $imageKey,
-                    'ts_image_id'   => $imageID,
-                    'ts_job_id'     => $bpSubjectImage['ts_job_id'],
-                    'is_primary'    => $imageIsPrimary,
-                    'exportStatus'    => 0
-                ]);
+
+                // Check if this image already exists in Blueprint
+                $existingImage = $subjectExistingImages->firstWhere('ts_imagekey', $imageKey);
+
+                if ($existingImage) {
+                    $needsUpdate = false;
+
+                    // Update image metadata if it changed
+                    if ($existingImage->ts_image_id != $imageID || $existingImage->is_primary != $imageIsPrimary || $existingImage->ts_job_id != $bpSubjectImage['ts_job_id']) {
+                        $existingImage->ts_image_id = $imageID;
+                        $existingImage->is_primary  = $imageIsPrimary;
+                        $existingImage->ts_job_id   = $bpSubjectImage['ts_job_id'];
+                        $needsUpdate = true;
+                    }
+
+                    // Force re-export for ALL verified images
+                    if ($existingImage->exportStatus !== 0) {
+                        $existingImage->exportStatus = 0;
+                        $needsUpdate = true;
+                    }
+                    
+                    if ($needsUpdate) {
+                        $imagesToUpdate[] = $existingImage;
+                    }
+                } else {
+                    // Prepare for bulk insert for massive speed improvements
+                    $imagesToInsert[] = [
+                        'keyorigin'   => 'Subject',
+                        'keyvalue'    => $tsSubjectKey,
+                        'ts_imagekey' => $imageKey,
+                        'ts_image_id' => $imageID,
+                        'ts_job_id'   => $bpSubjectImage['ts_job_id'],
+                        'is_primary'  => $imageIsPrimary,
+                        'exportStatus'=> 0,
+                        'protected'   => 0,
+                        'created_at'  => \Carbon\Carbon::now(),
+                        'updated_at'  => \Carbon\Carbon::now()
+                    ];
+                }
             }
-    
-            // DELETE images that no longer exist in Timestone
+
+            // DELETE images that no longer exist in Timestone for this subject
             $imagesToDelete = array_diff($existingBpImageKeys, $tsImageKeys);
-    
             if (!empty($imagesToDelete)) {
-                $this->imageService->deleteImagesBySubjectAndKeys(
-                    $tsSubjectKey,
-                    $imagesToDelete
-                );
+                $toDelete = $subjectExistingImages->whereIn('ts_imagekey', $imagesToDelete)->pluck('id')->toArray();
+                $idsToDelete = array_merge($idsToDelete, $toDelete);
             }
+        }
+
+        // --- Execute Bulk Operations ---
+
+        // 1. Bulk Delete all old images across all subjects in chunks
+        if (!empty($idsToDelete)) {
+            foreach (array_chunk($idsToDelete, 1000) as $chunk) {
+                \App\Models\Image::whereIn('id', $chunk)->delete();
+            }
+        }
+
+        // 2. Bulk Insert all new images in chunks
+        if (!empty($imagesToInsert)) {
+            foreach (array_chunk($imagesToInsert, 500) as $chunk) {
+                \App\Models\Image::insert($chunk);
+            }
+        }
+
+        // 3. Save updates
+        // Since we explicitly filtered out unmodified rows, this array is often completely empty!
+        foreach ($imagesToUpdate as $imageModel) {
+            $imageModel->save();
         }
     }
 

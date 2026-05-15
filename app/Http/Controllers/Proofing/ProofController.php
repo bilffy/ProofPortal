@@ -222,7 +222,7 @@ class ProofController extends Controller
             ->sortBy([['ts_folder_id', 'asc'], ['ts_subject_id', 'asc']])
             ->values();
         
-        $allSubjects = $attachedSubjects->merge($homedSubjects)->sortBy('firstname');
+        $allSubjects = $attachedSubjects->merge($homedSubjects)->sortBy('lastname');
         
         $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([
