@@ -367,7 +367,8 @@ class ConfigureService
                     'ts_imagekey'   => $imageKey,
                     'ts_image_id'   => $imageID,
                     'ts_job_id'     => $bpSubjectImage['ts_job_id'],
-                    'is_primary'    => $imageIsPrimary
+                    'is_primary'    => $imageIsPrimary,
+                    'exportStatus'    => 0
                 ]);
             }
     
