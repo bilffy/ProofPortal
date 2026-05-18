@@ -87,7 +87,7 @@
                                         $hash = Crypt::encryptString($subjectChange->ts_subjectkey);
                                         $rowIdSelector = sha1(json_encode($subjectChange));
                                         if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '' && $subjectChange->images) {
-                                            $image_url = route('serve.image', ['filename' => $hash, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+                                            $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $hash, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                                         }
                                         if($subjectChange->external_issue_name === 'Class'){
                                             $id = str_replace("Folder From: ", "", $subjectChange->change_from);

@@ -177,7 +177,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             //Proof-my-people - Group Magnifying in proofing - third page
             Route::get('/franchise/zoom', [ImageController::class, 'zoom'])->name('zoom');    
             //Proof-my-people - Image Preview of subject in proofing - second page
-            Route::get('network-image/{filename}/{jobKey}', [ImageController::class, 'serveImage'])->name('serve.image');
+            Route::get('network-image/{fileOrigin}/{filename}/{jobKey}', [ImageController::class, 'serveImage'])->name('serve.image');
             //groupImage Show
             Route::get('/image/{filename}', [ImageController::class, 'showgroupImage'])->name('image.show');
 

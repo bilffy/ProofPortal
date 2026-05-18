@@ -434,6 +434,7 @@ class ProofingChangelogService
         $responseData = [];
         
         if($requestData->has('issue')){
+            $issue = $requestData->get('issue'); // Fallback to what frontend explicitly sent, preventing undefined fatal crash
             if ($currentfirstname != $requestData['new_first_name'] || $currentlastname != $requestData['new_last_name']) {
                 $issue = 'SUBJECT_ISSUE_SPELLING';
             }elseif ($subjectData->title != $requestData->get('new_title') || $subjectData->salutation != $requestData['new_salutation']) {
@@ -442,9 +443,12 @@ class ProofingChangelogService
                 $issue = 'SUBJECT_ISSUE_PREFIX_SUFFIX';
             }
             $proofingDescription = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName($issue, 'issue_description', 'issue_category_id', 'id');
+            // If it couldn't find an issue mapping, safely abort payload
+            if (!$proofingDescription) return;
             $issueId = $proofingDescription->id;
         }else{
             $proofingDescription = $this->proofingDescriptionService->getAllProofingDescriptionById($requestData['subjects_questions'], 'issue_description', 'issue_category_id');
+            if (!$proofingDescription) return;
             $issueId = $requestData['subjects_questions'];
         }
         $constants = Config::get('constants');
@@ -470,8 +474,8 @@ class ProofingChangelogService
                     $result = false;
                     $message = "Character limit exceeded.";
                 } else {
-                    $currentValue = "{$currentfirstname} {$currentlastname}";
-                    $newValue = "{$requestData['new_first_name']} {$requestData['new_last_name']}";
+                    $currentValue = "[Firstname: {$currentfirstname}] [Lastname: {$currentlastname}]";
+                    $newValue = "[Firstname: {$requestData['new_first_name']}] [Lastname: {$requestData['new_last_name']}]";
                     $approvalStatus = $this->statusService->autoApproved;
                     $isResolved = $this->statusService->active;
                     $note = "{$issue}_NOTE";
@@ -514,7 +518,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
+                            "acknowledge" => __("Corrections could not be saved. Please try again."),
                             "full_name" => "<strong>{$subject->firstname} {$subject->lastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -612,7 +616,6 @@ class ProofingChangelogService
                         $result = false;
                     }
                 }
-
                 if ($result) {
                     $htmlUpdates = [
                             "acknowledge" => __("Corrections have been saved. Make another correction or close."),
@@ -621,7 +624,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
+                            "acknowledge" => __("Corrections could not be saved. Please try again."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -677,7 +680,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
+                            "acknowledge" => __("Corrections could not be saved. Please try again."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -723,7 +726,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
+                            "acknowledge" => __("Corrections could not be saved. Please try again."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -801,7 +804,7 @@ class ProofingChangelogService
                     ];
                 } else {
                     $htmlUpdates = [
-                            "acknowledge" => __("Corrections have been saved. Make another correction or close."),
+                            "acknowledge" => __("Corrections could not be saved. Please try again."),
                             "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong >",
                             "alert" => "danger"
                     ];
@@ -832,10 +835,11 @@ class ProofingChangelogService
         }
 
         $changeNote = count($replace) > 0 ? str_replace(array_keys($replace), $replace, $constants[$note]) : $note;
-        if(!$result){
-            if ($message != "Character limit exceeded.") {
-                try{
-                    $result = ProofingChangelog::insert([
+
+        // ONLY INSERT CHANGELOG IF IT IS A VALID ALLOWED CHANGE! (PREVENT CHARACTER LIMIT EXCEED FROM WRITING FLUSHED CORRUPT LOGS!)
+        if ($message !== "Character limit exceeded.") {
+            try{
+                $result = ProofingChangelog::insert([
                         'ts_jobkey' => $subjectData->job->ts_jobkey,
                         'keyvalue' => $subjectData->ts_subjectkey,
                         'keyorigin' => 'Subject',
@@ -848,32 +852,19 @@ class ProofingChangelogService
                         'change_datetime' => Carbon::now(),
                         'approvalStatus' => $approvalStatus
                     ]);
-                } catch (\Exception $e) {
-                    $message = $e->getMessage();
-                    $result = false;
-                }
+            } catch (\Exception $e) {
+                $message = $e->getMessage();
+                $result = false;
+            }
+        }
                 
+            if (!isset($htmlUpdates)) {
                 $htmlUpdates = [
-                    "acknowledge" => $result ? __("The issue has been logged. Make another correction or close.") : __("Corrections have been saved. Make another correction or close."),
+                    "acknowledge" => $result ? __("The issue has been logged. Make another correction or close.") : __("The issue could not be logged. Please try again."),
                     "full_name" => "<strong>{$currentfirstname} {$currentlastname}</strong>",
                     "alert" => $result ? "success" : "danger"
                 ];
             }
-        }else{
-            ProofingChangelog::insert([
-                'ts_jobkey' => $subjectData->job->ts_jobkey,
-                'keyvalue' => $subjectData->ts_subjectkey,
-                'keyorigin' => 'Subject',
-                'change_from' => $currentValue,
-                'change_to' => $newValue,
-                'user_id' => Auth::user()->id,
-                'notes' => $changeNote,
-                'issue_id' => $issueId,
-                'resolved_status_id' => $isResolved,
-                'change_datetime' => Carbon::now(),
-                'approvalStatus' => $approvalStatus
-            ]);
-        }
 
         $responseData = [];
 

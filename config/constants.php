@@ -34,7 +34,7 @@ return [
     'SUBJECT_REMOVE_PICTURE' => 'Please remove picture of FULLNAME for reasons such as infringement or child protection.',
     'SUBJECT_ABSENT' => 'FULLNAME was absent on photo-day.',
 
-    'SUBJECT_ISSUE_SPELLING_NOTE' => 'Change in spelling from "OLDFIRSTNAME OLDLASTNAME" to "NEWFIRSTNAME NEWLASTNAME"',
+    'SUBJECT_ISSUE_SPELLING_NOTE' => 'Change in spelling from [Firstname: "OLDFIRSTNAME"] [Lastname: "OLDLASTNAME"] to [Firstname: "NEWFIRSTNAME"] [Lastname: "NEWLASTNAME"]',
     'SUBJECT_ISSUE_PICTURE_EXIST_NOTE' => 'Picture is not of "FIRSTNAME LASTNAME", it may be of "VALUE"',
     'SUBJECT_ISSUE_PICTURE_NOTEXIST_NOTE' => 'Picture is not of "FIRSTNAME LASTNAME", I\'m not sure who it belongs to.',
     'SUBJECT_ISSUE_CLASS_EXIST_NOTE' => '"FIRSTNAME LASTNAME" does not belong in "CURRENTFOLDER", they may belong in "NEWFOLDER".',

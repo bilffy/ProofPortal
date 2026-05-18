@@ -20,7 +20,7 @@
                 if ($subject->ts_subjectkey != '' && $selectedJob->ts_jobkey != '') {
                     if($subject->images){
                         // Generate a signed URL for the image
-                        $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+                        $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                     }
                     $salutation = '';
                     $prefix     = '';

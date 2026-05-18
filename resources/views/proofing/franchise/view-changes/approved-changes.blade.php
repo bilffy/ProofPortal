@@ -152,7 +152,7 @@
                                         $folderName = implode("<br>", $attachedFolderNames[$subjectChange->ts_subjectkey]['names']);
                                         $skEncrypted = Crypt::encryptString($subjectChange->ts_subjectkey);
                                         if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '' && $subjectChange->images) {
-                                            $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+                                            $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
                                         }
                                     @endphp
                                     

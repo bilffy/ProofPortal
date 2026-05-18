@@ -101,14 +101,25 @@ class ExportImageService
                 
             $mimeType = $fileInfo->buffer($image->Thumbnail);
             $extension = $this->getExtensionFromMimeType($mimeType);
-            $sKey = (string)$image->SubjectKey;
-
             $prefix = config('services.proofing_cache_prefix');
+            $sKey = (string)$image->SubjectKey;
+            //secret code
+            $hash = hash_hmac('sha256', 'subjects', $sKey);
+            $p1 = substr($hash, 0, 2);
+            $p2 = substr($hash, 2, 2);
+            $p3 = substr($hash, 4, 2);
+            
             $remotePath = sprintf(
-                '%s/%s/%s/%s/%s/%s/%s.%s',
+                '%s/%s/%s/%s/subjects/%s/%s/%s/%s.%s',
                 $prefix, $image->Code, $image->SchoolKey, $image->JobKey,
-                $sKey[0], $sKey[1], $sKey, $extension
+                $p3, $p1, $p2, $sKey, $extension
             );
+            //old code
+            // $remotePath = sprintf(
+            //     '%s/%s/%s/%s/%s/%s/%s.%s',
+            //     $prefix, $image->Code, $image->SchoolKey, $image->JobKey,
+            //     $sKey[0], $sKey[1], $sKey, $extension
+            // );
             $remotePath = ltrim($remotePath, '/');
 
             $filename = sprintf('%s.%s', $sKey, $extension);

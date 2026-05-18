@@ -20,7 +20,7 @@
         $newimageName = Str::replace('\\', '-', $imageName);
         if($subject->images){
             // Generate a signed URL for the image
-            $image_url = route('serve.image', ['filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+            $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
         }
 
         $useSalutation = $currentFolder->is_edit_salutation;

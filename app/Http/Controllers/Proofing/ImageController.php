@@ -51,9 +51,16 @@ class ImageController extends Controller
             $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
             if ($folder && $folder->job) {
                 $job = $folder->job;
-                $char1 = $folderKey[0];
-                $char2 = $folderKey[1];
-                $cachePath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                //secret location
+                $hash = hash_hmac('sha256', 'folders', $folderKey);
+                $p1 = substr($hash, 0, 2);
+                $p2 = substr($hash, 2, 2);
+                $p3 = substr($hash, 4, 2);
+                $cachePath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
+                //old location
+                // $char1 = $folderKey[0];
+                // $char2 = $folderKey[1];
+                // $cachePath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$char1}/{$char2}/{$folderKey}.{$extension}";
                 $imageUrl = rtrim(config('services.exportImageLocation'), '/') . '/' . $cachePath;
 
                 $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
@@ -147,7 +154,7 @@ class ImageController extends Controller
         }
     }
 
-    public function serveImage($filename,$jobKey)
+    public function serveImage($fileOrigin,$filename,$jobKey)
     {
         try {
             // 1. Decrypt the filename
@@ -162,12 +169,17 @@ class ImageController extends Controller
                 Log::error("Invalid decrypted filename: " . json_encode($deCryptfilename));
                 return $this->serveFallback();
             }
+            //old location
+            // $char1 = $deCryptfilename[0];
+            // $char2 = $deCryptfilename[1];
+            // $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
 
-            // 2. Construct the URL 
-            $char1 = $deCryptfilename[0];
-            $char2 = $deCryptfilename[1];
-            
-            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
+            //secret location
+            $hash = hash_hmac('sha256', $fileOrigin, $deCryptfilename);
+            $p1 = substr($hash, 0, 2);
+            $p2 = substr($hash, 2, 2);
+            $p3 = substr($hash, 4, 2);
+            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$fileOrigin}/{$p3}/{$p1}/{$p2}/{$deCryptfilename}.jpg";
 
             // 3. Try HTTP first (Proxy)
             $response = Http::timeout(15)
@@ -251,10 +263,16 @@ class ImageController extends Controller
                 $seasonCode = $job->seasons->code;
                 $schoolKey = $job->ts_schoolkey;
                 $jobKey = $job->ts_jobkey;
-                
-                $char1 = $folderKey[0];
-                $char2 = $folderKey[1];
-                $cachePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                //secret location
+                $hash = hash_hmac('sha256', 'folders', $folderKey);
+                $p1 = substr($hash, 0, 2);
+                $p2 = substr($hash, 2, 2);
+                $p3 = substr($hash, 4, 2);
+                $cachePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
+                //old location
+                // $char1 = $folderKey[0];
+                // $char2 = $folderKey[1];
+                // $cachePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$char1}/{$char2}/{$folderKey}.{$extension}";
                 $imageUrl = rtrim(config('services.exportImageLocation'), '/') . '/' . $cachePath;
 
                 $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
@@ -377,30 +395,40 @@ class ImageController extends Controller
         $artifactToFolderMap = json_decode($request->input('artifact-to-folder-map'), true);
         $folderPath = $request->input('upload_session');
     
-        $jobKeyContext = null;
-        $seasonCode = null;
-        $schoolKey = null;
-
-        if ($request->has('jobHash')) {
-            $jobKeyContext = Crypt::decryptString($request->input('jobHash'));
-            $selectedJob = $this->jobService->getJobByJobKey($jobKeyContext)->first();
-            if ($selectedJob) {
-                $seasonCode = $selectedJob->seasons->code ?? null;
-                $schoolKey = $selectedJob->ts_schoolkey;
-            }
+        $jobKeyContextRequest = null;
+        if ($request->has('jobHash') && !empty($request->input('jobHash'))) {
+            $jobKeyContextRequest = Crypt::decryptString($request->input('jobHash'));
         }
 
-        // Now you can process this mapping as needed
         foreach ($artifactToFolderMap as $artifact => $folderKey) {
             // Check if folderKey is not 'discard_image' or 'no_match'
             if ($folderKey !== "discard_image" && $folderKey !== "no_match") {
                 $extension = pathinfo($artifact, PATHINFO_EXTENSION); // Get the file extension
-                $newPath = 'groupImages/' . $folderKey . '.' . $extension; // Ensure you're placing it in a folder
-                //Construct HTTP path: seasoncode/schoolkey/Jobkey/Folderkey[0]/Folderkey[1]/folderkey.jpg
-                if ($seasonCode && $schoolKey && $jobKeyContext) {
-                    $char1 = $folderKey[0];
-                    $char2 = $folderKey[1];
-                    $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                
+                // Lookup Folder details dynamically to ensure 100% correct hierarchy context
+                $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+                $seasonCodeLocal = null;
+                $schoolKeyLocal  = null;
+                $jobKeyLocal     = null;
+
+                if ($folder && $folder->job) {
+                    $jobLocal = $folder->job;
+                    $seasonCodeLocal = $jobLocal->seasons->code ?? null;
+                    $schoolKeyLocal = $jobLocal->ts_schoolkey;
+                    $jobKeyLocal = $jobLocal->ts_jobkey;
+                }
+                
+                if ($seasonCodeLocal && $schoolKeyLocal && $jobKeyLocal) {
+                    //secret location
+                    $hash = hash_hmac('sha256', 'folders', $folderKey);
+                    $p1 = substr($hash, 0, 2);
+                    $p2 = substr($hash, 2, 2);
+                    $p3 = substr($hash, 4, 2);
+                    $remotePath = "{$seasonCodeLocal}/{$schoolKeyLocal}/{$jobKeyLocal}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
+                    //old location
+                    // $char1 = $folderKey[0];
+                    // $char2 = $folderKey[1];
+                    // $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/folders/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
                     if (Storage::disk('public')->exists($artifact)) {
                         $fileContent = Storage::disk('public')->get($artifact);
@@ -410,13 +438,18 @@ class ImageController extends Controller
                         Storage::disk('public')->delete($artifact);
                     }
                 } else {
-                    Log::error("Missing job context for group image upload: " . $folderKey);
+                    Log::error("Missing job context for group image upload mapping: folderKey = " . $folderKey);
                 }
             } else {
-                Storage::disk('public')->delete($artifact);
+                if (Storage::disk('public')->exists($artifact)) {
+                    Storage::disk('public')->delete($artifact);
+                }
             }
         }
-        Storage::disk('public')->deleteDirectory($folderPath);
+        
+        if (Storage::disk('public')->exists($folderPath)) {
+            Storage::disk('public')->deleteDirectory($folderPath);
+        }
     
         // Return a response, redirect, or whatever your flow requires
         if ($request->has('jobHash')) {
@@ -449,10 +482,16 @@ class ImageController extends Controller
             $seasonCode = $job->seasons->code;
             $schoolKey = $job->ts_schoolkey;
             $jobKey = $job->ts_jobkey;
-            
-            $char1 = $folderKey[0];
-            $char2 = $folderKey[1];
-            $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+            //secret location
+            $hash = hash_hmac('sha256', 'folders', $folderKey);
+            $p1 = substr($hash, 0, 2);
+            $p2 = substr($hash, 2, 2);
+            $p3 = substr($hash, 4, 2);
+            $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
+            //old location
+            // $char1 = $folderKey[0];
+            // $char2 = $folderKey[1];
+            // $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$char1}/{$char2}/{$folderKey}.{$extension}";
 
             try {
                 $uploader = new ImageUploader();
@@ -473,25 +512,4 @@ class ImageController extends Controller
         return response()->json(['message' => 'Upload failed'], 500);
     }
 
-    public function groupImageDeleteFile(Request $request)
-    {
-        $folderKey = $request->input('folder_key');
-
-        $fileName = $this->imageService->deleteGroupImage($folderKey);
-
-        if ($fileName) {
-            // Check public too for backward compatibility
-            if (Storage::disk('public')->exists('groupImages/' . $fileName)) {
-                Storage::disk('public')->delete('groupImages/' . $fileName);
-            }
-            
-            return response()->json([
-                'message' => 'Image deleted successfully',
-            ]);
-        } else {
-            return response()->json([
-                'message' => 'Error deleting image',
-            ], 400);
-        }
-    }
 }
