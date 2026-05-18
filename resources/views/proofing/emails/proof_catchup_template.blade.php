@@ -119,7 +119,7 @@
                                         <br/><br/>
                                         Please complete your proofs for the following classes:
                                         <br/>
-                                        {{#FOLDERS}}
+                                        {#FOLDERS}
                                         <br/><br/>
                                         To complete your proofs click here:
                                         <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>

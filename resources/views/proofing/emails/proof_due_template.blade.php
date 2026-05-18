@@ -120,7 +120,7 @@
                                         <br/>
                                         Please complete your proofs for the following classes:
                                         <br/>
-                                        {{#FOLDERS}}
+                                        {#FOLDERS}
                                         <br/>
                                         <br/>
                                         To ensure there are no delays in receiving your photos, please click here

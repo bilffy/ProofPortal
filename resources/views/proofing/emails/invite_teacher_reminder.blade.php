@@ -120,7 +120,7 @@
                                         <br/>
                                         You have been allocated to proof the following Folders:
                                         <br/>
-                                        {{#FOLDERS}}
+                                        {#FOLDERS}
                                         <br/>
                                     </p>
                                     <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">

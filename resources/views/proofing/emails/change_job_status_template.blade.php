@@ -120,7 +120,7 @@
                                         <br/>
                                         The following Folders are part of the School:
                                         <br/>
-                                        {{#ALLFOLDERS}}
+                                        {#ALLFOLDERS}
                                         <br/>
                                         <br/>
                                         To review these changes, please visit
