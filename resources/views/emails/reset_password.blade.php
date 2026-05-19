@@ -9,7 +9,7 @@ Password Reset for MSP Portal
 Password Reset for MSP Portal
 <br/>
 </p>
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #666666; line-height: 1.3;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
 Hi {{ $firstname }},
 <br/>
 <br/>
@@ -28,7 +28,7 @@ width="225">
 </tr>
 <tr>
 <td colspan="2" style="padding: 0px 40px 0px 40px;">
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #666666; line-height: 1.3;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
 This password reset link will expire in {{ $expiration }} minutes. 
 </p>
 </td>

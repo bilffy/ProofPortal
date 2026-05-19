@@ -9,7 +9,7 @@ Invitation to MSP Portal
 Welcome to the MSP Portal
 <br/>
 </p>
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #6d6e71; line-height: 1.3;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
 Hi {{ $user->firstname }},
 <br/><br/>
 {{ $sender->name }} from {{ $senderOrgName }}
@@ -31,7 +31,7 @@ width="225">
 </tr>
 <tr>
 <td colspan="2" style="padding: 0px 40px 0px 40px">
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #6d6e71; line-height: 1.3;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
 During the setup process, you'll confirm your name, create a password and then be directed to the login page.
 <br/><br/>
 This invitation expires after 14 days.
