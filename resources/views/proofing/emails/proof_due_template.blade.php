@@ -138,8 +138,6 @@
                                         <br/>
                                         <strong>{FRANCHISE_NAME}</strong>
                                         <br/>
-                                        {FRANCHISE_PHONE}
-                                        <br/>
                                         <a href="mailto:{FRANCHISE_EMAIL}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry"
                                            style="text-decoration: none; color: #6d6e71;">{FRANCHISE_EMAIL}</a>
                                         <br/>
@@ -177,9 +175,9 @@
                 <tr>
                     <td colspan="2" style="padding: 10px 40px 20px 40px; text-align: center;">
                         <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                            {FRANCHISE_NAME}
+                            MSP Photography Pty Ltd
                             <br/>
-                            {FRANCHISE_ADDRESS1}, {FRANCHISE_SUBURB}, {FRANCHISE_STATE} {FRANCHISE_POSTCODE}
+                            Copyright ⓒ 2026 MSP Photography
                         </p>
                     </td>
                 </tr>

@@ -12,7 +12,7 @@
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
-                <div class="slate-board p-4 mb-4">
+                <div class="card p-4 mb-4">
                     <div class="row">
                         <div class="group-image-holder col-12 ml-auto mr-auto">
                             <div class="click-box-wrapper">
@@ -75,7 +75,7 @@
                 <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="slate-board p-4 mb-4">
+                            <div class="p-4 mb-4">
                                 @php
                                     $groupRowArray = $groupDetails['groupDetails'];
                                     $groupCount = count($groupRowArray);
@@ -169,7 +169,7 @@
 
     <div class="row" id="group_questions_2">
         <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
-            <div class="slate-board p-4 mb-4">
+            <div class="p-4 mb-4">
                 @if($currentFolder->is_edit_teacher)
                     <div class="form-group">
                         <label for="teacher-name">Teacher</label>

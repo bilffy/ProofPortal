@@ -401,11 +401,21 @@ class InvitationController extends Controller
         }
 
         // --- 5. SAVE INVITATION CONTENT FOR UNIQUE USERS ---
-        foreach (array_unique($inviteUsers) as $inviteUserId) {
+        $uniqueInviteUserIds = array_unique($inviteUsers);
+
+        foreach ($uniqueInviteUserIds as $inviteUserId) {
             $this->emailService->saveInvitationContent(
                 $request->role,
                 $inviteUserId,
                 now(),
+                $request->job_key
+            );
+        }
+
+        // --- 5b. SAVE SCHEDULED EMAIL RECORDS (templates 1-4) FOR EACH INVITED USER ---
+        if (!empty($uniqueInviteUserIds)) {
+            $this->emailService->saveScheduledEmailsForInviteUsers(
+                $uniqueInviteUserIds,
                 $request->job_key
             );
         }

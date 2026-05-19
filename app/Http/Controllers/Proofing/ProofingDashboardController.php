@@ -71,7 +71,15 @@ class ProofingDashboardController extends Controller
             session()->save();
 
         } elseif(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true) {
-            $selectedJob = session('selectedJob');
+            $sessionJob = session('selectedJob');
+            $selectedJob = $this->jobService->getJobByJobKey($sessionJob->ts_jobkey)->first();
+            
+            // Check if the job was archived in another session
+            if (!$selectedJob || $selectedJob->job_status_id == $this->statusService->archived) {
+                Session::forget(['selectedJob', 'selectedSeason', 'openJob']);
+                session()->save();
+                $selectedJob = null;
+            }
         }
 
         if ($selectedJob) {

@@ -78,18 +78,24 @@
 
         <div class="row mt-4">
             <div class="col-12">
-                <p class="lead">
+                <!-- <p class="lead">
                     <?php echo __('Your Unsynced Jobs...'); ?>
-                </p>
+                </p> -->
             </div>
             <div class="col-12">
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                There are
-                                <strong>@if($tsJobs){{$tsJobs->count()}}@endif</strong>
-                                Jobs to be synced.
+                                <!-- Combined into a single line wrapper -->
+                                <div class="mb-4">
+                                    <h5 class="text-black d-inline mr-2">Your Unsynced Jobs</h5>
+                                    <span class="text-muted">
+                                        - There are
+                                        <strong>@if($tsJobs){{$tsJobs->count()}}@endif</strong>
+                                        Jobs to be synced.
+                                    </span>
+                                </div>
                                 <div class="row mt-3 mb-3">
                                     <div class="col-lg-6">
                                         <div class="form-group">
@@ -169,28 +175,33 @@
 
         <div class="row mt-4">
             <div class="col-12">
-                <p class="lead">
-                    <?php echo __('Your Synced Jobs...'); ?>
-                </p>
             </div>
             <div class="col-12">
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                There are
-                                <strong>@if($data['activeSyncJobs']){{$data['activeSyncJobs']->count()}}@endif</strong>
-                                out of your
-                                <strong>@if($data['totalSchoolCount']){{$data['totalSchoolCount']}}@endif</strong>
-                                Jobs marked as active.
-                                <span class="btn-link ml-2 show-hide-archived" style="cursor: pointer;" data-toggle-url="{{ route('dashboard.toggleArchived') }}">Show Archived Jobs</span>
+                                <!-- Combined into a single line wrapper -->
+                                <div class="mb-4">
+                                    <h5 class="text-black d-inline mr-2">Your Synced Jobs</h5>
+                                    <span class="text-muted">
+                                        - There are 
+                                        <strong>@if($data['activeSyncJobs']){{$data['activeSyncJobs']->count()}}@endif</strong> 
+                                        out of your 
+                                        <strong>@if($data['totalSchoolCount']){{$data['totalSchoolCount']}}@endif</strong> 
+                                        Jobs marked as active.
+                                    </span>
+                                    <span class="btn-link ml-2 show-hide-archived" style="cursor: pointer;" data-toggle-url="{{ route('dashboard.toggleArchived') }}">
+                                        Show Archived Jobs
+                                    </span>
+                                </div>
+                                <!-- Filter Row below -->
                                 <div class="row mt-3 mb-3">
                                     <div class="col-lg-6">
                                         <div class="form-group">
                                             <input type="search" class="form-control" id="searchData_filter" placeholder="Start typing a Job name to filter by...">
                                         </div>
-                                        <div id="school-name-filter-feedback">
-                                        </div>
+                                        <div id="school-name-filter-feedback"></div>
                                     </div>
                                 </div>
                             </div>

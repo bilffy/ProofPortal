@@ -56,7 +56,7 @@
             <div class="row mt-4">
                 <div class="col-12">
                     <p class="lead text-center">
-                        You have no active proofing job to complete
+                        Currently you have no active proofing job to complete
                     </p>
                 </div>
             </div>

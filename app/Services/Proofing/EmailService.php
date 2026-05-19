@@ -468,6 +468,122 @@ class EmailService
         }
     }   
 
+    /**
+     * For each newly invited user, insert pending email records for the 4
+     * scheduled notification templates (proof_start, proof_warning, proof_due,
+     * proof_catchup) using the job's corresponding date columns as sentdate.
+     *
+     * Template mapping:
+     *   ID 1  – proof_start    → jobs.proof_start
+     *   ID 2  – proof_warning  → jobs.proof_warning
+     *   ID 3  – proof_due      → jobs.proof_due
+     *   ID 4  – proof_catchup  → jobs.proof_catchup
+     */
+    public function saveScheduledEmailsForInviteUsers(array $userIds, string $jobKey): void
+    {
+        $authUser = Auth::user();
+
+        // Load the job with its date columns and related data
+        $selectedJob = Job::with(['franchises', 'folders'])
+            ->where('ts_jobkey', $jobKey)
+            ->select(['id', 'ts_job_id', 'ts_jobkey', 'ts_jobname', 'ts_schoolkey', 'ts_account_id',
+                      'proof_start', 'proof_warning', 'proof_due', 'proof_catchup', 'job_status_id', 'notifications_matrix'])
+            ->first();
+
+        if (!$selectedJob) {
+            return;
+        }
+
+        // Map template_name → job column
+        $templateDateMap = [
+            'proof_start'   => $selectedJob->proof_start,
+            'proof_warning' => $selectedJob->proof_warning,
+            'proof_due'     => $selectedJob->proof_due,
+            'proof_catchup' => $selectedJob->proof_catchup,
+        ];
+
+        $users = User::whereIn('id', $userIds)
+            ->select('id', 'name', 'email', 'firstname', 'lastname')
+            ->get();
+
+        foreach ($templateDateMap as $templateName => $sentDate) {
+            // Skip if the job doesn't have this date configured
+            if (empty($sentDate)) {
+                continue;
+            }
+
+            $template = Template::where('template_name', $templateName)->first();
+            if (!$template) {
+                continue;
+            }
+
+            $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
+            if (!File::exists($templatePath)) {
+                continue;
+            }
+            $templateContent = File::get($templatePath);
+
+            $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
+            $statusModel   = Status::find($selectedJob->job_status_id);
+
+            foreach ($users as $user) {
+                // Skip if a pending record already exists for this user + template + job
+                $alreadyExists = Email::where('template_id', $template->id)
+                    ->where('ts_jobkey', $jobKey)
+                    ->where('email_to', $user->email)
+                    ->where('status_id', $this->statusService->pending)
+                    ->exists();
+
+                if ($alreadyExists) {
+                    continue;
+                }
+
+                // Resolve folders the user has access to within this job
+                $userFolders = $selectedJob->folders
+                    ->filter(fn ($folder) =>
+                        DB::table('folder_users')
+                            ->where('ts_folder_id', $folder->ts_folder_id)
+                            ->where('user_id', $user->id)
+                            ->exists()
+                    )
+                    ->pluck('ts_foldername')
+                    ->toArray();
+
+                $data = [
+                    'INVITEE_FIRST_NAME'    => $user->firstname ?? '',
+                    'FOLDERS'               => $userFolders,
+                    'ALLFOLDERS'            => $allJobFolders,
+                    'JOB_NAME'              => $selectedJob->ts_jobname ?? '',
+                    'REVIEW_DUE'            => $selectedJob->proof_due
+                                                ? Carbon::parse($selectedJob->proof_due)->format('l j F, Y')
+                                                : '',
+                    'FRANCHISE_NAME'        => $user->getSchoolOrFranchiseDetail()->name     ?? '',
+                    'FRANCHISE_PHONE'       => $user->getSchoolOrFranchiseDetail()->phone    ?? '',
+                    'FRANCHISE_EMAIL'       => $user->getSchoolOrFranchiseDetail()->email    ?? '',
+                    'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
+                    'FRANCHISE_ADDRESS1'    => $user->getSchoolOrFranchiseDetail()->address  ?? '',
+                    'FRANCHISE_SUBURB'      => $user->getSchoolOrFranchiseDetail()->suburb   ?? '',
+                    'FRANCHISE_STATE'       => $user->getSchoolOrFranchiseDetail()->state    ?? '',
+                    'FRANCHISE_POSTCODE'    => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
+                    'APP_URL'               => Config::get('app.url'),
+                    'JOB_STATUS_NAME'       => $statusModel->status_external_name ?? '',
+                ];
+
+                $processedContent = $this->replaceTemplateVariables($templateContent, $data);
+
+                $templateSubject = $template->template_subject;
+                if (strpos($templateSubject, 'JOB_NAME') !== false) {
+                    $templateSubject = str_replace('JOB_NAME', $selectedJob->ts_jobname, $templateSubject);
+                }
+
+                $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $sentDate);
+                $emlContent   = MessageConverter::toEmail($emailMessage)->toString();
+
+                $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $jobKey);
+            }
+        }
+    }
+
     public function saveInvitationContent($role, $user, $date, $jobkey)
     {
         $authUser = Auth::user();

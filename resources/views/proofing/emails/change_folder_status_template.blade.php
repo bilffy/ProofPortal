@@ -128,8 +128,6 @@
                                             <br/>
                                             <strong>{FRANCHISE_NAME}</strong>
                                             <br/>
-                                            {FRANCHISE_PHONE}
-                                            <br/>
                                             <a href="mailto:{FRANCHISE_EMAIL}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry" style="text-decoration: none; color: #6d6e71;">{FRANCHISE_EMAIL}</a>
                                             <br/>
                                             <a href="https://{FRANCHISE_WEB_ADDRESS}" style="text-decoration: none; color: #6d6e71;">{FRANCHISE_WEB_ADDRESS}</a>

@@ -212,11 +212,11 @@ START: Override CoreUI Styles to align with MSP Branding
     color: #fff;
     background: #005C91;
 }
-
+/* 
 .card {
     border: 2px solid #969696;
     border-radius: 12px;
-}
+} */
 
 .card-header {
     border-top-left-radius: 12px;
