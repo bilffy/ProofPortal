@@ -10,7 +10,7 @@ Password Reset for MSP Portal
 <br/>
 </p>
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
-Hi {{ $firstname }},
+Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{{ $firstname }}</span>,
 <br/>
 <br/>
 We received a request to reset your password. Click the link below to set a new one:
