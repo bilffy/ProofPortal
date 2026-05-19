@@ -55,6 +55,6 @@ class Franchise extends Model
 
     public function getBusinessName()
     {
-        return "MSP Portal " . $this->name;
+        return "MSP Photography " . $this->name;
     }
 }
