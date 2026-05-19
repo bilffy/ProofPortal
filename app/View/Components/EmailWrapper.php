@@ -8,6 +8,20 @@ use Illuminate\View\Component;
 
 class EmailWrapper extends Component
 {
+    public $franchiseName;
+    public $franchisePhone;
+    public $franchiseEmail;
+
+    /**
+     * Create a new component instance.
+     */
+    public function __construct($franchiseName = '', $franchisePhone = '', $franchiseEmail = '')
+    {
+        $this->franchiseName = $franchiseName;
+        $this->franchisePhone = $franchisePhone;
+        $this->franchiseEmail = $franchiseEmail;
+    }
+
     /**
      * Get the view / contents that represent the component.
      */
