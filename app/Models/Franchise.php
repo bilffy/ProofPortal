@@ -55,6 +55,6 @@ class Franchise extends Model
 
     public function getBusinessName()
     {
-        return "MSP Photography " . $this->name;
+        return $this->name . "<br>" . $this->email . "<br>" . config('app.franchise_web_address', 'www.msp.com.au');
     }
 }

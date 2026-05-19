@@ -20,7 +20,7 @@
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #666666; line-height: 1.4; text-align: left;">
                                         Regards,
                                         <br/>
-                                        <strong>{{ $franchiseName }}</strong>
+                                        <strong>{!! $franchiseName !!}</strong>
                                         <!-- @if (!empty($franchisePhone))
                                             <br/>
                                             {{ $franchisePhone }}
