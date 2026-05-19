@@ -1,7 +1,7 @@
 @php
     $user = auth()->user();
     $contact = "(02) 6933 7722 | helpdesk@msp.com.au";
-    $address = 'MSP Portal Resource Centre - 2 Ball Place, Wagga Wagga NSW 2650';
+    $address = 'MSP Photography Resource Centre - 2 Ball Place, Wagga Wagga NSW 2650';
     
     if ($user->isSchoolLevel() || $user->isFranchiseLevel()) {
         $franchise = $user->getFranchise();
