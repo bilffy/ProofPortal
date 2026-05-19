@@ -18,9 +18,18 @@
                             <tr>
                                 <th style="padding: 20px 10px 20px 40px; width: 30%;" class="stack">
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #666666; line-height: 1.4; text-align: left;">
-                                        Regards,
+                                        <!-- Regards,
                                         <br/>
-                                        <strong>{{ $franchiseName }}</strong>
+                                        <strong>{{ $franchiseName }}</strong> -->
+
+                                        Regards,<br>
+                                            @if(is_array($franchiseName))
+                                                @foreach($franchiseName as $line)
+                                                    {{ $line }}<br>
+                                                @endforeach
+                                            @else
+                                                {{ $franchiseName }}
+                                            @endif
                                         <!-- @if (!empty($franchisePhone))
                                             <br/>
                                             {{ $franchisePhone }}

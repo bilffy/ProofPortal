@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Config;
 
 class Franchise extends Model
 {
@@ -58,6 +57,11 @@ class Franchise extends Model
     {
         $webAddress = Config::get('app.franchise_web_address', 'www.msp.com.au');
         
-        return $this->name . '<br/>' . $this->email . '<br/>' . $webAddress;
+        // Return an array of lines instead of stringing them together
+        return [
+            $this->name,
+            $this->email,
+            $webAddress
+        ];
     }
 }
