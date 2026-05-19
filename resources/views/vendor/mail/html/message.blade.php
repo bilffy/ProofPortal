@@ -36,7 +36,7 @@
 							@endif
 							<br/><br/> -->
 						<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 12px; color: #666666; line-height: 1.3;">
-							&copy;MSP Portal 2026. All rights reserved.
+							Copyright ⓒ 2026 MSP Photography. All rights reserved.
 						</p>
                     </x-mail::footer>
                 </td>
