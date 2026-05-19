@@ -10,7 +10,7 @@
     
     <!-- Google Fonts for non-Outlook clients -->
     <!--[if !mso]><!-->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700&display=swap" rel="stylesheet">
     <!--<![endif]-->
 
     <style>
@@ -25,12 +25,12 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        html, body {
+        html, body, table, td, p, a {
             width: 100% !important;
             height: 100% !important;
             margin: 0;
             padding: 0;
-            font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
             font-weight: 300;
         }
 
@@ -182,7 +182,7 @@
                         <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
                             MSP Photography Pty Ltd
                             <br/>
-                            Copyright ⓒ 2026 MSP Photography
+                            Copyright ⓒ 2026 MSP Photography. All rights reserved.
                         </p>
                     </td>
                 </tr>

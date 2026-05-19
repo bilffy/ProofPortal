@@ -11,7 +11,7 @@
     
     <!-- Google Fonts for non-Outlook clients -->
     <!--[if !mso]><!-->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700&display=swap" rel="stylesheet">
     <!--<![endif]-->
 
     <style>
@@ -26,12 +26,12 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        html, body {
+        html, body, table, td, p, a {
             width: 100% !important;
             height: 100% !important;
             margin: 0;
             padding: 0;
-            font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
             font-weight: 300;
         }
 
@@ -158,11 +158,11 @@
                 <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center" width="750" class="container">
                     <tr>
                         <td colspan="2" style="padding: 10px 40px 20px 40px; text-align: center;">
-                            <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
-                                {FRANCHISE_NAME}
-                                <br/>
-                                {FRANCHISE_ADDRESS1}, {FRANCHISE_SUBURB}, {FRANCHISE_STATE} {FRANCHISE_POSTCODE}
-                            </p>
+                        <p style="font-size: 12px; color: #6d6e71; line-height: 1.3;">
+                            MSP Photography Pty Ltd
+                            <br/>
+                            Copyright ⓒ 2026 MSP Photography. All rights reserved.
+                        </p>
                         </td>
                     </tr>
                 </table>

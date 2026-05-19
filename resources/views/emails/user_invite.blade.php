@@ -5,18 +5,18 @@
     <x-email-wrapper :franchiseName="$franchise->getBusinessName()" :franchisePhone="$franchise->phone" :franchiseEmail="$franchise->email">
         <tr>
             <td colspan="2" style="padding: 0px 40px 0px 40px">
-                <p style="font-weight: 700; font-size: 21px; color: #00b3e0;">
+                <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-weight: 700; font-size: 21px; color: #00b3e0;">
                     Welcome to the MSP Portal
                     <br/>
                 </p>
-                <p style="font-size: 14px; color: #6d6e71; line-height: 1.3;">
+                <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #6d6e71; line-height: 1.3;">
                     Hi {{ $user->firstname }},
                     <br/><br/>
                     {{ $sender->name }} from {{ $senderOrgName }}
                     has invited you as a <b>{{ $userRole }}</b> to access the MSP&nbsp;Portal for <b>{{ $userOrgName }}</b>.
                     </p>
                 </p>
-                <p style="font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.3;">
+                <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.3;">
                     To get started, click the button to setup your account:
                 </p>
             </td>
@@ -32,7 +32,7 @@
         </tr>
         <tr>
             <td colspan="2" style="padding: 0px 40px 0px 40px">
-                <p style="font-size: 14px; color: #6d6e71; line-height: 1.3;">
+                <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #6d6e71; line-height: 1.3;">
                     During the setup process, you'll confirm your name, create a password and then be directed to the login page.
                     <br/><br/>
                     This invitation expires after 14 days.

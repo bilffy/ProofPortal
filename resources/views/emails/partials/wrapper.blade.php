@@ -17,7 +17,7 @@
                             {{ $slot }}
                             <tr>
                                 <th style="padding: 20px 10px 20px 40px; width: 30%;" class="stack">
-                                    <p style="font-size: 14px; color: #666666; line-height: 1.4; text-align: left;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #666666; line-height: 1.4; text-align: left;">
                                         Regards,
                                         <br/>
                                         <strong>{{ $franchiseName }}</strong>
@@ -35,7 +35,7 @@
                             </tr>
                             <tr>
                                 <td colspan="2" bgcolor="#00b3e0" style="padding: 20px 40px 20px 40px;">
-                                    <p style="font-size: 12px; color: #ffffff; line-height: 1.3; text-align: center;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 12px; color: #ffffff; line-height: 1.3; text-align: center;">
                                         <strong>Please note:</strong> This is an automated email, and the mailbox is
                                         unable to receive replies. We're happy to help you with any questions or
                                         concerns you may have, please contact your local MSP expert:

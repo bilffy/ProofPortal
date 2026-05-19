@@ -15,7 +15,7 @@
 
         .slate-board {
             padding: 20px;
-            border: 2px solid #b2ebf2;
+            border: 1px solid #c2cfd6;
         }
 
         .click-box {

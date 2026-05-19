@@ -12,7 +12,7 @@
         @endphp
         <div class="row" id="group_thumbnail">
             <div class="questions col-xs-12 col-sm-12 col-md-12 col-lg-10 col-xl-8 m-auto">
-                <div class="card p-4 mb-4">
+                <div class="slate-board p-4 mb-4">
                     <div class="row">
                         <div class="group-image-holder col-12 ml-auto mr-auto">
                             <div class="click-box-wrapper">

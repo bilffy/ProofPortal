@@ -23,7 +23,7 @@
         }
     }
     </style>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,700&display=swap" rel="stylesheet">
     {{ $head ?? '' }}
 </head>
 <body bgcolor="#e8ecf1">

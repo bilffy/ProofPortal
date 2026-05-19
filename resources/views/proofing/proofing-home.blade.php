@@ -21,6 +21,9 @@
     .card-header strong {
         color: #595b5d;
     }
+    #schools-table thead th {
+        color: #595b5d;
+    }
 </style>
 @stop
 
@@ -114,11 +117,14 @@
                                             <table id="schools-table" class="table table-bordered table-striped table-sm">
                                                 <thead>
                                                     <tr>
+                                                        <th scope="col" style="width: 70px; max-width: 70px; white-space: nowrap;">
+                                                            <i class="fa fa-sort"></i> ID
+                                                        </th>
                                                         <th scope="col">
                                                             <i class="fa fa-sort"></i> Job Key
                                                         </th>
                                                         <th scope="col">
-                                                            <i class="fa fa-sort"></i> Name
+                                                            <i class="fa fa-sort"></i> Job
                                                         </th>
                                                         <th scope="col">
                                                             <i class="fa fa-sort"></i> Season
@@ -139,6 +145,7 @@
                                                                 data-job-key="{{ $tsJob->JobKey }}"
                                                                 data-school-name="{{ strtolower(__($tsJob->Name . ' (' . $tsJob->code ?? '' . ')')) }}"
                                                             >
+                                                                <td>{{ $loop->iteration }}</td>
                                                                 <td class="idx-job-key">{{ $tsJob->JobKey }}</td>
                                                                 <td class="idx-name">{{ $tsJob->Name }}</td>
                                                                 <td class="idx-description">{{ $tsJob->code }}</td>
