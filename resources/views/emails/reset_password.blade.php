@@ -5,7 +5,7 @@ Password Reset for MSP Portal
 <x-email-wrapper :franchiseName="$franchise->getBusinessName()" :franchisePhone="$franchise->phone" :franchiseEmail="$franchise->email">
 <tr>
 <td colspan="2" style="padding: 0px 40px 0px 40px">
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-weight: 700; font-size: 21px; color: #00b3e0;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 21px; color: #00b3e0;">
 Password Reset for MSP Portal
 <br/>
 </p>

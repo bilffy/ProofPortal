@@ -23,7 +23,14 @@
         }
     }
     </style>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Montserrat:300,400,500,700&display=swap');
+    </style>
+    <style>
+        body, table, td, p, a, li, blockquote, span, strong, em {
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+        }
+    </style>
     {{ $head ?? '' }}
 </head>
 <body bgcolor="#e8ecf1">
