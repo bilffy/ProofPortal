@@ -21,10 +21,10 @@
                                         Regards,
                                         <br/>
                                         <strong>{{ $franchiseName }}</strong>
-                                        @if (!empty($franchisePhone))
+                                        <!-- @if (!empty($franchisePhone))
                                             <br/>
                                             {{ $franchisePhone }}
-                                        @endif
+                                        @endif -->
                                         <br/><br/>
                                     </p>
                                 </th>

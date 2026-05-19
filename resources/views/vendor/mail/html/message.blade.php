@@ -26,7 +26,7 @@
             <tr>
                 <td style="padding: 0; text-align: center;">
                     <x-mail::footer>
-						<p style="font-size: 12px; color: #666666; line-height: 1.3;">
+                        <!-- <p style="font-size: 12px; color: #666666; line-height: 1.3;">
 							{{$franchise->getBusinessName()}}
 							<br/>
 							@if (null == $franchise->state)
@@ -34,7 +34,8 @@
 							@else
 								{{$franchise->address}}, {{$franchise->state}} {{$franchise->postcode}}
 							@endif
-							<br/><br/>
+							<br/><br/> -->
+						<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 12px; color: #666666; line-height: 1.3;">
 							&copy;MSP Portal 2026. All rights reserved.
 						</p>
                     </x-mail::footer>
