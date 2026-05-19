@@ -19,10 +19,10 @@
     }
     #searchData thead th, 
     .card-header strong {
-        color: #595b5d;
+        color: #808080;
     }
     #schools-table thead th {
-        color: #595b5d;
+        color: #808080;
     }
 </style>
 @stop

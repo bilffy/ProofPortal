@@ -17,7 +17,7 @@ To finish logging in to your MSP Portal account, please enter this security code
 <br/>
 <br/>
 </p>
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; letter-spacing: 2px; font-size: 24px; line-height: 1.3; color: #595b5d;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; letter-spacing: 2px; font-size: 24px; line-height: 1.3; color: #808080;">
 <strong>{{ $otp }}</strong></p>
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #7f8184; line-height: 1.3;">
 <br/>

@@ -58,6 +58,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         // Users routes
         Route::get('/users', [UserController::class, 'index'])->name('users');
         Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
+        Route::get('/schools/search', [UserController::class, 'searchSchools'])->name('schools.search');
         // Route for inviting a single user
         Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
         Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');

@@ -163,7 +163,7 @@ START: Override CoreUI Styles to align with MSP Branding
 /* body {
     font-family: Montserrat,sans-serif!important;
     font-size: 1rem;
-    color: #595b5d;
+    color: #808080;
     line-height: 1.5rem;
     text-rendering: optimizeLegibility;
     background-color: #F5F7FA;
@@ -203,7 +203,7 @@ START: Override CoreUI Styles to align with MSP Branding
 }
 
 .navbar-nav .nav-item, .navbar-nav .nav-link {
-    color: #595b5d;
+    color: #808080;
     font-weight: 700;
 }
 

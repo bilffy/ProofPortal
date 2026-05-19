@@ -92,6 +92,41 @@ class UserController extends Controller
         return $validate;
     }
 
+    public function searchSchools(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('q');
+        $page = $request->input('page', 1);
+        $offset = ($page - 1) * 30;
+
+        $query = School::query()->orderBy('name');
+
+        if ($user->isFranchiseLevel()) {
+            $franchiseId = $user->getFranchise()->id;
+            $query->whereHas('franchises', function ($q) use ($franchiseId) {
+                $q->where('franchise_id', $franchiseId);
+            });
+        } elseif (!$user->isAdmin()) {
+            $query->where('id', $user->getSchool()->id);
+        }
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $totalCount = $query->count();
+        $schools = $query->offset($offset)->limit(30)->get(['id', 'name']);
+
+        return response()->json([
+            'results' => $schools->map(function($school) {
+                return ['id' => $school->id, 'text' => $school->name];
+            }),
+            'pagination' => [
+                'more' => ($offset + 30) < $totalCount
+            ]
+        ]);
+    }
+
     public function index(Request $request)
     {
         return view('manageUsers', [
@@ -104,9 +139,9 @@ class UserController extends Controller
         $user = Auth::user();
         $franchiseList = $user->isAdmin() ? Franchise::orderBy('name')->get()
             : ( $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [] );
-        $schoolList = $user->isAdmin() ? School::orderBy('name')->get()
+        $schoolList = $user->isAdmin() ? School::orderBy('name')->limit(10)->get()
             : ( $user->isFranchiseLevel()
-                ? School::orderBy('name')->with('franchises')->whereHas('franchises', function ($q) use ($user) { $q->where('franchise_id', $user->getFranchise()->id); })->get()
+                ? School::orderBy('name')->with('franchises')->whereHas('franchises', function ($q) use ($user) { $q->where('franchise_id', $user->getFranchise()->id); })->limit(10)->get()
                 : School::orderBy('name')->where('id', '=', $user->getSchool()->id)->get() );
 
         // Check if it has school context
@@ -233,10 +268,18 @@ class UserController extends Controller
 
         $franchiseList = $user->isAdmin() ? Franchise::orderBy('name')->get()
             : ( $user->isFranchiseLevel() ? Franchise::orderBy('name')->where('id', '=', $user->getFranchise()->id)->get() : [] );
-        $schoolList = $user->isAdmin() ? School::orderBy('name')->get()
+        $schoolList = $user->isAdmin() ? School::orderBy('name')->limit(10)->get()
             : ( $user->isFranchiseLevel()
-                ? School::orderBy('name')->with('franchises')->whereHas('franchises', function ($q) use ($user) { $q->where('franchise_id', $user->getFranchise()->id); })->get()
+                ? School::orderBy('name')->with('franchises')->whereHas('franchises', function ($q) use ($user) { $q->where('franchise_id', $user->getFranchise()->id); })->limit(10)->get()
                 : School::orderBy('name')->where('id', '=', $user->getSchool()->id)->get() );
+
+        // Ensure the target user's school is in the list
+        if (isset($editUser) && $editUser->isSchoolLevel()) {
+            $targetSchool = $editUser->getSchool();
+            if ($targetSchool && !$schoolList->contains('id', $targetSchool->id)) {
+                $schoolList->push($targetSchool);
+            }
+        }
 
         // Check if it has school context
         // This override the franchise level context from the selected school

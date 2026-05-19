@@ -172,7 +172,30 @@
     window.addEventListener('load', () => {
         $('#select_role').select2({minimumResultsForSearch: Infinity, placeholder: "Select"});
         $('#select_role').change(toggleLevelOptions);
-        $('#select_school').select2({placeholder: "Select"});
+        $('#select_school').select2({
+            placeholder: "Select",
+            ajax: {
+                url: '{{ route("schools.search") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: data.pagination.more
+                        }
+                    };
+                },
+                cache: true
+            }
+        });
         $('#select_franchise').select2({placeholder: "Select"});
         
         if (selectedRole) {
