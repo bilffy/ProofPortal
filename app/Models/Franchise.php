@@ -57,6 +57,7 @@ class Franchise extends Model
     public function getBusinessName()
     {
         $webAddress = Config::get('app.franchise_web_address', 'www.msp.com.au');
-        return $this->name . $this->email. $webAddress;
+        
+        return $this->name . '<br/>' . $this->email . '<br/>' . $webAddress;
     }
 }
