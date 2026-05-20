@@ -27,8 +27,6 @@
         }
 
         html, body, table, td, p, a {
-            width: 100% !important;
-            height: 100% !important;
             margin: 0;
             padding: 0;
             font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;

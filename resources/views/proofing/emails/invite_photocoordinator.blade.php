@@ -62,7 +62,7 @@
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         You have been allocated to proof the following Folders:
-                                        <br/>
+                                        <br/><br/>
                                         @foreach($FOLDERS as $FOLDER)
                                             <strong style="font-weight: 700;">- FOLDER_NAME</strong><br/>
                                         @endforeach
