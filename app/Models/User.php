@@ -436,7 +436,7 @@ class User extends Authenticatable
             return $user->isRcUser() || $user->isFranchiseLevel();
         } else if ($this->isFranchiseLevel()) { // For Franchise Admins
             return $user->isSchoolAdmin() || $user->isPhotoCoordinator();
-        } else if ($this->isSchoolAdmin() || $this->isPhotoCoordinator()) { // For School Admins and Photo Coordinators
+        } else if ($this->isSchoolAdmin() || $this->isPhotoCoordinator()) { // For School Administrator and Photo Coordinators
             return $user->isPhotoCoordinator() || $user->isTeacher();
         }
         

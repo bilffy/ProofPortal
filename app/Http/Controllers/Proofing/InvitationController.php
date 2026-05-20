@@ -105,7 +105,7 @@ class InvitationController extends Controller
                     $teachers[] = $user;
                 }
             } else {
-                // Fallback for other roles (School Admin, RcUser, etc.)
+                // Fallback for other roles (School Administrator, RcUser, etc.)
                 if ($user->hasRole('Photo Coordinator')) {
                     $photocoordinators[] = $user;
                 } elseif ($user->hasRole('Teacher')) {

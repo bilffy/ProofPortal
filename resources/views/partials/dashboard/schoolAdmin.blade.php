@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-5">
     <div>
-        <h3 class="text-2xl">School Admin</h3>
+        <h3 class="text-2xl">School Administrator</h3>
     </div>
     <div class="border-neutral-300 border-[1px] h-full w-1/2 rounded-md overflow-hidden">
         

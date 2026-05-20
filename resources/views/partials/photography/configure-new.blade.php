@@ -41,7 +41,7 @@
     $seasonService = new SeasonService();
     
     $selectOptionsEmailTo = [
-        'schooladmin' => 'School Admin',
+        'schooladmin' => 'School Administrator',
         'photocoordinator' => 'Photo Coordinator',
         'teacher' => 'Teacher',
     ];
@@ -131,7 +131,7 @@
                     <table class=" w-full">
                         <thead>
                             <x-table.headerCell sortable="{{false}}"> </x-table.headerCell>
-                            <x-table.headerCell sortable="{{false}}">School Admin</x-table.headerCell>
+                            <x-table.headerCell sortable="{{false}}">School Administrator</x-table.headerCell>
                             <x-table.headerCell sortable="{{false}}">Photo Coordinator</x-table.headerCell>
                             <x-table.headerCell sortable="{{false}}">Teacher</x-table.headerCell>
                         </thead>

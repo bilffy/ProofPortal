@@ -142,7 +142,7 @@
                 hideOrShowSelect('franchise', 'SHOW');
                 break;
             case 'Photo Coordinator':
-            case 'School Admin':
+            case 'School Administrator':
             case 'Teacher':
                 $('#level').removeClass('invisible');
                 $('#level').addClass('visible');

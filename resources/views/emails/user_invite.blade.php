@@ -9,13 +9,23 @@ Invitation to MSP Portal
 Welcome to the MSP Portal
 <br/>
 </p>
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
+@php
+    $userSchoolName = '';
+    if ($user->isSchoolLevel()) {
+        $school = $user->getSchool();
+        $userSchoolName = $school ? $school->name : '';
+    }
+@endphp
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #808080; line-height: 1.4;">
 Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{{ $user->firstname }}</span>,
 <br/><br/>
-{{ $sender->name }} from {{ $senderOrgName }}
-has invited you as a <b>{{ $userRole }}</b> to access the MSP&nbsp;Portal for <b>{{ $userOrgName }}</b>.
+@if($userSchoolName)
+{{ $sender->name }} from {{ $senderOrgName }} has invited you to access the MSP&nbsp;Portal as a {{ $userRole }} for <strong>{{ $userSchoolName }}</strong>.
+@else
+{{ $sender->name }} from {{ $senderOrgName }} has invited you to access the MSP&nbsp;Portal as a {{ $userRole }}.
+@endif
 </p>
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.3;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
 To get started, click the button to setup your account:
 </p>
 </td>
@@ -31,7 +41,7 @@ width="225">
 </tr>
 <tr>
 <td colspan="2" style="padding: 0px 40px 0px 40px">
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif; font-size: 14px; color: #808080; line-height: 1.3;">
+<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #808080; line-height: 1.4;">
 During the setup process, you'll confirm your name, create a password and then be directed to the login page.
 <br/><br/>
 This invitation expires after 14 days.

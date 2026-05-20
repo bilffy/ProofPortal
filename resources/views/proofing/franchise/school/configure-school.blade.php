@@ -34,7 +34,7 @@
     
     $selectOptionsEmailTo = [
         'photocoordinator' => 'Photo Coordinator',
-        'schooladmin' => 'School Admin',
+        'schooladmin' => 'School Administrator',
         'teacher' => 'Teacher',
     ];
 

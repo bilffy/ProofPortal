@@ -10,7 +10,7 @@ class RoleHelper
     public const ROLE_ADMIN = 'Admin';
     public const ROLE_FRANCHISE = 'Franchise';
     public const ROLE_PHOTO_COORDINATOR = 'Photo Coordinator';
-    public const ROLE_SCHOOL_ADMIN = 'School Admin';
+    public const ROLE_SCHOOL_ADMIN = 'School Administrator';
     public const ROLE_TEACHER = 'Teacher';
 
     /**
