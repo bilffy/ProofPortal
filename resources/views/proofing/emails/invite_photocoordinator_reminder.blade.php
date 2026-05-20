@@ -139,7 +139,7 @@
                             {DOWNLOAD_INSTRUCTIONS}
 
                             <tr>
-                                <th style="padding: 20px 40px 20px 40px;" class="stack">
+                                <th width="30%" style="padding: 20px 40px 20px 40px;" class="stack">
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; font-weight: 700; color: #666666; line-height: 1.4; text-align: left;">
                                         Regards,
                                         <br/>
