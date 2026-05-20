@@ -16,7 +16,7 @@
     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; font-weight: 700; color: #666666; line-height: 1.4; text-align: left;">
         Regards,
         <br/>
-        <strong>{{ $franchiseName }}</strong>
+        {{ $franchiseName }}
         <br/>
         <a href="mailto:{{ $franchiseEmail }}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry"
            style="text-decoration: none; color: #666666; font-weight: 700;">{{ $franchiseEmail }}</a>

@@ -130,7 +130,7 @@
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; font-weight: 700; color: #666666; line-height: 1.4; text-align: left;">
                                         Regards,
                                         <br/>
-                                        <strong>{FRANCHISE_NAME}</strong>
+                                        {FRANCHISE_NAME}
                                         <br/>
                                         <a href="mailto:{FRANCHISE_EMAIL}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry"
                                            style="text-decoration: none; color: #666666; font-weight: 700;">{FRANCHISE_EMAIL}</a>
@@ -167,7 +167,7 @@
                    width="750" class="container">
                 <tr>
                     <td colspan="2" style="padding: 10px 40px 20px 40px; text-align: center;">
-                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
+                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #666666; line-height: 1.4;">
                             <br/>
                             MSP Photography Pty Ltd
                             <br/>
