@@ -20,9 +20,9 @@ Welcome to the MSP Portal
 Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{{ $user->firstname }}</span>,
 <br/><br/>
 @if($userSchoolName)
-{{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a {{ $userRole }} for <strong>{{ $userSchoolName }}</strong>.
+    {{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a <strong>{{ $userRole }}</strong> for <strong>{{ $userSchoolName }}</strong>.
 @else
-{{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a member of {{ $userRole }}.
+    {{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a member of <strong>{{ $userOrgName }}</strong>&nbsp;<strong>{{ $userRole }}</strong>.
 @endif
 </p>
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
