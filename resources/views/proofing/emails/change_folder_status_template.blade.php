@@ -103,13 +103,13 @@
                                     <td colspan="2" style="padding: 0px 40px 0px 40px">
                                         <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 21px; color: #00b3e0;">
                                             Change in Folder Status
-                                            <br/>
                                         </p>
-                                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #666666; line-height: 1.3;">
+                                        <br/>
+                                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
                                             Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{INVITEE_FIRST_NAME}</span>,
                                             <br/><br/>
                                         </p>
-                                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #666666; line-height: 1.3;">
+                                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
                                             The status of the following Folders in the School <strong style="font-weight: 700;">{JOB_NAME}</strong> has been changed:<br/><br/>
                                             {#FOLDER_NAMES}
                                             <br/>
@@ -139,7 +139,7 @@
                                 </tr>
                                 <tr>
                                     <td colspan="2" bgcolor="#00b3e0" style="padding: 20px 40px 20px 40px;">
-                                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #ffffff; line-height: 1.3; text-align: center;">
+                                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #ffffff; line-height: 1.3; text-align: center;">
                                             <strong>Please note:</strong> This is an automated email, and the mailbox is unable to receive replies. We're happy to help you with any questions or concerns you may have, please contact your local MSP expert:
                                         </p>
                                     </td>
@@ -158,7 +158,7 @@
                 <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" align="center" width="750" class="container">
                     <tr>
                         <td colspan="2" style="padding: 10px 40px 20px 40px; text-align: center;">
-                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #666666; line-height: 1.3;">
+                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
                             <br/>
                             MSP Photography Pty Ltd
                             <br/>
