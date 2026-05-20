@@ -22,7 +22,7 @@ Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !importa
 @if($userSchoolName)
 {{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a {{ $userRole }} for <strong>{{ $userSchoolName }}</strong>.
 @else
-{{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a {{ $userRole }}.
+{{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a member of {{ $userRole }}.
 @endif
 </p>
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
