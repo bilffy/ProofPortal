@@ -134,7 +134,7 @@
                                                         
                                                         <div id="{{ $skHash }}_history_edits_button" class="{{ $historyEditsCss }}" data-route="{{$location}}">
                                                             <a href="#" data-toggle="modal" data-target="#HistoryEdits_Modal" data-skhash="{{ $skHash }}" style="text-decoration: none;">
-                                                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 18px; height: 18px; opacity: 0.95;">
+                                                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 24px; height: 24px; opacity: 0.95;">
                                                                     <i class="fa fa-history text-{{ $iconColour }}" data-toggle="tooltip" data-placement="top" title="Click here to view changes"></i>
                                                                 </div>
                                                             </a>
