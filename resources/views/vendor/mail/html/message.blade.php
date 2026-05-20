@@ -24,7 +24,6 @@
 <x-slot:footer>
     <x-mail::footer>
         <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #666666; line-height: 1.4; text-align: center !important;">
-            <br/>
             MSP Photography Pty Ltd
             <br/>
             Copyright &copy; 2026 MSP Photography. All rights reserved.

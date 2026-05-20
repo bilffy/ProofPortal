@@ -157,7 +157,6 @@
                     <tr>
                         <td colspan="2" style="padding: 10px 40px 20px 40px; text-align: center;">
                         <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 12px; color: #666666; line-height: 1.4;">
-                            <br/>
                             MSP Photography Pty Ltd
                             <br/>
                             Copyright ⓒ 2026 MSP Photography. All rights reserved.
