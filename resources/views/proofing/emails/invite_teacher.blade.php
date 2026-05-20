@@ -138,12 +138,12 @@
                                         Welcome to MSP Portal Proofing
                                     </p>
                                     <br/>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">INVITEE_FIRST_NAME</span>,
                                         <br/>
                                         <br/>
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         <strong>SENDER_FIRST_NAME SENDER_LAST_NAME</strong> from JOB_NAME has
                                         assigned you
                                         to use the MSP Portal Proofing system to manage the distribution and
@@ -157,18 +157,18 @@
                                         @endforeach
                                         <br/>
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         Please note that these proofs must be completed by <strong style="font-weight: 700;">REVIEW_DUE</strong>.
                                         <br/>
                                         <br/>
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         MSP Online Proofing allows you to check your class proofs and monitor
                                         your progress to ensure that you meet the due date.
                                         <br/>
                                         <br/>
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.3;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
                                         To get started, click the button to setup your account:
                                     </p>
                                 </td>
@@ -182,16 +182,16 @@
                             </tr>
                             <tr>
                                 <th style="padding: 20px 40px 20px 40px;" class="stack">
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4; text-align: left;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; font-weight: 700; color: #666666; line-height: 1.4; text-align: left;">
                                         Regards,
                                         <br/>
                                         <strong>FRANCHISE_NAME</strong>
                                         <br/>
                                         <a href="mailto:FRANCHISE_EMAIL?subject=MSP%20Photography%20Online%20Proofing%20Enquiry"
-                                           style="text-decoration: none; color: #666666;">FRANCHISE_EMAIL</a>
+                                           style="text-decoration: none; color: #666666; font-weight: 700;">FRANCHISE_EMAIL</a>
                                         <br/>
                                         <a href="https://FRANCHISE_WEB_ADDRESS"
-                                           style="text-decoration: none; color: #666666;">FRANCHISE_WEB_ADDRESS</a>
+                                           style="text-decoration: none; color: #666666; font-weight: 700;">FRANCHISE_WEB_ADDRESS</a>
                                     </p>
                                 </th>
                                 <th valign="bottom" style="text-align: right; padding: 0px 0px 30px 20px;"
@@ -201,7 +201,7 @@
                             </tr>
                             <tr>
                                 <td colspan="2" bgcolor="#00b3e0" style="padding: 20px 40px 20px 40px;">
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #ffffff; line-height: 1.3; text-align: center;">
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #ffffff; line-height: 1.4; text-align: center;">
                                         <strong>Please note:</strong> This is an automated email, and the mailbox is
                                         unable to receive replies. We're happy to help you with any questions or
                                         concerns you may have, please contact your local MSP expert:
@@ -224,7 +224,7 @@
                    width="750" class="container">
                 <tr>
                     <td colspan="2" style="padding: 10px 40px 20px 40px; text-align: center;">
-                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.3;">
+                        <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                             <br/>
                             MSP Photography Pty Ltd
                             <br/>
@@ -238,3 +238,5 @@
 </table>
 </body>
 </html>
+
+
