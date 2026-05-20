@@ -12,13 +12,18 @@
 </tr>
 {{ $slot }}
 <tr>
-<th style="padding: 20px 10px 20px 40px; width: 30%;" class="stack">
-<p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4; text-align: left;">
-Regards,
-<br/>
-{!! $franchiseName !!}
-<br/><br/>
-</p>
+<th style="padding: 20px 40px 20px 40px;" class="stack">
+    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; font-weight: 700; color: #666666; line-height: 1.4; text-align: left;">
+        Regards,
+        <br/>
+        <strong>{{ $franchiseName }}</strong>
+        <br/>
+        <a href="mailto:{{ $franchiseEmail }}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry"
+           style="text-decoration: none; color: #666666; font-weight: 700;">{{ $franchiseEmail }}</a>
+        <br/>
+        <a href="https://{{ $franchiseWebsite ?? 'www.msp.com.au' }}"
+           style="text-decoration: none; color: #666666; font-weight: 700;">{{ $franchiseWebsite ?? 'www.msp.com.au' }}</a>
+    </p>
 </th>
 <th valign="bottom" style="text-align: right; padding: 0px 0px 30px 20px;" class="stack">
 <img src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_services.png">

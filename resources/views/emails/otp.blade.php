@@ -2,7 +2,7 @@
 <div style="display: none; max-height: 0px; overflow: hidden;">
 Your MSP Portal Security Code
 </div>
-<x-email-wrapper :franchiseName="$franchise->getBusinessName()" :franchisePhone="$franchise->phone" :franchiseEmail="$franchise->email">
+<x-email-wrapper :franchiseName="$franchise->name" :franchisePhone="$franchise->phone" :franchiseEmail="$franchise->email">
 <tr>
 <td colspan="2" style="padding: 0px 40px 0px 40px">
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 21px; color: #00b3e0;">

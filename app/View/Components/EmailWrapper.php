@@ -11,15 +11,17 @@ class EmailWrapper extends Component
     public $franchiseName;
     public $franchisePhone;
     public $franchiseEmail;
+    public $franchiseWebsite;
 
     /**
      * Create a new component instance.
      */
-    public function __construct($franchiseName = '', $franchisePhone = '', $franchiseEmail = '')
+    public function __construct($franchiseName = '', $franchisePhone = '', $franchiseEmail = '', $franchiseWebsite = '')
     {
         $this->franchiseName = $franchiseName;
         $this->franchisePhone = $franchisePhone;
         $this->franchiseEmail = $franchiseEmail;
+        $this->franchiseWebsite = $franchiseWebsite ?: config('app.franchise_web_address', 'www.msp.com.au');
     }
 
     /**
