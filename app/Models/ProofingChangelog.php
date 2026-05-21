@@ -38,4 +38,7 @@ class ProofingChangelog extends Model
         return $this->belongsTo('App\Models\User', 'user_id', 'id'); 
     }
     
+    public function images(){
+        return $this->hasOne('App\Models\Image', 'keyvalue', 'ts_subjectkey')->orderBy('is_primary', 'desc');
+    }
 }

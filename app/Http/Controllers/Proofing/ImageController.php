@@ -52,11 +52,6 @@ class ImageController extends Controller
             if ($folder && $folder->job) {
                 $job = $folder->job;
                 //secret location
-                // $hash = hash_hmac('sha256', 'folders', $folderKey);
-                // $p1 = substr($hash, 0, 2);
-                // $p2 = substr($hash, 2, 2);
-                // $p3 = substr($hash, 4, 2);
-                // $cachePath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
                 $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
                 $cachePath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/".$image->image_path . $image->name;
                 //old location
@@ -177,11 +172,6 @@ class ImageController extends Controller
             // $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$char1}/{$char2}/{$deCryptfilename}.jpg";
 
             //secret location
-            // $hash = hash_hmac('sha256', $fileOrigin, $deCryptfilename);
-            // $p1 = substr($hash, 0, 2);
-            // $p2 = substr($hash, 2, 2);
-            // $p3 = substr($hash, 4, 2);
-            // $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$fileOrigin}/{$p3}/{$p1}/{$p2}/{$deCryptfilename}.jpg";
             $image = $this->imageService->getImagesBySubjectKey($deCryptfilename)->first();
             $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$selectedSeason->code}/{$selectedJob->ts_schoolkey}/{$deCryptjobKey}/{$fileOrigin}/{$image->image_path}{$image->name}";
 
@@ -268,11 +258,6 @@ class ImageController extends Controller
                 $schoolKey = $job->ts_schoolkey;
                 $jobKey = $job->ts_jobkey;
                 //secret location
-                // $hash = hash_hmac('sha256', 'folders', $folderKey);
-                // $p1 = substr($hash, 0, 2);
-                // $p2 = substr($hash, 2, 2);
-                // $p3 = substr($hash, 4, 2);
-                // $cachePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
                 $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
                 $cachePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$image->image_path}{$image->name}";
                 //old location
