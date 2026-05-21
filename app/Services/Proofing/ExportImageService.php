@@ -119,7 +119,7 @@ class ExportImageService
             $remotePath = ltrim($remotePath, '/');
 
             // Formulate the path and filename strings
-            $databaseRelativePath = sprintf('%s/%s/%s/%s.%s', $p3, $p1, $p2, $sKey, $extension);
+            $databaseRelativePath = sprintf('%s/%s/%s/', $p3, $p1, $p2);
             $filename = sprintf('%s.%s', $sKey, $extension);
                 
             try {
