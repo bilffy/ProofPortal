@@ -28,10 +28,9 @@
     $hasInvitePermission = auth()->user()->can($canInvitePermission);
     $hasEditPermission = auth()->user()->can($canEditPermission);
 
-    $canEdit = auth()->user()->canInvite($userId) && $hasEditPermission;
     $canDisable = auth()->user()->canDisable($userId) && $status != User::STATUS_DISABLED;
 
-    $disableOptions = $isUser || !($canDisable || $canImpersonate || $canEdit || ($hasInvitePermission && $isNotActiveOtherUser));
+    $disableOptions = $isUser || !($canDisable || $canImpersonate || $hasEditPermission || ($hasInvitePermission && $isNotActiveOtherUser));
 @endphp
 
 <div id="options_{{$userId}}" @if($disableOptions) class="hidden" @endif>
@@ -57,7 +56,7 @@
             @endif
         @endcan
         {{-- Use 'Can Invite' for 'Can Edit' decisions --}}
-        @if ($canEdit)
+        @if ($canEditPermission)
             <li>
                 <x-button.dropdownLink
                         href="{{ $editRoute }}"
