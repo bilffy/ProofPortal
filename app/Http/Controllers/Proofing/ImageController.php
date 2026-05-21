@@ -425,7 +425,7 @@ class ImageController extends Controller
                     $p2 = substr($hash, 2, 2);
                     $p3 = substr($hash, 4, 2);
                     $remotePath = "{$seasonCodeLocal}/{$schoolKeyLocal}/{$jobKeyLocal}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
-                    $path = "{$p3}/{$p1}/{$p2}";
+                    $path = "{$p3}/{$p1}/{$p2}/";
                     $fileName = "{$folderKey}.{$extension}";
                     //old location
                     // $char1 = $folderKey[0];
@@ -489,7 +489,7 @@ class ImageController extends Controller
             $p1 = substr($hash, 0, 2);
             $p2 = substr($hash, 2, 2);
             $p3 = substr($hash, 4, 2);
-            $path = "{$p3}/{$p1}/{$p2}";
+            $path = "{$p3}/{$p1}/{$p2}/";
             $fileName = "{$folderKey}.{$extension}";
             $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$fileName}";
             //old location
