@@ -376,7 +376,7 @@ class User extends Authenticatable
         }
 
         if ($this->isSchoolAdmin()) {
-            if ($user->isAdmin() || $user->isFranchiseLevel() || $user->isSchoolAdmin()) {
+            if ($user->isAdmin() || $user->isFranchiseLevel()) {
                 return false;
             }
             

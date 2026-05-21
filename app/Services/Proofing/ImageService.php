@@ -73,7 +73,7 @@ class ImageService
     }
 
 
-    public function createGroupImage($folderKey = null, $extension = null)
+    public function createGroupImage($folderKey = null, $path = null, $fileName = null)
     {
         $folderData = $this->folderService->getFolderByKey($folderKey)->select('ts_folderkey', 'ts_job_id')->first();
 
@@ -82,7 +82,8 @@ class ImageService
             Image::updateOrCreate(
                 ['keyvalue' => $folderData->ts_folderkey],
                 [
-                    'name' => $folderKey.'.'.$extension,
+                    'name' => $fileName,
+                    'image_path' => $path,
                     'ts_job_id' => $folderData->ts_job_id,  // Use null if ts_job_id is not provided
                     'keyorigin' => 'Folder',
                     'created_at' => Carbon::now()

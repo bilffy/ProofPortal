@@ -425,16 +425,18 @@ class ImageController extends Controller
                     $p2 = substr($hash, 2, 2);
                     $p3 = substr($hash, 4, 2);
                     $remotePath = "{$seasonCodeLocal}/{$schoolKeyLocal}/{$jobKeyLocal}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
+                    $path = "{$p3}/{$p1}/{$p2}";
+                    $fileName = "{$folderKey}.{$extension}";
                     //old location
                     // $char1 = $folderKey[0];
                     // $char2 = $folderKey[1];
-                    // $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/folders/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                    // $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKeyContext}/folders/{$char1}/{$char2}/{$fileName}";
 
                     if (Storage::disk('public')->exists($artifact)) {
                         $fileContent = Storage::disk('public')->get($artifact);
                         $uploader = new ImageUploader();
-                        $uploader->upload($fileContent, $remotePath, "{$folderKey}.{$extension}");
-                        $this->imageService->createGroupImage($folderKey, $extension);
+                        $uploader->upload($fileContent, $remotePath, "{$fileName}");
+                        $this->imageService->createGroupImage($folderKey, $path, $fileName);
                         Storage::disk('public')->delete($artifact);
                     }
                 } else {
@@ -487,18 +489,20 @@ class ImageController extends Controller
             $p1 = substr($hash, 0, 2);
             $p2 = substr($hash, 2, 2);
             $p3 = substr($hash, 4, 2);
-            $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
+            $path = "{$p3}/{$p1}/{$p2}";
+            $fileName = "{$folderKey}.{$extension}";
+            $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$fileName}";
             //old location
             // $char1 = $folderKey[0];
             // $char2 = $folderKey[1];
-            // $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$char1}/{$char2}/{$folderKey}.{$extension}";
+            // $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$char1}/{$char2}/{$fileName}";
 
             try {
                 $uploader = new ImageUploader();
-                $uploader->upload(file_get_contents($file), $remotePath, "{$folderKey}.{$extension}");
+                $uploader->upload(file_get_contents($file), $remotePath, "{$fileName}");
                 
-                $this->imageService->createGroupImage($folderKey, $extension);
-                $encryptedFilename = Crypt::encryptString($folderKey . '.' . $extension);
+                $this->imageService->createGroupImage($folderKey, $path, $fileName);
+                $encryptedFilename = Crypt::encryptString($fileName);
                 
                 return response()->json([
                     'message' => 'Image uploaded successfully',
