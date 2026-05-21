@@ -74,7 +74,7 @@ class RolePermission extends Component
         } elseif ($role == 'School Administrator') {
             $roles =  Role::where('id', '>', 3)->get();
         } elseif ($role == 'Photo Coordinator') {
-            $roles =  Role::where('id', '>', 4)->get();
+            $roles =  Role::where('id', '>', 3)->get();
         } else {
             $roles =  Role::where('name', $role)->get();
         }
