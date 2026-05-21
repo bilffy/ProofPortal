@@ -23,6 +23,13 @@ class ImageService
             ->get();
     }
 
+    public function getImagesByFolderKey(string $folderKey)
+    {
+        return Image::where('keyorigin', 'Folder')
+            ->where('keyvalue', $folderKey)
+            ->get();
+    }
+
     public function deleteImagesBySubjectAndKeys(string $subjectKey, array $imageKeys)
     {
         return Image::where('keyorigin', 'Subject')
