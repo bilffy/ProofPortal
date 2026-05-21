@@ -522,4 +522,48 @@ class ImageController extends Controller
         return response()->json(['message' => 'Upload failed'], 500);
     }
 
+    public function groupImageDeleteFile(Request $request)
+    {
+        $folderKey = $request->input('folder_key');
+        
+        // Find path for SFTP deletion
+        $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+        if ($folder && $folder->job) {
+            $job = $folder->job;
+            $seasonCode = $job->seasons->code;
+            $schoolKey = $job->ts_schoolkey;
+            $jobKey = $job->ts_jobkey;
+            
+            // We need the extension to delete the file
+            $imageRecord = \App\Models\Image::where('keyvalue', $folderKey)->first();
+            if ($imageRecord) {
+                $extension = pathinfo($imageRecord->name, PATHINFO_EXTENSION) ?: 'jpg';
+                $char1 = $folderKey[0];
+                $char2 = $folderKey[1];
+                // $sftpPath = "{$seasonCode}/{$schoolKey}/{$jobKey}/{$char1}/{$char2}/{$folderKey}.{$extension}";
+                
+                // if (Storage::disk('sftp')->exists($sftpPath)) {
+                //     Storage::disk('sftp')->delete($sftpPath);
+                // }
+            }
+        }
+
+        $fileName = $this->imageService->deleteGroupImage($folderKey);
+
+        if ($fileName) {
+            // Check public too for backward compatibility
+            if (Storage::disk('public')->exists('groupImages/' . $fileName)) {
+                Storage::disk('public')->delete('groupImages/' . $fileName);
+            }
+            
+            return response()->json([
+                'message' => 'Image deleted successfully',
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Error deleting image',
+            ], 400);
+        }
+    }
+
 }
