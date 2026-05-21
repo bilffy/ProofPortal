@@ -19,6 +19,7 @@ class Image extends Model
      */
     protected $fillable = [
         'name',
+        'image_path',
         'is_primary',
         'ts_image_id',
         'ts_imagekey',
