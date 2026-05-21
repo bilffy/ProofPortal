@@ -15,12 +15,12 @@
             <table class="w-full text-sm text-left rtl:text-right">
                 <thead class="border-b-1 border-neutral-300">
                     <tr>
-                        <x-table.headerCell id="header-permission-role" class="p-0.5 border-b-[1px]" clickable="{{false}}">Manage Users</x-table.headerCell>
-                        <x-table.headerCell id="header-permission-create" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Create/Invite</x-table.headerCell>
+                        <x-table.headerCell id="header-permission-role" class="p-0.5 border-b-[1px]" clickable="{{false}}">Manage Roles</x-table.headerCell>
+                        <x-table.headerCell id="header-permission-create" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>ReInvite</x-table.headerCell>
                         <x-table.headerCell id="header-permission-edit" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Edit</x-table.headerCell>
-                        <x-table.headerCell id="header-permission-disable" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Disable</x-table.headerCell>
                         <x-table.headerCell id="header-permission-impersonate" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Impersonate</x-table.headerCell>
-                        <x-table.headerCell id="header-permission-revoke" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Revoke</x-table.headerCell>
+                        <x-table.headerCell id="header-permission-disable" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Disable</x-table.headerCell>
+                      {{--  <x-table.headerCell id="header-permission-revoke" class="p-0.5 border-b-[1px]" clickable="{{false}}" centered>Revoke</x-table.headerCell> --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -51,16 +51,6 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
-                                    <input @if($currentRole->permissions->contains('name', 'disable ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif 
-                                    id="checkbox_disable_{{ $role->name }}"
-                                    type="checkbox"
-                                    value="{{ $role->id }}"
-                                    wire:click="updatePermission('disable', '{{ $role->name }}', $event.target.checked)"
-                                    class="w-4 h-4 text-primary rounded-sm focus:ring-0">
-                                </div>
-                            </x-table.cell>
-                            <x-table.cell class="w-1/6 border-none">
-                                <div class="flex justify-center">
                                     <input @if($currentRole->permissions->contains('name', 'impersonate ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
                                     id="checkbox_impersonate_{{ $role->name }}"
                                     type="checkbox"
@@ -71,6 +61,16 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
+                                    <input @if($currentRole->permissions->contains('name', 'disable ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif 
+                                    id="checkbox_disable_{{ $role->name }}"
+                                    type="checkbox"
+                                    value="{{ $role->id }}"
+                                    wire:click="updatePermission('disable', '{{ $role->name }}', $event.target.checked)"
+                                    class="w-4 h-4 text-primary rounded-sm focus:ring-0">
+                                </div>
+                            </x-table.cell>
+                            {{--   <x-table.cell class="w-1/6 border-none">
+                                <div class="flex justify-center">
                                     <input  @if($currentRole->permissions->contains('name', 'revoke ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
                                     id="checkbox_revoke_{{ $role->name }}"
                                     type="checkbox"
@@ -78,7 +78,7 @@
                                     wire:click="updatePermission('revoke', '{{ $role->name }}', $event.target.checked)"
                                     class="w-4 h-4 text-primary rounded-sm focus:ring-0">
                                 </div>
-                            </x-table.cell>
+                            </x-table.cell> --}}
                         </tr>
                     @endforeach
                 </tbody>

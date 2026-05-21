@@ -20,10 +20,15 @@
 
     $isUser = $userId == auth()->id();
     $isNotActiveOtherUser = !$isUser && $status != User::STATUS_ACTIVE;
+
     $canInvitePermission = PermissionHelper::toPermission(PermissionHelper::ACT_INVITE, subject: $role);
-    $hasInvitePermission = auth()->user()->can($canInvitePermission);
-    $canEdit = auth()->user()->canInvite($userId);
+    $canEditPermission = PermissionHelper::toPermission(PermissionHelper::ACT_EDIT, subject: $role);
     $canImpersonate = PermissionHelper::canImpersonate($userId);
+    
+    $hasInvitePermission = auth()->user()->can($canInvitePermission);
+    $hasEditPermission = auth()->user()->can($canEditPermission);
+
+    $canEdit = auth()->user()->canInvite($userId) && $hasEditPermission;
     $canDisable = auth()->user()->canDisable($userId) && $status != User::STATUS_DISABLED;
 
     $disableOptions = $isUser || !($canDisable || $canImpersonate || $canEdit || ($hasInvitePermission && $isNotActiveOtherUser));
