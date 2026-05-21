@@ -26,7 +26,7 @@ class RoleHelper
             case self::ROLE_SUPER_ADMIN:
                 $allowedRoles = [
                     self::ROLE_SUPER_ADMIN,
-                    self::ROLE_ADMIN,
+                    // self::ROLE_ADMIN,
                     self::ROLE_FRANCHISE,
                     self::ROLE_SCHOOL_ADMIN,
                     self::ROLE_PHOTO_COORDINATOR,
@@ -91,7 +91,7 @@ class RoleHelper
             default:
                 $allowedRoles = [
                     self::ROLE_SUPER_ADMIN,
-                    self::ROLE_ADMIN,
+                    // self::ROLE_ADMIN,
                     self::ROLE_FRANCHISE,
                     self::ROLE_SCHOOL_ADMIN,
                     self::ROLE_PHOTO_COORDINATOR,

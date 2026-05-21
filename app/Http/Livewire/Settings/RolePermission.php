@@ -13,7 +13,7 @@ use Spatie\Permission\Models\Role;
 class RolePermission extends Component
 {
     public $roles = [];
-    public $currentRoleSelected = 'Admin';
+    public $currentRoleSelected = 'Super Admin';
     public $listeners = [
         'EV_UPDATE_SELECTED_ROLE' => 'showRolesDownstream',
     ];
@@ -30,25 +30,25 @@ class RolePermission extends Component
         $this->permissionStates = $this->permissions ?? [];
     }
     
-    public function updatePermission($permission, $role, $value)
+    public function updatePermission($permissionAction, $targetRoleName, $value)
     {
-        $permission = Permission::findByName($permission . ' ' . strtolower(str_replace(' ', '_', $role)));
-        /** @var Role $role */
-        $role = Role::findByName($role);
+        $permissionName = $permissionAction . ' ' . strtolower(str_replace(' ', '_', $targetRoleName));
+        $permission = Permission::findOrCreate($permissionName);
+        
+        /** @var Role $currentRole */
+        $currentRole = Role::findByName($this->currentRoleSelected);
         
         if ($value === true) {
-            $permission->assignRole($role);
+            $currentRole->givePermissionTo($permission);
         } else {
-            $permission->removeRole($role);
+            $currentRole->revokePermissionTo($permission);
         }
-        //$permission->save();
-        //$permission->syncRoles([$role]);
     }
     
     public function render()
     {   
-        $role =  Role::where('name', '=', $this->currentRoleSelected)->get();
-        $roles = Role::where('id', '>', 1)->get();
+        $role =  Role::with('permissions')->where('name', '=', $this->currentRoleSelected)->get();
+        $roles = Role::whereNotIn('id', [2])->get();
         
         return view('livewire.settings.role-permission',
             [
@@ -65,13 +65,13 @@ class RolePermission extends Component
 
     // This function shows Downstream roles based on the selected role
     public function showRolesDownstream($role) {
-        if ($role == 'Super Admin') {
-            $roles =  Role::all();
+        if ($role == 'Super Admin') { 
+            $roles = Role::whereNotIn('id', [2])->get();
         } elseif ($role == 'Admin') {
             $roles =  Role::where('id', '>', 1)->get();
         } elseif ($role == 'Franchise') {
             $roles =  Role::where('id', '>', 3)->get();
-        } elseif ($role == 'School Administrator') {
+        } elseif ($role == 'School Admin') {
             $roles =  Role::where('id', '>', 4)->get();
         } elseif ($role == 'Photo Coordinator') {
             $roles =  Role::where('id', '>', 4)->get();

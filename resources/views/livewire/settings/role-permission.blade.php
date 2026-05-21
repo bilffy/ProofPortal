@@ -31,7 +31,7 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
-                                    <input <@if($role->permissions->contains('name', 'invite ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
+                                    <input @if($currentRole->permissions->contains('name', 'invite ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
                                     id="checkbox_invite_{{ $role->name }}"
                                     type="checkbox"
                                     value="{{ $role->id }}"
@@ -41,7 +41,7 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
-                                    <input <@if($role->permissions->contains('name', 'edit ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
+                                    <input @if($currentRole->permissions->contains('name', 'edit ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
                                     id="checkbox_edit_{{ $role->name }}"
                                     type="checkbox"
                                     value="{{ $role->id }}"
@@ -51,7 +51,7 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
-                                    <input <@if($role->permissions->contains('name', 'disable ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif 
+                                    <input @if($currentRole->permissions->contains('name', 'disable ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif 
                                     id="checkbox_disable_{{ $role->name }}"
                                     type="checkbox"
                                     value="{{ $role->id }}"
@@ -61,7 +61,7 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
-                                    <input <@if($role->permissions->contains('name', 'impersonate ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
+                                    <input @if($currentRole->permissions->contains('name', 'impersonate ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
                                     id="checkbox_impersonate_{{ $role->name }}"
                                     type="checkbox"
                                     value="{{ $role->id }}"
@@ -71,7 +71,7 @@
                             </x-table.cell>
                             <x-table.cell class="w-1/6 border-none">
                                 <div class="flex justify-center">
-                                    <input  <@if($role->permissions->contains('name', 'revoke ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
+                                    <input  @if($currentRole->permissions->contains('name', 'revoke ' . strtolower(str_replace(' ', '_', $role->name)))) checked @endif
                                     id="checkbox_revoke_{{ $role->name }}"
                                     type="checkbox"
                                     value="{{ $role->id }}"
