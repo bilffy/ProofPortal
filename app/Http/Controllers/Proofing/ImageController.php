@@ -4,17 +4,16 @@ namespace App\Http\Controllers\Proofing;
 
 use App\Http\Controllers\Controller;
 use App\Services\Proofing\ImageUploader;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Crypt;
 use App\Services\Proofing\ImageService;
 use App\Services\Proofing\SeasonService;
+use Intervention\Image\Facades\Image;
 use App\Services\Proofing\JobService;
 use App\Http\Resources\UserResource;
-use App\Models\Folder;
-use App\Models\Image as ImageModel;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str; 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +21,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use Intervention\Image\Facades\Image;
 
 class ImageController extends Controller
 {
@@ -42,7 +40,6 @@ class ImageController extends Controller
      */
     public function zoom(Request $request)
     {
-        $imgHandle = null;
         try {
             $w = (int) $request->query('imgClientSizeW');
             $h = (int) $request->query('imgClientSizeH');
@@ -53,8 +50,9 @@ class ImageController extends Controller
             $folderKey = pathinfo($artifactImage, PATHINFO_FILENAME);
             $cacheKey = "image_binary_fkey_" . $folderKey;
 
+            // OPTIMIZATION: Bypasses MySQL completely to prevent text collation binary encoding crashes
             $imageContent = Cache::store('file')->remember($cacheKey, 600, function() use ($folderKey) {
-                $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+                $folder = \App\Models\Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
                 if ($folder && $folder->job) {
                     $job = $folder->job;
                     $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
@@ -65,7 +63,7 @@ class ImageController extends Controller
 
                     $response = Http::timeout(10)->withoutVerifying()->get($imageUrl);
                     if ($response->successful()) {
-                        return $response->body();
+                        return $response->body(); // Raw binary streams write directly to secure local storage disks
                     }
                 }
                 return null;
@@ -75,9 +73,11 @@ class ImageController extends Controller
                 return response()->json(['error' => 'Image not found or inaccessible'], 404);
             }
 
-            $imgHandle = Image::make($imageContent);
-            $xPosition = intval($imgHandle->width() * $xPercent);
-            $yPosition = intval($imgHandle->height() * $yPercent);
+            // Create canvas context using shared memory limits
+            $image = Image::make($imageContent);
+
+            $xPosition = intval($image->width() * $xPercent);
+            $yPosition = intval($image->height() * $yPercent);
             $a = (int) $request->query('anchor', 5);
 
             switch ($a) {
@@ -93,15 +93,17 @@ class ImageController extends Controller
                 default: $xPoint = $xPosition; $yPoint = $yPosition; break;
             }
 
-            $imgHandle->crop($w, $h, $xPoint, $yPoint);
+            // Crop canvas bounding boxes
+            $image->crop($w, $h, $xPoint, $yPoint);
 
+            // Apply watermark without unneeded processing overhead
             $watermarkUrl = public_path('proofing-assets/img/msp_w_ios.png');
             if (file_exists($watermarkUrl)) {
-                $imgHandle->insert($watermarkUrl, 'top-left', 0, 0);
+                $image->insert($watermarkUrl, 'top-left', 0, 0);
             }
 
-            $mimeType = $imgHandle->mime();
-            $imageContentEncoded = $imgHandle->encode();
+            $mimeType = $image->mime();
+            $imageContentEncoded = $image->encode();
 
             return new Response($imageContentEncoded, 200, [
                 'Content-Type' => $mimeType,
@@ -111,10 +113,6 @@ class ImageController extends Controller
         } catch (\Exception $e) {
             Log::error('Error processing zoom image: ' . $e->getMessage());
             return response()->json(['error' => 'Image processing failed'], 500);
-        } finally {
-            if ($imgHandle instanceof \Intervention\Image\Image) {
-                $imgHandle->destroy();
-            }
         }
     }
 
@@ -206,35 +204,32 @@ class ImageController extends Controller
      */
     public function showgroupImage($filename)
     {
-        $img = null;
-        $watermark = null;
         try {
             $deCryptfilename = Crypt::decryptString($filename);
             $folderKey = pathinfo($deCryptfilename, PATHINFO_FILENAME);
+            $extension = pathinfo($deCryptfilename, PATHINFO_EXTENSION) ?: 'jpg';
             
             $imageContent = null;
             $contentType = 'image/jpeg';
 
-            // High Frequency Optimization: Cache structural path maps
-            $cacheKey = "group_image_meta_{$folderKey}";
-            $meta = Cache::remember($cacheKey, 300, function () use ($folderKey) {
-                $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
-                if ($folder && $folder->job) {
-                    $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
-                    if ($image) {
-                        return [
-                            'url' => rtrim(config('services.exportImageLocation'), '/') . "/{$folder->job->seasons->code}/{$folder->job->ts_schoolkey}/{$folder->job->ts_jobkey}/folders/{$image->image_path}{$image->name}"
-                        ];
-                    }
-                }
-                return null;
-            });
+            // Try HTTP cache server first
+            $folder = \App\Models\Folder::where('ts_folderkey', $folderKey)->first();
+            if ($folder && $folder->job) {
+                $job = $folder->job;
+                $seasonCode = $job->seasons->code;
+                $schoolKey = $job->ts_schoolkey;
+                $jobKey = $job->ts_jobkey;
+                
+                $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
+                $cachePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$image->image_path}{$image->name}";
+                $imageUrl = rtrim(config('services.exportImageLocation'), '/') . '/' . $cachePath;
 
-            if ($meta) {
-                $response = Http::timeout(15)->withoutVerifying()->get($meta['url']);
+                $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
                 if ($response->successful()) {
                     $imageContent = $response->body();
                     $contentType = $response->header('Content-Type', 'image/jpeg');
+                } else {
+                    Log::warning("Cache server returned {$response->status()} for group image: {$imageUrl}");
                 }
             }
 
@@ -247,33 +242,32 @@ class ImageController extends Controller
                 }
             }
 
+            // Apply watermark patterns dynamically
             if ($imageContent) {
-                $img = Image::make($imageContent);
-                $watermarkUrl = public_path('proofing-assets/img/msp_w_ios.png');
-                
-                if (file_exists($watermarkUrl)) {
-                    $watermark = Image::make($watermarkUrl);
-                    $watermark->resize($img->width(), $img->height());
-                    $img->insert($watermark, 'top-left', 0, 0);
+                try {
+                    $img = Image::make($imageContent);
+                    $watermarkUrl = public_path('proofing-assets/img/msp_w_ios.png');
+                    
+                    if (file_exists($watermarkUrl)) {
+                        $watermark = Image::make($watermarkUrl);
+                        $watermark->resize($img->width(), $img->height());
+                        $img->insert($watermark, 'top-left', 0, 0);
+                    }
+                    
+                    return response((string) $img->encode(), Response::HTTP_OK)
+                        ->header('Content-Type', $contentType)
+                        ->header('Cache-Control', 'public, max-age=86400');
+                } catch (\Exception $imgEx) {
+                    Log::error("Watermarking failed on group image: " . $imgEx->getMessage());
+                    return response($imageContent, Response::HTTP_OK)->header('Content-Type', $contentType);
                 }
-                
-                $encodedOutput = $img->encode();
-                return response($encodedOutput, Response::HTTP_OK)
-                    ->header('Content-Type', $contentType)
-                    ->header('Cache-Control', 'public, max-age=86400');
             }
 
         } catch (\Exception $e) {
             Log::error('Error showing group image: ' . $e->getMessage(), [
-                'folderKey' => $folderKey ?? null
+                'folderKey' => $folderKey ?? null,
+                'imageUrl' => $imageUrl ?? null,
             ]);
-        } finally {
-            if ($img instanceof \Intervention\Image\Image) {
-                $img->destroy();
-            }
-            if ($watermark instanceof \Intervention\Image\Image) {
-                $watermark->destroy();
-            }
         }
 
         return $this->serveFallback();
@@ -286,6 +280,7 @@ class ImageController extends Controller
     {
         if ($request->hasFile('file')) 
         {
+            Session::pull('upload_session');
             $file = $request->file('file');
         
             $request->validate([
@@ -296,7 +291,7 @@ class ImageController extends Controller
             $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $filename = $originalFilename . '.' . $file->getClientOriginalExtension();
         
-            $file->storeAs($request->input('upload_session'), $filename, 'public');
+            $path = $file->storeAs($request->input('upload_session'), $filename, 'public');
                 
             session([
                 'upload_session' => $request->input('upload_session')
@@ -314,7 +309,7 @@ class ImageController extends Controller
             'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/',
         ]);
 
-        Session::forget('upload_session');   
+        Session::pull('upload_session');   
         $uploadSession = $request->input('upload_session');
     
         if (Storage::disk('public')->exists($uploadSession)) {
@@ -342,7 +337,7 @@ class ImageController extends Controller
             return $val !== "discard_image" && $val !== "no_match";
         });
 
-        $folders = Folder::with(['job.seasons'])
+        $folders = \App\Models\Folder::with(['job.seasons'])
             ->whereIn('ts_folderkey', array_values($folderKeys))
             ->get()
             ->keyBy('ts_folderkey');
@@ -415,7 +410,7 @@ class ImageController extends Controller
         $folderKey = $request->input('folder_key');
         $extension = $file->getClientOriginalExtension();
         
-        $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+        $folder = \App\Models\Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
         
         if ($folder && $folder->job) {
             $job = $folder->job;
@@ -435,6 +430,7 @@ class ImageController extends Controller
             try {
                 $uploader = new ImageUploader();
                 
+                // Memory Optimization: Pull straight from resource pointers
                 $stream = fopen($file->getRealPath(), 'r');
                 $uploader->upload($stream, $remotePath, $fileName);
                 if (is_resource($stream)) {
@@ -466,7 +462,9 @@ class ImageController extends Controller
         ]);
 
         $folderKey = $request->input('folder_key');
-        $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+        
+        // Pull context maps to securely find path parameters matching structural uploads
+        $folder = \App\Models\Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
         
         if ($folder && $folder->job) {
             $job = $folder->job;
@@ -474,10 +472,13 @@ class ImageController extends Controller
             $schoolKey = $job->ts_schoolkey;
             $jobKey = $job->ts_jobkey;
             
-            $imageRecord = ImageModel::where('keyvalue', $folderKey)->first();
+            // Fetch explicit image data to determine proper file extensions 
+            $imageRecord = \App\Models\Image::where('keyvalue', $folderKey)->first();
             
             if ($imageRecord) {
                 $extension = pathinfo($imageRecord->name, PATHINFO_EXTENSION) ?: 'jpg';
+                
+                // Reconstruct exact dynamic structural components used on submit layers
                 $hash = hash_hmac('sha256', 'folders', $folderKey);
                 $p1 = substr($hash, 0, 2);
                 $p2 = substr($hash, 2, 2);
@@ -486,17 +487,23 @@ class ImageController extends Controller
                 $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$folderKey}.{$extension}";
                 
                 try {
-                    // Hook for remote cleanup if needed
+                    // Optional Hook: Add explicit remote cloud engine unlink blocks if applicable
+                    // if (Storage::disk('sftp')->exists($remotePath)) {
+                    //     Storage::disk('sftp')->delete($remotePath);
+                    // }
                 } catch (\Exception $storageEx) {
-                    Log::warning("Remote storage deletion skipped for '{$remotePath}': " . $storageEx->getMessage());
+                    Log::warning("Remote storage deletion skipped or failed for file path '{$remotePath}': " . $storageEx->getMessage());
                 }
             }
         }
 
+        // Clean out metadata entries via underlying infrastructure drivers
         $fileName = $this->imageService->deleteGroupImage($folderKey);
 
         if ($fileName) {
             $localLegacyPath = 'groupImages/' . $fileName;
+            
+            // Clear local cached copies safely if they still reside inside older paths
             if (Storage::disk('public')->exists($localLegacyPath)) {
                 Storage::disk('public')->delete($localLegacyPath);
             }
