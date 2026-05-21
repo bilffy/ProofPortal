@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Proofing;
+
 use App\Services\Proofing\StatusService;
 use App\Models\Image;
 use App\Models\Job;
@@ -92,7 +93,7 @@ class ExportImageService
         // Use cursor to stream 1 image at a time from the DB
         $images = $this->findImageMatchesByImageKeys($imageKeys)->cursor();
         
-        $successfullyUploadedKeys = [];
+        $batchData = []; // Multi-dimensional tracking array
         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
         $uploader = new ImageUploader();
 
@@ -103,7 +104,8 @@ class ExportImageService
             $extension = $this->getExtensionFromMimeType($mimeType);
             $prefix = config('services.proofing_cache_prefix');
             $sKey = (string)$image->SubjectKey;
-            //secret code
+            
+            // Generate partitioning subdirectories
             $hash = hash_hmac('sha256', 'subjects', $sKey);
             $p1 = substr($hash, 0, 2);
             $p2 = substr($hash, 2, 2);
@@ -114,46 +116,89 @@ class ExportImageService
                 $prefix, $image->Code, $image->SchoolKey, $image->JobKey,
                 $p3, $p1, $p2, $sKey, $extension
             );
-            //old code
-            // $remotePath = sprintf(
-            //     '%s/%s/%s/%s/%s/%s/%s.%s',
-            //     $prefix, $image->Code, $image->SchoolKey, $image->JobKey,
-            //     $sKey[0], $sKey[1], $sKey, $extension
-            // );
             $remotePath = ltrim($remotePath, '/');
 
+            // Formulate the path and filename strings
+            $databaseRelativePath = sprintf('%s/%s/%s/%s.%s', $p3, $p1, $p2, $sKey, $extension);
             $filename = sprintf('%s.%s', $sKey, $extension);
                 
             try {
                 $uploader->upload($image->Thumbnail, $remotePath, $filename);
                 
-                $successfullyUploadedKeys[] = $image->ImageKey;
+                // Track both variables under the unique ImageKey identifier
+                $batchData[$image->ImageKey] = [
+                    'path' => $databaseRelativePath,
+                    'name' => $filename,
+                ];
                 
                 // Update DB every 10 images to show progress and free RAM
-                if (count($successfullyUploadedKeys) >= 10) {
-                    Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
-                    $successfullyUploadedKeys = []; 
-                    gc_collect_cycles(); // Force PHP to empty the "trash"
+                if (count($batchData) >= 10) {
+                    $this->updateBatchStatusesAndPaths($batchData);
+                    $batchData = []; 
+                    gc_collect_cycles(); // Force PHP memory garbage collector cycle
                 }
             } catch (Exception $e) {
                 Log::error("Image Upload Error for {$image->ImageKey}: " . $e->getMessage());
             }
             
-            unset($image); // Clear the binary data from the variable
+            unset($image); // Clear binary buffer reference
         }
 
         // Final update for any remaining keys (the last 1-9 images)
-        if (!empty($successfullyUploadedKeys)) {
-            Image::whereIn('ts_imagekey', $successfullyUploadedKeys)->update(['exportStatus' => 1]);
+        if (!empty($batchData)) {
+            $this->updateBatchStatusesAndPaths($batchData);
         }
 
         return true;
     }
 
-    public function findImageMatchesByImageKeys(
-        $imageKeys = null
-    ) {
+    /**
+     * Executes an optimized raw SQL statement using independent CASE WHEN expressions
+     * to simultaneously update multiple custom dynamic values per image row.
+     */
+    protected function updateBatchStatusesAndPaths(array $batchData)
+    {
+        $keys = array_keys($batchData);
+        $pathCases = [];
+        $nameCases = [];
+        $bindings = [];
 
+        // 1. Build the CASE statement fragment parameters for the image_path modifications
+        foreach ($batchData as $imageKey => $data) {
+            $pathCases[] = "WHEN ts_imagekey = ? THEN ?";
+            $bindings[] = $imageKey;
+            $bindings[] = $data['path'];
+        }
+
+        // 2. Build the CASE statement fragment parameters for the name modifications
+        foreach ($batchData as $imageKey => $data) {
+            $nameCases[] = "WHEN ts_imagekey = ? THEN ?";
+            $bindings[] = $imageKey;
+            $bindings[] = $data['name'];
+        }
+
+        $pathCasesSql = implode(' ', $pathCases);
+        $nameCasesSql = implode(' ', $nameCases);
+        
+        // 3. Append final whereIn comparison parameters to validate selection safety
+        foreach ($keys as $key) {
+            $bindings[] = $key;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($keys), '?'));
+
+        // Executes dual CASE evaluations within a single operational database statement transaction
+        DB::statement("
+            UPDATE images 
+            SET exportStatus = 1, 
+                image_path = CASE $pathCasesSql ELSE image_path END,
+                name = CASE $nameCasesSql ELSE name END
+            WHERE ts_imagekey IN ($placeholders)
+        ", $bindings);
+    }
+
+    public function findImageMatchesByImageKeys($imageKeys = null) 
+    {
         $query = DB::connection('timestone')
                 ->table('ImageMatches')
                 ->join('Images', 'ImageMatches.ImageID', '=', 'Images.ImageID')
