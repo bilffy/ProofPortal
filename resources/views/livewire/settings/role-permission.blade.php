@@ -4,8 +4,8 @@
         <p class="pt-3">Configure permissions for each User Role.</p>
         <p>
             <label for="roles" class="block mb-2 text-sm font-bold text-gray-900 dark:text-white">Role</label>
-            <select wire:change="showRolesDownstream($event.target.value)"  id="roles" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block p-2.5 focus:ring-0">
-                <option selected value="Admin">Choose a role</option>
+            <select wire:change="showRolesDownstream($event.target.value)"  id="roles" class="w-64 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block p-2.5 focus:ring-0">
+                <option selected value="Super Admin">Choose a role</option>
                 @foreach ($allRoles as $role)
                     <option <@if($currentRole->name == $role->name) selected @endif  value="{{ $role->name }}">{{ $role->name }}</option>
                 @endforeach
