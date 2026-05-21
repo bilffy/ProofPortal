@@ -49,24 +49,33 @@ class ImageController extends Controller
             $xPercent = (float) $request->query('mousePosPercentX');
             $yPercent = (float) $request->query('mousePosPercentY');
             $artifactImage = Crypt::decryptString($request->query('artifactNameCrypt'));
-            
-            $folderKey = pathinfo($artifactImage, PATHINFO_FILENAME);
-            $cacheKey = "image_binary_fkey_" . $folderKey;
+            $a = (int) $request->query('anchor', 5);
 
-            $imageContent = Cache::store('file')->remember($cacheKey, 600, function() use ($folderKey) {
+            $folderKey = pathinfo($artifactImage, PATHINFO_FILENAME);
+
+            // Cache key includes crop params so each unique crop region is cached separately
+            $processedCacheKey = "zoom_processed_{$folderKey}_{$w}_{$h}_{$xPercent}_{$yPercent}_{$a}";
+
+            $cached = Cache::store('file')->get($processedCacheKey);
+            if ($cached) {
+                return new Response($cached, 200, [
+                    'Content-Type'  => 'image/jpeg',
+                    'Cache-Control' => 'public, max-age=3600',
+                ]);
+            }
+
+            // Fetch the raw image binary (cached for 10 minutes)
+            $binaryCacheKey = "image_binary_fkey_{$folderKey}";
+            $imageContent = Cache::store('file')->remember($binaryCacheKey, 600, function () use ($folderKey) {
                 $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
                 if ($folder && $folder->job) {
                     $job = $folder->job;
                     $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
                     if (!$image) return null;
-
                     $cachePath = "{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/" . $image->image_path . $image->name;
                     $imageUrl = rtrim(config('services.exportImageLocation'), '/') . '/' . $cachePath;
-
                     $response = Http::timeout(10)->withoutVerifying()->get($imageUrl);
-                    if ($response->successful()) {
-                        return $response->body();
-                    }
+                    return $response->successful() ? $response->body() : null;
                 }
                 return null;
             });
@@ -78,7 +87,6 @@ class ImageController extends Controller
             $imgHandle = Image::make($imageContent);
             $xPosition = intval($imgHandle->width() * $xPercent);
             $yPosition = intval($imgHandle->height() * $yPercent);
-            $a = (int) $request->query('anchor', 5);
 
             switch ($a) {
                 case 7: $xPoint = $xPosition; $yPoint = $yPosition; break;
@@ -101,11 +109,14 @@ class ImageController extends Controller
             }
 
             $mimeType = $imgHandle->mime();
-            $imageContentEncoded = $imgHandle->encode();
+            $encoded = (string) $imgHandle->encode('jpg', 85);
 
-            return new Response($imageContentEncoded, 200, [
-                'Content-Type' => $mimeType,
-                'Cache-Control' => 'public, max-age=3600, must-revalidate'
+            // Cache the final processed result for 1 hour
+            Cache::store('file')->put($processedCacheKey, $encoded, 3600);
+
+            return new Response($encoded, 200, [
+                'Content-Type'  => $mimeType,
+                'Cache-Control' => 'public, max-age=3600',
             ]);
 
         } catch (\Exception $e) {
@@ -428,29 +439,29 @@ class ImageController extends Controller
             $p2 = substr($hash, 2, 2);
             $p3 = substr($hash, 4, 2);
             
-            $path = "{$p3}/{$p1}/{$p2}/";
+            $storagePath = "{$p3}/{$p1}/{$p2}/";
             $fileName = "{$folderKey}.{$extension}";
             $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$fileName}";
 
-            try {
-                $uploader = new ImageUploader();
-                
-                $stream = fopen($file->getRealPath(), 'r');
-                $uploader->upload($stream, $remotePath, $fileName);
-                if (is_resource($stream)) {
-                    fclose($stream);
-                }
-                
-                $this->imageService->createGroupImage($folderKey, $path, $fileName);
-                $encryptedFilename = Crypt::encryptString($fileName);
-                
-                return response()->json([
-                    'message' => 'Image uploaded successfully',
-                    'full_url' => route('image.show', ['filename' => $encryptedFilename]),
-                ]);
-            } catch (\Exception $e) {
-                Log::error("Failed to upload group image for folder: {$folderKey} - " . $e->getMessage());
-            }
+            // Store the file locally in a temp upload folder
+            $tempFolder = 'group_upload_temp';
+            $localFilePath = $file->storeAs($tempFolder, $fileName, 'public');
+
+            // Dispatch background job — returns immediately, upload happens async
+            \App\Jobs\UploadGroupImageJob::dispatch(
+                $localFilePath,
+                $remotePath,
+                $fileName,
+                $storagePath,
+                $folderKey,
+            );
+
+            $encryptedFilename = Crypt::encryptString($fileName);
+
+            return response()->json([
+                'message' => 'Image upload queued successfully',
+                'full_url' => route('image.show', ['filename' => $encryptedFilename]),
+            ]);
         }
 
         return response()->json(['message' => 'Upload failed'], 500);
