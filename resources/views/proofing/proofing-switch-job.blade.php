@@ -65,8 +65,7 @@
 
 @section('js')
 
-<script src="{{ URL::asset('proofing-assets/js/franchise/ajaxcontrol.js') }}"></script>
-
+<script src="{{ URL::asset('proofing-assets/js/franchise/ajaxcontrol.js') }}?v={{ filemtime(public_path('proofing-assets/js/franchise/ajaxcontrol.js')) }}"></script>
 @stop
 
 

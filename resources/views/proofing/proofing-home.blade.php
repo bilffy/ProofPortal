@@ -334,7 +334,7 @@
 <script src="{{ URL::asset('proofing-assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js')}}"></script>
 <!-- DataTables -->
 <script src="{{ URL::asset('proofing-assets/js/moment.min.js')}}"></script>
-<script src="{{ URL::asset('proofing-assets/js/franchise/ajaxcontrol.js') }}"></script>
+<script src="{{ URL::asset('proofing-assets/js/franchise/ajaxcontrol.js') }}?v={{ filemtime(public_path('proofing-assets/js/franchise/ajaxcontrol.js')) }}"></script>
 
 @stop
 
