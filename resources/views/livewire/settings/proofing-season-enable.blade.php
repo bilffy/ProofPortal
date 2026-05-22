@@ -1,7 +1,7 @@
 <div class="w-full overflow-x-auto">
     <div class="overflow-hidden min-w-max">
         <h5 class="text-xl font-bold dark:text-white">Season Enable</h5>
-        <p class="pt-3">Enable or Disable Proofing Seasons. Enabled season jobs will be visible in the portal and proofing.</p>
+        <p class="pt-3">Enable or Disable the season. Jobs from the enabled season will be visible in the portal and proofing.</p>
         <div class="w-full flex flex-row gap-4 mt-4 max-h-96 overflow-y-auto rounded-[4px] border-[1px]">
             <table class="w-full text-sm text-left rtl:text-right">
                 <thead class="sticky top-0 bg-white z-10">

@@ -147,10 +147,10 @@ $(document).ready(function () {
         schoolsTable = $('#schools-table').DataTable({
             // "dom": 'Blfrtip',
             "paging": true,
-            "pageLength": 10,
+            "pageLength": 5,
             "lengthMenu": [
-                [10, 20, 50, 100, 200, 500, -1],
-                [10, 20, 50, 100, 200, 500, 'All']
+                [5, 10, 20, 50, 100, 200, 500, -1],
+                [5, 10, 20, 50, 100, 200, 500, 'All']
             ],
             "language": {
                 "lengthMenu": "Display _MENU_"

@@ -214,15 +214,18 @@ class ProofController extends Controller
         $selectedJob = $currentFolder->job;
         $selectedSeason = $selectedJob->seasons;
 
-        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy([['ts_folder_id', 'asc'], ['ts_subject_id', 'asc']])
-            ->values();
-        
+        // 1. Fetch and sort attached subjects by lastname
         $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy([['ts_folder_id', 'asc'], ['ts_subject_id', 'asc']])
+            ->sortBy('lastname')
             ->values();
-        
-        $allSubjects = $attachedSubjects->merge($homedSubjects)->sortBy('lastname');
+
+        // 2. Fetch and sort homed subjects by lastname
+        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id)
+            ->sortBy('lastname')
+            ->values();
+
+        // 3. Join them together (Attached first, then Homed)
+        $allSubjects = $attachedSubjects->concat($homedSubjects);
         
         $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([
