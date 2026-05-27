@@ -26,7 +26,7 @@ class SubjectService
         return Subject::with(['images:id,keyvalue,ts_imagekey'])
         ->whereNotNull('ts_subjectkey')
         ->where('ts_folder_id', $folderId)
-        ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'prefix', 'suffix', 'ts_subject_id')
+        ->select('id', 'firstname', 'lastname', 'ts_subjectkey', 'is_locked', 'title', 'salutation', 'prefix', 'suffix', 'sort_order', 'ts_subject_id')
         ->get();
     }
 

@@ -30,9 +30,33 @@
                 </ul>
 
                 <p class="mb-0">
+                    Has Salutation/Job Title
+                </p>
+                <ul class="list-disc pl-5">
+                    <li>
+                        The Salutation is being pulled from the TNJ portrait section.
+                    </li>
+                    <li>
+                        The Job Title is being pulled from the TNJ portrait section.
+                    </li>
+                    <li>
+                        Selecting this option will show/hide the Salutation/Job Title fields.
+                    </li>
+                    <li>
+                       <span data-count="is-edit-salutation-active">{{$isEditSalutationCounter['true']}}</span> Folders marked as having Salutation field editable, <span data-count="is-edit-salutation-inactive">{{$isEditSalutationCounter['false']}}</span> Folders marked as Salutation field not editable.
+                    </li>
+                    <li>
+                       <span data-count="is-edit-job-title-active">{{$isEditJobTitleCounter['true']}}</span> Folders marked as having Job Title field editable, <span data-count="is-edit-job-title-inactive">{{$isEditJobTitleCounter['false']}}</span> Folders marked Job Title field not editable.
+                    </li>
+                </ul>
+
+                <p class="mb-0">
                     Show Salutation in Portraits
                 </p>
                 <ul class="list-disc pl-5">
+                    <li>
+                        The Salutation is being pulled from the TNJ portrait section.
+                    </li>
                     <li>
                         Selecting this option will show/hide the Salutation in Portrait Photos wizard step.
                     </li>
@@ -45,6 +69,9 @@
                     Show Prefix & Suffix in Portraits
                 </p>
                 <ul class="list-disc pl-5">
+                    <li>
+                        The Prefix and Suffix are being pulled from the TNJ group names.
+                    </li>
                     <li>
                         Selecting this option will show/hide the Prefix & Suffix in Portrait Photos wizard step.
                     </li>
@@ -118,24 +145,12 @@
                 </ul>
 
                 <p class="mb-0">
-                    Has Salutation/Job Title
-                </p>
-                <ul class="list-disc pl-5">
-                    <li>
-                        Selecting this option will show/hide the Salutation/Job Title fields.
-                    </li>
-                    <li>
-                       <span data-count="is-edit-salutation-active">{{$isEditSalutationCounter['true']}}</span> Folders marked as having Salutation field editable, <span data-count="is-edit-salutation-inactive">{{$isEditSalutationCounter['false']}}</span> Folders marked as Salutation field not editable.
-                    </li>
-                    <li>
-                       <span data-count="is-edit-job-title-active">{{$isEditJobTitleCounter['true']}}</span> Folders marked as having Job Title field editable, <span data-count="is-edit-job-title-inactive">{{$isEditJobTitleCounter['false']}}</span> Folders marked Job Title field not editable.
-                    </li>
-                </ul>
-
-                <p class="mb-0">
                     Show Salutation in Groups
                 </p>
                 <ul class="list-disc pl-5">
+                    <li>
+                        The Salutation is being pulled from the TNJ portrait section.
+                    </li>
                     <li>
                         Selecting this option will show/hide the Salutation in Group Photo wizard step.
                     </li>
@@ -148,6 +163,9 @@
                     Show Prefix & Suffix in Groups
                 </p>
                 <ul class="list-disc pl-5">
+                    <li>
+                        The Prefix and Suffix are being pulled from the TNJ group names.
+                    </li>
                     <li>
                         Selecting this option will show/hide the Prefix & Suffix in Group Photo wizard step.
                     </li>
@@ -163,11 +181,15 @@
                 </div>
                 <div class="row">
                     <div class="col-12 table-fixed-header">
-                        <table class="table table-responsive-sm table-sm table-bordered fixed-table">
+                        <table class="table table-responsive-sm table-sm table-bordered fixed-table" style="table-layout: fixed; width: auto; min-width: 100%;">
                             <thead>
+                                <tr class="bg-light text-center font-weight-bold text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.05em;">
+                                    <th rowspan="2" class="align-middle border-bottom" style="width: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Folder</th>
+                                    <th colspan="6" class="border-bottom-0" style="border-right: 1px solid #dee2e6; border-left: 1px solid #dee2e6;">Portrait</th>
+                                    <th colspan="8" class="border-bottom-0" style="border-right: 1px solid #dee2e6; border-left: 1px solid #dee2e6;">Group</th>
+                                </tr>
                                 <tr class="bg-light">
-                                    <th>Folder</th>
-                                    <th class="text-center">
+                                    <th class="text-center" style="width: 120px;">
                                         Visible for Proofing
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
@@ -178,7 +200,7 @@
                                                 id="set-is-visible-for-proofing-none">None</span>
                                         </p>
                                     </th>
-                                    <th class="text-center">
+                                    <th class="text-center" style="width: 120px;">
                                         Show Portraits Step
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
@@ -189,98 +211,7 @@
                                                 id="set-is-edit-portraits-none">None</span>
                                         </p>
                                     </th>
-                                    <th class="text-center">
-                                        Show Salutation in Portraits
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-job-show-salutation-portrait-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-job-show-salutation-portrait-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Show Prefix & Suffix in Portraits
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-job-prefix-suffix-portrait-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-job-prefix-suffix-portrait-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Show Group Step
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-group-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-group-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Has Group Names
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="is-subject-list-allowed-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="is-subject-list-allowed-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center group-image-col">
-                                        Show Group Image
-                                    </th>
-                                    <th class="text-center">
-                                        Has Principal
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-principal-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-principal-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Has Deputy
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-deputy-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-deputy-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Has Teacher
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-teacher-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-teacher-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
-                                        Has Salutation
-                                        <br>
-                                        <p class="mb-0 d-repeating-header-none">
-                                                <span class="font-weight-light"
-                                                    id="set-is-edit-salutation-all">Select All</span>
-                                            <span class="font-weight-normal"> | </span>
-                                            <span class="font-weight-light"
-                                                id="set-is-edit-salutation-none">None</span>
-                                        </p>
-                                    </th>
-                                    <th class="text-center">
+                                    <th class="text-center" style="width: 120px;">
                                         Has Job Title
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
@@ -291,8 +222,99 @@
                                                 id="set-is-edit-job-title-none">None</span>
                                         </p>
                                     </th>
-                                    <th class="text-center">
-                                        Show Salutation in Groups
+                                    <th class="text-center" style="width: 120px;">
+                                        Has Salutation
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-salutation-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-salutation-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Show Salutation from TNJ portrait
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-show-salutation-portrait-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-show-salutation-portrait-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Show Prefix & Suffix from TNJ group names
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-job-prefix-suffix-portrait-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-job-prefix-suffix-portrait-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Show Group Step
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-group-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-group-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Has Group Names
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="is-subject-list-allowed-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="is-subject-list-allowed-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center group-image-col" style="width: 120px;">
+                                        Show Group Image
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Has Principal
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-principal-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-principal-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Has Deputy
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-deputy-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-deputy-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Has Teacher
+                                        <br>
+                                        <p class="mb-0 d-repeating-header-none">
+                                                <span class="font-weight-light"
+                                                    id="set-is-edit-teacher-all">Select All</span>
+                                            <span class="font-weight-normal"> | </span>
+                                            <span class="font-weight-light"
+                                                id="set-is-edit-teacher-none">None</span>
+                                        </p>
+                                    </th>
+                                    <th class="text-center" style="width: 120px;">
+                                        Show Salutation from TNJ portrait
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
                                                 <span class="font-weight-light"
@@ -302,8 +324,8 @@
                                                 id="set-is-edit-job-show-salutation-group-none">None</span>
                                         </p>
                                     </th>
-                                    <th class="text-center">
-                                        Show Prefix & Suffix in Groups
+                                    <th class="text-center" style="width: 120px;">
+                                        Show Prefix & Suffix from TNJ group names
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
                                                 <span class="font-weight-light"
@@ -327,7 +349,7 @@
                                         $fkHash = Crypt::encryptString($folder->ts_folderkey);
                                     @endphp
                                     <tr>
-                                        <td>
+                                        <td style="width: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                             <div class="mt-1 ml-1">
                                                 <?= $folder->ts_foldername ?>
                                             </div>
@@ -394,6 +416,68 @@
                                                 {{-- <div class="col-12 mt-4 text-center">
                                                     Alphabetical
                                                 </div> --}}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="row is-edit-job-title is-edit-job-title--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        $isEditJobTitle = true;
+                                                        $isEditJobTitleDisabled = false;
+                                                        if (isset($isEditJobTitleList[$folder->ts_folder_id])) {
+                                                            if ($isEditJobTitleList[$folder->ts_folder_id] == false) {
+                                                                $isEditJobTitle = false;
+                                                            } elseif ($isEditJobTitleList[$folder->ts_folder_id] == null) {
+                                                                $isEditJobTitle = false;
+                                                                $isEditJobTitleDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-job-title text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-job-title-{{ $folderKey }}"
+                                                               name="is-edit-job-title-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditJobTitle ? 'checked' : '' }}
+                                                               {{ $isEditJobTitleDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td> 
+                                        <td>
+                                            <div class="row is-edit-salutation is-edit-salutation--{{ $folderKey }}">
+                                                <div class="col-12">
+                                                    @php
+                                                        $isEditSalutation = true;
+                                                        $isEditSalutationDisabled = false;
+                                                        if (isset($isEditSalutationList[$folder->ts_folder_id])) {
+                                                            if ($isEditSalutationList[$folder->ts_folder_id] == false) {
+                                                                $isEditSalutation = false;
+                                                            } elseif ($isEditSalutationList[$folder->ts_folder_id] == null) {
+                                                                $isEditSalutation = false;
+                                                                $isEditSalutationDisabled = true;
+                                                            }
+                                                        }
+                                                    @endphp
+                                        
+                                                    <div class="form-group text-center">
+                                                        <!-- Checkbox -->
+                                                        <input type="checkbox"
+                                                               class="form-check-input folder-details-is-edit-salutation text-center mt-2 ml-0 mr-0"
+                                                               id="is-edit-salutation-{{ $folderKey }}"
+                                                               name="is-edit-salutation-{{ $folderName }}"
+                                                               data-folder-key="{{ $folderKey }}"
+                                                               data-folder-name="{{ $folderName }}"
+                                                               data-folder-id="{{ $folder->ts_folder_id }}"
+                                                               {{ $isEditSalutation ? 'checked' : '' }}
+                                                               {{ $isEditSalutationDisabled ? 'disabled' : '' }}>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td>
@@ -690,68 +774,6 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="row is-edit-salutation is-edit-salutation--{{ $folderKey }}">
-                                                <div class="col-12">
-                                                    @php
-                                                        $isEditSalutation = true;
-                                                        $isEditSalutationDisabled = false;
-                                                        if (isset($isEditSalutationList[$folder->ts_folder_id])) {
-                                                            if ($isEditSalutationList[$folder->ts_folder_id] == false) {
-                                                                $isEditSalutation = false;
-                                                            } elseif ($isEditSalutationList[$folder->ts_folder_id] == null) {
-                                                                $isEditSalutation = false;
-                                                                $isEditSalutationDisabled = true;
-                                                            }
-                                                        }
-                                                    @endphp
-                                        
-                                                    <div class="form-group text-center">
-                                                        <!-- Checkbox -->
-                                                        <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-salutation text-center mt-2 ml-0 mr-0"
-                                                               id="is-edit-salutation-{{ $folderKey }}"
-                                                               name="is-edit-salutation-{{ $folderName }}"
-                                                               data-folder-key="{{ $folderKey }}"
-                                                               data-folder-name="{{ $folderName }}"
-                                                               data-folder-id="{{ $folder->ts_folder_id }}"
-                                                               {{ $isEditSalutation ? 'checked' : '' }}
-                                                               {{ $isEditSalutationDisabled ? 'disabled' : '' }}>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="row is-edit-job-title is-edit-job-title--{{ $folderKey }}">
-                                                <div class="col-12">
-                                                    @php
-                                                        $isEditJobTitle = true;
-                                                        $isEditJobTitleDisabled = false;
-                                                        if (isset($isEditJobTitleList[$folder->ts_folder_id])) {
-                                                            if ($isEditJobTitleList[$folder->ts_folder_id] == false) {
-                                                                $isEditJobTitle = false;
-                                                            } elseif ($isEditJobTitleList[$folder->ts_folder_id] == null) {
-                                                                $isEditJobTitle = false;
-                                                                $isEditJobTitleDisabled = true;
-                                                            }
-                                                        }
-                                                    @endphp
-                                        
-                                                    <div class="form-group text-center">
-                                                        <!-- Checkbox -->
-                                                        <input type="checkbox"
-                                                               class="form-check-input folder-details-is-edit-job-title text-center mt-2 ml-0 mr-0"
-                                                               id="is-edit-job-title-{{ $folderKey }}"
-                                                               name="is-edit-job-title-{{ $folderName }}"
-                                                               data-folder-key="{{ $folderKey }}"
-                                                               data-folder-name="{{ $folderName }}"
-                                                               data-folder-id="{{ $folder->ts_folder_id }}"
-                                                               {{ $isEditJobTitle ? 'checked' : '' }}
-                                                               {{ $isEditJobTitleDisabled ? 'disabled' : '' }}>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td> 
                                         <td>
                                             <div class="row is-edit-job-show-salutation-group is-edit-job-show-salutation-group--{{ $folderKey }}">
                                                 <div class="col-12">

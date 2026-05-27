@@ -56,7 +56,7 @@
             @endif
         @endcan
         {{-- Use 'Can Invite' for 'Can Edit' decisions --}}
-        @if ($canEditPermission)
+        @if ($hasEditPermission)
             <li>
                 <x-button.dropdownLink
                         href="{{ $editRoute }}"

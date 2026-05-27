@@ -18,6 +18,7 @@ use App\Helpers\Constants\LogConstants;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use App\Models\Subject;
+use App\Models\ProofingIssue;
 use Carbon\Carbon;
 use URL;
 use Auth;
@@ -91,7 +92,9 @@ class ProofController extends Controller
 
         $reviewStatusesColours = $this->statusService->getAllStatusData('id', 'status_external_name', 'colour_code')->get();
         // Get all unique keyvalues that have changes to avoid repeated DB lookups
+        $issueID = ProofingIssue::where('issue_category_id', 1)->pluck('id')->toArray();
         $getChangelog = $this->proofingChangelogService->getAllChangelogsByJobkeyExceptTraditional($selectedJob->ts_jobkey)
+            ->whereNotIn('issue_id', $issueID)
             ->select('keyvalue')
             ->get();
         $changelogKeysMap = $getChangelog->pluck('keyvalue')->unique()->flip();
@@ -214,23 +217,36 @@ class ProofController extends Controller
         $selectedJob = $currentFolder->job;
         $selectedSeason = $selectedJob->seasons;
 
-        // 1. Fetch and sort attached subjects by lastname
-        $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy('lastname')
-            ->values();
+        // 1. Fetch the raw collections from your service layer
+        $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id);
+        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id);
 
-        // 2. Fetch and sort homed subjects by lastname
-        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy('lastname')
-            ->values();
+        // 2. Check if ANY item in either collection has a valid 'sort_order' property
+        $hasSortOrder = $attachedSubjects->contains(fn($item) => isset($item->sort_order)) 
+                    || $homedSubjects->contains(fn($item) => isset($item->sort_order));
 
-        // 3. Join them together (Attached first, then Homed)
-        $allSubjects = $attachedSubjects->concat($homedSubjects);
+        if ($hasSortOrder) {
+            // STRATEGY A: 'sort_order' exists on at least one item. 
+            // Join them together first, then sort the global pool by sort_order.
+            $allSubjects = $attachedSubjects->concat($homedSubjects)
+                ->sortBy([
+                    ['sort_order', 'asc'],
+                    ['lastname', 'asc']
+                ])
+                ->values();
+        } else {
+            // STRATEGY B: No 'sort_order' exists anywhere.
+            // Sort each group independently by lastname, then join them (Attached group first).
+            $sortedAttached = $attachedSubjects->sortBy('lastname')->values();
+            $sortedHomed    = $homedSubjects->sortBy('lastname')->values();
+
+            $allSubjects = $sortedAttached->concat($sortedHomed);
+        }
         
         $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([
                                 'ts_subject_id', 'ts_subjectkey', 'salutation', 
-                                'prefix', 'firstname', 'lastname', 'suffix', 'title'
+                                'prefix', 'firstname', 'lastname', 'suffix', 'title', 'sort_order'
                             ])->get();
 
         $groupDetails = $this->folderService->getGroupByFolder($currentFolder->ts_folderkey);

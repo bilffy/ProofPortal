@@ -89,7 +89,7 @@
                                         @php 
                                             $isAbsentList = false;
                                             if (is_string($groupDetail) && stripos($groupDetail, "Absent") !== false && trim($groupDetail) === '') {
-                                                $rowLabel = 'Absent List';
+                                                $rowLabel = 'Absent List L-R';
                                                 $isAbsentList = true;
                                                 $row = $rowNumber;
                                                 $names = implode(', ', $groupDetail);
@@ -107,27 +107,27 @@
                                             
                                                 if($groupCountExceptAbsent < 2){
                                                     if($key === 'Row_0'){
-                                                        $rowLabel = 'Back Row';
+                                                        $rowLabel = 'Back Row L-R';
                                                     } elseif($key === 'Absent'){
-                                                        $rowLabel = 'Absent List';
+                                                        $rowLabel = 'Absent List L-R';
                                                     }
                                                 } elseif($groupCountExceptAbsent === 2){
                                                     if($key === 'Row_0'){
-                                                        $rowLabel = 'Back Row';
+                                                        $rowLabel = 'Back Row L-R';
                                                     } elseif($key === 'Row_1'){
-                                                        $rowLabel = 'Front Row';
+                                                        $rowLabel = 'Front Row L-R';
                                                     } elseif($key === 'Absent'){
-                                                        $rowLabel = 'Absent List';
+                                                        $rowLabel = 'Absent List L-R';
                                                     }
                                                 } elseif($groupCountExceptAbsent > 2){
                                                     if($key === 'Row_0'){
-                                                        $rowLabel = 'Back Row';
+                                                        $rowLabel = 'Back Row L-R';
                                                     } elseif($key === 'Row_'.($groupCountExceptAbsent-1)){
-                                                        $rowLabel = 'Front Row';
+                                                        $rowLabel = 'Front Row L-R';
                                                     } elseif($key !== 'Absent'){
-                                                        $rowLabel = 'Middle Row';
+                                                        $rowLabel = 'Middle Row L-R';
                                                     } elseif($key === 'Absent'){
-                                                        $rowLabel = 'Absent List';
+                                                        $rowLabel = 'Absent List L-R';
                                                     }
                                                 }
                                                 $names = implode(', ', $groupDetail);
@@ -141,11 +141,11 @@
                                     @endforeach
                                 @else
                                     <div class="form-group row-label tagsSection" data-row-number="0">
-                                        <label for="tags_0">Back Row</label>
+                                        <label for="tags_0">Back Row L-R</label>
                                         <input type="text" class="form-control tagsinput" style="display:none;" data-role="tagsinput" id="tags_0" name="tags[]" value="" placeholder="Add a Name" class="typeahead" data-provide="typeahead" autocomplete="off">
                                     </div>
                                     <div class="form-group row-label tagsSection" data-row-number="1">
-                                        <label for="tags_1">Absent List</label>
+                                        <label for="tags_1">Absent List L-R</label>
                                         <input type="text" class="form-control tagsinput" style="display:none;" data-role="tagsinput" id="tags_1" name="tags[]" value="" placeholder="Add a Name" class="typeahead" data-provide="typeahead" autocomplete="off">
                                     </div>
                                 @endif

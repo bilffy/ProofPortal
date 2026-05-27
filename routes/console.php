@@ -21,23 +21,8 @@ use App\Services\Proofing\StatusService;
 //     ->runInBackground()
 //     ->appendOutputTo($logsPath);
 
-Schedule::call(function () {
-    $statusService = app(StatusService::class);
-    $jobs = Job::where('proof_start', '>', Carbon::today())
-    ->where('imagesync_status_id', $statusService->unsync)
-    ->whereHas('images', function ($query) {
-        $query->where('exportStatus', 0)
-              ->where('keyorigin', 'Subject');
-    })
-    ->chunkById(50, function ($jobs) {
-        foreach ($jobs as $job) {
-            SyncImagesToProd02::dispatch($job->ts_jobkey);
-        }
-    });
-
-})
-->name('sync_images_scheduler')
-->everyMinute()
-->withoutOverlapping();
-
-
+// In your Console Scheduler configuration
+Schedule::command('images:sync-scheduler')
+    ->everyMinute()
+    ->name('sync_images_scheduler')
+    ->withoutOverlapping(10); // Prevents locks from hanging forever if a process crashes

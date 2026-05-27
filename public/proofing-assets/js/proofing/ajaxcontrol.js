@@ -672,13 +672,13 @@ $(document).ready(function () {
         e.preventDefault();
 
         let frontRow = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().includes('Front Row');
+            return $(this).find('label').text().includes('Front Row L-R');
         });
         let middleRow = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().includes('Middle Row');
+            return $(this).find('label').text().includes('Middle Row L-R');
         });
         let backRow = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().includes('Back Row');
+            return $(this).find('label').text().includes('Back Row L-R');
         });
 
         let currentRow = $(this).closest('.form-group.row-label');
@@ -691,16 +691,20 @@ $(document).ready(function () {
 
         let maxRowNumber = $('[data-row-number]').length;
 
-        // If the current row label is 'Front Row', rename the previous row's label to 'Front Row'
-        if (currentRow.find('label').text().includes('Front Row') && prevRow.length) {
-            if (rowCount === maxRowNumber) {
-                prevRow.find('label').html('Front Row');
+        // If the current row label is 'Front Row', rename the previous row's label appropriately
+        if (currentRow.find('label').text().includes('Front Row L-R') && prevRow.length) {
+            // Count how many non-absent rows remain in the DOM after removal
+            let remainingNonAbsent = $('.form-group.row-label').filter(function () {
+                return !$(this).find('label').text().includes('Absent List L-R');
+            }).length;
+
+            if (remainingNonAbsent <= 1) {
+                // Only one row left — it must be the Back Row, keep it as Back Row
+                prevRow.find('label').html('Back Row L-R');
+            } else if (backRow.length && frontRow.length && !middleRow.length) {
+                prevRow.find('label').html('Back Row L-R');
             } else {
-                if (backRow.length && frontRow.length && !middleRow.length) {
-                    prevRow.find('label').html('Back Row');
-                } else {
-                    prevRow.find('label').html('Front Row <a href="#" class="remove_row">(Remove Row)</a>');
-                }
+                prevRow.find('label').html('Front Row L-R <a href="#" class="remove_row">(Remove Row)</a>');
             }
         }
         isaddedrow = true;
@@ -711,16 +715,16 @@ $(document).ready(function () {
         e.preventDefault();
 
         let frontRowOnly = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().trim() === 'Front Row';
+            return $(this).find('label').text().trim() === 'Front Row L-R';
         });
         let frontRow = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().includes('Front Row');
+            return $(this).find('label').text().includes('Front Row L-R');
         });
         let middleRow = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().includes('Middle Row');
+            return $(this).find('label').text().includes('Middle Row L-R');
         });
         let backRow = $('.form-group.row-label').filter(function () {
-            return $(this).find('label').text().includes('Back Row');
+            return $(this).find('label').text().includes('Back Row L-R');
         });
         var rowCount = parseInt(document.querySelector('input[name="groupCount"]').value);
 
@@ -740,7 +744,7 @@ $(document).ready(function () {
     });
 
     function insertFrontRowBeforeOnlyBack(backRow, rowCount) {
-        backRow.find('label').html('Back Row');
+        backRow.find('label').html('Back Row L-R');
         let newRowNumber = rowCount + 1;
         let maxRowNumber = $('[data-row-number]').length + 1;
 
@@ -753,20 +757,28 @@ $(document).ready(function () {
 
         let newRowHtml = `
             <div class="form-group row-label tagsSection" data-row-number="${newRowNumber}">
-                <label for="tags_${newRowNumber}">Front Row ${removeRowLink}</label>
+                <label for="tags_${newRowNumber}">Front Row L-R ${removeRowLink}</label>
                 <input type="text" class="form-control tagsinput" id="tags_${newRowNumber}" name="tags[]" data-role="tagsinput" data-key="" value="" placeholder="Add a Name" autocomplete="off" style="display: none;">
             </div>
         `;
 
-        $(`.form-group.row-label[data-row-number=${rowCount}]`).before(newRowHtml);
+        // Insert before the Absent List row (always present), falling back to after back row
+        let $absentRow = $('.form-group.row-label').filter(function () {
+            return $(this).find('label').text().includes('Absent List L-R');
+        });
+        if ($absentRow.length) {
+            $absentRow.before(newRowHtml);
+        } else {
+            backRow.after(newRowHtml);
+        }
         fetchAndUpdateSubjectNames();
     }
 
     function insertFrontRowBefore(frontRow, rowCount, rowLabel) {
         if (rowLabel === 'Front_remove') {
-            frontRow.find('label').html('Middle Row <a href="#" class="remove_row">(Remove Row)</a>');
+            frontRow.find('label').html('Middle Row L-R <a href="#" class="remove_row">(Remove Row)</a>');
         } else if (rowLabel === 'Front') {
-            frontRow.find('label').html('Middle Row');
+            frontRow.find('label').html('Middle Row L-R');
         }
 
         let maxRowNumber = 0;
@@ -788,12 +800,20 @@ $(document).ready(function () {
 
         let newRowHtml = `
             <div class="form-group row-label tagsSection" data-row-number="${newRowNumber}">
-                <label for="tags_${newRowNumber}">Front Row ${removeRowLink}</label>
+                <label for="tags_${newRowNumber}">Front Row L-R ${removeRowLink}</label>
                 <input type="text" class="form-control tagsinput" id="tags_${newRowNumber}" name="tags[]" data-role="tagsinput" data-key="" value="" placeholder="Add a Name" autocomplete="off" style="display: none;">
             </div>
         `;
 
-        $(`.form-group.row-label[data-row-number=${rowCount}]`).before(newRowHtml);
+        // Insert before the Absent List row (always present), falling back to after frontRow
+        let $absentRowFront = $('.form-group.row-label').filter(function () {
+            return $(this).find('label').text().includes('Absent List L-R');
+        });
+        if ($absentRowFront.length) {
+            $absentRowFront.before(newRowHtml);
+        } else {
+            frontRow.after(newRowHtml);
+        }
         fetchAndUpdateSubjectNames();
     }
 
@@ -817,7 +837,7 @@ $(document).ready(function () {
 
         let newRowHtml = `
             <div class="form-group row-label tagsSection" data-row-number="${newRowNumber}">
-                <label for="tags_${newRowNumber}">Middle Row <a href="#" class="remove_row">(Remove Row)</a></label>
+                <label for="tags_${newRowNumber}">Middle Row L-R <a href="#" class="remove_row">(Remove Row)</a></label>
                 <input type="text" class="form-control tagsinput" id="tags_${newRowNumber}" name="tags[]" data-role="tagsinput" data-key="" value="" placeholder="Add a Name" autocomplete="off" style="display: none;">
             </div>
         `;
@@ -837,8 +857,8 @@ $(document).ready(function () {
             let labelB = $(b).find('label').text().trim();
 
             // Place 'Absent List' first, others can follow in their original order
-            if (labelA === 'Absent List') return -1;
-            if (labelB === 'Absent List') return 1;
+            if (labelA === 'Absent List L-R') return -1;
+            if (labelB === 'Absent List L-R') return 1;
             return 0;
         });
 
@@ -846,7 +866,7 @@ $(document).ready(function () {
         let nameRowCounter = 0;
         sortedSections.each(function (index) {
             let rowLabel = $(this).find('label').text().trim();
-            if (rowLabel.includes('Absent List')) {
+            if (rowLabel.includes('Absent List L-R')) {
                 rowLabel = 'Absent';
             } else {
                 rowLabel = 'Row_' + nameRowCounter;

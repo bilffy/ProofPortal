@@ -113,7 +113,6 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <p>Click headings to sort by that column.</p>
-                                        @if (count($tsJobs) > 0)
                                             <table id="schools-table" class="table table-bordered table-striped table-sm">
                                                 <thead>
                                                     <tr>
@@ -166,11 +165,6 @@
                                                         @endforeach
                                                 </tbody>
                                             </table>
-                                        @else
-                                            <div class="text-center py-3 text-muted fw-semibold">
-                                                {{ __('No Jobs Found...') }}
-                                            </div> 
-                                        @endif
                                     </div>
                                 </div>
                             </div>
