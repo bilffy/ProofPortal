@@ -44,7 +44,7 @@
             <div class="reports index">
                 <div class="card">
                     <div class="card-header">
-                        <i class="fa fa-align-justify"></i> {{ __('Proofing Records') }}
+                        <i class="fa fa-align-justify"></i> {{ __('Proofing Reports') }}
                     </div>
                     <div class="card-body">
                         <table class="table table-bordered table-striped table-sm">

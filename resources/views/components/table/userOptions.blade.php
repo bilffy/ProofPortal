@@ -23,6 +23,7 @@
 
     $canInvitePermission = PermissionHelper::toPermission(PermissionHelper::ACT_INVITE, subject: $role);
     $canEditPermission = PermissionHelper::toPermission(PermissionHelper::ACT_EDIT, subject: $role);
+    
     $canImpersonate = PermissionHelper::canImpersonate($userId);
     
     $hasInvitePermission = auth()->user()->can($canInvitePermission);
@@ -55,7 +56,7 @@
                 </li>
             @endif
         @endcan
-        {{-- Use 'Can Invite' for 'Can Edit' decisions --}}
+        {{-- Use evaluated permission result, not the permission name string --}}
         @if ($hasEditPermission)
             <li>
                 <x-button.dropdownLink

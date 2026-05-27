@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Helpers\PermissionHelper;
 use App\Helpers\RoleHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -441,5 +442,37 @@ class User extends Authenticatable
         }
         
         return false;
+    }
+
+    /**
+     * Check if this user can edit the target user, based on Spatie role_has_permissions.
+     *
+     * @param int|string $userId
+     * @return bool
+     */
+    public function canEdit($userId): bool
+    {
+        $id = $userId;
+
+        // Cannot edit yourself
+        if ($this->id === (int) $id) {
+            return false;
+        }
+
+        /** @var User $targetUser */
+        $targetUser = User::query()->find($id);
+
+        if (!$targetUser) {
+            return false;
+        }
+
+        $targetRole = $targetUser->getRole();
+        if (!$targetRole) {
+            return false;
+        }
+
+        // Build "edit {role_name}" permission and check against role_has_permissions
+        $editPermission = PermissionHelper::toPermission(PermissionHelper::ACT_EDIT, $targetRole);
+        return $this->can($editPermission);
     }
 }

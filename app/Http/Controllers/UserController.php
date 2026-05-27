@@ -247,7 +247,7 @@ class UserController extends Controller
         $user = Auth::user();
         if (!$isApiRequest) {
             $editUserId = $request->route('id');
-            if ($user->canInvite($editUserId)) {
+            if ($user->canEdit($editUserId)) {
                 $editUser = User::findOrFail($editUserId);
             } else {
                 // redirect to users list with error
@@ -314,7 +314,7 @@ class UserController extends Controller
         
         if ($isEditUserForm) {
             $editUserId = $request->route('id');
-            if (Auth::user()->canInvite($editUserId)) {
+            if (Auth::user()->canEdit($editUserId)) {
                 $user = User::findOrFail($editUserId);
             } else {
                 // redirect to users list with error
