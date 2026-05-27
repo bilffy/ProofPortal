@@ -28,6 +28,9 @@ $downloadNameBuilder = $currentDate->format('Ymd-His') . ' - ' . $report->name;
 $passedParamValues = array_values($passedParamValues);
 
 foreach ($reportParams as $k => $reportParam) {
+    if (!isset($passedParamValues[$k])) {
+        continue;
+    }
     $q = $reportParam['query']->select($reportParam['valueField'], $reportParam['keyField'])
                             ->where($reportParam['keyField'], $passedParamValues[$k])
                             ->first();
