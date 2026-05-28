@@ -417,9 +417,9 @@
                                                             {{ $isEditPortraitsDisabled ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
-                                                {{-- <div class="col-12 mt-4 text-center">
-                                                    Alphabetical
-                                                </div> --}}
+                                                <div class="col-12 mt-4 text-center">
+                                                    {{ $SortOrderList[$folder->ts_folder_id] }}
+                                                </div>
                                             </div>
                                         </td>
                                         <td>

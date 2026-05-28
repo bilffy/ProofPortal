@@ -189,6 +189,15 @@
 
             // Iterate over folder details and update lists and counters
             foreach ($selectedFolders as $folderDetail) {
+                $hasSortOrder =
+                    $folderDetail->subjects->contains(fn($subject) => !is_null($subject->sort_order))
+                    || $folderDetail->attachedsubjects->contains(
+                        fn($item) => !is_null($item->subject?->sort_order)
+                    );
+
+                $SortOrderList[$folderDetail->ts_folder_id] = $hasSortOrder
+                    ? 'TNJ Sort Order' : 'Alphabetical';
+
                 $isVisibleForProofingList[$folderDetail->ts_folder_id] = $folderDetail->is_visible_for_proofing;
                 $isVisibleForProofingCounter[$folderDetail->is_visible_for_proofing ? 'true' : 'false']++;
 

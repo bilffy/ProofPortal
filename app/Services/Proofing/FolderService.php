@@ -46,7 +46,7 @@ class FolderService
 
     public function getFolderByJobId($tsJobId)
     {
-        return Folder::where('ts_job_id', $tsJobId)->where('status_id', '!=', $this->statusService->tnjNotFound);
+        return Folder::where('ts_job_id', $tsJobId)->where('status_id', '!=', $this->statusService->tnjNotFound)->with(['attachedsubjects.subject']);
     }
 
     public function getFolderByJobIdAndFolderKey($tsJobId,$folderkey)
