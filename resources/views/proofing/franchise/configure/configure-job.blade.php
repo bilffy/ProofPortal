@@ -89,11 +89,6 @@
             width: 90px;
         }
 
-        /* Show Group Image column */
-        .fixed-table th.group-image-col,
-        .fixed-table td.group-image-col {
-            width: 200px; /* Increased to fit image + button side-by-side */
-        }
         /*table folder config adjustments*/
 
     </style> 
@@ -218,8 +213,8 @@
                 $isEditJobPrefixSuffixGroupList[$folderDetail->ts_folder_id] = $folderDetail->show_prefix_suffix_groups;
                 $isEditJobPrefixSuffixGroupCounter[$folderDetail->show_prefix_suffix_groups ? 'true' : 'false']++;
 
-                $isEditSalutationList[$folderDetail->ts_folder_id] = $folderDetail->is_edit_salutation;
-                $isEditSalutationCounter[$folderDetail->is_edit_salutation ? 'true' : 'false']++;
+                // $isEditSalutationList[$folderDetail->ts_folder_id] = $folderDetail->is_edit_salutation;
+                // $isEditSalutationCounter[$folderDetail->is_edit_salutation ? 'true' : 'false']++;
 
                 $isSubjectListAllowedList[$folderDetail->ts_folder_id] = $folderDetail->is_subject_list_allowed;
                 $isSubjectListAllowedCounter[$folderDetail->is_subject_list_allowed ? 'true' : 'false']++;

@@ -30,21 +30,25 @@
                 </ul>
 
                 <p class="mb-0">
-                    Has Salutation/Job Title
+                    <!-- Has Salutation/Job Title -->
+                    Has Job Title
                 </p>
                 <ul class="list-disc pl-5">
-                    <li>
+                    <!-- <li>
                         The Salutation is being pulled from the TNJ portrait section.
-                    </li>
+                    </li> -->
                     <li>
                         The Job Title is being pulled from the TNJ portrait section.
                     </li>
-                    <li>
+                    <!-- <li>
                         Selecting this option will show/hide the Salutation/Job Title fields.
-                    </li>
+                    </li> -->
                     <li>
-                       <span data-count="is-edit-salutation-active">{{$isEditSalutationCounter['true']}}</span> Folders marked as having Salutation field editable, <span data-count="is-edit-salutation-inactive">{{$isEditSalutationCounter['false']}}</span> Folders marked as Salutation field not editable.
+                        Selecting this option will show/hide the Job Title fields.
                     </li>
+                    <!-- <li>
+                       <span data-count="is-edit-salutation-active">{{$isEditSalutationCounter['true']}}</span> Folders marked as having Salutation field editable, <span data-count="is-edit-salutation-inactive">{{$isEditSalutationCounter['false']}}</span> Folders marked as Salutation field not editable.
+                    </li> -->
                     <li>
                        <span data-count="is-edit-job-title-active">{{$isEditJobTitleCounter['true']}}</span> Folders marked as having Job Title field editable, <span data-count="is-edit-job-title-inactive">{{$isEditJobTitleCounter['false']}}</span> Folders marked Job Title field not editable.
                     </li>
@@ -222,7 +226,7 @@
                                                 id="set-is-edit-job-title-none">None</span>
                                         </p>
                                     </th>
-                                    <th class="text-center" style="width: 120px;">
+                                    <!-- <th class="text-center" style="width: 120px;">
                                         Has Salutation
                                         <br>
                                         <p class="mb-0 d-repeating-header-none">
@@ -232,7 +236,7 @@
                                             <span class="font-weight-light"
                                                 id="set-is-edit-salutation-none">None</span>
                                         </p>
-                                    </th>
+                                    </th> -->
                                     <th class="text-center" style="width: 120px;">
                                         Show Salutation from TNJ portrait
                                         <br>
@@ -449,7 +453,7 @@
                                                 </div>
                                             </div>
                                         </td> 
-                                        <td>
+                                        <!-- <td>
                                             <div class="row is-edit-salutation is-edit-salutation--{{ $folderKey }}">
                                                 <div class="col-12">
                                                     @php
@@ -466,7 +470,6 @@
                                                     @endphp
                                         
                                                     <div class="form-group text-center">
-                                                        <!-- Checkbox -->
                                                         <input type="checkbox"
                                                                class="form-check-input folder-details-is-edit-salutation text-center mt-2 ml-0 mr-0"
                                                                id="is-edit-salutation-{{ $folderKey }}"
@@ -479,7 +482,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </td>
+                                        </td> -->
                                         <td>
                                             <div class="row is-edit-job-show-salutation-portrait is-edit-job-show-salutation-portrait--{{ $folderKey }}">
                                                 <div class="col-12">
@@ -617,67 +620,67 @@
                                                 <div class="col-12">
                                                     <div class="row traditional-photo-upload traditional-photo-upload--{{ $folderKey }}">
                                                         <div class="col-12 text-center">
-                                                                <div class="row no-gutters align-items-start justify-content-center flex-nowrap">
-                                                                    <div class="col-auto text-center pr-2">
-                                                                    @php
-                                                                        $imageData = $folder->images;
-                                                                        
-                                                                        if (!empty($imageData) && !empty($imageData->name)) {
-                                                                            $imageUrl = route('image.show', Crypt::encryptString($imageData->name));
-                                                                            $deleteLinkVisible = true;
-                                                                        } else {
-                                                                            $imageUrl = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');
-                                                                            $deleteLinkVisible = false;
-                                                                        }
+                                                                 <div class="d-flex flex-column align-items-center justify-content-center" style="gap: 5px;">
+                                                                     <div class="text-center">
+                                                                         @php
+                                                                             $imageData = $folder->images;
+                                                                             
+                                                                             if (!empty($imageData) && !empty($imageData->name)) {
+                                                                                 $imageUrl = route('image.show', Crypt::encryptString($imageData->name));
+                                                                                 $deleteLinkVisible = true;
+                                                                             } else {
+                                                                                 $imageUrl = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');
+                                                                                 $deleteLinkVisible = false;
+                                                                             }
 
-                                                                    @endphp
-                                                                     <img loading="lazy" src="{{ $imageUrl }}" 
-                                                                         class="mx-auto d-block modal-thumb" 
-                                                                         style="width: 100px; height: auto; object-fit: contain;" 
-                                                                         id="{{ $folderKey }}-image"
-                                                                         data-modal-title="{{ $folder->ts_foldername }}" 
-                                                                         data-modal-src="{{ $imageUrl }}">
-                                                                
-                                                                    @php
-                                                                        $deleteClass = $deleteLinkVisible ? 'delete-artifact mx-auto d-block' : 'delete-artifact mx-auto d-none';
-                                                                    @endphp
-                                                                
-                                                                    <a href="#" 
-                                                                        id="{{ $folderKey }}-delete" 
-                                                                        class="{{ $deleteClass }}" 
-                                                                        data-folder-key="{{ $folderKey }}" 
-                                                                        data-folder-name="{{ $folderName }}" onclick="event.preventDefault();">
-                                                                        Delete
-                                                                    </a>
-                                                                </div>
-                                                                
-                                        
-                                                                    <div class="col-auto text-left d-flex flex-column align-items-start" style="gap: 5px;">
-                                                                        <div class="form-group mb-0">
-                                                                            <label for="{{ $folderKey }}" class="btn btn-secondary btn-sm mb-0" style="padding: 4px 10px; white-space: nowrap; cursor: pointer;">
-                                                                                Upload File
-                                                                            </label>
-                                                                            <input type="file" accept="image/jpeg, image/png, image/jpg"
-                                                                                class="form-control-file traditional-photo-upload d-none"
-                                                                                id="{{ $folderKey }}"
-                                                                                name="{{ $folderName }}">
-                                                                        </div> 
-                                            
-                                                                        <div id="{{ $folderKey }}-bar" class="d-none w-100">
-                                                                            <div id="progress-wrp-{{ $folderKey }}" class="progress" style="height: 18px; font-size: 10px; line-height: 18px;">
-                                                                                <div class="progress-bar bg-success" role="progressbar"
-                                                                                     style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                            
-                                                                        <div id="{{ $folderKey }}-error" class="alert alert-danger d-none p-1 mb-0" style="font-size: 11px;">
-                                                                            Error MSG
-                                                                        </div>
-                                                                    </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                                         @endphp
+                                                                         <img loading="lazy" src="{{ $imageUrl }}" 
+                                                                             class="mx-auto d-block modal-thumb" 
+                                                                             style="width: 100px; height: auto; object-fit: contain; border: 1px solid #ddd; padding: 2px;" 
+                                                                             id="{{ $folderKey }}-image"
+                                                                             data-modal-title="{{ $folder->ts_foldername }}" 
+                                                                             data-modal-src="{{ $imageUrl }}">
+                                                                     
+                                                                         @php
+                                                                             $deleteClass = $deleteLinkVisible ? 'delete-artifact mx-auto d-block mt-1' : 'delete-artifact mx-auto d-none mt-1';
+                                                                         @endphp
+                                                                     
+                                                                         <a href="#" 
+                                                                             id="{{ $folderKey }}-delete" 
+                                                                             class="{{ $deleteClass }}" 
+                                                                             data-folder-key="{{ $folderKey }}" 
+                                                                             data-folder-name="{{ $folderName }}" onclick="event.preventDefault();" style="font-size: 11px;">
+                                                                             Delete
+                                                                         </a>
+                                                                     </div>
+                                                                 
+                                         
+                                                                     <div class="text-center d-flex flex-column align-items-center w-100" style="gap: 5px;">
+                                                                         <div class="form-group mb-0 w-100">
+                                                                             <label for="{{ $folderKey }}" class="btn btn-secondary btn-sm mb-0 btn-block" style="padding: 2px 5px; font-size: 10px; white-space: nowrap; cursor: pointer;">
+                                                                                 Upload File
+                                                                             </label>
+                                                                             <input type="file" accept="image/jpeg, image/png, image/jpg"
+                                                                                 class="form-control-file traditional-photo-upload d-none"
+                                                                                 id="{{ $folderKey }}"
+                                                                                 name="{{ $folderName }}">
+                                                                         </div> 
+                                             
+                                                                         <div id="{{ $folderKey }}-bar" class="d-none w-100">
+                                                                             <div id="progress-wrp-{{ $folderKey }}" class="progress" style="height: 12px; font-size: 9px; line-height: 12px;">
+                                                                                 <div class="progress-bar bg-success" role="progressbar"
+                                                                                      style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                                                 </div>
+                                                                             </div>
+                                                                         </div>
+                                             
+                                                                         <div id="{{ $folderKey }}-error" class="alert alert-danger d-none p-1 mb-0 w-100" style="font-size: 9px;">
+                                                                             Error MSG
+                                                                         </div>
+                                                                     </div>
+                                                                 </div>
+                                                         </div>
+                                                     </div>
                                                 </div>
                                             </div>
                                         </td>

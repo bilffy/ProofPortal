@@ -107,11 +107,11 @@
 
                                                 // Check conditions
                                                 if ($subject_question->issue_description === $jobTitleSalutation) {
-                                                    $displayOption = $currentFolder->is_edit_job_title == 1 && $currentFolder->is_edit_salutation == 1;
+                                                    $displayOption = $currentFolder->is_edit_job_title == 1 && $currentFolder->show_salutation_portraits == 1;
                                                 } elseif ($subject_question->issue_description === $jobTitle) {
-                                                    $displayOption = $currentFolder->is_edit_job_title == 1 && $currentFolder->is_edit_salutation != 1;
+                                                    $displayOption = $currentFolder->is_edit_job_title == 1 && $currentFolder->show_salutation_portraits != 1;
                                                 } elseif ($subject_question->issue_description === $jobSalutation) {
-                                                    $displayOption = $currentFolder->is_edit_job_title != 1 && $currentFolder->is_edit_salutation == 1;
+                                                    $displayOption = $currentFolder->is_edit_job_title != 1 && $currentFolder->show_salutation_portraits == 1;
                                                 }
                                               
                                                 // Assign template IDs based on description
@@ -186,7 +186,7 @@
                                                         <label for="{{ $skHash }}-new_title" class="mt-3">Job Title</label>
                                                         <input type="text" name="{{ $skHash }}_new_title" id="{{ $skHash }}-new_title" class="form-control {{ $skHash }}-form-spelling-title" value="{{ $subject->title }}">
                                                     @endif
-                                                    @if ($currentFolder->is_edit_salutation)
+                                                    @if ($currentFolder->show_salutation_portraits)
                                                         <label for="{{ $skHash }}-new_salutation" class="mt-3">Salutation</label>
                                                         <input type="text" name="{{ $skHash }}_new_salutation" id="{{ $skHash }}-new_salutation" class="form-control {{ $skHash }}-form-spelling-salutation" value="{{ $subject->salutation }}">
                                                     @endif
@@ -279,7 +279,7 @@
                                     <th class="idx-last-name" scope="col">Last Name</th>
                                     <th class="idx-class" scope="col" width="20%">Folder Name</th>
 
-                                    @if ($currentFolder->is_edit_salutation)
+                                    @if ($currentFolder->show_salutation_portraits)
                                         <th class="idx-salutation" scope="col">Salutation</th>
                                     @endif
                                     <th class="idx-prefix" scope="col">Prefix</th>

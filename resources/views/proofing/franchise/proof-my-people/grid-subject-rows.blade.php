@@ -23,7 +23,7 @@
             $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
         }
 
-        $useSalutation = $currentFolder->is_edit_salutation;
+        $useSalutation = $currentFolder->show_salutation_portraits;
         $usePrefixSuffix = $currentFolder->show_prefix_suffix_groups;
 
         // Trim all parts safely
@@ -99,7 +99,7 @@
             data-skhash="{{ $skHash }}"
             data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
     </td>
-    @if ($currentFolder->is_edit_salutation)
+    @if ($currentFolder->show_salutation_portraits)
         <td class="idx-salutation p-0">
             <input type="text" class="form-control grid-spelling {{ $skHash }}-grid-spelling-salutation"
                 id="{{ $skHash }}-grid-spelling-salutation"

@@ -217,44 +217,31 @@ class ProofController extends Controller
         $selectedJob = $currentFolder->job;
         $selectedSeason = $selectedJob->seasons;
 
-        // // 1. Fetch the raw collections from your service layer
-        // $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id);
-        // $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id);
+        // 1. Fetch the raw collections from your service layer
+        $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id);
+        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id);
 
-        // // 2. Check if ANY item in either collection has a valid 'sort_order' property
-        // $hasSortOrder = $attachedSubjects->contains(fn($item) => isset($item->sort_order)) 
-        //             || $homedSubjects->contains(fn($item) => isset($item->sort_order));
+        // 2. Check if ANY item in either collection has a valid 'sort_order' property
+        $hasSortOrder = $attachedSubjects->contains(fn($item) => isset($item->sort_order)) 
+                    || $homedSubjects->contains(fn($item) => isset($item->sort_order));
 
-        // if ($hasSortOrder) {
-        //     // STRATEGY A: 'sort_order' exists on at least one item. 
-        //     // Join them together first, then sort the global pool by sort_order.
-        //     $allSubjects = $attachedSubjects->concat($homedSubjects)
-        //         ->sortBy([
-        //             ['sort_order', 'asc'],
-        //             ['lastname', 'asc']
-        //         ])
-        //         ->values();
-        // } else {
-        //     // STRATEGY B: No 'sort_order' exists anywhere.
-        //     // Sort each group independently by lastname, then join them (Attached group first).
-        //     $sortedAttached = $attachedSubjects->sortBy('lastname')->values();
-        //     $sortedHomed    = $homedSubjects->sortBy('lastname')->values();
+        if ($hasSortOrder) {
+            // STRATEGY A: 'sort_order' exists on at least one item. 
+            // Join them together first, then sort the global pool by sort_order.
+            $allSubjects = $attachedSubjects->concat($homedSubjects)
+                ->sortBy([
+                    ['sort_order', 'desc'],
+                    ['lastname', 'asc']
+                ])
+                ->values();
+        } else {
+            // STRATEGY B: No 'sort_order' exists anywhere.
+            // Sort each group independently by lastname, then join them (Attached group first).
+            $sortedAttached = $attachedSubjects->sortBy('lastname')->values();
+            $sortedHomed    = $homedSubjects->sortBy('lastname')->values();
 
-        //     $allSubjects = $sortedAttached->concat($sortedHomed);
-        // }
-
-        // 1. Fetch and sort attached subjects by lastname
-        $attachedSubjects = $this->subjectService->getAllAttachedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy('lastname')
-            ->values();
-
-        // 2. Fetch and sort homed subjects by lastname
-        $homedSubjects = $this->subjectService->getAllHomedSubjectsByFolderID($currentFolder->ts_folder_id)
-            ->sortBy('lastname')
-            ->values();
-
-        // 3. Join them together (Attached first, then Homed)
-        $allSubjects = $attachedSubjects->concat($homedSubjects);
+            $allSubjects = $sortedAttached->concat($sortedHomed);
+        }
         
         $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([

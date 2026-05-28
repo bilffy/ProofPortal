@@ -451,23 +451,23 @@
                 //==============================================================
         
         
-                //Is Edit Salutation
-                $("#set-is-edit-salutation-all").click(function () {
-                    $("input[id^='is-edit-salutation-']").prop('checked', true);
-                    processCheckboxes('is-edit-salutation-','is_edit_salutation');
-                    applyEditCapabilities();
-                }).css('cursor', 'pointer');
+                // //Is Edit Salutation
+                // $("#set-is-edit-salutation-all").click(function () {
+                //     $("input[id^='is-edit-salutation-']").prop('checked', true);
+                //     processCheckboxes('is-edit-salutation-','is_edit_salutation');
+                //     applyEditCapabilities();
+                // }).css('cursor', 'pointer');
         
-                $("#set-is-edit-salutation-none").click(function () {
-                    $("input[id^='is-edit-salutation-']").prop('checked', false);
-                    processCheckboxes('is-edit-salutation-','is_edit_salutation');
-                    applyEditCapabilities();
-                }).css('cursor', 'pointer');
+                // $("#set-is-edit-salutation-none").click(function () {
+                //     $("input[id^='is-edit-salutation-']").prop('checked', false);
+                //     processCheckboxes('is-edit-salutation-','is_edit_salutation');
+                //     applyEditCapabilities();
+                // }).css('cursor', 'pointer');
         
-                $("input[id^='is-edit-salutation-']").change(function () {
-                    processCheckboxes('is-edit-salutation-','is_edit_salutation');
-                    applyEditCapabilities();
-                });
+                // $("input[id^='is-edit-salutation-']").change(function () {
+                //     processCheckboxes('is-edit-salutation-','is_edit_salutation');
+                //     applyEditCapabilities();
+                // });
                 //==============================================================
         
         
@@ -678,7 +678,7 @@
                         isEditPrincipalCheckbox = $("#is-edit-principal-" + folderKey);
                         isEditDeputyCheckbox = $("#is-edit-deputy-" + folderKey);
                         isEditTeacherCheckbox = $("#is-edit-teacher-" + folderKey);
-                        isEditSalutationCheckbox = $("#is-edit-salutation-" + folderKey);
+                        // isEditSalutationCheckbox = $("#is-edit-salutation-" + folderKey);
                         isEditJobTitleCheckbox = $("#is-edit-job-title-" + folderKey);
                         showSalutationPortraitCheckbox = $("#is-edit-job-show-salutation-portrait-" + folderKey);
                         showSalutationGroupCheckbox = $("#is-edit-job-show-salutation-group-" + folderKey);
@@ -695,7 +695,7 @@
                             $(".is-edit-principal--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-deputy--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', '').css('opacity', 1);
-                            $(".is-edit-salutation--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            // $(".is-edit-salutation--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-title--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
@@ -707,7 +707,7 @@
                             $(".is-edit-principal--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-deputy--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
-                            $(".is-edit-salutation--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            // $(".is-edit-salutation--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-title--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
@@ -719,9 +719,13 @@
                          if (isEditPortraitsCheckboxTicked && isVisibleForProofingCheckboxTicked) {
                              $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
                              $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            // $(".is-edit-salutation--" + folderKey).css('pointer-events', '').css('opacity', 1);
+                            $(".is-edit-job-title--" + folderKey).css('pointer-events', '').css('opacity', 1);
                          } else {
                              $(".is-edit-job-show-salutation-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                              $(".is-edit-job-prefix-suffix-portrait--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            // $(".is-edit-salutation--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
+                            $(".is-edit-job-title--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                          }
         
                          //isEditGroup Checkbox
@@ -732,8 +736,6 @@
                             $(".is-edit-principal--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-deputy--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', '').css('opacity', 1);
-                            $(".is-edit-salutation--" + folderKey).css('pointer-events', '').css('opacity', 1);
-                            $(".is-edit-job-title--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-show-salutation-group--" + folderKey).css('pointer-events', '').css('opacity', 1);
                             $(".is-edit-job-prefix-suffix-group--" + folderKey).css('pointer-events', '').css('opacity', 1);
                         } else {
@@ -742,8 +744,6 @@
                             $(".is-edit-principal--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-deputy--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-teacher--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
-                            $(".is-edit-salutation--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
-                            $(".is-edit-job-title--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-show-salutation-group--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                             $(".is-edit-job-prefix-suffix-group--" + folderKey).css('pointer-events', 'none').css('opacity', 0);
                         }

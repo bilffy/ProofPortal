@@ -126,7 +126,8 @@ $(document).ready(function () {
                 [10, 20, 50, 100, 200, 500, 'All']
             ],
             "language": {
-                "lengthMenu": "Display _MENU_"
+                "lengthMenu": "Display _MENU_",
+                "emptyTable": "No Jobs Found"
             },
             "lengthChange": true,
             "searching": true, // Enable searching
@@ -153,7 +154,8 @@ $(document).ready(function () {
                 [5, 10, 20, 50, 100, 200, 500, 'All']
             ],
             "language": {
-                "lengthMenu": "Display _MENU_"
+                "lengthMenu": "Display _MENU_",
+                "emptyTable": "No Jobs Found"
             },
             "lengthChange": true,
             "searching": true, // Enable searching
