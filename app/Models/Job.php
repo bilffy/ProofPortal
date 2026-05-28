@@ -34,7 +34,6 @@ class Job extends Model
         'proof_catchup',
         'show_proofing',
         'download_available_date',
-        'download_available_date',
         'notifications_enabled',
         'notifications_matrix',
     ];

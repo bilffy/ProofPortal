@@ -20,7 +20,7 @@ return [
     'SUBJECTS_ACCOUNTED_NOTE' => 'Marked All Subjects Present as "VALUE"',
     'FOLDER_CORRECTED_NOTE' => 'Marked All Issue Recorded as "VALUE"',
     'SUBJECT_MISSING_NAMES_NOTE' => 'The following Subjects are missing from this Folder: "DATA"',
-    'GENERAL_ISSUES_NOTE' => 'DATA',
+    'GENERAL_ISSUES_NOTE' => 'The following general issues are present in this Folder: "DATA"',
     'GROUP_COMMENTS_NOTE' => 'DATA',
 
 	'SUBJECT_ISSUE_SPELLING' => 'Spelling mistake in FULLNAME.',
