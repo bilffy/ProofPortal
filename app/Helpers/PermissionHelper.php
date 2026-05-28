@@ -135,9 +135,9 @@ class PermissionHelper
         }
 
         if ($currentUser->isSchoolAdmin()) {
-            // if ($user->isSchoolAdmin()) {
-            //     return false;
-            // }
+            if ($user->isSchoolAdmin()) {
+                return false;
+            }
             return true;
         }
 
