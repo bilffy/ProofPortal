@@ -427,5 +427,5 @@
 </div>
 
 @section('js')
-    <script type="module" src="{{ URL::asset('proofing-assets/js/school/configure.js') }}?v={{ filemtime(public_path('proofing-assets/js/school/configure.js')) }}"></script>
+    <script type="module" src="{{ URL::asset('proofing-assets/js/school/configure.js') }}"></script>
 @stop
