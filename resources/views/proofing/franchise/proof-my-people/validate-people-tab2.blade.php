@@ -115,7 +115,7 @@
 
                                                 <!-- IMAGE BLOCK -->
                                                 <div class="position-relative overflow-hidden rounded transition-all" style="height: 229px; background-color: #E6E7E8; display: flex; align-items: center; justify-content: center;">
-                                                    <img style="object-fit: cover;" class="lazyload mx-auto d-block w-100 h-100 pointer-events-none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" data-src="{{ $image_url }}" alt="Photo-Image">
+                                                    <img class="lazyload mx-auto d-block w-100 h-100 pointer-events-none subject-photo" style="object-fit: cover; max-width: none;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" data-src="{{ $image_url }}" alt="Photo-Image" onload="if(typeof adjustSubjectPhoto === 'function') adjustSubjectPhoto(this)">
                                                     
                                                     <!-- EDIT BUTTON AND HISTORY ICON -->
                                                     <div class="position-absolute d-flex justify-content-between align-items-center w-100" style="top: 0; padding: 10px; z-index: 10;">

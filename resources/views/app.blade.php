@@ -72,6 +72,9 @@
                 });
             }
         });
+
+        // Disable right click context menu
+        document.addEventListener('contextmenu', event => event.preventDefault());
     </script>
 </head>
 

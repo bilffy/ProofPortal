@@ -13,6 +13,10 @@
     <!-- Scripts -->
     @vite(['resources/js/app.ts', 'resources/css/app.scss'])
     @livewireStyles
+    <script>
+        // Disable right click context menu
+        document.addEventListener('contextmenu', event => event.preventDefault());
+    </script>
 </head>
 <body class="font-sans antialiased">
     <div class="flex items-center justify-center p-6 min-h-screen">

@@ -86,6 +86,32 @@
                     });
                 }
             });
+            function adjustSubjectPhoto(img) {
+                if (!img || !img.classList.contains('subject-photo')) return;
+                
+                // Use a small timeout to ensure natural dimensions are ready
+                if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                    applyOrientationStyles(img);
+                } else {
+                    img.onload = () => applyOrientationStyles(img);
+                }
+            }
+
+            function applyOrientationStyles(img) {
+                if (img.naturalWidth > img.naturalHeight) {
+                    // Landscape: Fit width, show bars (Photography style)
+                    img.style.setProperty('object-fit', 'contain', 'important');
+                    img.classList.remove('h-100');
+                    img.style.setProperty('height', 'auto', 'important');
+                } else {
+                    // Portrait: Fill container (Original style)
+                    img.style.setProperty('object-fit', 'cover', 'important');
+                    img.classList.add('h-100');
+                    img.style.setProperty('height', '100%', 'important');
+                }
+            }
+
+            window.adjustSubjectPhoto = adjustSubjectPhoto;
         </script>
     </head>
 

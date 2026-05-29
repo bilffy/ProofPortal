@@ -265,6 +265,22 @@
             });
         });
 
+        // Handle image orientation for subject photos
+        document.addEventListener('lazyloaded', function(e) {
+            if (window.adjustSubjectPhoto) {
+                window.adjustSubjectPhoto(e.target);
+            }
+        });
+
+        // Run for any images that might have loaded before this script or stay in cache
+        $(document).ready(function() {
+            $('.subject-photo').each(function() {
+                if (window.adjustSubjectPhoto) {
+                    window.adjustSubjectPhoto(this);
+                }
+            });
+        });
+
         //Update Class name on change
         $(document).ready(function () {
             jQuery.noConflict();

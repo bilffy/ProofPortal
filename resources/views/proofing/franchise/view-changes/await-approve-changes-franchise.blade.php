@@ -81,6 +81,8 @@
                                         $skEncrypted = Crypt::encryptString($subjectChange->ts_subjectkey);
                                         if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '' && $subjectChange->images) {
                                             $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $skEncrypted, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+                                        }else{
+                                            $image_url = asset('proofing-assets/img/subject-image.png');
                                         }
                                     @endphp
                                     <tr id="{{ $folderKey }}">

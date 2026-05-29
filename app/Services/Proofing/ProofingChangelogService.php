@@ -118,6 +118,7 @@ class ProofingChangelogService
     public function getAllApprovedSubjectChangeByJobKey($jobKey)
     {
         $subjectChanges = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+            ->with('images')
             ->join('subjects', 'subjects.ts_subjectkey', '=', 'changelogs.keyvalue')
             ->join('folders', 'folders.ts_folder_id', '=', 'subjects.ts_folder_id')
             ->where([
