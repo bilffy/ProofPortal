@@ -14,11 +14,33 @@
     @vite(['resources/js/app.ts', 'resources/css/app.scss'])
     @livewireStyles
     <script>
-        // Disable right click context menu
+        // Disable right click context menu immediately
         document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Block keyboard shortcuts for Save (Ctrl+S), View Source (Ctrl+U), and Inspect (F12/Ctrl+Shift+I)
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S (Save), U (View Source), P (Print)
+            if ((e.ctrlKey || e.metaKey) && (e.keyCode === 83 || e.keyCode === 85 || e.keyCode === 80)) {
+                e.preventDefault();
+                return false;
+            }
+            // F12 or Ctrl+Shift+I (Inspect)
+            if (e.keyCode === 123 || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.keyCode === 73)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Extra layer for right-click mouse buttons
+        document.addEventListener('mousedown', function(e) {
+            if (e.button === 2) {
+                e.preventDefault();
+                return false;
+            }
+        });
     </script>
 </head>
-<body class="font-sans antialiased">
+<body class="font-sans antialiased" oncontextmenu="return false;">
     <div class="flex items-center justify-center p-6 min-h-screen">
         <div class="w-full max-w-md">
             <div class="flex align-middle justify-center">

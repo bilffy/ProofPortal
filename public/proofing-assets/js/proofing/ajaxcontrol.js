@@ -1100,12 +1100,12 @@ $(document).ready(function () {
         var inputGridSpellingPrefix = $("#" + skHash + "-grid-spelling-prefix");
         var inputGridSpellingSuffix = $("#" + skHash + "-grid-spelling-suffix");
 
-        var originalValueSalutation = inputGridSpellingSalutation.data('original-value');
-        var originalValueFirstName = inputGridSpellingFirstName.data('original-value');
-        var originalValueLastName = inputGridSpellingLastName.data('original-value');
-        var originalValueTitle = inputGridSpellingTitle.data('original-value');
-        var originalValuePrefix = inputGridSpellingPrefix.data('original-value');
-        var originalValueSuffix = inputGridSpellingSuffix.data('original-value');
+        var originalValueSalutation = inputGridSpellingSalutation.attr('data-original-value') || "";
+        var originalValueFirstName = inputGridSpellingFirstName.attr('data-original-value') || "";
+        var originalValueLastName = inputGridSpellingLastName.attr('data-original-value') || "";
+        var originalValueTitle = inputGridSpellingTitle.attr('data-original-value') || "";
+        var originalValuePrefix = inputGridSpellingPrefix.attr('data-original-value') || "";
+        var originalValueSuffix = inputGridSpellingSuffix.attr('data-original-value') || "";
 
         //roll back the values
         inputGridSpellingSalutation.val(originalValueSalutation);
@@ -1133,180 +1133,177 @@ $(document).ready(function () {
         var inputGridSpellingPrefix = $("#" + skHash + "-grid-spelling-prefix");
         var inputGridSpellingSuffix = $("#" + skHash + "-grid-spelling-suffix");
 
-        if (inputGridSpellingSalutation.val() || inputGridSpellingFirstName.val() || inputGridSpellingLastName.val() || inputGridSpellingTitle.val() || inputGridSpellingPrefix.val() || inputGridSpellingSuffix.val()) {
-            var formData = new FormData();
-            formData.append("issue", 'grid-spelling');
-            formData.append("subject_key_hash", skHash);
-            formData.append("subject_key_encrypted", skEncrypted);
-            formData.append("folder_key_encrypted", folderkeyEncrypted);
+        var formData = new FormData();
+        formData.append("issue", 'grid-spelling');
+        formData.append("subject_key_hash", skHash);
+        formData.append("subject_key_encrypted", skEncrypted);
+        formData.append("folder_key_encrypted", folderkeyEncrypted);
 
-            formData.append("new_salutation", inputGridSpellingSalutation.val());
-            formData.append("new_first_name", inputGridSpellingFirstName.val());
-            formData.append("new_last_name", inputGridSpellingLastName.val());
-            formData.append("new_title", inputGridSpellingTitle.val());
-            formData.append("new_prefix", inputGridSpellingPrefix.val());
-            formData.append("new_suffix", inputGridSpellingSuffix.val());
-            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+        formData.append("new_salutation", inputGridSpellingSalutation.val() || "");
+        formData.append("new_first_name", inputGridSpellingFirstName.val() || "");
+        formData.append("new_last_name", inputGridSpellingLastName.val() || "");
+        formData.append("new_title", inputGridSpellingTitle.val() || "");
+        formData.append("new_prefix", inputGridSpellingPrefix.val() || "");
+        formData.append("new_suffix", inputGridSpellingSuffix.val() || "");
+        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
 
-            $.ajax({
-                dataType: 'json',
-                type: "POST",
-                url: targetUrl,
-                async: true,
-                data: formData,
-                cache: false,
-                contentType: false,
-                processData: false,
-                timeout: 60000,
+        $.ajax({
+            dataType: 'json',
+            type: "POST",
+            url: targetUrl,
+            async: true,
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            timeout: 60000,
 
-                success: function (response) {
-                    var responseData = response.responseData;
-                    // console.log(responseData);
-                    var fullNamePortraitOld = responseData['fullNameOldPortrait'];
-                    var fullNamePortraitNew = responseData['fullNamePortrait'];
-                    var fullNameGroupOld = responseData['fullNameOldGroup'];
-                    var fullNameGroupNew = responseData['fullNameGroup'];
+            success: function (response) {
+                var responseData = response.responseData;
+                // console.log(responseData);
+                var fullNamePortraitOld = responseData['fullNameOldPortrait'];
+                var fullNamePortraitNew = responseData['fullNamePortrait'];
+                var fullNameGroupOld = responseData['fullNameOldGroup'];
+                var fullNameGroupNew = responseData['fullNameGroup'];
 
-                    var first_name_old = responseData['oldfirst_name'];
-                    var first_name = responseData['first_name'] || "";
+                var first_name_old = responseData['oldfirst_name'];
+                var first_name = responseData['first_name'] || "";
 
-                    var last_name_old = responseData['oldlast_name'];
-                    var last_name = responseData['last_name'] || "";
+                var last_name_old = responseData['oldlast_name'];
+                var last_name = responseData['last_name'] || "";
 
-                    var title_old = responseData['title_old'];
-                    var title = responseData['title'] || "";
+                var title_old = responseData['title_old'];
+                var title = responseData['title'] || "";
 
-                    var salutation_old = responseData['salutation_old'];
-                    var salutation = responseData['salutation'] || "";
+                var salutation_old = responseData['salutation_old'];
+                var salutation = responseData['salutation'] || "";
 
-                    var prefix_old = responseData['prefix_old'];
-                    var prefix = responseData['prefix'] || "";
+                var prefix_old = responseData['prefix_old'];
+                var prefix = responseData['prefix'] || "";
 
-                    var suffix_old = responseData['suffix_old'];
-                    var suffix = responseData['suffix'] || "";
+                var suffix_old = responseData['suffix_old'];
+                var suffix = responseData['suffix'] || "";
 
-                    var useSalutationPortrait = responseData['useSalutationPortrait'];
+                var useSalutationPortrait = responseData['useSalutationPortrait'];
 
-                    var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
+                var usePrefixSuffixPortrait = responseData['usePrefixSuffixPortrait'];
 
-                    //find and replace names wrapped in specific HTML classes
-                    $("." + skHash + "-first-name").text(first_name);
-                    $("." + skHash + "-last-name").text(last_name);
-                    $("." + skHash + "-title").text(title);
-                    $("." + skHash + "-salutation").text(salutation);
-                    $("." + skHash + "-prefix").text(prefix);
-                    $("." + skHash + "-suffix").text(suffix);
+                //find and replace names wrapped in specific HTML classes
+                $("." + skHash + "-first-name").text(first_name);
+                $("." + skHash + "-last-name").text(last_name);
+                $("." + skHash + "-title").text(title);
+                $("." + skHash + "-salutation").text(salutation);
+                $("." + skHash + "-prefix").text(prefix);
+                $("." + skHash + "-suffix").text(suffix);
 
-                    $("." + skHash + "-salutation").addClass('d-none');
-                    $("." + skHash + "-prefix").addClass('d-none');
-                    $("." + skHash + "-suffix").addClass('d-none');
+                $("." + skHash + "-salutation").addClass('d-none');
+                $("." + skHash + "-prefix").addClass('d-none');
+                $("." + skHash + "-suffix").addClass('d-none');
 
-                    if (useSalutationPortrait) {
-                        $("." + skHash + "-salutation").removeClass('d-none');
-                    }
-
-                    if (usePrefixSuffixPortrait) {
-                        $("." + skHash + "-prefix").removeClass('d-none');
-                        $("." + skHash + "-suffix").removeClass('d-none');
-                    }
-
-                    //find and replace names in specific HTML input fields
-                    $("." + skHash + "-form-spelling-first-name").val(first_name);
-                    $("." + skHash + "-form-spelling-last-name").val(last_name);
-                    $("." + skHash + "-form-spelling-title").val(title);
-                    $("." + skHash + "-form-spelling-salutation").val(salutation);
-                    $("." + skHash + "-form-spelling-prefix").val(prefix);
-                    $("." + skHash + "-form-spelling-suffix").val(suffix);
-
-                    $("." + skHash + "-grid-spelling-first-name").val(first_name);
-                    $("." + skHash + "-grid-spelling-last-name").val(last_name);
-                    $("." + skHash + "-grid-spelling-title").val(title);
-                    $("." + skHash + "-grid-spelling-salutation").val(salutation);
-                    $("." + skHash + "-grid-spelling-prefix").val(prefix);
-                    $("." + skHash + "-grid-spelling-suffix").val(suffix);
-
-                    $('tr.person-row.' + skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
-
-                    //find and replace general
-                    $('.' + skHash + '-find-replace').contents().filter(function () {
-                        return this.nodeType === 3;
-                    }).replaceWith(function () {
-                        // Ensure we are replacing with a string, even if empty
-                        let newName = fullNamePortraitNew || "";
-                        return this.nodeValue.replace(fullNamePortraitOld, newName);
-                    });
-
-                    var $subjectNamesInput = $('#allSubjectNames');
-
-                    if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
-                        try {
-                            // 1. Parse the JSON strings from the value and the data attribute
-                            var mainArray = JSON.parse($subjectNamesInput.val());
-                            var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
-
-                            // 2. Helper function to update names in an array
-                            var updateArray = function (arr, oldName, newName) {
-                                return arr.map(function (name) {
-                                    return name === oldName ? newName : name;
-                                });
-                            };
-
-                            // 3. Update the main array
-                            mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
-
-                            // 4. Update the data-key object (Row_0, Row_1, etc.)
-                            if (keyData) {
-                                Object.keys(keyData).forEach(function (row) {
-                                    keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
-                                });
-                            }
-
-                            // 5. Save back to the element
-                            // Update the value attribute
-                            $subjectNamesInput.val(JSON.stringify(mainArray));
-
-                            // Update the internal jQuery data object AND the actual DOM attribute
-                            $subjectNamesInput.data('key', keyData);
-                            $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
-
-                            // 6. Trigger change for other listeners
-                            $subjectNamesInput.trigger('change');
-                        } catch (e) {
-                            // console.error("Error parsing allSubjectNames JSON:", e);
-                        }
-                    }
-
-
-                    //update the JS array with the new name.
-                    findSpanByText(fullNameGroupOld, fullNameGroupNew);
-                    fetchAndUpdateSubjectNames();
-                    // createJsonData();
-
-                    $('#grid-spelling-acknowledge')
-                        .removeClass("text-success")
-                        .removeClass("text-info")
-                        .removeClass("text-warning")
-                        .removeClass("text-danger")
-                        .addClass("text-" + responseData['htmlUpdates']['alert'])
-                        .html(responseData['htmlUpdates']['acknowledge']).fadeIn(500).delay(3000).fadeOut(500);
-
-                    if (responseData['status']) {
-                        //show the history button
-                        $('#' + skHash + '_history_edits_button').removeClass("d-none").addClass("d-inline-block");
-                        if (responseData['resolved_status_id'] === 0) {
-                            $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-success');
-                        } else {
-                            $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-danger');
-                        }
-                    }
-                },
-                error: function (e) {
-                    //alert("An error occurred: " + e.responseText.message);
-                    //console.log(e);
+                if (useSalutationPortrait) {
+                    $("." + skHash + "-salutation").removeClass('d-none');
                 }
-            })
-        }
 
+                if (usePrefixSuffixPortrait) {
+                    $("." + skHash + "-prefix").removeClass('d-none');
+                    $("." + skHash + "-suffix").removeClass('d-none');
+                }
+
+                //find and replace names in specific HTML input fields
+                $("." + skHash + "-form-spelling-first-name").val(first_name);
+                $("." + skHash + "-form-spelling-last-name").val(last_name);
+                $("." + skHash + "-form-spelling-title").val(title);
+                $("." + skHash + "-form-spelling-salutation").val(salutation);
+                $("." + skHash + "-form-spelling-prefix").val(prefix);
+                $("." + skHash + "-form-spelling-suffix").val(suffix);
+
+                $("." + skHash + "-grid-spelling-first-name").val(first_name);
+                $("." + skHash + "-grid-spelling-last-name").val(last_name);
+                $("." + skHash + "-grid-spelling-title").val(title);
+                $("." + skHash + "-grid-spelling-salutation").val(salutation);
+                $("." + skHash + "-grid-spelling-prefix").val(prefix);
+                $("." + skHash + "-grid-spelling-suffix").val(suffix);
+
+                $('tr.person-row.' + skHash).attr('data-subject-name', fullNameGroupNew.toLowerCase());
+
+                //find and replace general
+                $('.' + skHash + '-find-replace').contents().filter(function () {
+                    return this.nodeType === 3;
+                }).replaceWith(function () {
+                    // Ensure we are replacing with a string, even if empty
+                    let newName = fullNamePortraitNew || "";
+                    return this.nodeValue.replace(fullNamePortraitOld, newName);
+                });
+
+                var $subjectNamesInput = $('#allSubjectNames');
+
+                if ($subjectNamesInput.length > 0 && $subjectNamesInput.val()) {
+                    try {
+                        // 1. Parse the JSON strings from the value and the data attribute
+                        var mainArray = JSON.parse($subjectNamesInput.val());
+                        var keyData = $subjectNamesInput.data('key'); // jQuery automatically parses data-key as an object
+
+                        // 2. Helper function to update names in an array
+                        var updateArray = function (arr, oldName, newName) {
+                            return arr.map(function (name) {
+                                return name === oldName ? newName : name;
+                            });
+                        };
+
+                        // 3. Update the main array
+                        mainArray = updateArray(mainArray, fullNameGroupOld, fullNameGroupNew);
+
+                        // 4. Update the data-key object (Row_0, Row_1, etc.)
+                        if (keyData) {
+                            Object.keys(keyData).forEach(function (row) {
+                                keyData[row] = updateArray(keyData[row], fullNameGroupOld, fullNameGroupNew);
+                            });
+                        }
+
+                        // 5. Save back to the element
+                        // Update the value attribute
+                        $subjectNamesInput.val(JSON.stringify(mainArray));
+
+                        // Update the internal jQuery data object AND the actual DOM attribute
+                        $subjectNamesInput.data('key', keyData);
+                        $subjectNamesInput.attr('data-key', JSON.stringify(keyData));
+
+                        // 6. Trigger change for other listeners
+                        $subjectNamesInput.trigger('change');
+                    } catch (e) {
+                        // console.error("Error parsing allSubjectNames JSON:", e);
+                    }
+                }
+
+
+                //update the JS array with the new name.
+                findSpanByText(fullNameGroupOld, fullNameGroupNew);
+                fetchAndUpdateSubjectNames();
+                // createJsonData();
+
+                $('#grid-spelling-acknowledge')
+                    .removeClass("text-success")
+                    .removeClass("text-info")
+                    .removeClass("text-warning")
+                    .removeClass("text-danger")
+                    .addClass("text-" + responseData['htmlUpdates']['alert'])
+                    .html(responseData['htmlUpdates']['acknowledge']).fadeIn(500).delay(3000).fadeOut(500);
+
+                if (responseData['status']) {
+                    //show the history button
+                    $('#' + skHash + '_history_edits_button').removeClass("d-none").addClass("d-inline-block");
+                    if (responseData['resolved_status_id'] === 0) {
+                        $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-success');
+                    } else {
+                        $('#' + skHash + '_history_edits_button').find("i.fa-history").addClass('text-danger');
+                    }
+                }
+            },
+            error: function (e) {
+                //alert("An error occurred: " + e.responseText.message);
+                //console.log(e);
+            }
+        });
     }
 
     // var filterByText;

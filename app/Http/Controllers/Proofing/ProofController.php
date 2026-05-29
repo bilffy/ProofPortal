@@ -455,6 +455,8 @@ class ProofController extends Controller
             'new_last_name' => 'nullable|string',
             'new_title' => 'nullable|string',
             'new_salutation' => 'nullable|string',
+            'new_prefix' => 'nullable|string',
+            'new_suffix' => 'nullable|string',
         ]);
 
         $responseData = $this->proofingChangelogService->insertSubjectProofingChangeLog($request->all());

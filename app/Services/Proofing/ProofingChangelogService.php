@@ -222,7 +222,7 @@ class ProofingChangelogService
     public function getFolderGeneralChangeByJobKey($jobKey){
         return ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
         ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
-        ->whereIn('issues.issue_name', ['FOLDER_NAME_CHANGE', 'GENERAL_ISSUES', 'TEACHER', 'PRINCIPAL', 'DEPUTY'])
+        ->whereIn('issues.issue_name', ['FOLDER_NAME_CHANGE', 'GENERAL_ISSUES', 'TEACHER', 'PRINCIPAL', 'DEPUTY', 'GROUP_COMMENTS'])
         ->where('ts_jobkey', $jobKey)
         ->whereNotNull('folders.ts_folderkey')
         ->orderBy('issues.id', 'ASC')
@@ -468,6 +468,77 @@ class ProofingChangelogService
         ->select('change_to','id')
         ->orderBy('id', 'DESC')->first();
 
+        // If this is a grid spelling edit, ensure ALL fields are updated on the model before any specific issue logic runs
+        if ($requestData->get('issue') === 'grid-spelling') {
+            $fieldsToUpdate = [
+                'new_first_name' => 'firstname',
+                'new_last_name' => 'lastname',
+                'new_title' => 'title',
+                'new_salutation' => 'salutation',
+                'new_prefix' => 'prefix',
+                'new_suffix' => 'suffix'
+            ];
+
+            $limitExceeded = false;
+            foreach ($fieldsToUpdate as $reqKey => $dbKey) {
+                if ($requestData->has($reqKey)) {
+                    $val = $requestData->get($reqKey);
+                    if (is_string($val) && strlen($val) > 128) {
+                        $limitExceeded = true;
+                        break;
+                    }
+                    $subject->$dbKey = $val;
+                    if ($dbKey === 'firstname') $subject->portal_firstname = $val;
+                    if ($dbKey === 'lastname') $subject->portal_lastname = $val;
+                }
+            }
+
+            if ($limitExceeded) {
+                $result = false;
+                $message = "Character limit exceeded.";
+            } else {
+                // Sync with Group Positions and Traditional Tags (JSON-aware replacement)
+                if (isset($groupsName)) {
+                    $json = json_decode($groupsName->change_to, true);
+                    
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                        $newFullName = trim(($subject->salutation ? $subject->salutation . ' ' : '') . 
+                                           ($subject->prefix ? $subject->prefix . ' ' : '') . 
+                                           $subject->firstname . ' ' . 
+                                           $subject->lastname . 
+                                           ($subject->suffix ? ' ' . $subject->suffix : ''));
+                        $newFullName = trim($newFullName);
+
+                        foreach ($json as $rowLabel => &$subjectsInRow) {
+                            if (!is_array($subjectsInRow)) continue;
+                            foreach ($subjectsInRow as &$entry) {
+                                // Format is usually "SUBJECTKEY:NAME" or "SUBJECTKEY:NAME PART"
+                                if (strpos($entry, ':') !== false) {
+                                    $parts = explode(':', $entry, 2);
+                                    if ($parts[0] === $subjectData->ts_subjectkey) {
+                                        $entry = $parts[0] . ':' . $newFullName;
+                                    }
+                                }
+                            }
+                        }
+                        $groupsName->change_to = json_encode($json);
+                        $groupsName->save();
+                    }
+                }
+                
+                if ($currentfirstname != $subject->firstname || $currentlastname != $subject->lastname) {
+                    $this->getGroupPositionService()->updateGroupPosition(
+                        $subjectData->job->ts_jobkey, 
+                        $subjectData->folder->ts_folderkey, 
+                        $currentfirstname, 
+                        $currentlastname, 
+                        $subject->firstname, 
+                        $subject->lastname
+                    );
+                }
+            }
+        }
+
         switch ($issue) {
 
             case 'SUBJECT_ISSUE_SPELLING':
@@ -488,17 +559,32 @@ class ProofingChangelogService
                     ];
                     $subject->firstname = $requestData['new_first_name'];
                     $subject->lastname = $requestData['new_last_name'];
+                    $subject->portal_firstname = $requestData['new_first_name'];
+                    $subject->portal_lastname = $requestData['new_last_name'];
 
-                    if(isset($groupsName)){
-                        // Perform the string replacement
-                        $updatedChangeTo = str_replace(
-                            [$currentfirstname .' '. $currentlastname],
-                            [$requestData['new_first_name'] .' '. $requestData['new_last_name']],
-                            $groupsName->change_to
-                        );
-                        // Update the 'change_to' field
-                        $groupsName->change_to = $updatedChangeTo;
-                        $groupsName->save(); // Save the changes to the database
+                    if (isset($groupsName)) {
+                        $json = json_decode($groupsName->change_to, true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                            $newFullName = trim(($subject->salutation ? $subject->salutation . ' ' : '') . 
+                                               ($subject->prefix ? $subject->prefix . ' ' : '') . 
+                                               $subject->firstname . ' ' . 
+                                               $subject->lastname . 
+                                               ($subject->suffix ? ' ' . $subject->suffix : ''));
+                            $newFullName = trim($newFullName);
+                            foreach ($json as $rowLabel => &$subjectsInRow) {
+                                if (!is_array($subjectsInRow)) continue;
+                                foreach ($subjectsInRow as &$entry) {
+                                    if (strpos($entry, ':') !== false) {
+                                        $parts = explode(':', $entry, 2);
+                                        if ($parts[0] === $subjectData->ts_subjectkey) {
+                                            $entry = $parts[0] . ':' . $newFullName;
+                                        }
+                                    }
+                                }
+                            }
+                            $groupsName->change_to = json_encode($json);
+                            $groupsName->save();
+                        }
                     }
 
                     $this->getGroupPositionService()->updateGroupPosition($subjectData->job->ts_jobkey, $subjectData->folder->ts_folderkey, $currentfirstname, $currentlastname, $requestData['new_first_name'], $requestData['new_last_name']);
@@ -591,16 +677,30 @@ class ProofingChangelogService
                     if ($requestData->has('new_salutation')) {
                         if ($requestData->get('new_salutation') !== null) {
                             $salutationValue = $requestData->get('new_salutation');
-                            if(isset($groupsName)){
-                                // Perform the string replacement
-                                $updatedChangeTo = str_replace(
-                                    [$subjectData->salutation],
-                                    [$salutationValue],
-                                    $groupsName->change_to
-                                );
-                                // Update the 'change_to' field
-                                $groupsName->change_to = $updatedChangeTo;
-                                $groupsName->save(); // Save the changes to the database
+                            if (isset($groupsName)) {
+                                $json = json_decode($groupsName->change_to, true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                                    // Use the updated model values for full name sync
+                                    $newFullName = trim(($salutationValue ? $salutationValue . ' ' : '') . 
+                                                       ($subject->prefix ? $subject->prefix . ' ' : '') . 
+                                                       $subject->firstname . ' ' . 
+                                                       $subject->lastname . 
+                                                       ($subject->suffix ? ' ' . $subject->suffix : ''));
+                                    $newFullName = trim($newFullName);
+                                    foreach ($json as $rowLabel => &$subjectsInRow) {
+                                        if (!is_array($subjectsInRow)) continue;
+                                        foreach ($subjectsInRow as &$entry) {
+                                            if (strpos($entry, ':') !== false) {
+                                                $parts = explode(':', $entry, 2);
+                                                if ($parts[0] === $subjectData->ts_subjectkey) {
+                                                    $entry = $parts[0] . ':' . $newFullName;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $groupsName->change_to = json_encode($json);
+                                    $groupsName->save();
+                                }
                             }
                         } else {
                             $salutationValue = '';
@@ -648,16 +748,29 @@ class ProofingChangelogService
                     if ($requestData->has('new_salutation')) {
                         if ($requestData->get('new_salutation') !== null) {
                             $salutationValue = $requestData->get('new_salutation');
-                            if(isset($groupsName)){
-                                // Perform the string replacement
-                                $updatedChangeTo = str_replace(
-                                    [$subjectData->salutation],
-                                    [$salutationValue],
-                                    $groupsName->change_to
-                                );
-                                // Update the 'change_to' field
-                                $groupsName->change_to = $updatedChangeTo;
-                                $groupsName->save(); // Save the changes to the database
+                            if (isset($groupsName)) {
+                                $json = json_decode($groupsName->change_to, true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                                    $newFullName = trim(($salutationValue ? $salutationValue . ' ' : '') . 
+                                                       ($subject->prefix ? $subject->prefix . ' ' : '') . 
+                                                       $subject->firstname . ' ' . 
+                                                       $subject->lastname . 
+                                                       ($subject->suffix ? ' ' . $subject->suffix : ''));
+                                    $newFullName = trim($newFullName);
+                                    foreach ($json as $rowLabel => &$subjectsInRow) {
+                                        if (!is_array($subjectsInRow)) continue;
+                                        foreach ($subjectsInRow as &$entry) {
+                                            if (strpos($entry, ':') !== false) {
+                                                $parts = explode(':', $entry, 2);
+                                                if ($parts[0] === $subjectData->ts_subjectkey) {
+                                                    $entry = $parts[0] . ':' . $newFullName;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $groupsName->change_to = json_encode($json);
+                                    $groupsName->save();
+                                }
                             }
                         } else {
                             $salutationValue = '';

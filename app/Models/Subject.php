@@ -12,6 +12,19 @@ class Subject extends Model
     use HasFactory, BelongsToFranchise;
 
     protected $table = 'subjects';
+
+    protected static function booted()
+    {
+        static::saving(function ($subject) {
+            // Automatically sync portal names with base names if they are changed
+            if ($subject->isDirty('firstname')) {
+                $subject->portal_firstname = $subject->firstname;
+            }
+            if ($subject->isDirty('lastname')) {
+                $subject->portal_lastname = $subject->lastname;
+            }
+        });
+    }
     
     /**
      * The attributes that are mass assignable.

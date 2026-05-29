@@ -33,6 +33,30 @@
 
         @yield('css')
         <script>
+            // Disable right click context menu immediately
+            document.addEventListener('contextmenu', event => event.preventDefault());
+
+            // Block keyboard shortcuts: Ctrl+S (Save), Ctrl+U (View Source), Ctrl+P (Print)
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && (e.keyCode === 83 || e.keyCode === 85 || e.keyCode === 80)) {
+                    e.preventDefault();
+                    return false;
+                }
+                // F12 or Ctrl+Shift+I (Inspect)
+                if (e.keyCode === 123 || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.keyCode === 73)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Extra layer: block right mouse button press
+            document.addEventListener('mousedown', function(e) {
+                if (e.button === 2) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
             var base_url = "{{URL::to('/')}}";
 
             function debounce(func, delay) {
@@ -115,7 +139,7 @@
         </script>
     </head>
 
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased" oncontextmenu="return false;">
         <div id="toast-wrapper"></div>
         {{-- @if(session('success'))
             <x-toast-success message="{!! session('success') !!}" />

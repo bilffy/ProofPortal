@@ -99,7 +99,7 @@
 
                                         @if ($isAbsentList)
                                             <div class="form-group row-label tagsSection mb-2" data-row-number="{{ $row }}">
-                                                <label for="tags_{{ $row }}">{{ $rowLabel }}</label>
+                                                <label for="tags_{{ $row }}">{{ $rowLabel ?? '' }}</label>
                                                 <input type="text" class="form-control tagsinput" style="display:none;" data-role="tagsinput" id="tags_{{ $row }}" name="tags[]" data-key="" value="{{ $names }}" placeholder="Add a Name" autocomplete="off">
                                             </div>
                                         @else
@@ -134,7 +134,7 @@
 
                                             @endphp
                                             <div class="form-group row-label tagsSection" data-row-number="{{ $rowNumber }}">
-                                                <label for="tags_{{ $rowNumber }}">{{ $rowLabel }}</label>
+                                                <label for="tags_{{ $rowNumber }}">{{ $rowLabel ?? ''}}</label>
                                                 <input type="text" class="form-control tagsinput" style="display:none;" data-role="tagsinput" id="tags_{{ $rowNumber }}" name="tags[]" value="{{ $names }}" placeholder="Add a Name" class="typeahead" data-provide="typeahead" autocomplete="off">
                                             </div>
                                         @endif
@@ -149,7 +149,7 @@
                                         <input type="text" class="form-control tagsinput" style="display:none;" data-role="tagsinput" id="tags_1" name="tags[]" value="" placeholder="Add a Name" class="typeahead" data-provide="typeahead" autocomplete="off">
                                     </div>
                                 @endif
-                                <button class="add_row_button btn btn-secondary">Add Row</button>
+                                <button type="button" class="add_row_button btn btn-secondary">Add Row</button>
                                     <p class="mt-3 mb-0"><strong>Spelling Mistake? Click
                                             <a href="#" data-toggle="modal" data-target="{{ $currentFolder->is_edit_portraits ? '#GridSpellingEdits_Modal' : '#NotEnablePortrait_Modal' }}">here</a>
                                             to correct spelling.</strong>
@@ -203,6 +203,16 @@
                         </div>
                     </div>
                 @endif
+                <script>
+                    $(document).ready(function() {
+                        $('#teacher_name, #principal_name, #deputy_name').on('keydown', function(e) {
+                            if (e.keyCode === 13) {
+                                e.preventDefault();
+                                return false;
+                            }
+                        });
+                    });
+                </script>
             </div>
         </div>
     </div>
