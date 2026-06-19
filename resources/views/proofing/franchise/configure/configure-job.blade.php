@@ -144,8 +144,8 @@
                 $review_due_catchup = Carbon::parse($selectedJob->proof_catchup)->format('d/m/Y g:i A');
                 $trigger_review_due_catchup = false;
             } else {
-                $review_due_catchup = $defaultDate;
-                $trigger_review_due_catchup = true;
+                $review_due_catchup = null;
+                $trigger_review_due_catchup = false;
             }
 
             $isVisibleForProofingList = [];
@@ -460,6 +460,30 @@
                                 if (dateStr) {
                                     var selectedDate = $field.val();
                                     var fieldId = $field.attr('id'); // Use saved reference to get the ID
+
+                                    // Auto-set Due Date to 1 week after Catchup Date
+                                    if (fieldId === 'review_due_catchup_picker') {
+                                        const catchupDate = selectedDates[0];
+                                        if (catchupDate) {
+                                            const dueDate = new Date(catchupDate);
+                                            dueDate.setDate(dueDate.getDate() + 7);
+                                            
+                                            const duePicker = document.querySelector('#review_due_picker')?._flatpickr;
+                                            if (duePicker) {
+                                                duePicker.setDate(dueDate, true);
+
+                                                // Manually trigger email-send for the updated Due Date
+                                                var jobHash = document.querySelector('input[name="jobHash"]').value;
+                                                var targetUrl = base_url + "/franchise/config-job/proofing-timeline/email-send";
+                                                var dueFormData = new FormData();
+                                                dueFormData.append('date', convertTo24HourFormat(duePicker.formatDate(dueDate, "d/m/Y h:i K")));
+                                                dueFormData.append('dataType', 'proof_due');
+                                                dueFormData.append('jobHash', jobHash);
+                                                sendAjaxRequest(targetUrl, dueFormData);
+                                            }
+                                        }
+                                    }
+
                                     // Map field ID to specific actions
                                     var actionMap = {
                                         'review_due_start_picker': 'proof_start',
@@ -475,7 +499,12 @@
                                     formData.append('date', convertTo24HourFormat(selectedDate)); // Replace with actual data
                                     formData.append('dataType', actionMap[fieldId]); // Replace with actual data
                                     formData.append('jobHash', jobHash); // Replace with actual data
-                                    sendAjaxRequest(targetUrl, formData);
+
+                                    // Delay the catchup email send slightly if we also triggered a due date update
+                                    var delay = (fieldId === 'review_due_catchup_picker') ? 600 : 0;
+                                    setTimeout(function() {
+                                        sendAjaxRequest(targetUrl, formData);
+                                    }, delay);
                                 } 
                             }
                         });

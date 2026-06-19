@@ -265,8 +265,9 @@ class EmailService
         $template = Template::where('template_name', $field)->firstOrFail();
     
         // Fetch the job data
+        $hasDateColumn = Schema::hasColumn('jobs', $field);
         $columnsToSelect = ['id', 'notifications_matrix', 'notifications_enabled', 'ts_schoolkey', 'ts_account_id', 'ts_job_id', 'ts_jobname', 'proof_due'];
-        if (Schema::hasColumn('jobs', $field)) {
+        if ($hasDateColumn) {
             $columnsToSelect[] = $field;
         }
     
@@ -277,6 +278,11 @@ class EmailService
 
         if (!$selectedJob) {
             abort(404); 
+        }
+
+        // Ensure the job object has the updated date for placeholders
+        if ($hasDateColumn) {
+            $selectedJob->$field = $date;
         }
     
         $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();

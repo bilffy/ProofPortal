@@ -22,6 +22,7 @@ use App\Helpers\SchoolContextHelper;
 use Illuminate\Support\Facades\URL;
 use App\Jobs\SyncImagesToProd02;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Auth;
 
 class ProofingJobController extends Controller
@@ -194,6 +195,7 @@ class ProofingJobController extends Controller
         $jobKey = $this->getDecryptData($request->input('jobKey'));
         \Log::info('Proxy sync started', ['jobKey' => $jobKey]);
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
+
         $baseUrl = config('services.bpsync.url', 'http://bpsync.msp.local/index.php');
     
         try {
@@ -218,19 +220,32 @@ class ProofingJobController extends Controller
             if ($selectedJob) {
                 // Re-activate if deleted
                 if ($selectedJob->job_status_id == $this->statusService->deleted) {
+                    $tsFolderIds = $selectedJob->folders()->pluck('ts_folder_id')->toArray(); 
+                    $tsJobId     = $selectedJob->ts_job_id;
+                    $tsJobKey    = $selectedJob->ts_jobkey;
                     $rootUserId = Auth::id();
                     ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
                         'jobkey' => $jobKey,
                         'status' => $this->statusService->none
                         ], $rootUserId);
                     $this->jobService->updateJobData($jobKey, 'job_status_id', $this->statusService->none);
+                    if (!empty($tsFolderIds)) {
+                        DB::table('subjects')->whereIn('ts_folder_id', $tsFolderIds)->delete();
+                        DB::table('folder_subjects')->whereIn('ts_folder_id', $tsFolderIds)->delete();
+                        DB::table('images')->where('ts_job_id', $tsJobId)->delete();
+                        DB::table('changelogs')->where('ts_jobkey', $tsJobKey)->delete();
+                    }
+    
+                    DB::table('group_positions')->where('ts_jobkey', $tsJobKey)->delete();
+    
+                    $selectedJob->folders()->delete();
                     $selectedJob->refresh(); // Sync the model instance with the DB
                 }
 
                 $this->jobService->updateJobData($jobKey, 'proof_start', Carbon::now()->addDays(20)->setTime(9, 0, 0));
                 $this->jobService->updateJobData($jobKey, 'proof_warning', Carbon::now()->addDays(25)->setTime(9, 0, 0));
                 $this->jobService->updateJobData($jobKey, 'proof_due', Carbon::now()->addDays(30)->setTime(9, 0, 0));
-                $this->jobService->updateJobData($jobKey, 'proof_catchup', Carbon::now()->addDays(40)->setTime(9, 0, 0));
+                // $this->jobService->updateJobData($jobKey, 'proof_catchup', Carbon::now()->addDays(40)->setTime(9, 0, 0));
                 \Log::info('Proof date updated', ['jobKey' => $jobKey]);
             }
 
@@ -242,33 +257,33 @@ class ProofingJobController extends Controller
                 'folder_status' => $folderResponse?->status(),
                 'folder_body' => $folderResponse?->body()
             ]);
-    
-            // Validate
-            if ($selectedJob && $folderResponse?->successful()) {
-                \Log::info("Dispatching SyncImagesToProd02 for Job: $jobKey");
-                SyncImagesToProd02::dispatch($jobKey);
 
+            // Assign user to job and folders if the job exists
+            if ($selectedJob) {
                 $userId = Auth::id();
-                
-                // Ensure permissions and visibility
-                $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
-    
-                // Fetch folders - if this is empty, the sync API might be slow
-                $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
-    
                 // Map User to Job
                 JobUser::firstOrCreate([
                     'user_id'   => $userId,
                     'ts_job_id' => $selectedJob->ts_job_id
                 ]);
-    
+        
                 // Map User to Folders
+                $folderIds = $selectedJob->folders()->pluck('ts_folder_id');
                 foreach ($folderIds as $folderId) {
                     FolderUser::firstOrCreate([
                         'user_id'      => $userId,
                         'ts_folder_id' => $folderId
                     ]);
                 }
+            }
+    
+            // Validate sync success
+            if ($selectedJob && $folderResponse?->successful()) {
+                \Log::info("Dispatching SyncImagesToProd02 for Job: $jobKey");
+                SyncImagesToProd02::dispatch($jobKey);
+                
+                // Ensure permissions and visibility
+                $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
     
                 return response()->json([
                     'success' => true,

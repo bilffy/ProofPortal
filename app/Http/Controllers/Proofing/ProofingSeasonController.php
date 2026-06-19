@@ -80,6 +80,7 @@ class ProofingSeasonController extends Controller
 
         $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
         $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)
+            ->where('job_status_id', $this->statusService->deleted)
             ->where('job_users.user_id', $user->id)
             ->where('show_proofing', 1)
             ->pluck('ts_jobkey');

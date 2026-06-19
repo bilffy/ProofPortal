@@ -14,6 +14,7 @@ use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class PhotoGrid extends Component
 {
@@ -251,7 +252,36 @@ class PhotoGrid extends Component
     public function render()
     {   
         $paginatedImages = $this->getImages();
-        return view('livewire.photography.photo-grid', ['paginatedImages' => $paginatedImages]);
+        $totalWithImages = $this->getCountWithImages();
+        return view('livewire.photography.photo-grid', [
+            'paginatedImages' => $paginatedImages,
+            'totalWithImages' => $totalWithImages
+        ]);
+    }
+
+    private function getCountWithImages()
+    {
+        $imageService = new ImageService();
+        $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
+        
+        switch ($this->category) {
+            case PhotographyHelper::TAB_GROUPS:
+                $query = $imageService->getFoldersCollection($this->season, $this->schoolKey, $keys, $this->search);
+                $query->join('images', function ($join) {
+                    $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
+                         ->on('images.keyvalue', '=', 'folders.ts_folderkey');
+                });
+                return $query->count(DB::raw('DISTINCT folders.ts_folderkey'));
+            case PhotographyHelper::TAB_OTHERS:
+            case PhotographyHelper::TAB_PORTRAITS:
+            default:
+                $query = $imageService->getSubjectsCollection($this->season, $this->schoolKey, $keys, $this->search);
+                $query->join('images', function ($join) {
+                    $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
+                         ->on('images.keyvalue', '=', 'subjects.ts_subjectkey');
+                });
+                return $query->count(DB::raw('DISTINCT subjects.ts_subjectkey'));
+        }
     }
 
     private function setPaginationValues($targetPerPage, $force = false)

@@ -87,7 +87,9 @@
                         </span>
                     </div>
                     <span class="text-warning">
-                        Catchup notification emails will be sent on this date, please ensure this date is after the schools actual photo catchup day.
+                        Catchup notification emails will be sent on this date. Please ensure this date is set after the school's actual photo catchup day.
+                        <br>Selecting a catchup date will automatically set the Due Date to one week later.
+                        <br>Portraits will be temporarily hidden for this TNJ from the Photography section between the catchup date and the due date and will be available once the due date passes.
                     </span>
                 </div>
             </div>

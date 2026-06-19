@@ -75,9 +75,9 @@
                                                                           method="POST" style="display:none;">
                                                                         @csrf
                                                                     </form>
-                                                                    <a href="#" onclick="event.preventDefault(); if(confirm('{{ __('Are you sure you want to remove :name from this Folder?', ['name' => $photocoordinator->name]) }}')) { document.getElementById('remove-pc-folder-{{ $photocoordinator->id }}-{{ $folder->ts_folder_id }}').submit(); }">
+                                                                    <!-- <a href="#" onclick="event.preventDefault(); if(confirm('{{ __('Are you sure you want to remove :name from this Folder?', ['name' => $photocoordinator->name]) }}')) { document.getElementById('remove-pc-folder-{{ $photocoordinator->id }}-{{ $folder->ts_folder_id }}').submit(); }">
                                                                         {{ __('Revoke Folder Proofing Access') }}
-                                                                    </a>
+                                                                    </a> -->
                                                                 @endif
                                                             </li>
                                                         @endforeach

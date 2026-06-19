@@ -81,7 +81,7 @@
             <div class="modal fade modal_start" id="{{ $skHash }}_Modal" tabindex="-1" role="dialog" aria-labelledby="{{ $skHash }}Label" aria-hidden="true">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
-                        <form id="{{ $skHash }}_form" action="" autocomplete="off">
+                        <form id="{{ $skHash }}_form" action="" autocomplete="off" onsubmit="event.preventDefault(); document.getElementById('{{ $skHash }}_issue_submit').click();">
                         @csrf
                             <input type="hidden" name="subject_key_encrypted" value="{{$skEncrypted}}">
                             <input type="hidden" name="folder_key_encrypted" value="{{$folderkeyEncrypted}}">

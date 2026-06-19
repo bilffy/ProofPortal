@@ -49,6 +49,10 @@ class ConfigureService
     public function insertProofingTimeline($data){
         $tsJobKey = $this->getDecryptData($data['jobHash']);
         $getJobData = $this->jobService->updateJobData($tsJobKey, $data['dataType'], $data['date']);
+
+        if ($data['dataType'] === 'proof_catchup') {
+            $this->jobService->updateJobData($tsJobKey, 'is_in_catchup', 0);
+        }
     }
 
     public function sendEmailDates($data){
@@ -490,20 +494,22 @@ class ConfigureService
         $tsHomedSubjectImagesCount = $tsHomedSubjectImages->count(); // Format subjects by SubjectId
         $tsHomedSubjectIds = $tsHomedSubjectImages->pluck('Subjects.SubjectID')->toArray();
 
-        $tsAttachedSubjectImagesCount = $this->timestoneTableService->getAllTimestoneAttachedSubjectsImageByJobID($tsJobId)->whereNotIn('SubjectFolders.SubjectID', $tsHomedSubjectIds)->groupBy('SubjectFolders.SubjectID')->count();
-        $totalTSSubjectImages = $tsHomedSubjectImagesCount + $tsAttachedSubjectImagesCount;
+        // $tsAttachedSubjectImagesCount = $this->timestoneTableService->getAllTimestoneAttachedSubjectsImageByJobID($tsJobId)->whereNotIn('SubjectFolders.SubjectID', $tsHomedSubjectIds)->groupBy('SubjectFolders.SubjectID')->count();
+        // $totalTSSubjectImages = $tsHomedSubjectImagesCount + $tsAttachedSubjectImagesCount;
+        $totalTSSubjectImages = $tsHomedSubjectImagesCount;
 
         // Blueprint
         $bpSubjectCount = $this->subjectService->getSubjectByJobId($tsJobId)->count();
         $bpHomedSubjectImages = $this->subjectService->getAllHomedSubjectsImageByJobId($tsJobId);
         $bpHomedSubjectImagesCount = $bpHomedSubjectImages->count();
-        $bpHomedSubjectIds =  $bpHomedSubjectImages->pluck('ts_subject_id')->toArray();
+        // $bpHomedSubjectIds =  $bpHomedSubjectImages->pluck('ts_subject_id')->toArray();
 
-        $bpFolders = $this->folderService->getFolderByJobId($tsJobId)->pluck('ts_folder_id');
-        $bpAttachedSubjectIDs = $this->folderSubjectService->getAllBlueprintSubjectFoldersByFolderIds($bpFolders->toArray())->pluck('ts_subject_id')->toArray();
-        $bpAttachedSubjectImages = $this->folderSubjectService->getAllAttachedSubjectsImageBySubjectIds($bpAttachedSubjectIDs)->whereNotIn('ts_subject_id', $bpHomedSubjectIds)->groupBy('ts_subject_id')->count();
+        // $bpFolders = $this->folderService->getFolderByJobId($tsJobId)->pluck('ts_folder_id');
+        // $bpAttachedSubjectIDs = $this->folderSubjectService->getAllBlueprintSubjectFoldersByFolderIds($bpFolders->toArray())->pluck('ts_subject_id')->toArray();
+        // $bpAttachedSubjectImages = $this->folderSubjectService->getAllAttachedSubjectsImageBySubjectIds($bpAttachedSubjectIDs)->whereNotIn('ts_subject_id', $bpHomedSubjectIds)->groupBy('ts_subject_id')->count();
 
-        $totalBPSubjectImages = $bpHomedSubjectImagesCount + $bpAttachedSubjectImages;
+        // $totalBPSubjectImages = $bpHomedSubjectImagesCount + $bpAttachedSubjectImages;
+        $totalBPSubjectImages = $bpHomedSubjectImagesCount;
 
         return [
             'totalTSSubjectImages' => $totalTSSubjectImages,

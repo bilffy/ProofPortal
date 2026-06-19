@@ -189,8 +189,8 @@
                             <thead>
                                 <tr class="bg-light text-center font-weight-bold text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.05em;">
                                     <th rowspan="2" class="align-middle border-bottom" style="width: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Folder</th>
-                                    <th colspan="6" class="border-bottom-0" style="border-right: 1px solid #dee2e6; border-left: 1px solid #dee2e6;">Portrait</th>
-                                    <th colspan="8" class="border-bottom-0" style="border-right: 1px solid #dee2e6; border-left: 1px solid #dee2e6;">Group</th>
+                                    <th colspan="5" class="border-bottom-0" style="border-right: 1px solid #dee2e6; border-left: 1px solid #dee2e6;">Portrait</th>
+                                    <th colspan="9" class="border-bottom-0" style="border-right: 1px solid #dee2e6; border-left: 1px solid #dee2e6;">Group</th>
                                 </tr>
                                 <tr class="bg-light">
                                     <th class="text-center" style="width: 120px;">

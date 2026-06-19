@@ -30,7 +30,7 @@
 ">
 
     <div class="w-full text-center">
-        <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $paginatedImages->total() }}">
+        <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $totalWithImages }}">
             @foreach ($paginatedImages as $image)
                 @php
                     $isFolder = $image['category'] == 'FOLDER';
@@ -52,7 +52,11 @@
         <div class="mt-4 mb-4 flex justify-center">
             <div>
                 @if (count($paginatedImages) == 0)
-                    Your MSP photos are currently being processed and will appear here shortly.
+                    @if ($this->search)
+                        {{ $this->category == \App\Helpers\PhotographyHelper::TAB_PORTRAITS ? 'No Subject Found.' : '' }}
+                    @else
+                        Your MSP photos are currently being processed and will appear here shortly.
+                    @endif
                 @else
                     {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }} {{-- code by IT --}}
                     {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}} {{-- code by chromedia --}}

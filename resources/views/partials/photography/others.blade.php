@@ -116,7 +116,7 @@
         const select = $(selector);
         select.empty(); // Clear existing options
 
-        if (selector.endsWith('_class')) {
+        if (selector.endsWith('_class') && Object.keys(options).length > 0) {
             select.append(new Option('Select All', 'all'));
         }
 

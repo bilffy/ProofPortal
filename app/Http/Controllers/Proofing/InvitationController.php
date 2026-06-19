@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Email;
 use App\Models\School;
 use Carbon\Carbon;
+use App\Helpers\SchoolContextHelper;
 use Session;
 use Auth;
 
@@ -82,7 +83,7 @@ class InvitationController extends Controller
                 $canDisableMap[$user->id] = $user->hasRole('Photo Coordinator') || $user->hasRole('Teacher');
             } elseif ($currentUser->isPhotoCoordinator()) {
                 // Photo Coordinator can revoke Teachers only
-                $canDisableMap[$user->id] = $user->hasRole('Teacher');
+                $canDisableMap[$user->id] = $user->hasRole('Photo Coordinator') || $user->hasRole('Teacher');
             } else {
                 $canDisableMap[$user->id] = $currentUser->canDisable($user->id);
             }
@@ -98,9 +99,11 @@ class InvitationController extends Controller
                     $otherList[] = $user;
                 }
             } elseif ($currentUser->isPhotoCoordinator()) {
-                // Photo Coordinator: other PCs (incl. self) → otherList, Teachers → teachers, higher roles hidden
-                if ($user->hasRole('Photo Coordinator')) {
+                // Photo Coordinator: self -> otherList, Teachers -> teachers, other PCs/higher roles hidden
+                if ($user->id == $currentUser->id) {
                     $otherList[] = $user;
+                } elseif ($user->hasRole('Photo Coordinator')) {
+                    $photocoordinators[] = $user;
                 } elseif ($user->hasRole('Teacher')) {
                     $teachers[] = $user;
                 }
@@ -179,7 +182,7 @@ class InvitationController extends Controller
             abort(404); 
         }
         
-        $currentSchool = Session::get('school_context-sid');
+        $currentSchool = SchoolContextHelper::getSchool()?->id;
         $user = Auth::user(); 
     
         $users = User::query()
@@ -284,7 +287,7 @@ class InvitationController extends Controller
             abort(404); 
         }
         
-        $currentSchool = Session::get('school_context-sid');
+        $currentSchool = SchoolContextHelper::getSchool()?->id;
         $user = Auth::user(); 
     
         $users = User::query()

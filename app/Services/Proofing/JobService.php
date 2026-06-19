@@ -228,9 +228,6 @@ class JobService
     public function deleteJob($tsJobKey)
     {                    
         $job = Job::with('seasons')->where('ts_jobkey', $tsJobKey)->firstOrFail();
-        $tsJobId = $job->ts_job_id;
-        $tsSchoolKey = $job->ts_schoolkey;
-        $seasonCode = $job->seasons->code ?? null;
                                                     
         $tsFolderIds = $job->folders()->pluck('ts_folder_id')->toArray();                                                                
         
@@ -238,17 +235,9 @@ class JobService
 
         try {
             if (!empty($tsFolderIds)) {
-                \DB::table('subjects')->whereIn('ts_folder_id', $tsFolderIds)->delete();
                 \DB::table('folder_users')->whereIn('ts_folder_id', $tsFolderIds)->delete();
-                \DB::table('folder_subjects')->whereIn('ts_folder_id', $tsFolderIds)->delete();
-                \DB::table('images')->where('ts_job_id', $tsJobId)->delete();
-                \DB::table('changelogs')->where('ts_jobkey', $tsJobKey)->delete();
             }
-
-            $job->folders()->delete();
             $job->jobUsers()->delete();
-            $job->groupPositions()->delete(); 
-            // \DB::table('emails')->where('ts_jobkey', $tsJobKey)->delete(); //2026 Dec Enhancement
 
             $rootUserId = Auth::id();
             ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
@@ -257,8 +246,6 @@ class JobService
             ], $rootUserId);
 
             $job->update([
-                'jobsync_status_id' => $this->statusService->sync,
-                'foldersync_status_id' => $this->statusService->pending,
                 'job_status_id' => $this->statusService->deleted,
                 'imagesync_status_id' => $this->statusService->unsync,
                 'show_proofing' => null,

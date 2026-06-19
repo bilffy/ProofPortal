@@ -308,7 +308,7 @@
                         
                         {{-- Job Open Notification --}}
                         {{-- @if(session()->get('openJob') === true && session()->has('selectedJob') && session()->has('selectedSeason')) --}}
-                        @if(session()->get('openJob') === true && !empty($selectedJob['ts_jobname']) && !empty($selectedSeason['code']))
+                        @if(session()->get('openJob') === true && !empty($selectedJob['ts_jobname']) && !empty($selectedSeason['code']) && !(($user->resource->isPhotoCoordinator() || $user->resource->isTeacher()) && $user->resource->jobs()->count() === 1))
                             <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
                                 <div class="col-12">
                                     <span class="lead m-0 mr-2">

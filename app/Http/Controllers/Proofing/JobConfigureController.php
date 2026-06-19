@@ -89,7 +89,7 @@ class JobConfigureController extends Controller
             'hash' =>$hash, 
             'selectedFolders' => $selectedFolders, 
             'compiledFolderDuplicates' => $compiledFolderDuplicates, 
-            'compiledSubjectDuplicates' => $compiledSubjectDuplicates ,
+            'compiledSubjectDuplicates' => $compiledSubjectDuplicates,
             'imageCount' => $imageCount,
             'user' => new UserResource($user)
         ]);

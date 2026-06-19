@@ -33,6 +33,7 @@ class Job extends Model
         'proof_due',
         'proof_catchup',
         'show_proofing',
+        'is_in_catchup',
         'download_available_date',
         'notifications_enabled',
         'notifications_matrix',
