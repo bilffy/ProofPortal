@@ -183,29 +183,41 @@ $(document).ready(function () {
 
         const url = $(this).data('toggle-url');
 
-        // Always remove archived rows first
-        searchDataTable.rows('.archived').remove().draw();
+        // Clear the table before fetching new data
+        searchDataTable.clear().draw();
 
-        // If we are hiding archived, stop here
-        if (isArchivedHidden) {
-            updateRowNumbers(searchDataTable);
-            return;
-        }
-
-        // Otherwise fetch archived jobs
+        // Fetch jobs (either archived or active/none based on toggle)
         $.ajax({
             url: url,
             data: {
-                includeArchived: true
+                includeArchived: !isArchivedHidden
             },
             success: function (response) {
-
                 response.data.forEach(function (job) {
-
                     const folderCounts = job.folderCounts || {};
                     const formattedCounts = Object.entries(folderCounts)
                         .map(([statusName, count]) => `${statusName}: ${count}`)
                         .join('<br>');
+
+                    let actionHtml = '';
+                    if (isArchivedHidden) {
+                        // Action for Active/None jobs
+                        actionHtml = `
+                            <a href="#" id="open-job-link" data-job="${job.jobKeyHash}">Open Job</a> |
+                            <a href="${job.config_url}">Configure</a> |
+                            <a href="#" class="archive-job" data-job="${job.hash}" data-name="${job.ts_jobname}">Archive</a>
+                        `;
+                    } else {
+                        // Action for Archived jobs
+                        actionHtml = `
+                            <a href="#" 
+                                data-name="${job.ts_jobname}" 
+                                id="restore-job" 
+                                data-job="${job.hash}">
+                                Restore
+                            </a>
+                        `;
+                    }
 
                     const newRow = searchDataTable.row.add([
                         '',
@@ -219,20 +231,15 @@ $(document).ready(function () {
                         job.proof_start ? moment(job.proof_start).format('YYYY-MM-DD') : '',
                         job.proof_warning ? moment(job.proof_warning).format('YYYY-MM-DD') : '',
                         job.proof_due ? moment(job.proof_due).format('YYYY-MM-DD') : '',
-                        `<a href="#" 
-                                data-name="${job.ts_jobname}" 
-                                id="restore-job" 
-                                data-job="${job.hash}">
-                                Restore
-                            </a>`
+                        actionHtml
                     ]).node();
 
-                    // Mark row as archived
-                    $(newRow).addClass('archived');
+                    if (!isArchivedHidden) {
+                        $(newRow).addClass('archived');
+                    }
 
                     // Date-based coloring
                     const now = moment();
-
                     if (job.proof_start && moment(job.proof_start).isSameOrBefore(now)) {
                         $(newRow).find('td:eq(6)').addClass('text-success alert-link');
                     }

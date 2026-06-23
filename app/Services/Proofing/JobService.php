@@ -124,39 +124,30 @@ class JobService
         $archiveStatus = $this->statusService->archived;
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        if ($includeArchived) {
-            return $this->queryJobs($franchiseCode,null)
-                ->where('jobs.job_status_id', $this->statusService->archived)
-                ->where('jobs.ts_schoolkey', $schoolKey)
-                ->where('job_users.user_id', Auth::user()->id)
-                ->get()
-                ->map(function ($job) {
-                    $job->hash = Crypt::encryptString($job->ts_job_id);
-                    $job->folderCounts = $job->folders->groupBy('status_id')->map->count();
-                    $statusNames = $this->statusService->getDataById($job->folderCounts->keys())->pluck('status_external_name', 'id');
-                    $job->folderCounts = $job->folderCounts->mapWithKeys(function ($count, $statusId) use ($statusNames) {
-                        return [$statusNames[$statusId] ?? 'Unknown Status' => $count];
-                    })->toArray();
-                    return $job;
-                });
-        }else{
-            return $this->queryJobs($franchiseCode,null)
-            ->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound, $deleted])
-            ->where('jobs.jobsync_status_id', $this->statusService->sync)
+        
+        $query = $this->queryJobs($franchiseCode,null)
             ->where('jobs.ts_schoolkey', $schoolKey)
-            ->where('job_users.user_id', Auth::user()->id)
-            ->get()
-            ->map(function ($job) {
-                $job->hash = Crypt::encryptString($job->ts_job_id);
-                $job->folderCounts = $job->folders->groupBy('status_id')->map->count();
-                $statusNames = $this->statusService->getDataById($job->folderCounts->keys())->pluck('status_external_name', 'id');
-                $job->folderCounts = $job->folderCounts->mapWithKeys(function ($count, $statusId) use ($statusNames) {
-                    return [$statusNames[$statusId] ?? 'Unknown Status' => $count];
-                })->toArray();
-                return $job;
-            });
+            ->where('job_users.user_id', Auth::user()->id);
+
+        if ($includeArchived) {
+            $jobs = $query->where('jobs.job_status_id', $this->statusService->archived)->get();
+        } else {
+            $jobs = $query->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound, $deleted])
+                          ->where('jobs.jobsync_status_id', $this->statusService->sync)
+                          ->get();
         }
-        return [];
+
+        return $jobs->map(function ($job) {
+            $job->hash = Crypt::encryptString($job->ts_job_id);
+            $job->jobKeyHash = Crypt::encryptString($job->ts_jobkey);
+            $job->config_url = \URL::signedRoute('config-job', ['hash' => $job->jobKeyHash]);
+            $job->folderCounts = $job->folders->groupBy('status_id')->map->count();
+            $statusNames = $this->statusService->getDataById($job->folderCounts->keys())->pluck('status_external_name', 'id');
+            $job->folderCounts = $job->folderCounts->mapWithKeys(function ($count, $statusId) use ($statusNames) {
+                return [$statusNames[$statusId] ?? 'Unknown Status' => $count];
+            })->toArray();
+            return $job;
+        });
     }
 
     public function updateJobStatus($tsJobId, $newStatusId)
