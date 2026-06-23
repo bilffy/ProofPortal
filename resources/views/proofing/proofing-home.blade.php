@@ -184,7 +184,7 @@
                             <div class="card-header">
                                 <!-- Combined into a single line wrapper -->
                                 <div class="mb-4">
-                                    <h5 class="text-black d-inline mr-2">Your Synced Jobs</h5>
+                                    <h5 class="text-black d-inline mr-2">Your Synced (Active) Jobs</h5>
                                     <span class="text-muted">
                                         - There are 
                                         <strong>@if($data['activeSyncJobs']){{$data['activeSyncJobs']->count()}}@endif</strong> 
