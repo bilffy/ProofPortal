@@ -136,6 +136,8 @@ $(document).ready(function () {
             "autoWidth": false,
             "responsive": true
         });
+        $('#searchData').removeClass('hide-until-ready');
+        searchDataTable.columns.adjust().draw(false);
     }
 
     // Update search on input change
@@ -164,6 +166,8 @@ $(document).ready(function () {
             "autoWidth": false,
             "responsive": true
         });
+        $('#schools-table').removeClass('hide-until-ready');
+        schoolsTable.columns.adjust().draw(false);
     }
 
     // Update search on input change

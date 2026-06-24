@@ -7,11 +7,14 @@
 
 
 <style>
+    .hide-until-ready {
+        display: none !important;
+    }
     .d-none-archive {
         display: none !important
     }
     /* Hide the DataTables search input field */
-        .dataTables_filter {
+    .dataTables_filter {
         display: none;
     }
     div.dataTables_wrapper div.dataTables_length select{
@@ -113,7 +116,7 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <p>Click headings to sort by that column.</p>
-                                            <table id="schools-table" class="table table-bordered table-striped table-sm">
+                                            <table id="schools-table" class="table table-bordered table-striped table-sm hide-until-ready">
                                                 <thead>
                                                     <tr>
                                                         <th scope="col" style="width: 70px; max-width: 70px; white-space: nowrap;">
@@ -210,7 +213,7 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <p>Click headings to sort by that column.</p>
-                                        <table id="searchData" class="table table-bordered table-sm">
+                                        <table id="searchData" class="table table-bordered table-sm hide-until-ready">
                                             <thead>
                                                 <!-- Table Headings-->
                                                 <tr>
