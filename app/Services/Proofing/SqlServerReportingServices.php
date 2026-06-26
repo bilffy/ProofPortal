@@ -14,6 +14,431 @@ class SqlServerReportingServices
         //
     }
 
+    /**
+     * Map portal parameter keys to SSRS report parameter names.
+     */
+    public static function mapSsrsParamKey(string $paramKey): string
+    {
+        $configured = config('settings.ssrs_param_map', []);
+
+        if (isset($configured[$paramKey])) {
+            return $configured[$paramKey];
+        }
+
+        return match ($paramKey) {
+            'ts_job_id' => 'schoolid',
+            'ts_folder_id' => 'folderid',
+            default => $paramKey,
+        };
+    }
+
+    /**
+     * Map UI/download format keys to SSRS rs:Format values.
+     */
+    public static function mapDownloadFormat(string $format): string
+    {
+        $normalized = strtolower($format);
+
+        return match ($normalized) {
+            'csv' => 'CSV',
+            'pdf' => 'PDF',
+            'xlsx', 'excelopenxml' => 'EXCELOPENXML',
+            'xls', 'excel' => 'EXCEL',
+            default => strtoupper($format),
+        };
+    }
+
+    /**
+     * File extension for a download format.
+     */
+    public static function downloadExtension(string $format): string
+    {
+        $normalized = strtolower($format);
+
+        return match ($normalized) {
+            'csv' => 'csv',
+            'pdf' => 'pdf',
+            'xlsx', 'excelopenxml' => 'xlsx',
+            'xls', 'excel' => 'xls',
+            default => strtolower($format),
+        };
+    }
+
+    /**
+     * Normalize portal param keys to SSRS URL parameter names.
+     */
+    public static function normalizeSsrsParams(array $params): array
+    {
+        $normalized = [];
+
+        foreach ($params as $key => $value) {
+            $normalized[self::mapSsrsParamKey($key)] = $value;
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Apply report-specific extra SSRS parameters and discover any remaining required params.
+     */
+    public static function completeSsrsParams(string $reportName, array $params): array
+    {
+        $params = self::normalizeSsrsParams($params);
+        $params = self::applyConfiguredExtraParams($reportName, $params);
+
+        $maxIterations = (int) config('settings.ssrs_param_discovery_attempts', 8);
+
+        for ($i = 0; $i < $maxIterations; $i++) {
+            $missing = self::getMissingReportParameter($reportName, $params);
+
+            if ($missing === null) {
+                break;
+            }
+
+            $value = self::resolveMissingParameterValue($missing, $params);
+
+            if ($value === null || array_key_exists($missing, $params)) {
+                break;
+            }
+
+            $params[$missing] = $value;
+        }
+
+        return self::filterToReportParameters($reportName, $params);
+    }
+
+    protected static function applyConfiguredExtraParams(string $reportName, array $params): array
+    {
+        $extras = config("settings.ssrs_report_extra_params.{$reportName}", []);
+        $validNames = self::getReportParameterNames($reportName, $params);
+
+        foreach ($extras as $paramName => $template) {
+            if (array_key_exists($paramName, $params)) {
+                continue;
+            }
+
+            if ($validNames !== null && ! in_array($paramName, $validNames, true)) {
+                continue;
+            }
+
+            $value = self::interpolateParamTemplate($template, $params);
+            if ($value !== null && $value !== '') {
+                $params[$paramName] = $value;
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Drop portal params that the SSRS report does not define.
+     *
+     * @return array<string, mixed>
+     */
+    protected static function filterToReportParameters(string $reportName, array $params): array
+    {
+        $validNames = self::getReportParameterNames($reportName, $params);
+
+        if ($validNames === null) {
+            return $params;
+        }
+
+        return array_intersect_key($params, array_flip($validNames));
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    protected static function getReportParameterNames(string $reportName, array $params): ?array
+    {
+        $response = self::ssrsHttpGet($reportName, $params, [
+            'rs:Command' => 'GetReportParameters',
+            'rs:Format' => 'XML',
+        ]);
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        if (! preg_match_all('/<ReportParameter Name="([^"]+)"/', $response->body(), $matches)) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    protected static function interpolateParamTemplate(string $template, array $params): ?string
+    {
+        if (preg_match('/^\{(.+)\}$/', $template, $matches)) {
+            return isset($params[$matches[1]]) ? (string) $params[$matches[1]] : null;
+        }
+
+        return $template;
+    }
+
+    protected static function resolveMissingParameterValue(string $paramName, array $params): mixed
+    {
+        if (isset($params[$paramName])) {
+            return $params[$paramName];
+        }
+
+        return match ($paramName) {
+            'email' => $params['email'] ?? null,
+            'schoolid' => $params['schoolid'] ?? null,
+            'folderid' => $params['folderid'] ?? null,
+            default => self::guessGenericParameterValue($paramName, $params),
+        };
+    }
+
+    protected static function guessGenericParameterValue(string $paramName, array $params): mixed
+    {
+        if (preg_match('/^Parameter\d+$/', $paramName)) {
+            return $params['folderid'] ?? $params['schoolid'] ?? null;
+        }
+
+        return null;
+    }
+
+    protected static function getMissingReportParameter(string $reportName, array $params): ?string
+    {
+        $response = self::ssrsHttpGet($reportName, $params, [
+            'rs:Command' => 'GetReportParameters',
+            'rs:Format' => 'XML',
+        ]);
+
+        if ($response->successful()) {
+            return null;
+        }
+
+        return self::parseMissingParameterName($response->body());
+    }
+
+    protected static function parseMissingParameterName(string $body): ?string
+    {
+        if (preg_match("/report parameter &#39;([^&#]+)&#39;/i", $body, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match("/report parameter '([^']+)'/i", html_entity_decode($body), $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    protected static function parseUnknownParameterName(string $body): ?string
+    {
+        if (preg_match("/parameter '([^']+)' that is not defined/i", html_entity_decode($body), $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match("/parameter &#39;([^&#]+)&#39; that is not defined/i", $body, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    protected static function ssrsHttpGet(string $reportName, array $params, array $queryOptions = [], ?string $format = null)
+    {
+        $url = self::makeSsrsUrl([
+            'ssrsServer' => config('settings.ssrs_server'),
+            'ssrsFolder' => config('settings.ssrs_folder'),
+            'ssrsReport' => $reportName,
+            'format' => $format,
+            'params' => $params,
+            'queryOptions' => $queryOptions,
+        ]);
+
+        return \Illuminate\Support\Facades\Http::withBasicAuth(
+            config('settings.ssrs_username'),
+            config('settings.ssrs_password')
+        )->get($url);
+    }
+
+    /**
+     * Fetch a rendered report from SQL Server Reporting Services.
+     *
+     * @return array{success: bool, body: ?string, contentType: ?string, extension: ?string, error: ?string, url: ?string, params: array<string, mixed>}
+     */
+    public static function downloadFromReportServer(string $reportQueryName, string $format, array $params): array
+    {
+        $ssrsFormat = self::mapDownloadFormat($format);
+        $extension = self::downloadExtension($format);
+        $params = self::completeSsrsParams($reportQueryName, $params);
+
+        $maxAttempts = 3;
+
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            $result = self::attemptSsrsDownload($reportQueryName, $ssrsFormat, $extension, $params);
+
+            if ($result['success'] || $attempt === $maxAttempts - 1) {
+                return $result;
+            }
+
+            $unknownParam = self::parseUnknownParameterName($result['error'] ?? '');
+
+            if ($unknownParam === null || ! array_key_exists($unknownParam, $params)) {
+                return $result;
+            }
+
+            unset($params[$unknownParam]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array{success: bool, body: ?string, contentType: ?string, extension: ?string, error: ?string, url: ?string, params: array<string, mixed>}
+     */
+    protected static function attemptSsrsDownload(string $reportQueryName, string $ssrsFormat, string $extension, array $params): array
+    {
+        $ssrsUrl = self::makeSsrsUrl([
+            'ssrsServer' => config('settings.ssrs_server'),
+            'ssrsFolder' => config('settings.ssrs_folder'),
+            'ssrsReport' => $reportQueryName,
+            'format' => $ssrsFormat,
+            'params' => $params,
+        ]);
+
+        $response = \Illuminate\Support\Facades\Http::withBasicAuth(
+            config('settings.ssrs_username'),
+            config('settings.ssrs_password')
+        )->get($ssrsUrl);
+
+        if (!$response->successful()) {
+            return [
+                'success' => false,
+                'body' => null,
+                'contentType' => null,
+                'extension' => $extension,
+                'error' => self::extractSsrsErrorMessage($response->body()) ?: 'Failed to download report from Report Server.',
+                'url' => $ssrsUrl,
+                'params' => $params,
+            ];
+        }
+
+        $body = $response->body();
+        $contentType = $response->header('Content-Type') ?: self::defaultContentType($extension);
+
+        if ($ssrsFormat === 'CSV' && self::csvHasOnlyHeader($body)) {
+            return [
+                'success' => false,
+                'body' => null,
+                'contentType' => $contentType,
+                'extension' => $extension,
+                'error' => 'Report Server returned no data for your account. Please verify your email is registered in Report Server for this school.',
+                'url' => $ssrsUrl,
+                'params' => $params,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'body' => $body,
+            'contentType' => $contentType,
+            'extension' => $extension,
+            'error' => null,
+            'url' => $ssrsUrl,
+            'params' => $params,
+        ];
+    }
+
+    public static function csvHasOnlyHeader(string $body): bool
+    {
+        $lines = preg_split('/\r\n|\r|\n/', trim($body));
+
+        return count($lines) <= 1;
+    }
+
+    protected static function defaultContentType(string $extension): string
+    {
+        return match ($extension) {
+            'csv' => 'text/csv',
+            'pdf' => 'application/pdf',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls' => 'application/vnd.ms-excel',
+            default => 'application/octet-stream',
+        };
+    }
+
+    protected static function extractSsrsErrorMessage(string $body): ?string
+    {
+        if (preg_match('/<li>(.*?)<\/li>/s', $body, $matches)) {
+            return trim(strip_tags(html_entity_decode($matches[1])));
+        }
+
+        return null;
+    }
+
+    /**
+     * Build SSRS URL parameters and display metadata for a report run.
+     *
+     * @param  string  $userEmail
+     * @param  array<int, mixed>  $passedParamValues
+     * @param  array<int, array<string, mixed>>  $reportParams
+     * @return array{ssrsParams: array<string, mixed>, sqlParams: array<int, array<string, mixed>>, downloadName: string}
+     */
+    public static function buildReportParams(string $userEmail, array $passedParamValues, array $reportParams, string $reportDisplayName): array
+    {
+        $sqlParams = [
+            [
+                'sqlFriendly' => 'email',
+                'urlKey' => 'email',
+                'urlValue' => $userEmail,
+            ],
+        ];
+
+        $downloadName = now()->format('Ymd-His') . ' - ' . $reportDisplayName;
+        $passedParamValues = array_values($passedParamValues);
+
+        foreach ($reportParams as $k => $reportParam) {
+            if (!isset($passedParamValues[$k])) {
+                continue;
+            }
+
+            $paramValue = $passedParamValues[$k];
+            $record = collect($reportParam['query'])->firstWhere($reportParam['keyField'], $paramValue);
+            $friendlyValue = $record
+                ? data_get($record, $reportParam['valueField'], $paramValue)
+                : $paramValue;
+
+            $urlKey = strtolower(str_replace('.', '', str_replace('s.', '.', $reportParam['keyField'])));
+
+            $sqlParams[] = [
+                'sqlFriendly' => strtolower(str_replace('.', '_', str_replace('s.', '.', $reportParam['keyField']))),
+                'urlKey' => $urlKey,
+                'urlValue' => $paramValue,
+                'friendlyName' => $reportParam['name'],
+                'friendlyValue' => $friendlyValue,
+            ];
+
+            $downloadName .= ' - ' . $friendlyValue;
+        }
+
+        $ssrsParams = [];
+        foreach ($sqlParams as $sqlParam) {
+            $ssrsParams[$sqlParam['urlKey']] = $sqlParam['urlValue'];
+        }
+
+        return [
+            'ssrsParams' => $ssrsParams,
+            'sqlParams' => $sqlParams,
+            'downloadName' => $downloadName,
+        ];
+    }
+
+    /**
+     * Build final SSRS params for a report, including report-server-specific extras.
+     */
+    public static function buildSsrsDownloadParams(string $reportQueryName, string $userEmail, array $passedParamValues, array $reportParams, string $reportDisplayName): array
+    {
+        $payload = self::buildReportParams($userEmail, $passedParamValues, $reportParams, $reportDisplayName);
+        $payload['ssrsParams'] = self::completeSsrsParams($reportQueryName, $payload['ssrsParams']);
+
+        return $payload;
+    }
+
     public static function makeSsrsUrl($opts = [])
     {
         // Default options
@@ -23,6 +448,7 @@ class SqlServerReportingServices
             'ssrsReport' => null,
             'format' => null,
             'params' => null,
+            'queryOptions' => [],
         ];
 
         // Merge provided options with defaults
@@ -42,17 +468,19 @@ class SqlServerReportingServices
             $url .= "&rs:Format=" . urlencode($opts['format']);
         }
 
+        foreach ($opts['queryOptions'] as $queryKey => $queryValue) {
+            $url .= "&" . urlencode($queryKey) . "=" . urlencode((string) $queryValue);
+        }
+
         // Append parameters to the URL if present
         if ($opts['params']) {
             foreach ($opts['params'] as $paramK => $paramV) {
-                if($paramK === 'ts_job_id')
-                {
-                    $paramK = 'schoolid';
-                }elseif($paramK === 'ts_folder_id')
-                {
-                    $paramK = 'folderid';
+                if (array_key_exists($paramK, $opts['queryOptions'])) {
+                    continue;
                 }
-                $url .= "&" . urlencode($paramK) . "=" . urlencode($paramV);
+
+                $paramK = self::mapSsrsParamKey($paramK);
+                $url .= "&" . urlencode($paramK) . "=" . urlencode((string) $paramV);
             }
         }
 
@@ -102,10 +530,11 @@ class SqlServerReportingServices
         $inProgress .= implode(",", $headerRow) . PHP_EOL;
     
         foreach ($reportRows as $reportRow) {
-            foreach ($reportRow as $cellKey => $cell) {
-                $reportRow[$cellKey] = self::valueToString($cell, ","); // Use self:: to call static methods
+            $rowArray = (array)$reportRow;
+            foreach ($rowArray as $cellKey => $cell) {
+                $rowArray[$cellKey] = self::valueToString($cell, ",");
             }
-            $currentRow = self::qualifyWords($reportRow, "\"", [",", "\r", "\n", "\t"]);
+            $currentRow = self::qualifyWords($rowArray, "\"", [",", "\r", "\n", "\t"]);
             $inProgress .= implode(",", $currentRow) . PHP_EOL;
         }
     

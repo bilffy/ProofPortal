@@ -8,10 +8,9 @@ use App\Repositories\ReportRepository;
 
 /**
  * Report Model
- * 
- * This model now delegates all complex SQL queries to the ReportRepository.
- * Static methods are maintained for backward compatibility with existing code
- * (particularly ReportController which uses reflection to call these methods).
+ *
+ * The reports.query column stores the SSRS report name/path used for downloads.
+ * ReportRepository methods (via countResults()) are used only for portal preview counts.
  */
 class Report extends Model
 {
@@ -260,9 +259,9 @@ class Report extends Model
      * @param int|null $tsFolderId
      * @return \Illuminate\Support\Collection
      */
-    public static function myGroupPhotoPositionsBySchoolAndFolderForTnjImporting($tsJobId = null, $tsFolderId = null)
+    public static function myGroupPhotoPositionsBySchoolAndFolder($tsJobId = null, $tsFolderId = null)
     {
-        return self::repository()->getGroupPhotoPositionsBySchoolAndFolderForTnjImporting($tsJobId, $tsFolderId);
+        return self::repository()->getGroupPhotoPositionsBySchoolAndFolder($tsJobId, $tsFolderId);
     }
 
     /**
@@ -273,7 +272,7 @@ class Report extends Model
      */
     public static function blueprintFullChangeList($tsJobId = null)
     {
-        return self::mySchools();
+        return self::repository()->getBlueprintFullChangeList($tsJobId);
     }
 
     // ========================================================================
@@ -288,13 +287,71 @@ class Report extends Model
      * @param  array  $parameters
      * @return mixed
      */
-    public static function __callStatic($method, $parameters)
+    /**
+     * Maps the reports.query value (SSRS report path/name) to the portal count method.
+     */
+    protected static function ssrsQueryToCountMethodMap(): array
     {
-        if ($method === 'BlueprintFullChangeList -Portal') {
-            return self::blueprintFullChangeList(...$parameters);
+        return [
+            'MyFolderChangesBySchool' => 'myFolderChangesBySchool',
+            'MyFolderChangesBySchoolAndFolder' => 'myFolderChangesBySchoolAndFolder',
+            'MySubjectChangesBySchool' => 'mySubjectChangesBySchool',
+            'MySubjectChangesBySchoolAndFolder' => 'mySubjectChangesBySchoolAndFolder',
+            'MySubjectChangesBySchoolForTimestoneImport' => 'mySubjectChangesBySchoolForTimestoneImport',
+            'MyGroupPhotoPositionsBySchoolAndFolder' => 'myGroupPhotoPositionsBySchoolAndFolder',
+            'BlueprintFullChangeList' => 'blueprintFullChangeList',
+        ];
+    }
+
+    /**
+     * Resolve the portal repository method used to count preview results.
+     */
+    public static function resolveCountMethod(string $queryName): ?string
+    {
+        $map = self::ssrsQueryToCountMethodMap();
+
+        if (isset($map[$queryName])) {
+            return $map[$queryName];
         }
 
-        return parent::__callStatic($method, $parameters);
+        if (method_exists(static::class, $queryName)) {
+            return $queryName;
+        }
+
+        $camelCase = lcfirst($queryName);
+        if (method_exists(static::class, $camelCase)) {
+            return $camelCase;
+        }
+
+        return null;
+    }
+
+    /**
+     * Count portal preview results. SSRS report downloads use reports.query directly.
+     */
+    public static function countResults(string $queryName, array $parameters = []): int
+    {
+        $method = self::resolveCountMethod($queryName);
+
+        if ($method === null) {
+            return 0;
+        }
+
+        return self::repository()->countForReport($method, $parameters);
+    }
+
+    /**
+     * @deprecated Use countResults() for preview counts. Downloads are served from SSRS via reports.query.
+     */
+    public static function runQuery(string $queryName, array $parameters = [])
+    {
+        $method = self::resolveCountMethod($queryName);
+
+        if ($method === null) {
+            return collect();
+        }
+
+        return call_user_func_array([static::class, $method], $parameters);
     }
 
     // ========================================================================

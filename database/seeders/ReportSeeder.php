@@ -77,31 +77,31 @@ class ReportSeeder extends Seeder
             [
                 'name' => 'My Folder Changes By School',
                 'description' => 'Provide a list of changes to all Folders by School.',
-                'query' => 'myFolderChangesBySchool',
+                'query' => 'MyFolderChangesBySchool',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
             ],
             [
                 'name' => 'My Folder Changes By School And Folder',
                 'description' => 'Provide a list of changes to all Folders by School and Folder.',
-                'query' => 'myFolderChangesBySchoolAndFolder',
+                'query' => 'MyFolderChangesBySchoolAndFolder',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
             ],
             [
                 'name' => 'My Subject Changes By School',
                 'description' => 'Provide a list of changes to all Subjects by School.',
-                'query' => 'mySubjectChangesBySchool',
+                'query' => 'MySubjectChangesBySchool',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
             ],
             [
                 'name' => 'My Subject Changes By School And Folder',
                 'description' => 'Provide a list of changes to all Subjects by School and Folder.',
-                'query' => 'mySubjectChangesBySchoolAndFolder',
+                'query' => 'MySubjectChangesBySchoolAndFolder',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
             ],
             [
                 'name' => 'My Subject Changes by School for Timestone Import',
                 'description' => 'Provide a list of changes to Subject by School for importing into Datapost',
-                'query' => 'mySubjectChangesBySchoolForTimestoneImport',
+                'query' => 'MySubjectChangesBySchoolForTimestoneImport',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
             ],
             [
@@ -119,14 +119,14 @@ class ReportSeeder extends Seeder
             [
                 'name' => 'TNJ Import Group Position By School And Folder',
                 'description' => 'Use this to import a list into the TNJ. Filtered by School and Folder.',
-                'query' => 'myGroupPhotoPositionsBySchoolAndFolderForTnjImporting',
+                'query' => 'MyGroupPhotoPositionsBySchoolAndFolder',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
             ],
             [
-                'name' => 'Proofing Full Change List',
+                'name' => 'Full Change List -Portal',
                 'description' => 'Runs 3 x Reports of all the Changes in a School.',
                 // 'query' => 'blueprintFullChangeList',
-                'query' => 'BlueprintFullChangeList -Portal',
+                'query' => 'BlueprintFullChangeList',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
             ],
         ]);

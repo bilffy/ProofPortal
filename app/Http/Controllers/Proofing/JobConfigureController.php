@@ -221,14 +221,18 @@ class JobConfigureController extends Controller
                 break;
 
             case 'update-subject-associations':
-                $this->configureService->updateSubjectAssociations($selectedJob->ts_job_id);
-                $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
-                break;
+                if ($this->configureService->updateSubjectAssociations($selectedJob->ts_job_id)) {
+                    $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
+                    return redirect()->back()->with('message', 'Success! ' . $message);
+                }
+                return redirect()->back()->with('error', 'Update blocked: Job synchronization is already in progress or already scheduled in Timestone.');
 
             case 'update-people-images':
-                $this->configureService->updatePeopleImage($selectedJob->ts_job_id, $selectedJob->ts_jobkey);
-                $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
-                break;
+                if ($this->configureService->updatePeopleImage($selectedJob->ts_job_id, $selectedJob->ts_jobkey)) {
+                    $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
+                    return redirect()->back()->with('message', 'Success! ' . $message);
+                }
+                return redirect()->back()->with('error', 'Update blocked: Job synchronization is already in progress or already scheduled in Timestone.');
 
             default:
                 return redirect()->back()->with('error', 'Invalid action.');

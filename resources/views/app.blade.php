@@ -99,6 +99,20 @@
         });
 
     </script>
+    <style>
+        .custom-dropdown-item {
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        /* Force color override on hover */
+        .custom-dropdown-item:hover {
+            background-color: #5897fb !important;
+        }
+        /* Force text to turn white on hover so it remains readable */
+        .custom-dropdown-item:hover a,
+        .custom-dropdown-item:hover label {
+            color: #ffffff !important;
+        }
+    </style>
 </head>
 
 <body class="font-sans antialiased" oncontextmenu="return false;">

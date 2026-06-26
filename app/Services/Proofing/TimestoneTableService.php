@@ -2,6 +2,7 @@
 
 namespace App\Services\Proofing;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class TimestoneTableService
 {
@@ -60,14 +61,35 @@ class TimestoneTableService
     public function getAllTimestoneJobsBySeasonID($tsSeasonIds, $tsAccountId, $schoolKey)
     {
         return DB::connection('timestone')
-        ->table('Jobs')
-        ->join('Accounts', 'Accounts.AccountID', '=', 'Jobs.AccountID')
-        ->join('Seasons', 'Seasons.SeasonID', '=', 'Jobs.SeasonID')
-        ->leftjoin('JobDetails', 'JobDetails.JobID', '=', 'Jobs.JobID')
-        ->whereIn('Jobs.SeasonID', $tsSeasonIds)
-        ->where('Jobs.AccountID', $tsAccountId)
-        ->where('JobDetails.SchoolKey', $schoolKey)
-        ->select(['Jobs.Name', 'Jobs.JobKey', 'Jobs.JobID', 'Seasons.code'])
-        ->orderBy('Jobs.Name', 'asc'); // Format jobs by Name
+            ->table('Jobs')
+            ->join('Accounts', 'Accounts.AccountID', '=', 'Jobs.AccountID')
+            ->join('Seasons', 'Seasons.SeasonID', '=', 'Jobs.SeasonID')
+            ->leftjoin('JobDetails', 'JobDetails.JobID', '=', 'Jobs.JobID')
+            ->whereIn('Jobs.SeasonID', $tsSeasonIds)
+            ->where('Jobs.AccountID', $tsAccountId)
+            ->where('JobDetails.SchoolKey', $schoolKey)
+            ->select(['Jobs.Name', 'Jobs.JobKey', 'Jobs.JobID', 'Seasons.code'])
+            ->orderBy('Jobs.Name', 'asc');
+    }
+
+    public function isJobEligibleForSync($tsJobKey)
+    {
+        return DB::connection('timestone')
+            ->table('JobSync')
+            ->where('JobKey', $tsJobKey)
+            ->whereNull('BlueprintSyncDate')
+            ->whereNull('BlueprintSyncStatus')
+            ->exists();
+    }
+
+    public function markBlueprintSyncComplete(string $tsJobKey, int $statusId): void
+    {
+        DB::connection('timestone')
+            ->table('JobSync')
+            ->where('JobKey', $tsJobKey)
+            ->update([
+                'BlueprintSyncStatus' => $statusId,
+                'BlueprintSyncDate' => Carbon::now(),
+            ]);
     }
 }

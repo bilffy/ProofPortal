@@ -10,6 +10,7 @@ use App\Services\Proofing\TimestoneTableService;
 use App\Services\Proofing\ProofingChangelogService;
 use App\Services\Proofing\FolderSubjectService;
 use App\Services\Proofing\EmailService;
+use App\Services\Proofing\StatusService;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\SyncImagesToProd02;
 
@@ -24,11 +25,12 @@ class ConfigureService
     protected $timestoneTableService;
     protected $folderSubjectService;
     protected $emailService;
+    protected $statusService;
 
     public function __construct(
         EncryptDecryptService $encryptDecryptService, JobService $jobService, FolderService $folderService, ProofingChangelogService $proofingChangelogService,
         SubjectService $subjectService, ImageService $imageService, TimestoneTableService $timestoneTableService, FolderSubjectService $folderSubjectService, 
-        EmailService $emailService
+        EmailService $emailService, StatusService $statusService
         )
     {
         $this->encryptDecryptService = $encryptDecryptService;
@@ -40,6 +42,7 @@ class ConfigureService
         $this->timestoneTableService = $timestoneTableService;
         $this->folderSubjectService = $folderSubjectService;
         $this->emailService = $emailService;
+        $this->statusService = $statusService;
     }
 
     private function getDecryptData($hash){
@@ -222,6 +225,11 @@ class ConfigureService
 
     public function updateSubjectAssociations($tsJobId)
     {
+        $job = \App\Models\Job::where('ts_job_id', $tsJobId)->first();
+        if (!$job || !$this->timestoneTableService->isJobEligibleForSync($job->ts_jobkey)) {
+            return false;
+        }
+
         // Timestone
         $tsSubjects = $this->timestoneTableService->getAllTimestoneSubjectsByJobID($tsJobId); // Format subjects by SubjectKey
 
@@ -253,6 +261,10 @@ class ConfigureService
 
         // Update FoldersSubjects table from Timestone using Bulk queries
         $this->recastTimestoneLinksOfSubjectsToFolders($bpSubjects->pluck('ts_subject_id'), $bpFolders->values()->toArray());
+
+        $this->timestoneTableService->markBlueprintSyncComplete($job->ts_jobkey, $this->statusService->success);
+
+        return true;
     }
     
 
@@ -336,6 +348,10 @@ class ConfigureService
 
     public function updatePeopleImage($tsJobId, $tsJobKey)
     {
+        if (!$this->timestoneTableService->isJobEligibleForSync($tsJobKey)) {
+            return false;
+        }
+
         DB::beginTransaction();
     
         try {
@@ -350,13 +366,16 @@ class ConfigureService
             $this->updateImage($tsSubjectImages, $bpSubjectImages);
 
             // Re-flag the umbrella Job so the cron scheduler knows it needs attention as a fallback
-            $statusService = app(\App\Services\Proofing\StatusService::class);
-            \App\Models\Job::where('ts_job_id', $tsJobId)->update(['imagesync_status_id' => $statusService->unsync]);
+            \App\Models\Job::where('ts_job_id', $tsJobId)->update(['imagesync_status_id' => $this->statusService->unsync]);
             
             DB::commit();
 
+            $this->timestoneTableService->markBlueprintSyncComplete($tsJobKey, $this->statusService->success);
+
             // Fire queue ONLY after ALL nested database transactions officially record the changes on disk
             SyncImagesToProd02::dispatch($tsJobKey)->afterCommit();
+
+            return true;
         } catch (\Throwable $e) {
             DB::rollBack(); // NOTHING SAVES if error occurs
             throw $e;
