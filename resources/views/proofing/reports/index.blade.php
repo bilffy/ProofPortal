@@ -118,7 +118,7 @@
                         <div class="paginator mt-3">
                             {{ $reports->links('proofing.layouts.pagination-custom') }} 
                         
-                            <p class="mt-2 text-muted small">
+                            <p class="mt-2 text-muted">
                                 {{ __('Page :page of :pages, showing :current record(s) out of :count total', [
                                     'page' => $reports->currentPage(),
                                     'pages' => $reports->lastPage(),
