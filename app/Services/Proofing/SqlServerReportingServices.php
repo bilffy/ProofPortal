@@ -144,17 +144,8 @@ class SqlServerReportingServices
             'email' => $params['email'] ?? null,
             'schoolid' => $params['schoolid'] ?? null,
             'folderid' => $params['folderid'] ?? null,
-            default => self::guessGenericParameterValue($paramName, $params),
+            default => null,
         };
-    }
-
-    protected static function guessGenericParameterValue(string $paramName, array $params): mixed
-    {
-        if (preg_match('/^Parameter\d+$/', $paramName)) {
-            return $params['folderid'] ?? $params['schoolid'] ?? null;
-        }
-
-        return null;
     }
 
     protected static function getMissingReportParameter(string $reportName, array $params): ?string

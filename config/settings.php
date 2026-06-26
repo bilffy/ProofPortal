@@ -26,10 +26,5 @@ return [
     |--------------------------------------------------------------------------
     */
     'ssrs_report_extra_params' => [
-        // 'MySubjectChangesBySchoolAndFolder' => [
-        //     'Parameter1' => '{email}',
-        //     'Parameter2' => '{folderid}',
-        //     'Parameter3' => '{schoolid}',
-        // ],
     ],
 ];
