@@ -287,7 +287,11 @@ class ProofController extends Controller
             'groupValue' => json_encode($finalGroupDetails, JSON_UNESCAPED_UNICODE),
         ];
 
-        $formattedFoldersWithChanges = $this->proofingChangelogService->getAllProofingChangelogFolder($selectedJob->ts_jobkey, $currentFolder->ts_folderkey)->get();      
+        $formattedFoldersWithChanges = $this->proofingChangelogService->getAllProofingChangelogFolder($selectedJob->ts_jobkey, $currentFolder->ts_folderkey)->get();
+        $subjectChangeFlags = $this->proofingChangelogService->getSubjectChangeFlagsByJobKey(
+            $selectedJob->ts_jobkey,
+            $this->statusService->awaitingApproval
+        );
         $folder_questions = $this->fetchProofingQuestions('FOLDER');
         $subject_questions = $this->fetchProofingQuestions('SUBJECT');
         $group_questions = $this->fetchProofingQuestions('GROUP');
@@ -298,6 +302,7 @@ class ProofController extends Controller
             'selectedJob' => $selectedJob,
             'allSubjects' => $allSubjects,
             'formattedFoldersWithChanges' => $formattedFoldersWithChanges,
+            'subjectChangeFlags' => $subjectChangeFlags,
             'folder_questions' => $folder_questions,
             'subject_questions' => $subject_questions,
             'group_questions' => $group_questions,

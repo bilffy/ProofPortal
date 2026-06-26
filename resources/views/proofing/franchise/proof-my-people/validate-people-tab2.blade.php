@@ -1,11 +1,8 @@
 @php
     use App\Helpers\Helper;
-    use App\Models\ProofingChangelog;
     use Illuminate\Support\Facades\Crypt;
-    use App\Models\Status;
     use Illuminate\Support\Facades\URL;
     use Illuminate\Support\Str;
-    $awaitingApproval = Status::where('status_external_name','Awaiting Approval')->value('id');
 @endphp
 
                 <fieldset id="ValidateStep2">
@@ -29,9 +26,6 @@
                                 </div>
                             @endif
                             <div class="row d-flex flex-wrap pb-4" style="gap: 15px; justify-content: flex-start; margin-left: 0; margin-right: 0;" id="subject_thumbnails">
-                                @php
-                                    $formattedSubjectsWithChanges = ProofingChangelog::where([['ts_jobkey', $selectedJob->ts_jobkey]])->get()->groupBy('keyvalue'); // Eager load and key by keyvalue for efficient lookup
-                                @endphp
                                 @foreach($allSubjects as $subject)
                                     @php
                                         $image_url = asset('proofing-assets/img/subject-image.png');
@@ -73,13 +67,12 @@
 
                                         $jobTitleWrapped = $currentFolder->is_edit_job_title ? Helper::wrapTitle($subject->title, $skHash) : '';
                                         $subjectKey = $subject->ts_subjectkey;
-                                        $subjectChanges = $formattedSubjectsWithChanges->get($subjectKey); 
-                                        $hasChanges = !empty($subjectChanges);
+                                        $subjectChangeMeta = $subjectChangeFlags->get($subjectKey);
+                                        $hasChanges = $subjectChangeMeta !== null;
                                         if (!$hasChanges) {
                                             $iconColour = 'success';
                                         } else {
-                                            $hasawaitingApproval = $subjectChanges->contains('approvalStatus', $awaitingApproval);
-                                            $iconColour = $hasawaitingApproval ? 'danger' : 'success';
+                                            $iconColour = ($subjectChangeMeta['has_awaiting_approval'] ?? false) ? 'danger' : 'success';
                                         }
 
                                         $historyEditsCss = $hasChanges ? 'd-inline-block' : 'd-none';

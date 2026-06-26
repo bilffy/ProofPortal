@@ -48,6 +48,24 @@ class ProofingChangelogService
         return ProofingChangelog::with('statuses')->where('keyvalue', $subjectkey);
     }
 
+    /**
+     * Lightweight per-subject change flags for validate-people thumbnails.
+     * Avoids loading full changelog rows in Blade.
+     *
+     * @return \Illuminate\Support\Collection<string, array{has_awaiting_approval: bool}>
+     */
+    public function getSubjectChangeFlagsByJobKey(string $tsJobKey, int $awaitingApprovalStatusId)
+    {
+        return ProofingChangelog::query()
+            ->where('ts_jobkey', $tsJobKey)
+            ->select('keyvalue', 'approvalStatus')
+            ->get()
+            ->groupBy('keyvalue')
+            ->map(fn ($group) => [
+                'has_awaiting_approval' => $group->contains('approvalStatus', $awaitingApprovalStatusId),
+            ]);
+    }
+
     public function deleteChangelog($changelogIdsToDelete)
     {
         return ProofingChangelog::whereIn('id', $changelogIdsToDelete)->delete();
