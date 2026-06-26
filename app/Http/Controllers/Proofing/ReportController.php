@@ -153,7 +153,7 @@ class ReportController extends Controller
 
         $reportParamPayload = SqlServerReportingServices::buildSsrsDownloadParams(
             $report->query,
-            'bilffy.jose@msp.com.au',
+            $user->email,
             $passedParamValues,
             $reportParams,
             $report->name
