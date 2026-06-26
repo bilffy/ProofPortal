@@ -41,7 +41,7 @@
                                 @endforeach
                             </p>
                         @else
-                            <p class="mb-2">{{ __('No jobs have been synced for proofing yet.') }}</p>
+                            <p class="mb-2">{{ __('No Jobs have been synced for proofing yet.') }}</p>
                         @endif
                     </div>
 

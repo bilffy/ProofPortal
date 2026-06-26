@@ -104,20 +104,15 @@ class SqlServerReportingServices
             $params[$missing] = $value;
         }
 
-        return self::filterToReportParameters($reportName, $params);
+        return $params;
     }
 
     protected static function applyConfiguredExtraParams(string $reportName, array $params): array
     {
         $extras = config("settings.ssrs_report_extra_params.{$reportName}", []);
-        $validNames = self::getReportParameterNames($reportName, $params);
 
         foreach ($extras as $paramName => $template) {
             if (array_key_exists($paramName, $params)) {
-                continue;
-            }
-
-            if ($validNames !== null && ! in_array($paramName, $validNames, true)) {
                 continue;
             }
 
@@ -128,43 +123,6 @@ class SqlServerReportingServices
         }
 
         return $params;
-    }
-
-    /**
-     * Drop portal params that the SSRS report does not define.
-     *
-     * @return array<string, mixed>
-     */
-    protected static function filterToReportParameters(string $reportName, array $params): array
-    {
-        $validNames = self::getReportParameterNames($reportName, $params);
-
-        if ($validNames === null) {
-            return $params;
-        }
-
-        return array_intersect_key($params, array_flip($validNames));
-    }
-
-    /**
-     * @return array<int, string>|null
-     */
-    protected static function getReportParameterNames(string $reportName, array $params): ?array
-    {
-        $response = self::ssrsHttpGet($reportName, $params, [
-            'rs:Command' => 'GetReportParameters',
-            'rs:Format' => 'XML',
-        ]);
-
-        if (! $response->successful()) {
-            return null;
-        }
-
-        if (! preg_match_all('/<ReportParameter Name="([^"]+)"/', $response->body(), $matches)) {
-            return null;
-        }
-
-        return $matches[1];
     }
 
     protected static function interpolateParamTemplate(string $template, array $params): ?string
@@ -265,7 +223,8 @@ class SqlServerReportingServices
     {
         $ssrsFormat = self::mapDownloadFormat($format);
         $extension = self::downloadExtension($format);
-        $params = self::completeSsrsParams($reportQueryName, $params);
+        // Params are finalized when the run page is built; only normalize key names here.
+        $params = self::normalizeSsrsParams($params);
 
         $maxAttempts = 3;
 
@@ -403,7 +362,7 @@ class SqlServerReportingServices
                 ? data_get($record, $reportParam['valueField'], $paramValue)
                 : $paramValue;
 
-            $urlKey = strtolower(str_replace('.', '', str_replace('s.', '.', $reportParam['keyField'])));
+            $urlKey = self::mapSsrsParamKey($reportParam['keyField']);
 
             $sqlParams[] = [
                 'sqlFriendly' => strtolower(str_replace('.', '_', str_replace('s.', '.', $reportParam['keyField']))),

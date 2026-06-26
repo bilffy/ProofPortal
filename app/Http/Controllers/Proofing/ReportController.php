@@ -153,7 +153,7 @@ class ReportController extends Controller
 
         $reportParamPayload = SqlServerReportingServices::buildSsrsDownloadParams(
             $report->query,
-            $user->email,
+            'bilffy.jose@msp.com.au',
             $passedParamValues,
             $reportParams,
             $report->name
@@ -205,6 +205,14 @@ class ReportController extends Controller
 
             return back()->with('error', $result['error']);
         }
+
+        Log::info('SSRS report download succeeded', [
+            'report' => $ssrsReportName,
+            'format' => $format,
+            'params' => $result['params'] ?? $ssrsParams,
+            'url' => $result['url'],
+            'bytes' => strlen($result['body'] ?? ''),
+        ]);
 
         $filename = $downloadName . '.' . $result['extension'];
 

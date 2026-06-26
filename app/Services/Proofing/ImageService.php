@@ -20,6 +20,7 @@ class ImageService
     {
         return Image::where('keyorigin', 'Subject')
             ->where('keyvalue', $subjectKey)
+            ->where('exportStatus', 1)
             ->get();
     }
 
