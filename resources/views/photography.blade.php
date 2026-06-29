@@ -463,6 +463,7 @@
     window.updateImageCheckboxes = updateImageCheckboxes;
     window.updateDownloadSelection = updateDownloadSelection;
     window.revealPortraitCheckbox = revealPortraitCheckbox;
+    window.hidePortraitCheckbox = hidePortraitCheckbox;
     resetImages();
     
     document.addEventListener('livewire:initialized', () => {
@@ -682,10 +683,26 @@
         }
         const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
         if (selectMode) {
-            updateImageCheckboxes(true);
+            const wrapper = img.querySelector('.portrait-img-checkbox')?.parentElement;
+            wrapper?.classList.remove('hidden');
         }
         const images = JSON.parse(localStorage.getItem('selectedImages') ?? '[]');
         updateImageState(img.querySelector('.portrait-img-checkbox'), images.includes(imageId), false);
+    }
+
+    function hidePortraitCheckbox(imageId) {
+        const img = document.getElementById(imageId);
+        if (!img) {
+            return;
+        }
+        const checkbox = img.querySelector('.portrait-img-checkbox');
+        if (!checkbox) {
+            return;
+        }
+        checkbox.classList.replace('portrait-img-checkbox', 'img-not-found');
+        const wrapper = checkbox.parentElement;
+        wrapper?.classList.remove('img-checkbox');
+        wrapper?.classList.add('hidden');
     }
     
     function showConfirmDownloadRequest(isLightbox = false) {
@@ -773,19 +790,7 @@
         }
         setTimeout(() => {
             const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages') ?? '[]');
-            const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
-            let checkbox = img.querySelector('.portrait-img-checkbox');
-            if (!checkbox && img.querySelector('.img-not-found')) {
-                const wrapper = img.querySelector('.img-not-found')?.parentElement;
-                if (wrapper) {
-                    wrapper.classList.add('img-checkbox');
-                    img.querySelector('.img-not-found')?.classList.replace('img-not-found', 'portrait-img-checkbox');
-                    checkbox = img.querySelector('.portrait-img-checkbox');
-                }
-            }
-            if (selectMode && !isLightbox) {
-                updateImageCheckboxes(true);
-            }
+            const checkbox = img.querySelector('.portrait-img-checkbox');
             updateImageState(checkbox, images.includes(imageId), isLightbox);
         }, 50);
     });

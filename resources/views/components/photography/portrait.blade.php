@@ -105,6 +105,8 @@
                         fetchSpinner = false;
                         if (imageSource === 'file' && typeof window.revealPortraitCheckbox === 'function') {
                             window.revealPortraitCheckbox('{{ $imgId }}');
+                        } else if (imageSource !== 'file' && typeof window.hidePortraitCheckbox === 'function') {
+                            window.hidePortraitCheckbox('{{ $imgId }}');
                         }
                     })
                     .catch(() => { 
