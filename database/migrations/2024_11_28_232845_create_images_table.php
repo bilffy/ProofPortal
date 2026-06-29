@@ -16,7 +16,6 @@ return new class extends Migration
             $table->integer('ts_image_id')->nullable();
             $table->string('name', 255)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('image_path', 2048)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
-            $table->integer('ts_image_id')->nullable();
             $table->string('ts_imagekey', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->integer('ts_job_id')->nullable();
             $table->string('keyvalue', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
