@@ -13,11 +13,16 @@ return new class extends Migration
     {
         Schema::create('job_users', function (Blueprint $table) {
             $table->id();
-            $table->integer('ts_job_id')->nullable(); // Matches the type in the jobs table
+            
+            // 1. Changed to unsignedInteger to match standard parent index structures
+            $table->unsignedInteger('ts_job_id')->nullable(); 
             $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
 
-            // Add foreign key constraints
+            // 2. Explicitly add a local index to the column first
+            $table->index('ts_job_id');
+
+            // 3. Foreign key constraints
             $table->foreign('ts_job_id')->references('ts_job_id')->on('jobs')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
