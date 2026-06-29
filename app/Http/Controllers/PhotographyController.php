@@ -630,15 +630,15 @@ class PhotographyController extends Controller
         
         $key = base64_decode(base64_decode($id));
         
-        // This unified call already seamlessly falls back to 
-        // getFallbackAbsentImage() or getFallbackNotFoundImage() if needed
-        $imageContent = $this->imageService->getImageContent($key, null, $category);
+        $result = $this->imageService->getImageServeResult($key, null, $category);
+        $imageContent = $result['content'];
         
         if ($imageContent) {
             $binaryImage = base64_decode($imageContent);
             $mimeType = getimagesizefromstring($binaryImage)['mime'] ?? 'image/jpeg';
             return response($binaryImage, 200)
                 ->header('Content-Type', $mimeType)
+                ->header('X-Photography-Source', $result['source'])
                 ->header('Cache-Control', 'private, max-age=86400, must-revalidate');
         }
         

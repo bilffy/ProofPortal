@@ -97,11 +97,15 @@
                     })
                     .then(res => {
                         if (!res.ok) throw new Error('Fetch failed');
-                        return res.blob();
+                        const imageSource = res.headers.get('X-Photography-Source');
+                        return res.blob().then(blob => ({ blob, imageSource }));
                     })
-                    .then(blob => { 
-                        src = URL.createObjectURL(blob); 
-                        fetchSpinner = false; 
+                    .then(({ blob, imageSource }) => {
+                        src = URL.createObjectURL(blob);
+                        fetchSpinner = false;
+                        if (imageSource === 'file' && typeof window.revealPortraitCheckbox === 'function') {
+                            window.revealPortraitCheckbox('{{ $imgId }}');
+                        }
                     })
                     .catch(() => { 
                         fetchSpinner = false; 

@@ -599,24 +599,43 @@ class ImageService
 
     public function getImageContent(string $key, $resolutionId = null, $tab = ''): ?string
     {
+        return $this->getImageServeResult($key, $resolutionId, $tab)['content'];
+    }
+
+    /**
+     * Resolve image bytes and how they were resolved (for AJAX serve + checkbox UI).
+     *
+     * @return array{content: ?string, source: 'file'|'absent'|'not-found'}
+     */
+    public function getImageServeResult(string $key, $resolutionId = null, $tab = ''): array
+    {
         $imageRecordExists = Image::where('keyvalue', $key)->exists();
 
         if (!$imageRecordExists) {
-            return $this->getFallbackAbsentImage();
+            return [
+                'content' => $this->getFallbackAbsentImage(),
+                'source' => 'absent',
+            ];
         }
 
         $urls = $this->getImageUrls($key, $resolutionId, $tab);
-    
+
         foreach ($urls as $url) {
             if ($this->urlExists($url)) {
                 $binary = @file_get_contents($url);
                 if ($binary !== false) {
-                    return base64_encode($binary);
+                    return [
+                        'content' => base64_encode($binary),
+                        'source' => 'file',
+                    ];
                 }
             }
         }
-    
-        return $this->getFallbackNotFoundImage();
+
+        return [
+            'content' => $this->getFallbackNotFoundImage(),
+            'source' => 'not-found',
+        ];
     }
     
     private function getFallbackNotFoundImage(): ?string
@@ -717,16 +736,38 @@ class ImageService
      */
     private function urlExists(string $url): bool
     {
-        // Use HEAD instead of GET to only fetch headers and prevent downloading mb image payloads
-        $context = stream_context_create([
+        // Prefer HEAD to avoid downloading full image payloads
+        $headContext = stream_context_create([
             'http' => [
                 'method' => 'HEAD',
-                'timeout' => 2
-            ]
+                'timeout' => 2,
+                'ignore_errors' => true,
+            ],
         ]);
-        
-        $headers = @get_headers($url, 0, $context);
-        return $headers && strpos($headers[0], '200') !== false;
+
+        $headers = @get_headers($url, 0, $headContext);
+        if ($headers && str_contains($headers[0], '200')) {
+            return true;
+        }
+
+        // Some image servers reject HEAD while GET still works (same as getImageContent)
+        $rangeContext = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => "Range: bytes=0-0\r\n",
+                'timeout' => 3,
+                'ignore_errors' => true,
+            ],
+        ]);
+
+        $headers = @get_headers($url, 1, $rangeContext);
+        if (!$headers) {
+            return false;
+        }
+
+        $statusLine = is_array($headers[0]) ? end($headers[0]) : $headers[0];
+
+        return str_contains($statusLine, '200') || str_contains($statusLine, '206');
     }
     //CODE BY IT
 

@@ -416,10 +416,11 @@
         const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
         const isUploaded = img.classList.contains('uploaded');
         const externalSubjectId = img.dataset.externalSubjectId;
+        const hasSelectableImage = hasImage || !!img.querySelector('.portrait-img-checkbox');
         
         if (!isLightbox) {
             if (selectMode) {
-                if (!hasImage) {
+                if (!hasSelectableImage) {
                     return;
                 }
             } else {
@@ -461,11 +462,24 @@
     window.toggleSelectMode = toggleSelectMode;
     window.updateImageCheckboxes = updateImageCheckboxes;
     window.updateDownloadSelection = updateDownloadSelection;
+    window.revealPortraitCheckbox = revealPortraitCheckbox;
     resetImages();
     
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.hook('morph.updated', ({ el }) => {
+            if (!el?.querySelector?.('.portrait-img')) {
+                return;
+            }
+            const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
+            updateImageCheckboxes(selectMode);
+            updateDownloadSelection(false);
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
         window.localStorage.setItem('selectMode', 'true');
+        updateImageCheckboxes(true);
         window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
         const activeTabId = getActiveTabId();
@@ -655,6 +669,24 @@
             if (selectModeBtn) selectModeBtn.classList.remove('hidden');
         }
     }
+
+    function revealPortraitCheckbox(imageId) {
+        const img = document.getElementById(imageId);
+        if (!img) {
+            return;
+        }
+        const notFound = img.querySelector('.img-not-found');
+        if (notFound) {
+            notFound.classList.replace('img-not-found', 'portrait-img-checkbox');
+            notFound.parentElement?.classList.add('img-checkbox');
+        }
+        const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
+        if (selectMode) {
+            updateImageCheckboxes(true);
+        }
+        const images = JSON.parse(localStorage.getItem('selectedImages') ?? '[]');
+        updateImageState(img.querySelector('.portrait-img-checkbox'), images.includes(imageId), false);
+    }
     
     function showConfirmDownloadRequest(isLightbox = false) {
         showOptionsDownloadModal.hide();
@@ -733,11 +765,27 @@
         const isLightbox = event.detail[0]['isLightbox'];
         const imageId = isLightbox ? `img-lb_${event.detail[0]['imageId']}` : `img_${event.detail[0]['imageId']}`;
         const img = document.querySelector(`#${imageId}`);
-        Alpine.$data(img).showSpinner = false;
+        if (!img) {
+            return;
+        }
+        if (typeof Alpine !== 'undefined' && Alpine.$data) {
+            Alpine.$data(img).showSpinner = false;
+        }
         setTimeout(() => {
-            const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
-            const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+            const images = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages') ?? '[]');
+            const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
             let checkbox = img.querySelector('.portrait-img-checkbox');
+            if (!checkbox && img.querySelector('.img-not-found')) {
+                const wrapper = img.querySelector('.img-not-found')?.parentElement;
+                if (wrapper) {
+                    wrapper.classList.add('img-checkbox');
+                    img.querySelector('.img-not-found')?.classList.replace('img-not-found', 'portrait-img-checkbox');
+                    checkbox = img.querySelector('.portrait-img-checkbox');
+                }
+            }
+            if (selectMode && !isLightbox) {
+                updateImageCheckboxes(true);
+            }
             updateImageState(checkbox, images.includes(imageId), isLightbox);
         }, 50);
     });
