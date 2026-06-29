@@ -23,6 +23,7 @@ return new class extends Migration
             $table->integer('ts_folder_id')->nullable();
             $table->string('ts_folderkey', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('ts_foldername', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('portal_ts_foldername', 255)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->integer('ts_job_id')->nullable();
 
             $table->unsignedBigInteger('folder_tag')->nullable();
@@ -53,10 +54,12 @@ return new class extends Migration
             $table->tinyInteger('is_visible_for_proofing')->nullable();
             $table->tinyInteger('is_visible_for_portrait')->nullable();
             $table->tinyInteger('is_visible_for_group')->nullable();
+            $table->tinyInteger('pre_catchup_visible_portrait')->nullable();
             $table->tinyInteger('is_subject_list_allowed')->nullable();
             $table->tinyInteger('is_edit_principal')->nullable();
             $table->tinyInteger('is_edit_deputy')->nullable();
             $table->tinyInteger('is_edit_teacher')->nullable();
+            $table->tinyInteger('is_deleted')->nullable();
             
             $table->timestamps();
         });

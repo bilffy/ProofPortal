@@ -427,6 +427,7 @@ class ConfigureService
 
             $tsImages = $tsSubjectImages[$tsSubjectId];
             $tsImageKeys = [];
+            $imageCount = count($tsImages ?? []);
 
             foreach ($tsImages as $tsImage) {
                 $imageKey       = $tsImage->ImageKey;
@@ -434,6 +435,12 @@ class ConfigureService
                 $imageIsPrimary = $tsImage->IsPrimary;
 
                 $tsImageKeys[] = $imageKey;
+
+                if ($imageCount > 1) {
+                    $dynamicExportStatus = ($imageIsPrimary == 1) ? 0 : null;
+                } else {
+                    $dynamicExportStatus = 0;
+                }
 
                 // Check if this image already exists in Blueprint
                 $existingImage = $subjectExistingImages->firstWhere('ts_imagekey', $imageKey);
@@ -450,8 +457,8 @@ class ConfigureService
                     }
 
                     // Force re-export for ALL verified images
-                    if ($existingImage->exportStatus !== 0) {
-                        $existingImage->exportStatus = 0;
+                    if ($existingImage->exportStatus !== $dynamicExportStatus) {
+                        $existingImage->exportStatus = $dynamicExportStatus;
                         $needsUpdate = true;
                     }
                     
@@ -467,7 +474,7 @@ class ConfigureService
                         'ts_image_id' => $imageID,
                         'ts_job_id'   => $bpSubjectImage['ts_job_id'],
                         'is_primary'  => $imageIsPrimary,
-                        'exportStatus'=> 0,
+                        'exportStatus'=> $dynamicExportStatus,
                         'protected'   => 0,
                         'created_at'  => \Carbon\Carbon::now(),
                         'updated_at'  => \Carbon\Carbon::now()

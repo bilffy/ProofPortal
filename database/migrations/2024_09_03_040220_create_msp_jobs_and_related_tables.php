@@ -26,6 +26,9 @@ return new class extends Migration
             $table->unsignedBigInteger('jobsync_status_id')->nullable();
             $table->unsignedBigInteger('foldersync_status_id')->nullable();
             $table->unsignedBigInteger('job_status_id')->nullable();
+            $table->integer('show_portal')->nullable();
+            $table->integer('show_proofing')->nullable();
+            $table->integer('is_in_catchup')->nullable();
             $table->dateTime('proof_start')->nullable();
             $table->dateTime('proof_warning')->nullable();
             $table->dateTime('proof_due')->nullable();

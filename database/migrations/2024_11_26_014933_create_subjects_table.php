@@ -15,6 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('firstname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('lastname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('portal_firstname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('portal_lastname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('portrait_prefix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('portrait_suffix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('sort_order', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('title', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('salutation', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('prefix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
@@ -25,6 +30,7 @@ return new class extends Migration
             $table->integer('ts_subject_id')->nullable();
             $table->integer('ExportStatus')->nullable();
             $table->tinyInteger('is_locked')->nullable();
+            $table->tinyInteger('is_deleted')->nullable();
             $table->timestamps();
         });
     }

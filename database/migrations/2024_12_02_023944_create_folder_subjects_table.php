@@ -28,6 +28,7 @@ return new class extends Migration
             $table->id();
             $table->integer('ts_folder_id')->nullable();  
             $table->integer('ts_subject_id')->nullable();
+            $table->tinyInteger('is_deleted')->nullable();
             $table->timestamps();
             $table->foreign('ts_folder_id')->references('ts_folder_id')->on('folders')->onDelete('cascade');
             $table->foreign('ts_subject_id')->references('ts_subject_id')->on('subjects')->onDelete('cascade');

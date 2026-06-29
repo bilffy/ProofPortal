@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('description', 255)->nullable();
             $table->string('query', 100)->nullable();
             $table->string('params', 400)->nullable();
+            $table->tinyInteger('is_deleted')->nullable();
             $table->timestamps();
         });
 
