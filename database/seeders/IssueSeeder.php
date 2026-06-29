@@ -124,7 +124,7 @@ class IssueSeeder extends Seeder
             ],               
             [
                 'issue_name' => 'GROUP_COMMENTS',
-                'external_issue_name' => NULL,
+                'external_issue_name' => 'Group Notes',
                 'issue_description' => 'Comments/Notes',
                 'issue_error_message' => NULL,
                 'approval_status_id' => 3,

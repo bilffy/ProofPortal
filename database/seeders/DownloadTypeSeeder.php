@@ -16,9 +16,9 @@ class DownloadTypeSeeder extends Seeder
             [
                 'download_type' => 'Portrait'
             ],
-            [
-                'download_type' => 'Group'
-            ],
+            // [
+            //     'download_type' => 'Group'
+            // ],
         ]);
     }
 }

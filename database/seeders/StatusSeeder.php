@@ -225,6 +225,24 @@ class StatusSeeder extends Seeder
                 'colour_code' => null,
                 'created_at' => Carbon::now(),
             ],
+            [
+                'status_internal_name' => 'FAILED',
+                'status_external_name' => 'Failed',
+                'colour_code' => null,
+                'created_at' => Carbon::now(),
+            ],
+            [
+                'status_internal_name' => 'SENDING',
+                'status_external_name' => 'Sending',
+                'colour_code' => null,
+                'created_at' => Carbon::now(),
+            ],
+            [
+                'status_internal_name' => 'STUCK IN PICKUP',
+                'status_external_name' => 'Stuck in Pickup',
+                'colour_code' => null,
+                'created_at' => Carbon::now(),
+            ],
         ]);
     }
 }

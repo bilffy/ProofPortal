@@ -18,116 +18,135 @@ class ReportSeeder extends Seeder
                 'name' => 'My Franchises',
                 'description' => 'Provide a list of all the Franchises I am associated with.',
                 'query' => 'myFranchises',
-                'params' => NULL
+                'params' => NULL,
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Schools',
                 'description' => 'Provide a list of all the Schools I am associated with.',
                 'query' => 'mySchools',
-                'params' => NULL
+                'params' => NULL,
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Folders',
                 'description' => 'Provide a list of all the Folders I am associated with.',
                 'query' => 'myFolders',
-                'params' => NULL
+                'params' => NULL,
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Folders By School',
                 'description' => 'Provide a list of all the Folders I am associated with by School.',
                 'query' => 'myFoldersBySchool',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subjects',
                 'description' => 'Provide a list of all the Subjects I am associated with.',
                 'query' => 'mySubjects',
-                'params' => NULL
+                'params' => NULL,
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subjects By School',
                 'description' => 'Provide a list of all the Subjects I am associated with by School.',
                 'query' => 'mySubjectsBySchool',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subjects By Folder',
                 'description' => 'Provide a list of all the Subjects I am associated with by Folder.',
                 'query' => 'mySubjectsByFolder',
-                'params' => '[  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIds",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
+                'params' => '[  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIds",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subjects By School And Folder',
                 'description' => 'Provide a list of all the Subjects I am associated with by School and Folder.',
                 'query' => 'mySubjectsBySchoolAndFolder',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Photo Coordinators',
                 'description' => 'Provide a list of all the Photo Coordinators I am associated with.',
                 'query' => 'myPhotocoordinators',
-                'params' => NULL
+                'params' => NULL,
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Teachers',
                 'description' => 'Provide a list of all the Teachers I am associated with.',
                 'query' => 'myTeachers',
-                'params' => NULL
+                'params' => NULL,
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Folder Changes By School',
                 'description' => 'Provide a list of changes to all Folders by School.',
                 'query' => 'MyFolderChangesBySchool',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Folder Changes By School And Folder',
                 'description' => 'Provide a list of changes to all Folders by School and Folder.',
                 'query' => 'MyFolderChangesBySchoolAndFolder',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subject Changes By School',
                 'description' => 'Provide a list of changes to all Subjects by School.',
                 'query' => 'MySubjectChangesBySchool',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subject Changes By School And Folder',
                 'description' => 'Provide a list of changes to all Subjects by School and Folder.',
                 'query' => 'MySubjectChangesBySchoolAndFolder',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'My Subject Changes by School for Timestone Import',
                 'description' => 'Provide a list of changes to Subject by School for importing into Datapost',
                 'query' => 'MySubjectChangesBySchoolForTimestoneImport',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'TNJ Import Group Position By School',
                 'description' => 'Use this to import a list into the TNJ. Filtered by School',
                 'query' => 'myGroupPhotoPositionsBySchoolForTnjImporting',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 1
             ],
             [
                 'name' => 'TNJ Import Group Position By Folder',
                 'description' => 'Use this to import a list into the TNJ. Filtered by Folder',
                 'query' => 'myGroupPhotoPositionsByFolderForTnjImporting',
-                'params' => '[  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIds",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
+                'params' => '[  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIds",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
+                'is_deleted' => 1
             ],
             [
                 'name' => 'TNJ Import Group Position By School And Folder',
                 'description' => 'Use this to import a list into the TNJ. Filtered by School and Folder.',
                 'query' => 'MyGroupPhotoPositionsBySchoolAndFolder',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
+                'is_deleted' => 0
             ],
             [
                 'name' => 'Full Change List -Portal',
                 'description' => 'Runs 3 x Reports of all the Changes in a School.',
                 // 'query' => 'blueprintFullChangeList',
                 'query' => 'BlueprintFullChangeList',
-                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]'
+                'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
+                'is_deleted' => 0
             ],
         ]);
     }
