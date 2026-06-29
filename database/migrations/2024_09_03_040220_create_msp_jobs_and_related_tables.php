@@ -19,7 +19,7 @@ return new class extends Migration
             $table->id();
             $table->integer('ts_season_id')->nullable();
             $table->integer('ts_account_id')->nullable();
-            $table->integer('ts_job_id')->nullable();
+            $table->integer('ts_job_id')->nullable()->index();
             $table->string('ts_jobkey', 25)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('ts_jobname', 25)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('ts_schoolkey', 25)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
