@@ -16,8 +16,6 @@ return new class extends Migration
             $table->integer('ts_account_id')->nullable();
             $table->string('alphacode', 25)->nullable();
             $table->string('name', 25)->nullable();
-            $table->string('email', 100)->nullable();
-            $table->string('phone', 100)->nullable();
             $table->string('address', 100)->nullable();
             $table->string('postcode', 25)->nullable();
             $table->string('suburb', 25)->nullable();
