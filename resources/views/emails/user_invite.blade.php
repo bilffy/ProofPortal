@@ -17,7 +17,7 @@ Welcome to the MSP Portal
     }
 @endphp
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #808080; line-height: 1.4;">
-Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{{ $user->firstname }}</span>,
+Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">{{ $user->firstname }}</span>,
 <br/><br/>
 @if($userSchoolName)
     {{ $sender->name }} from the <strong>{{ $senderOrgName }}</strong> has invited you to access the <strong>MSP&nbsp;Portal</strong> as a <strong>{{ $userRole }}</strong> for <strong>{{ $userSchoolName }}</strong>.
