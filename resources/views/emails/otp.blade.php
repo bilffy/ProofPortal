@@ -10,7 +10,7 @@ Your MSP Portal Security Code
 <br/>
 </p>
 <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 500; font-size: 14px; color: #808080; line-height: 1.5;">
-Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{{ $user->firstname }}</span>,
+Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">{{ $user->firstname }}</span>,
 <br/>
 <br/>
 To finish logging in to your MSP Portal account, please enter this security code:
