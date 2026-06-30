@@ -30,8 +30,7 @@ class SyncImagesScheduler extends Command
     public function handle(StatusService $statusService)
     {
         // Chunk optimization prevents heavy memory usage and long open db lock constraints
-        Job::where('proof_start', '>', Carbon::today())
-            ->where('imagesync_status_id', $statusService->unsync)
+        Job::where('imagesync_status_id', $statusService->unsync)
             ->whereHas('images', function ($query) {
                 $query->where('exportStatus', 0)
                       ->where('keyorigin', 'Subject');
