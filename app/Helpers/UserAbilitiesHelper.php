@@ -61,6 +61,7 @@ class UserAbilitiesHelper
     public static function getDefaultUserImpersonationPermissions()
     {
         return [
+            PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_SUPER_ADMIN),
             PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_ADMIN),
             PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_FRANCHISE),
             PH::toPermission(PH::ACT_IMPERSONATE, RoleHelper::ROLE_SCHOOL_ADMIN),
