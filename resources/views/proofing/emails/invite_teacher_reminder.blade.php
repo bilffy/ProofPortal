@@ -106,7 +106,7 @@
                                     </p>
                                     <br/>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700;">{INVITEE_FIRST_NAME} {INVITEE_LAST_NAME}</span>,
+                                        Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">{INVITEE_FIRST_NAME} {INVITEE_LAST_NAME}</span>,
                                         <br/>
                                         <br/>
                                     </p>
@@ -157,7 +157,7 @@
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #ffffff; line-height: 1.4; text-align: center;">
                                         <strong>Please note:</strong> This is an automated email, and the mailbox is
                                         unable to receive replies. We're happy to help you with any questions or
-                                        concerns you may have, please contact your local MSP expert:
+                                        concerns you may have, please contact your <a href="https://www.msp.com.au/find-your-local-expert/" style="color: #ffffff; text-decoration: underline; font-weight: 700;">local MSP expert</a>:
                                     </p>
                                 </td>
                             </tr>
