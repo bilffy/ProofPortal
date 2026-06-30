@@ -15,6 +15,10 @@ class UserAbilitiesHelper
             PH::getAccessToPage(PH::SUB_ORDERING),
             PH::getAccessToPage(PH::SUB_PHOTOGRAPHY),
             PH::getAccessToPage(PH::SUB_PROOFING),
+            PH::getAccessToPage(PH::SUB_CONFIG_PROOFING),
+            PH::getAccessToPage(PH::SUB_MANGE_INVITATION),
+            PH::getAccessToPage(PH::SUB_PROOF_CHANGE),
+            PH::getAccessToPage(PH::SUB_BULK_UPLOAD),
             PH::getAccessToPage(PH::SUB_REPORTS),
         ];
     }
