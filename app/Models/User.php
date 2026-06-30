@@ -184,9 +184,9 @@ class User extends Authenticatable
     {
         // Redundancy: Added get Franchise from School process to avoid null from School level users
         if ($this->isSchoolLevel()) {
-            /** @var School $school */
+            /** @var School|null $school */
             $school = $this->getSchool();
-            return $school->franchises()->first();
+            return $school?->franchises()->first();
         }
         return $this->franchises()->first();
     }
@@ -233,10 +233,11 @@ class User extends Authenticatable
 
     public function getOrganization()
     {
-        if ($this->isAdmin()) {
-            return Franchise::getMSP();
-        }
-        return $this->getFranchise();
+        $franchise = $this->isAdmin()
+            ? Franchise::getMSP()
+            : $this->getFranchise();
+
+        return Franchise::forEmail($franchise);
     }
 
     public function getSchoolOrFranchiseDetail()

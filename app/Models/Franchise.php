@@ -53,6 +53,22 @@ class Franchise extends Model
         return self::where('ts_account_id', 1)->first();
     }
 
+    /**
+     * Resolve franchise contact details for outbound email when none is linked to the user.
+     */
+    public static function forEmail(?self $franchise = null): self
+    {
+        if ($franchise !== null) {
+            return $franchise;
+        }
+
+        return self::getMSP() ?? new self([
+            'name' => 'MSP Photography Pty Ltd',
+            'email' => config('mail.from.address', 'info@msp.com.au'),
+            'phone' => '',
+        ]);
+    }
+
     public function getBusinessName()
     {
         return $this->name . "<br>" . $this->email . "<br>" . config('app.franchise_web_address', 'www.msp.com.au');
