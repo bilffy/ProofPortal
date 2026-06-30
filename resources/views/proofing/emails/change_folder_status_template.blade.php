@@ -143,9 +143,9 @@
                                     </td>
                                 </tr>
                                 <tr>        
-                                    <td colspan="2" bgcolor="#00b3e0" style="text-align: center; padding: 0px;">
+                                    <td colspan="2" bgcolor="#00b3e0" style="text-align: center; padding: 0px 0px 20px 0px;">
                                         <a href="mailto:{FRANCHISE_EMAIL}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry">
-                                            <img src="https://www.msp.com.au/wp-content/uploads/2020/02/msp_op_button_email.png" width="225" style="display: block; margin: 0 auto 10px; padding: 0; border: none;">
+                                            <img src="https://www.msp.com.au/wp-content/uploads/2020/02/msp_op_button_email.png" width="225" style="display: block; margin: 0 auto; border: 0;">
                                         </a>
                                     </td>
                                 </tr>
