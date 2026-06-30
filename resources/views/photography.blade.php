@@ -288,12 +288,16 @@
 <script type="module">
     // TODO: Implement cloudflare-friendly encryption for photography download request
     {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
+    function isSelectModeEnabled() {
+        return window.localStorage.getItem('selectMode')?.toLowerCase() !== 'false';
+    }
+
     function updateImageState(imgCheckbox, isSelected, isLightbox = false) {
         if (!imgCheckbox) {
             return;
         }
         let checkIcon = imgCheckbox.querySelector('i');
-        const isSelectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+        const isSelectMode = isSelectModeEnabled();
         if (isLightbox || isSelectMode) {
             imgCheckbox.parentElement.classList.remove('hidden');
         } else {
@@ -410,7 +414,7 @@
     }, 300);
 
     function handleImageClick(imageId, isLightbox = false, hasImage = false) {
-        const selectMode = window.localStorage.getItem('selectMode').toLowerCase() === 'true';
+        const selectMode = isSelectModeEnabled();
         const img = document.querySelector(`#${imageId}`);
         const name = img.querySelector('.img-decoded-name').textContent;
         const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
@@ -464,6 +468,14 @@
     window.updateDownloadSelection = updateDownloadSelection;
     window.revealPortraitCheckbox = revealPortraitCheckbox;
     window.hidePortraitCheckbox = hidePortraitCheckbox;
+
+    if (window.localStorage.getItem('selectMode') === null) {
+        window.localStorage.setItem('selectMode', 'true');
+    }
+    if (window.localStorage.getItem('selectedImages') === null) {
+        window.localStorage.setItem('selectedImages', JSON.stringify([]));
+    }
+
     resetImages();
     
     document.addEventListener('livewire:initialized', () => {
@@ -471,7 +483,7 @@
             if (!el?.querySelector?.('.portrait-img')) {
                 return;
             }
-            const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
+            const selectMode = isSelectModeEnabled();
             updateImageCheckboxes(selectMode);
             updateDownloadSelection(false);
         });
@@ -681,7 +693,7 @@
             notFound.classList.replace('img-not-found', 'portrait-img-checkbox');
             notFound.parentElement?.classList.add('img-checkbox');
         }
-        const selectMode = window.localStorage.getItem('selectMode')?.toLowerCase() === 'true';
+        const selectMode = isSelectModeEnabled();
         if (selectMode) {
             const wrapper = img.querySelector('.portrait-img-checkbox')?.parentElement;
             wrapper?.classList.remove('hidden');

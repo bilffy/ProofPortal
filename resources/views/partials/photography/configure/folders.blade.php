@@ -63,9 +63,10 @@
                                 <x-table.cell class="flex items-center">
                                     <input type="checkbox"
                                         class="folder-details-is-visible-for-portrait mr-1"
-                                        id="is-visible-for-portrait"
+                                        id="is-visible-for-portrait-{{ $folder['ts_folder_id'] }}"
                                         name="is-visible-for-portrait-{{ $folderName }}"
                                         data-folder-id="{{ $fIdHash }}"
+                                        data-ts-folder-id="{{ $folder['ts_folder_id'] }}"
                                         data-folder-name="{{ $folderName }}"
                                         data-value="{{$folder['is_visible_for_portrait']}}"
                                         {{ $allowPortraitVisible ? 'checked' : '' }}
@@ -90,9 +91,10 @@
                                     <x-table.cell class=" items-center">
                                         <input type="checkbox"
                                             class="folder-details-is-visible-for-group mr-1"
-                                            id="is-visible-for-group"
+                                            id="is-visible-for-group-{{ $folder['ts_folder_id'] }}"
                                             name="is-visible-for-group-{{ $folderName }}"
                                             data-folder-id="{{ $fIdHash }}"
+                                            data-ts-folder-id="{{ $folder['ts_folder_id'] }}"
                                             data-folder-name="{{ $folderName }}"
                                             data-value="{{$folder['is_visible_for_group']}}"
                                             {{ $allowGroupVisible ? 'checked' : '' }}

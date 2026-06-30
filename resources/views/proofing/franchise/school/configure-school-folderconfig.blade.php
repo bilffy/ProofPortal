@@ -66,9 +66,10 @@
                                             <div class="form-group text-center">
                                                 <input type="checkbox"
                                                     class="form-check-input folder-details-is-visible-for-portrait text-center mt-2 ml-0 mr-0"
-                                                    id="is-visible-for-portrait"
+                                                    id="is-visible-for-portrait-{{ $folder['ts_folder_id'] }}"
                                                     name="is-visible-for-portrait-{{ $folderName }}"
                                                     data-folder-id="{{ $fIdHash }}"
+                                                    data-ts-folder-id="{{ $folder['ts_folder_id'] }}"
                                                     data-folder-name="{{ $folderName }}"
                                                     {{ $allowPortraitVisible ? 'checked' : '' }} data-value="{{$folder['is_visible_for_portrait']}}">
                                             </div>
@@ -88,9 +89,10 @@
                                                 <div class="form-group text-center">
                                                     <input type="checkbox"
                                                         class="form-check-input folder-details-is-visible-for-group text-center mt-2 ml-0 mr-0"
-                                                        id="is-visible-for-group"
+                                                        id="is-visible-for-group-{{ $folder['ts_folder_id'] }}"
                                                         name="is-visible-for-group-{{ $folderName }}"
                                                         data-folder-id="{{ $fIdHash }}"
+                                                        data-ts-folder-id="{{ $folder['ts_folder_id'] }}"
                                                         data-folder-name="{{ $folderName }}"
                                                         {{ $allowGroupVisible ? 'checked' : '' }} data-value="{{$folder['is_visible_for_group']}}">
                                                 </div>

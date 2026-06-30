@@ -577,20 +577,20 @@
 
                 
                 //Is Visible Portrait
-                $("#set-is-visible-for-portrait-all").click(function () {
+                $("#set-is-visible-for-portrait-all").click(function () {console.log('hi');
                     $("input[id^='is-visible-for-portrait-']").prop('checked', true);
-                    processCheckboxes('is-visible-for-portrait-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-portrait-','is_visible_for_portrait');
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-visible-for-portrait-none").click(function () {
                     $("input[id^='is-visible-for-portrait-']").prop('checked', false);
-                    processCheckboxes('is-visible-for-portrait-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-portrait-','is_visible_for_portrait');
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-visible-for-portrait-']").change(function () {
-                    processCheckboxes('is-visible-for-portrait-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-portrait-','is_visible_for_portrait');
                     applyEditCapabilities();
                 });
         
@@ -621,18 +621,18 @@
                 //Is Visible School Photo
                 $("#set-is-visible-for-school-all").click(function () {
                     $("input[id^='is-visible-for-school-']").prop('checked', true);
-                    processCheckboxes('is-visible-for-school-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-school-','pre_catchup_visible_portrait');
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("#set-is-visible-for-school-none").click(function () {
                     $("input[id^='is-visible-for-school-']").prop('checked', false);
-                    processCheckboxes('is-visible-for-school-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-school-','pre_catchup_visible_portrait');
                     applyEditCapabilities();
                 }).css('cursor', 'pointer');
         
                 $("input[id^='is-visible-for-school-']").change(function () {
-                    processCheckboxes('is-visible-for-school-','is_visible_portrait');
+                    processCheckboxes('is-visible-for-school-','pre_catchup_visible_portrait');
                     applyEditCapabilities();
                 });
         

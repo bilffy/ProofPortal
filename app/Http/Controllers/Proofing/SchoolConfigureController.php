@@ -300,23 +300,26 @@ class SchoolConfigureController extends Controller
     public function configSchoolFolderChangeUpdate(Request $request)
     {
         $school = SchoolContextHelper::getCurrentSchoolContext();
-        $folderIds = explode(',', $request->folderId);
-        if (is_array($folderIds)) {
-            foreach ($folderIds as $folderId) {
-                $decryptedFolderId[] = $this->getDecryptData($folderId);
-            }
-            $decryptedFolderIds = is_array($decryptedFolderId) ? $decryptedFolderId : [$decryptedFolderId];
-            $this->folderService->updateFolderData($decryptedFolderIds, $request->field, $request->newValue);
+        $folderIds = array_filter(array_map('trim', explode(',', (string) $request->folderId)));
+        $decryptedFolderId = [];
 
-            $folder = Folder::where('ts_folder_id', $decryptedFolderIds[0])->first();
-            // Log UPDATE_SCHOOL_FOLDER_CONFIG activity
-            ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_FOLDER_CONFIG, [
-                'school' => $school->id,
-                'school_key' => $school->schoolkey,
-                'job_id' => $folder->ts_job_id,
-                'folder_key' => $folder->ts_folderkey,
-                $request->field => $request->newValue,
-            ]);
+        foreach ($folderIds as $folderId) {
+            $decryptedFolderId[] = $this->getDecryptData($folderId);
+        }
+
+        if ($decryptedFolderId !== []) {
+            $this->folderService->updateFolderData($decryptedFolderId, $request->field, $request->newValue);
+
+            $folder = Folder::where('ts_folder_id', $decryptedFolderId[0])->first();
+            if ($folder) {
+                ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_FOLDER_CONFIG, [
+                    'school' => $school->id,
+                    'school_key' => $school->schoolkey,
+                    'job_id' => $folder->ts_job_id,
+                    'folder_key' => $folder->ts_folderkey,
+                    $request->field => $request->newValue,
+                ]);
+            }
         }
 
         return response()->json(['success' => true, 'message' => 'Folder updated successfully.']);

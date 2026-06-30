@@ -74,75 +74,67 @@ jQuery(document).ready(function ($) {
 
     //Job Update
     $(document).on('change', '.folder-details-is-visible-for-portrait', function () {
-        // Get the checked state of the checkbox
-        const checkedValue = $(this).is(':checked'); // true if checked, false if unchecked
+        const checkedValue = $(this).is(':checked');
         const newValue = checkedValue ? 1 : 0;
-
-        // Get folder and job-related data
-        const folderId = $(this).data('folder-id');
+        const folderId = $(this).attr('data-folder-id');
         const field = "is_visible_for_portrait";
         const selectedJobKey = $('#select_job').val();
-
-        // Find the selected job in jobsData
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-        if (selectedJob) {
-            const selectedFolderName = $(this).data('folder-name');
 
-            // Find the specific folder within the selected job's Folders array
-            const selectedFolder = selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
+        if (selectedJob && selectedJob.Folders) {
+            const folderTsId = $(this).attr('data-ts-folder-id');
+            const selectedFolderName = $(this).attr('data-folder-name');
+            const selectedFolder = folderTsId
+                ? selectedJob.Folders.find(folder => String(folder.ts_folder_id) === String(folderTsId))
+                : selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
 
-            // Update the folder property if the folder was found
             if (selectedFolder) {
                 selectedFolder.is_visible_for_portrait = newValue;
-
-                // Check if any folder in this job now has is_visible_for_portrait = 1
-                const anyVisible = selectedJob.Folders.some(f => f.is_visible_for_portrait == 1);
-                const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
-                if (anyVisible) {
-                    jobOption.data('has-visible', true).attr('data-has-visible', 'true');
-                } else {
-                    jobOption.data('has-visible', false).attr('data-has-visible', 'false');
-                }
-                // Refresh select2 to show/hide the tick if needed
-                $('#select_job').trigger('change.select2');
-
-                sendFolderChanges(folderId, field, newValue);
             }
+
+            const anyVisible = selectedJob.Folders.some(f => f.is_visible_for_portrait == 1);
+            const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
+            if (anyVisible) {
+                jobOption.data('has-visible', true).attr('data-has-visible', 'true');
+            } else {
+                jobOption.data('has-visible', false).attr('data-has-visible', 'false');
+            }
+            $('#select_job').trigger('change.select2');
         }
+
+        sendFolderChanges(folderId, field, newValue);
     });
 
     $(document).on('change', '.folder-details-is-visible-for-group', function () {
-        // Get the checked state of the checkbox
-        const checkedValue = $(this).is(':checked'); // true if checked, false if unchecked
+        const checkedValue = $(this).is(':checked');
         const newValue = checkedValue ? 1 : 0;
-
-        // Get folder and job-related data
-        const folderId = $(this).data('folder-id');
+        const folderId = $(this).attr('data-folder-id');
         const field = "is_visible_for_group";
         const selectedJobKey = $('#select_job').val();
-
-        // Find the selected job in jobsData
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-        if (selectedJob) {
-            const selectedFolderName = $(this).data('folder-name');
 
-            // Find the specific folder within the selected job's Folders array
-            const selectedFolder = selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
+        if (selectedJob && selectedJob.Folders) {
+            const folderTsId = $(this).attr('data-ts-folder-id');
+            const selectedFolderName = $(this).attr('data-folder-name');
+            const selectedFolder = folderTsId
+                ? selectedJob.Folders.find(folder => String(folder.ts_folder_id) === String(folderTsId))
+                : selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
 
-            // Update the folder property if the folder was found
             if (selectedFolder) {
                 selectedFolder.is_visible_for_group = newValue;
-                sendFolderChanges(folderId, field, newValue);
             }
         }
+
+        sendFolderChanges(folderId, field, newValue);
     });
 
     function sendFolderChanges(folderId, field, newData) {
         return new Promise((resolve, reject) => {
+            const folderIdValue = Array.isArray(folderId) ? folderId.join(',') : folderId;
             const formData = new FormData();
             formData.append("field", field);
             formData.append("newValue", newData);
-            formData.append("folderId", folderId);
+            formData.append("folderId", folderIdValue);
             formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
 
             $.ajax({
@@ -412,12 +404,14 @@ jQuery(document).ready(function ($) {
                     checkbox.checked = isChecked;
                     // Note: We don't trigger 'change' here to avoid individual AJAX spam
                     const folderId = checkbox.getAttribute('data-folder-id');
+                    const folderTsId = checkbox.getAttribute('data-ts-folder-id');
                     const folderName = checkbox.getAttribute('data-folder-name');
                     folderIdsToUpdate.push(folderId);
 
-                    // Update local jobsData
                     if (selectedJob && selectedJob.Folders) {
-                        const selectedFolder = selectedJob.Folders.find(f => f.ts_foldername === folderName);
+                        const selectedFolder = folderTsId
+                            ? selectedJob.Folders.find(f => String(f.ts_folder_id) === String(folderTsId))
+                            : selectedJob.Folders.find(f => f.ts_foldername === folderName);
                         if (selectedFolder) {
                             selectedFolder[field] = newValue;
                         }
