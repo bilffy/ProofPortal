@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\FilenameFormat;
 use Illuminate\Database\Seeder;
+use DB;
 
 class FilenameFormatsTableSeeder extends Seeder
 {
