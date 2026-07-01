@@ -13,7 +13,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('title', config('app.name', 'Laravel'))</title>
+        <title>{{ config('app.name', 'MSP') }}</title>
         <!-- MSP LOGO -->
         <link rel="shortcut icon" href="{{ URL::asset('proofing-assets/img/msp_logo.svg') }}">
         <!-- Fonts -->

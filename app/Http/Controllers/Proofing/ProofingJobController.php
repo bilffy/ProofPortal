@@ -279,11 +279,11 @@ class ProofingJobController extends Controller
     
             // Validate sync success
             if ($selectedJob && $folderResponse?->successful()) {
-                \Log::info("Dispatching SyncImagesToProd02 for Job: $jobKey");
-                SyncImagesToProd02::dispatch($jobKey);
-                
                 // Ensure permissions and visibility
                 $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
+
+                \Log::info("Dispatching SyncImagesToProd02 for Job: $jobKey");
+                SyncImagesToProd02::dispatch($jobKey);
     
                 return response()->json([
                     'success' => true,
