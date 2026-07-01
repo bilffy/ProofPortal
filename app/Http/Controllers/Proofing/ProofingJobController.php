@@ -196,7 +196,7 @@ class ProofingJobController extends Controller
         \Log::info('Proxy sync started', ['jobKey' => $jobKey]);
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
 
-        $baseUrl = config('services.bpsync.url', 'http://bpsync.msp.local/index.php');
+        $baseUrl = config('services.bpsync.url');
     
         try {
             $client = Http::withOptions(['verify' => config('services.bpsync.verify_ssl', true)])->timeout(60); // Increased timeout for sync
