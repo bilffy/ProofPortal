@@ -107,6 +107,10 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::get('/settings', [SettingsController::class, 'main'])->name('settings.main');
     Route::get('/settings/feature-control', FeatureControl::class)->name('settings.feature.control');
     Route::get('/settings/role-permission', RolePermission::class)->name('settings.role.permission');
+    Route::post('/settings/sync-seasons', [SettingsController::class, 'syncSeasons'])->name('settings.sync.seasons');
+    Route::post('/settings/sync-franchises', [SettingsController::class, 'syncFranchises'])->name('settings.sync.franchises');
+    Route::post('/settings/sync-schools', [SettingsController::class, 'syncSchools'])->name('settings.sync.schools');
+
     
     //Configure School - fetch jobs by season
         Route::get('/config-school/fetch-jobs', [SchoolConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');

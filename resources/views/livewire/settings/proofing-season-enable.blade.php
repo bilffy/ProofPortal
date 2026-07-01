@@ -12,36 +12,44 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($seasons as $season)
-                        <tr class="border-b border-[#E6E7E8] last:border-b-0">
-                            <x-table.cell class="grid grid-rows-2 gap-1 border-none">
-                                <span class="text-lg font-bold">{{ $season->code }}</span>
-                                <span class="text-sm">Manage visibility for the {{ $season->code }} season in the portal.</span>
-                            </x-table.cell>
-                            <x-table.cell class="w-1/4 border-none">
-                                <div class="flex flex-wrap gap-1">
-                                    @php
-                                        $isEnabled = $seasonStates[$season->id] ?? false;
-                                        $tagText = $isEnabled ? 'Enabled' : 'Disabled';
-                                        $tagColor = $isEnabled ? 'border-[#009236] text-[#009236]' : 'border-[#E87F54] text-[#E87F54]';
-                                    @endphp
-                                     <x-tag.base class="{{ $tagColor }}" hollow>{{ $tagText }}</x-tag.base>
-                                </div>
-                            </x-table.cell>
-                            <x-table.cell class="w-1/4 border-none">
-                                <div class="flex flex-wrap gap-1">
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input
-                                                type="checkbox"
-                                                wire:model="seasonStates.{{ $season->id }}"
-                                                wire:click="toggleSeason('{{ $season->id }}')"
-                                                class="sr-only peer">
-                                        <div class="relative w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                    </label>
-                                </div>
-                            </x-table.cell>
+                    @if (count($seasons) == 0)
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                No Seasons Found
+                            </td>
                         </tr>
-                    @endforeach
+                    @else
+                        @foreach ($seasons as $season)
+                            <tr class="border-b border-[#E6E7E8] last:border-b-0">
+                                <x-table.cell class="grid grid-rows-2 gap-1 border-none">
+                                    <span class="text-lg font-bold">{{ $season->code }}</span>
+                                    <span class="text-sm">Manage visibility for the {{ $season->code }} season in the portal.</span>
+                                </x-table.cell>
+                                <x-table.cell class="w-1/4 border-none">
+                                    <div class="flex flex-wrap gap-1">
+                                        @php
+                                            $isEnabled = $seasonStates[$season->id] ?? false;
+                                            $tagText = $isEnabled ? 'Enabled' : 'Disabled';
+                                            $tagColor = $isEnabled ? 'border-[#009236] text-[#009236]' : 'border-[#E87F54] text-[#E87F54]';
+                                        @endphp
+                                         <x-tag.base class="{{ $tagColor }}" hollow>{{ $tagText }}</x-tag.base>
+                                    </div>
+                                </x-table.cell>
+                                <x-table.cell class="w-1/4 border-none">
+                                    <div class="flex flex-wrap gap-1">
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input
+                                                    type="checkbox"
+                                                    wire:model="seasonStates.{{ $season->id }}"
+                                                    wire:click="toggleSeason('{{ $season->id }}')"
+                                                    class="sr-only peer">
+                                            <div class="relative w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                </x-table.cell>
+                            </tr>
+                        @endforeach
+                    @endif
                 </tbody>
             </table>
         </div>

@@ -21,4 +21,76 @@ class SettingsController extends Controller
             
         ]);
     }
+
+    public function syncSeasons(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $baseUrl = rtrim(config('services.bpsync.url'), '/');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::withOptions([
+                'verify' => config('services.bpsync.verify_ssl', false)
+            ])->timeout(120)->get("{$baseUrl}/seasons/sync");
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => 'success']);
+            }
+
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $response->status()], 500);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function syncFranchises(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $baseUrl = rtrim(config('services.bpsync.url'), '/');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::withOptions([
+                'verify' => config('services.bpsync.verify_ssl', false)
+            ])->timeout(120)->get("{$baseUrl}/franchises/sync");
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => 'success']);
+            }
+
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $response->status()], 500);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function syncSchools(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $baseUrl = rtrim(config('services.bpsync.url'), '/');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::withOptions([
+                'verify' => config('services.bpsync.verify_ssl', false)
+            ])->timeout(180)->get("{$baseUrl}/schools/sync");
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => 'success']);
+            }
+
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $response->status()], 500);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }
