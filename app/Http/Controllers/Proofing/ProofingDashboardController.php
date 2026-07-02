@@ -118,6 +118,12 @@ class ProofingDashboardController extends Controller
                 'account_id' => $user->getFranchise()->ts_account_id,
                 'school_key' => SchoolContextHelper::getCurrentSchoolContext()->schoolkey
             ]);
+
+            // Log the query results safely
+            Log::info('Fetched Timestone Jobs Results', [
+                'count' => $tsJobs->count(),
+                'jobs'  => $tsJobs->toArray() // Converts the database object collection to a clean text array format
+            ]);
             $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)
                 ->where('job_users.user_id', $user->id)
                 ->where('show_proofing', 1)
