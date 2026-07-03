@@ -82,7 +82,7 @@ class SettingsController extends Controller
         try {
             $response = \Illuminate\Support\Facades\Http::withOptions([
                 'verify' => config('services.bpsync.verify_ssl', false)
-            ])->timeout(180)->get("{$baseUrl}/schools/sync");
+            ])->timeout(180)->get("{$baseUrl}/schools/sync?full=1");
 
             if ($response->successful()) {
                 return response()->json(['success' => true, 'message' => 'success']);
