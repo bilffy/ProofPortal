@@ -112,9 +112,11 @@ class ProofingDashboardController extends Controller
                         ->getAllSeasonData('ts_season_id')
                         ->pluck('ts_season_id')
                         ->toArray();
-            $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, SchoolContextHelper::getCurrentSchoolContext()->schoolkey)->get();
+            $currentSchoolkey = SchoolContextHelper::getSchool()?->schoolkey;
 
-            $bpJobs = $this->jobService->getJobsBySeason(SchoolContextHelper::getCurrentSchoolContext()->schoolkey, $getSeason)
+            $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, $currentSchoolkey)->get();
+
+            $bpJobs = $this->jobService->getJobsBySeason($currentSchoolkey, $getSeason)
                 ->where('job_users.user_id', $user->id)
                 ->where('show_proofing', 1)
                 ->pluck('ts_jobkey');

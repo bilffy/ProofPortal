@@ -8,6 +8,7 @@ use App\Services\Proofing\SchoolService;
 use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\EmailService;
 use App\Helpers\ActivityLogHelper;
+use App\Helpers\SchoolContextHelper;
 use App\Helpers\Constants\LogConstants;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -37,9 +38,7 @@ class JobService
 
     public function getDashboardData($franchiseCode, $schoolKey = null)
     {
-        $school = $this->schoolService->getSchoolById($schoolKey)->select('schoolkey')->first()
-               ?? $this->schoolService->getSchoolBySchoolKey($schoolKey)->select('schoolkey')->first()
-               ?? Auth::user()->getSchool();
+        $school = SchoolContextHelper::getSchool();
         $selectedSchoolkey = $school ? $school->schoolkey : null;
         
         $tnjNotFound = $this->statusService->tnjNotFound;
@@ -79,15 +78,10 @@ class JobService
     
     public function getActiveSyncJobs($franchiseCode, $schoolKey = null)
     {
-        $school = $this->schoolService->getSchoolById($schoolKey)->select('schoolkey')->first()
-               ?? $this->schoolService->getSchoolBySchoolKey($schoolKey)->select('schoolkey')->first()
-               ?? Auth::user()->getSchool();
-        
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        $targetSchoolkey = $school ? $school->schoolkey : null;
 
-        return $this->queryJobs($franchiseCode, $targetSchoolkey)
+        return $this->queryJobs($franchiseCode, $schoolKey)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->where('job_users.user_id', Auth::user()->id)
             ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])

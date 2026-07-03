@@ -29,7 +29,7 @@ class SyncImagesScheduler extends Command
      */
     public function handle(StatusService $statusService)
     {
-        // Chunk optimization prevents heavy memory usage and long open db lock constraints
+        // // Chunk optimization prevents heavy memory usage and long open db lock constraints
         Job::where('imagesync_status_id', $statusService->unsync)
             ->where('show_proofing', 1)
             ->whereHas('images', function ($query) {
