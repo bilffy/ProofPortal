@@ -1,7 +1,7 @@
 @component('mail::message', ['franchise' => $franchise])
-<div style="display: none; max-height: 0px; overflow: hidden;">
+<!-- <div style="display: none; max-height: 0px; overflow: hidden;">
 Invitation to MSP Portal
-</div>
+</div> -->
 <x-email-wrapper :franchiseName="$franchise->name" :franchisePhone="$franchise->phone" :franchiseEmail="$franchise->email">
 <tr>
 <td colspan="2" style="padding: 0px 40px 0px 40px">

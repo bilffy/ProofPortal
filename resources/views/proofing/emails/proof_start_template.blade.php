@@ -81,9 +81,9 @@
     </style>
 </head>
 <body bgcolor="#e8ecf1">
-<div style="display: none; max-height: 0px; overflow: hidden;">
+<!-- <div style="display: none; max-height: 0px; overflow: hidden;">
     MSP Portal Proofing Commencement Notification
-</div>
+</div> -->
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" class="document">
     <tr>
         <td valign="top">
