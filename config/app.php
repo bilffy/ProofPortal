@@ -158,7 +158,7 @@ return [
         'otp' => [
             'title' => 'Verification Code',
             'invalid' => [
-                'message' => 'OTP is Invalid.',
+                'message' => 'Verification Code is Invalid.',
             ],
             'resend' => [
                 'message1' => 'Security code has been resent to your email.',
