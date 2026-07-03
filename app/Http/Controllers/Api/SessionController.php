@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Auth;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 class SessionController extends Controller
 {
@@ -44,20 +46,32 @@ class SessionController extends Controller
 
     public function ping(Request $request)
     {
-        // Check if the current request session is valid
         $isAlive = false;
+        
+        $cookieName = config('session.cookie');
+        $sessionId = $request->cookie($cookieName);
 
-        if ($request->session()->isValid()) {
-            $lastActivity = $request->session()->get('last_activity', time());
-            $maxIdleTime = config('session.lifetime') * 60;
-            
-            $isAlive = (time() - $lastActivity) < $maxIdleTime;
+        if ($sessionId) {
+            try {
+                $decryptedId = decrypt($sessionId, false);
+                
+                if (str_contains($decryptedId, '|')) {
+                    $decryptedId = explode('|', $decryptedId)[1];
+                }
+                
+                $sessionKey = Str::slug(config('app.name', 'laravel'), '_') . '_session:' . $decryptedId;
+
+                // Directly checks Redis DB 0 via the 'default' connection config
+                if (Redis::connection('default')->exists($sessionKey)) {
+                    $isAlive = true;
+                }
+            } catch (\Exception $e) {
+                $isAlive = false;
+            }
         }
 
-        $data = [
+        return response()->json([
             'is_alive' => $isAlive
-        ];
-
-        return response()->json($data);
+        ]);
     }
 }
