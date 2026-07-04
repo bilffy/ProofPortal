@@ -22,6 +22,7 @@ use App\Models\Email;
 use App\Models\School;
 use Carbon\Carbon;
 use App\Helpers\SchoolContextHelper;
+use App\Helpers\RoleHelper;
 use Session;
 use Auth;
 
@@ -55,17 +56,19 @@ class InvitationController extends Controller
         }
 
         $tsJobId = $selectedJob->ts_job_id;
-        // Fetch the users with roles "Teacher" or "Photo Coordinator" for the given ts_job_id
-        $roles = ['Teacher', 'Photo Coordinator', 'Franchise'];
+        // Fetch users assigned to this job (job_users) with Teacher / Photo Coordinator / Franchise roles
+        $roles = [
+            RoleHelper::ROLE_TEACHER,
+            RoleHelper::ROLE_PHOTO_COORDINATOR,
+            RoleHelper::ROLE_FRANCHISE,
+        ];
 
-        $users = User::whereHas('roles', fn($q) => 
+        $users = User::whereHas('roles', fn($q) =>
             $q->whereIn('name', $roles)
         )
-        ->whereIn('id', function ($sub) use ($tsJobId) {
-            $sub->select('user_id')
-                ->from('msp_portal.job_users')
-                ->where('ts_job_id', $tsJobId);
-        })
+        ->whereHas('jobs', fn($q) =>
+            $q->where('jobs.ts_job_id', $tsJobId)
+        )
         ->get();
 
         $photocoordinators = [];
