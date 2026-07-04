@@ -1500,68 +1500,74 @@ $(document).ready(function () {
 
     /****************************************************************************************** Proofing - Final submit *****************************************************************************************************************/
 
-    //Modal Subject Proofing
+    // Modal subject proofing — show fields by issues.issue_name (category 2)
     $('.modal_start').on('change', '.is_subject_select', function () {
-        var modalId = $(this).closest('.modal_start').attr('id');
         var skHash = $(this).data('id');
-        var selectedOption = $(this).val();
-        var selectedText = $(this).find('option:selected').text();
-        var classNameCurrent = document.querySelector('input[name="old_folder_name"]').value;
-        var classNameNew = document.querySelector('input[name="folder_name"]').value;
+        var $selected = $(this).find('option:selected');
+        var issueName = $selected.data('issue-name') || '';
+        var classNameCurrentEl = document.querySelector('input[name="old_folder_name"]');
+        var classNameNewEl = document.querySelector('input[name="folder_name"]');
+        var classNameCurrent = classNameCurrentEl ? classNameCurrentEl.value : '';
+        var classNameNew = classNameNewEl ? classNameNewEl.value : '';
 
-        var inputFieldsContainer = $('#inputFieldsContainer_' + modalId.split('_')[0]);
-        inputFieldsContainer.empty(); // Clear previous input fields
+        var inputFieldsContainer = $('#inputFieldsContainer_' + skHash);
+        inputFieldsContainer.empty();
 
-
-        var templateId;
-        if (selectedText.includes('Job Title') || selectedText.includes('Salutation')) {
-            // Get the template based on the selected option
-            templateId = 'inputFieldTemplate_' + modalId.split('_')[0];
-        } else {
-            templateId = 'inputFieldTemplate' + selectedOption + '_' + skHash;
+        if (!issueName) {
+            return;
         }
 
-        var template = $('#' + templateId).html();
-
-        if (template) {
-            var firstName = $('#' + skHash + '-first-name').text();
-            var lastName = $('#' + skHash + '-last-name').text();
-            var salutation = $('#' + skHash + '-salutation').text();
-            var title = $('#' + skHash + '-title').text();
-            var picture = $('#' + skHash + '_picture').text();
-            var folder = $('#' + skHash + '_folder').text();
-            var prefix = $('#' + skHash + '-prefix').text();
-            var suffix = $('#' + skHash + '-suffix').text();
-
-            var templateElement = $(template);
-
-            var firstNameInput = templateElement.find('input[name="' + skHash + '_new_first_name"]');
-            var lastNameInput = templateElement.find('input[name="' + skHash + '_new_last_name"]');
-            var salutationInput = templateElement.find('input[name="' + skHash + '_new_salutation"]');
-            var prefixInput = templateElement.find('input[name="' + skHash + '_new_prefix"]');
-            var suffixInput = templateElement.find('input[name="' + skHash + '_new_suffix"]');
-            var titleInput = templateElement.find('input[name="' + skHash + '_new_title"]');
-            var pictureInput = templateElement.find('input[name="' + skHash + '_picture_issue"]');
-            var folderInput = templateElement.find('select[name="' + skHash + '_folder_issue"]');
-
-            /* ✅ SET ONLY IF VALUE EXISTS */
-            if (firstNameInput.length) firstNameInput.val(firstName);
-            if (lastNameInput.length) lastNameInput.val(lastName);
-            if (salutationInput.length) salutationInput.val(salutation);
-            if (prefixInput.length) prefixInput.val(prefix);
-            if (suffixInput.length) suffixInput.val(suffix);
-            if (titleInput.length) titleInput.val(title);
-            if (pictureInput.length) pictureInput.val(picture);
-            if (folderInput.length) folderInput.val(folder);
-
-            inputFieldsContainer.append(templateElement);
+        // Templates are keyed by issue_name (matches issues.issue_name for category 2)
+        var templateEl = document.getElementById('inputFieldTemplate_' + issueName + '_' + skHash);
+        if (!templateEl) {
+            // LEFT_SCHOOL, REMOVE_PICTURE, ABSENT, etc. have no extra fields
+            return;
         }
 
-        $('.homedfolders option').each(function () {
-            if ($(this).text() === classNameCurrent) {
-                $(this).text(classNameNew); // Correct way to update the text
-            }
-        });
+        var templateHtml = templateEl.innerHTML;
+        if (!templateHtml) {
+            return;
+        }
+
+        var firstName = ($('#' + skHash + '-first-name').text() || '').trim();
+        var lastName = ($('#' + skHash + '-last-name').text() || '').trim();
+        var salutation = ($('#' + skHash + '-salutation').text() || '').trim();
+        var title = ($('#' + skHash + '-title').text() || '').trim();
+        var picture = ($('#' + skHash + '_picture').text() || '').trim();
+        var folder = ($('#' + skHash + '_folder').text() || '').trim();
+        var prefix = ($('#' + skHash + '-prefix').text() || '').trim();
+        var suffix = ($('#' + skHash + '-suffix').text() || '').trim();
+
+        var templateElement = $(templateHtml);
+
+        var firstNameInput = templateElement.find('input[name="' + skHash + '_new_first_name"]');
+        var lastNameInput = templateElement.find('input[name="' + skHash + '_new_last_name"]');
+        var salutationInput = templateElement.find('input[name="' + skHash + '_new_salutation"]');
+        var prefixInput = templateElement.find('input[name="' + skHash + '_new_prefix"]');
+        var suffixInput = templateElement.find('input[name="' + skHash + '_new_suffix"]');
+        var titleInput = templateElement.find('input[name="' + skHash + '_new_title"]');
+        var pictureInput = templateElement.find('input[name="' + skHash + '_picture_issue"]');
+        var folderInput = templateElement.find('select[name="' + skHash + '_folder_issue"]');
+
+        // Only override template defaults when live page values are present
+        if (firstNameInput.length && firstName) firstNameInput.val(firstName);
+        if (lastNameInput.length && lastName) lastNameInput.val(lastName);
+        if (salutationInput.length && salutation) salutationInput.val(salutation);
+        if (prefixInput.length && prefix) prefixInput.val(prefix);
+        if (suffixInput.length && suffix) suffixInput.val(suffix);
+        if (titleInput.length && title) titleInput.val(title);
+        if (pictureInput.length && picture) pictureInput.val(picture);
+        if (folderInput.length && folder) folderInput.val(folder);
+
+        inputFieldsContainer.append(templateElement);
+
+        if (classNameCurrent && classNameNew) {
+            inputFieldsContainer.find('.homedfolders option').each(function () {
+                if ($(this).text() === classNameCurrent) {
+                    $(this).text(classNameNew);
+                }
+            });
+        }
     });
 
     //subject submit

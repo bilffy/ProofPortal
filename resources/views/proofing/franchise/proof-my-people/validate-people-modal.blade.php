@@ -13,10 +13,6 @@
                 $skHash = sha1($subject->ts_subjectkey);
                 $skEncrypted = Crypt::encryptString($subject->ts_subjectkey);
                 $folderkeyEncrypted = Crypt::encryptString($currentFolder->ts_folderkey);
-                $spellingTemplateID = 0;
-                $pictureTemplateID = 0; 
-                $wrongclassTemplateID = 0;
-
                 if ($subject->ts_subjectkey != '' && $selectedJob->ts_jobkey != '') {
                     if($subject->images){
                         // Generate a signed URL for the image
@@ -105,40 +101,31 @@
                                             @php
                                                 $displayOption = true;
 
-                                                // Check conditions
-                                                if ($subject_question->issue_description === $jobTitleSalutation) {
+                                                // Visibility by stable issue_name (not description text)
+                                                if ($subject_question->issue_name === 'SUBJECT_ISSUE_JOBTITLE_SALUTATION') {
                                                     $displayOption = $currentFolder->is_edit_job_title == 1 && $currentFolder->show_salutation_portraits == 1;
-                                                } elseif ($subject_question->issue_description === $jobTitle) {
+                                                } elseif ($subject_question->issue_name === 'SUBJECT_ISSUE_JOBTITLE') {
                                                     $displayOption = $currentFolder->is_edit_job_title == 1 && $currentFolder->show_salutation_portraits != 1;
-                                                } elseif ($subject_question->issue_description === $jobSalutation) {
+                                                } elseif ($subject_question->issue_name === 'SUBJECT_ISSUE_SALUTATION') {
                                                     $displayOption = $currentFolder->is_edit_job_title != 1 && $currentFolder->show_salutation_portraits == 1;
                                                 }
-                                              
-                                                // Assign template IDs based on description
-                                                if ($subject_question->issue_description === Config::get('constants.SUBJECT_ISSUE_SPELLING')) {
-                                                    $spellingTemplateID = $subject_question->id;
-                                                } elseif ($subject_question->issue_description === Config::get('constants.SUBJECT_ISSUE_PICTURE')) {
-                                                    $pictureTemplateID = $subject_question->id;
-                                                } elseif ($subject_question->issue_description === Config::get('constants.SUBJECT_ISSUE_CLASS')) {
-                                                    $wrongclassTemplateID = $subject_question->id;
-                                                } elseif ($subject_question->issue_description === Config::get('constants.SUBJECT_ISSUE_PREFIX_SUFFIX')) {
-                                                    $prefixsuffixTemplateID = $subject_question->id;
-                                                }
 
-                                                // Replace placeholders with actual names
                                                 $description = str_replace(['FULLNAME'], [$fullNameWrappedText], $subject_question->issue_description);
-
                                             @endphp
                                             @if ($displayOption)
-                                                <option class="{{ $skHash }}-find-replace" value="{{ $subject_question->id }}">
+                                                <option
+                                                    class="{{ $skHash }}-find-replace"
+                                                    value="{{ $subject_question->id }}"
+                                                    data-issue-name="{{ $subject_question->issue_name }}"
+                                                >
                                                     {{ $description }}
                                                 </option>
                                             @endif
                                         @endforeach
                                     </select>
                                             <div id="inputFieldsContainer_{{ $skHash }}"></div>
-                                            <!-- Input field templates -->
-                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$spellingTemplateID}}_{{ $skHash }}">
+                                            {{-- Templates keyed by issue_name so JS does not depend on issues.id or description text --}}
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_SPELLING_{{ $skHash }}">
                                                 <div id="spelling_{{ $skHash }}" class="mt-2">
                                                     <div id="first_name_{{ $skHash }}">
                                                         <label for="{{ $skHash }}-new_first_name" class="mt-3">First Name</label>
@@ -151,14 +138,14 @@
                                                 </div>
                                             </template>
 
-                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$pictureTemplateID}}_{{ $skHash }}">
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_PICTURE_{{ $skHash }}">
                                                 <div id="picture_{{ $skHash }}" class="mt-2">
                                                     <label for="{{ $skHash }}-picture_issue" class="mt-3">Do you know who this is? Type their name below or leave it blank.</label>
                                                     <input type="text" name="{{ $skHash }}_picture_issue" id="{{ $skHash }}-picture_issue" class="form-control" value="{{$subjectPicture}}">
                                                 </div>
                                             </template>
 
-                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$wrongclassTemplateID}}_{{ $skHash }}">
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_CLASS_{{ $skHash }}">
                                                 <div id="folder_{{ $skHash }}" class="mt-2">
                                                     <label for="{{ $skHash }}-folder_issue" class="mt-3">Do you know which Class/Group they belong to? If so, select from below.</label>
                                                     <select name="{{ $skHash }}_folder_issue" id="{{ $skHash }}-folder_issue" class="form-control homedfolders">
@@ -169,8 +156,8 @@
                                                     </select>
                                                 </div>
                                             </template>
-                                            
-                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate{{$prefixsuffixTemplateID}}_{{ $skHash }}">
+
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_PREFIX_SUFFIX_{{ $skHash }}">
                                                 <div id="prefix-suffix_{{ $skHash }}">
                                                         <label for="{{ $skHash }}-new_prefix" class="mt-3">Prefix</label>
                                                         <input type="text" name="{{ $skHash }}_new_prefix" id="{{ $skHash }}-new_prefix" class="form-control {{ $skHash }}-form-spelling-prefix" value="{{ $subject->prefix }}">
@@ -180,7 +167,7 @@
                                                 </div>
                                             </template>
 
-                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_{{ $skHash }}">
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_JOBTITLE_SALUTATION_{{ $skHash }}">
                                                 <div id="title-salutation_{{ $skHash }}">
                                                     @if ($currentFolder->is_edit_job_title)
                                                         <label for="{{ $skHash }}-new_title" class="mt-3">Job Title</label>
@@ -190,6 +177,18 @@
                                                         <label for="{{ $skHash }}-new_salutation" class="mt-3">Salutation</label>
                                                         <input type="text" name="{{ $skHash }}_new_salutation" id="{{ $skHash }}-new_salutation" class="form-control {{ $skHash }}-form-spelling-salutation" value="{{ $subject->salutation }}">
                                                     @endif
+                                                </div>
+                                            </template>
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_JOBTITLE_{{ $skHash }}">
+                                                <div id="title-only_{{ $skHash }}">
+                                                    <label for="{{ $skHash }}-new_title" class="mt-3">Job Title</label>
+                                                    <input type="text" name="{{ $skHash }}_new_title" id="{{ $skHash }}-new_title" class="form-control {{ $skHash }}-form-spelling-title" value="{{ $subject->title }}">
+                                                </div>
+                                            </template>
+                                            <template class="template_{{ $skHash }}" id="inputFieldTemplate_SUBJECT_ISSUE_SALUTATION_{{ $skHash }}">
+                                                <div id="salutation-only_{{ $skHash }}">
+                                                    <label for="{{ $skHash }}-new_salutation" class="mt-3">Salutation</label>
+                                                    <input type="text" name="{{ $skHash }}_new_salutation" id="{{ $skHash }}-new_salutation" class="form-control {{ $skHash }}-form-spelling-salutation" value="{{ $subject->salutation }}">
                                                 </div>
                                             </template>
                                     </div>
