@@ -15,7 +15,7 @@
     @livewireStyles
     <script>
         // Disable right click context menu immediately
-        document.addEventListener('contextmenu', event => event.preventDefault());
+        // document.addEventListener('contextmenu', event => event.preventDefault());
 
         // Block keyboard shortcuts for Save (Ctrl+S), View Source (Ctrl+U), and Inspect (F12/Ctrl+Shift+I)
         document.addEventListener('keydown', function(e) {
@@ -40,7 +40,7 @@
         });
     </script>
 </head>
-<body class="font-sans antialiased" oncontextmenu="return false;">
+<body class="font-sans antialiased">
     <div class="flex items-center justify-center p-6 min-h-screen">
         <div class="w-full max-w-md">
             <div class="flex align-middle justify-center">

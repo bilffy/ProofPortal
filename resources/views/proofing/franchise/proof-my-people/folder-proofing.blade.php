@@ -52,37 +52,41 @@
                                 <div class="card-body">
                                     <div class="row">
                                         @if ($preparedFolders->count() > 0)
-                                        @foreach ($preparedFolders as $item)
-                                            @php
-                                                $folder = $item['folder'];
-                                                $displayStatusId = $item['displayStatusId'];
-                                                $isManuallyModified = $item['isManuallyModified'];
-                                                
-                                                $status = $reviewStatusesColours->firstWhere('id', $displayStatusId);
-                                                $completedText = $displayStatusId != $noneStatus ? '<p class="small mt-1">(' . $status->status_external_name . ')</p>' : '';
-                                                
-                                                $hash = Crypt::encryptString($folder->ts_folderkey);
-                                                $location = URL::signedRoute('my-folders-validate', ['hash' => $hash]);
-                                            @endphp
-                                            <div class="col-6 col-lg-3">
-                                                @if ($folder->status_id != $completeStatus)
-                                                    <a href="{{ $location }}">
-                                                @endif
+                                            @foreach ($preparedFolders as $item)
+                                                @php
+                                                    $folder = $item['folder'];
+                                                    $displayStatusId = $item['displayStatusId'];
+                                                    $isManuallyModified = $item['isManuallyModified'];
+                                                    
+                                                    $status = $reviewStatusesColours->firstWhere('id', $displayStatusId);
+                                                    $completedText = $displayStatusId != $noneStatus ? '<p class="small mt-1">(' . $status->status_external_name . ')</p>' : '';
+                                                    
+                                                    $hash = Crypt::encryptString($folder->ts_folderkey);
+                                                    $location = URL::signedRoute('my-folders-validate', ['hash' => $hash]);
+                                                @endphp
+                                                <div class="col-6 col-lg-3">
+                                                    @if ($folder->status_id != $completeStatus)
+                                                        <a href="{{ $location }}">
+                                                    @endif
 
-                                                <div class="card">
-                                                    <div class="card-body p-3 clearfix">
-                                                        <i class="fa fa-mortar-board bg-success p-3 font-2xl mr-3 float-left colour-scheme-reverse-{{ $displayStatusId }}"></i>
-                                                        <div class="h5 text-success mb-0 mt-3 colour-scheme-{{ $displayStatusId }}">
-                                                            {{ $folder->ts_foldername }}{!! $completedText !!}
+                                                    <div class="card">
+                                                        <div class="card-body p-3 clearfix">
+                                                            <i class="fa fa-mortar-board bg-success p-3 font-2xl mr-3 float-left colour-scheme-reverse-{{ $displayStatusId }}"></i>
+                                                            <div class="h5 text-success mb-0 mt-3 colour-scheme-{{ $displayStatusId }}">
+                                                                {{ $folder->ts_foldername }}{!! $completedText !!}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                @if ($folder->status_id != $completeStatus)
-                                                    </a>
-                                                @endif
+                                                    @if ($folder->status_id != $completeStatus)
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <div class="col-12">
+                                                <p class="text-center">{{ __('Please contact the franchise for more information.') }}</p>
                                             </div>
-                                        @endforeach
                                         @endif
                                     </div>
                                 </div>
