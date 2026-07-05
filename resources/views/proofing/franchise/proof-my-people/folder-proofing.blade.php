@@ -84,9 +84,7 @@
                                                 </div>
                                             @endforeach
                                         @else
-                                            <div class="col-12">
-                                                <p class="text-center">{{ __('Please contact the franchise for more information.') }}</p>
-                                            </div>
+                                            <div class="w-full text-center text-neutral-300">Please contact the franchise for more information.</div>
                                         @endif
                                     </div>
                                 </div>

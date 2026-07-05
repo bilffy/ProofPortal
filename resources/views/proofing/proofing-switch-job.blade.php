@@ -55,9 +55,7 @@
         @else
             <div class="row mt-4">
                 <div class="col-12">
-                    <p class="lead text-center">
-                        Currently you have no active proofing job to complete
-                    </p>
+                    <div class="w-full text-center text-neutral-300">Currently you have no active proofing job to complete.</div>
                 </div>
             </div>
         @endif
