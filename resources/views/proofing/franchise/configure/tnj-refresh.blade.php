@@ -43,7 +43,7 @@
     <div class="col-3 m-auto">
         {{-- @if (auth()->user()->hasRole('franchise')) --}}
             @php
-                $confirmMsg = __('Are you sure you want to update People Images and update how People are linked to Folders of :school? This should only be done if you have uploaded new images or moved People between Folders in the TNJ.', ['school' => $selectedJob->ts_jobname]);
+                $confirmMsg = __('Are you sure you want to update People Images or how People are linked to Folders of :school? This should only be done if you have uploaded new images or moved People between Folders in the TNJ.', ['school' => $selectedJob->ts_jobname]);
             @endphp
             <form action="{{ URL::signedRoute('config-job-action', ['action' => 'update-people-images-and-associations', 'hash' => $jobKeyHash]) }}" method="POST">
                 @csrf
