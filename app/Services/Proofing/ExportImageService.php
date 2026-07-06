@@ -17,7 +17,6 @@ class ExportImageService
     public const EXPORT_SYNCED = 1;
     public const EXPORT_DOWNLOADED = 2;
     public const EXPORT_FAILED = -1;
-    public const EXPORT_UPLOAD_FAILED = -3;
 
     protected StatusService $statusService;
 
@@ -28,7 +27,7 @@ class ExportImageService
 
     /**
      * Phase 1: download Timestone thumbnails to local disk in batches of 100 (exportStatus → 2).
-     * Phase 2: bulk-upload via ImageUploader (exportStatus → 1, -3 on upload failure), then delete local staging.
+     * Phase 2: bulk-upload via ImageUploader (exportStatus → 1), then delete local staging.
      */
     public function getAllUnsyncJobsImages($jobkey)
     {
@@ -201,8 +200,9 @@ class ExportImageService
     {
         $this->reconcileMissingLocalFiles($job, $jobkey);
 
-        $uploadSummary = $this->uploadLocalImagesToProd($job, $jobkey);
-        $pendingUploads = $this->countPendingUploads($job);
+        // Increased default chunk size from 10 to 50 for optimized HTTP batch performance
+        $uploadSummary = $this->uploadLocalImagesToProd($job, $jobkey, 50);
+        $pendingUploads = $uploadSummary['failed'];
 
         Log::info('Image sync upload batch finished', array_merge(
             ['jobkey' => $jobkey, 'pending_uploads' => $pendingUploads],
@@ -232,9 +232,10 @@ class ExportImageService
     }
 
     /**
-     * @return array{uploaded: int, failed: int, orphaned: int}
+     * Processes locally cached images and aggregates them into multi-file batches for dispatching.
+     * * @return array{uploaded: int, failed: int, orphaned: int}
      */
-    protected function uploadLocalImagesToProd(Job $job, string $jobkey, int $chunkSize = 10): array
+    protected function uploadLocalImagesToProd(Job $job, string $jobkey, int $chunkSize = 50): array
     {
         $summary = ['uploaded' => 0, 'failed' => 0, 'orphaned' => 0];
         $localDir = $this->localStagingDir($jobkey);
@@ -244,11 +245,12 @@ class ExportImageService
         }
 
         $files = Storage::disk('local')->allFiles($localDir);
-        $uploader = new ImageUploader();
         $prefix = $this->cachePrefix();
-        $uploadedKeys = [];
-        $uploadedFiles = [];
-        $uploadFailedBatch = [];
+        
+        // Temporary placeholders for buffering batches
+        $pendingBatchFiles = []; 
+        $pendingBatchKeys = [];  
+        $pendingBatchData = [];
 
         foreach ($files as $file) {
             $subjectKey = pathinfo($file, PATHINFO_FILENAME);
@@ -286,38 +288,26 @@ class ExportImageService
             ), '/');
             $filename = sprintf('%s.%s', $subjectKey, $extension);
 
-            try {
-                $uploader->upload(Storage::disk('local')->get($file), $remotePath, $filename);
+            // Append item attributes into the pending batch instead of immediately firing an HTTP connection
+            $pendingBatchFiles[] = $file;
+            $pendingBatchKeys[] = $image->ts_imagekey;
+            $pendingBatchData[] = [
+                'filename' => $filename,
+                'remote_path' => $remotePath
+            ];
 
-                $uploadedKeys[] = $image->ts_imagekey;
-                $uploadedFiles[] = $file;
-
-                if (count($uploadedKeys) >= $chunkSize) {
-                    $summary['uploaded'] += $this->updateBatchUploadStatuses($uploadedKeys);
-                    $uploadedKeys = [];
-                }
-            } catch (Exception $e) {
-                $uploadFailedBatch[] = $image->ts_imagekey;
-                $summary['failed'] += $this->flushUploadFailedBatch($uploadFailedBatch, $chunkSize);
-
-                Log::error('Image upload failed', [
-                    'jobkey' => $jobkey,
-                    'image_key' => $image->ts_imagekey,
-                    'subject_key' => $subjectKey,
-                    'export_status' => self::EXPORT_UPLOAD_FAILED,
-                    'error' => $e->getMessage(),
-                ]);
+            // Trigger payload transmission once buffer threshold hits the targeted chunk size
+            if (count($pendingBatchFiles) >= $chunkSize) {
+                $this->processHttpBatchUpload($pendingBatchFiles, $pendingBatchKeys, $pendingBatchData, $summary);
+                $pendingBatchFiles = [];
+                $pendingBatchKeys = [];
+                $pendingBatchData = [];
             }
         }
 
-        if (!empty($uploadedKeys)) {
-            $summary['uploaded'] += $this->updateBatchUploadStatuses($uploadedKeys);
-        }
-
-        $summary['failed'] += $this->flushUploadFailedBatch($uploadFailedBatch, $chunkSize, true);
-
-        foreach ($uploadedFiles as $file) {
-            Storage::disk('local')->delete($file);
+        // Catch and process remaining leftovers that didn't fully satisfy the strict chunk limits
+        if (!empty($pendingBatchFiles)) {
+            $this->processHttpBatchUpload($pendingBatchFiles, $pendingBatchKeys, $pendingBatchData, $summary);
         }
 
         if ($summary['failed'] === 0) {
@@ -327,48 +317,42 @@ class ExportImageService
         return $summary;
     }
 
-    protected function countPendingUploads(Job $job): int
+    /**
+     * Executes the network delivery mapping payloads into ImageUploader->uploadBatch().
+     */
+    private function processHttpBatchUpload(array $files, array $imageKeys, array $metaData, array &$summary): void
     {
-        return Image::query()
-            ->where('ts_job_id', $job->ts_job_id)
-            ->where('keyorigin', 'Subject')
-            ->where('exportStatus', self::EXPORT_DOWNLOADED)
-            ->count();
-    }
+        try {
+            $uploader = new ImageUploader();
+            $filesPayload = [];
 
-    protected function flushUploadFailedBatch(array &$uploadFailedBatch, int $chunkSize, bool $force = false): int
-    {
-        if (empty($uploadFailedBatch)) {
-            return 0;
+            // Compile unified structure conforming to ImageUploader requirements
+            foreach ($files as $index => $file) {
+                $filesPayload[] = [
+                    'content'     => Storage::disk('local')->get($file),
+                    'filename'    => $metaData[$index]['filename'],
+                    'remote_path' => $metaData[$index]['remote_path']
+                ];
+            }
+
+            // Push the batch data to the Core PHP API over a single request block
+            $uploader->uploadBatch($filesPayload);
+
+            // Update local tracking metrics and clear out transient local disk contents on verified success
+            $summary['uploaded'] += $this->updateBatchUploadStatuses($imageKeys);
+
+            foreach ($files as $file) {
+                Storage::disk('local')->delete($file);
+            }
+
+        } catch (Exception $e) {
+            // Keep localized structural storage untouched on network exceptions to ensure consistent retries
+            $summary['failed'] += count($files);
+            Log::error('Batch Image upload service failed', [
+                'image_keys' => $imageKeys,
+                'error'      => $e->getMessage(),
+            ]);
         }
-
-        if (!$force && count($uploadFailedBatch) < $chunkSize) {
-            return 0;
-        }
-
-        $count = $this->markImagesAsUploadFailed($uploadFailedBatch);
-        $uploadFailedBatch = [];
-
-        return $count;
-    }
-
-    protected function markImagesAsUploadFailed(array $imageKeys): int
-    {
-        if (empty($imageKeys)) {
-            return 0;
-        }
-
-        $updated = Image::whereIn('ts_imagekey', $imageKeys)
-            ->where('exportStatus', self::EXPORT_DOWNLOADED)
-            ->update(['exportStatus' => self::EXPORT_UPLOAD_FAILED]);
-
-        Log::warning('Marked images as upload failed', [
-            'count' => $updated,
-            'export_status' => self::EXPORT_UPLOAD_FAILED,
-            'image_keys' => $imageKeys,
-        ]);
-
-        return $updated;
     }
 
     /**
