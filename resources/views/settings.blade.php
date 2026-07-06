@@ -83,7 +83,7 @@
                     }));
                 } else {
                     window.dispatchEvent(new CustomEvent('show-toast-message', {
-                        detail: { status: 'error', message: result.message || 'Synchronization failed.' }
+                        detail: { status: 'error', message: result.message || 'Sync failed.' }
                     }));
                 }
             } catch (error) {

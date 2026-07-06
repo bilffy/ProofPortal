@@ -225,14 +225,21 @@ class JobConfigureController extends Controller
                     $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
                     return redirect()->back()->with('message', 'Success! ' . $message);
                 }
-                return redirect()->back()->with('error', 'Update blocked: Job synchronization is already in progress or already scheduled in Timestone.');
+                return redirect()->back()->with('error', 'Update blocked: Job sync is already in progress or already scheduled in Timestone.');
 
             case 'update-people-images':
                 if ($this->configureService->updatePeopleImage($selectedJob->ts_job_id, $selectedJob->ts_jobkey)) {
                     $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
                     return redirect()->back()->with('message', 'Success! ' . $message);
                 }
-                return redirect()->back()->with('error', 'Update blocked: Job synchronization is already in progress or already scheduled in Timestone.');
+                return redirect()->back()->with('error', 'Update blocked: Job sync is already in progress or already scheduled in Timestone.');
+
+            case 'update-people-images-and-associations':
+                if ($this->configureService->updatePeopleImagesAndAssociations($selectedJob->ts_job_id, $selectedJob->ts_jobkey)) {
+                    $message = "People Images and Folder Attachments will be updated for \"$selectedJob->ts_jobname\".";
+                    return redirect()->back()->with('message', 'Success! ' . $message);
+                }
+                return redirect()->back()->with('error', 'Update blocked: Job sync is already in progress or already scheduled in Timestone.');
 
             default:
                 return redirect()->back()->with('error', 'Invalid action.');

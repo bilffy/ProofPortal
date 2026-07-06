@@ -22,7 +22,7 @@ class SyncImagesScheduler extends Command
      *
      * @var string
      */
-    protected $description = 'Dispatches synchronization jobs for unsynced assets';
+    protected $description = 'Dispatches sync jobs for unsynced assets';
 
     /**
      * Execute the console command.
