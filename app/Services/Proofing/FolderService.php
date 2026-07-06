@@ -281,17 +281,20 @@ class FolderService
         }
 
         $tsJobId = $this->getDecryptData($data['JobId']);
+        $job = $this->getJobService()->getJobById($tsJobId);
 
         // If all active folders are now Completed, mark the Job as Completed
         if ($newStatusId == $this->statusService->completed) {
             if ($this->countFoldersByNotStatus($tsJobId, $this->statusService->completed) === 0) {
-                $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->completed); 
+                $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->completed);
             }
-        } 
-        // If all active folders are now Unlocked, mark the Job as Unlocked
-        elseif ($newStatusId == $this->statusService->unlocked) {
-            if ($this->countFoldersByNotStatus($tsJobId, $this->statusService->unlocked) === 0) {
-                $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->unlocked); 
+        } elseif ($newStatusId == $this->statusService->unlocked) {
+            $allFoldersUnlocked = $this->countFoldersByNotStatus($tsJobId, $this->statusService->unlocked) === 0;
+            $jobWasCompleted = $job && (int) $job->job_status_id === (int) $this->statusService->completed;
+
+            // Unlock the job when every folder is unlocked, or when re-opening any folder on a completed job
+            if ($allFoldersUnlocked || ($jobWasCompleted && !empty($changingFolderIds))) {
+                $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->unlocked);
             }
         }
 
