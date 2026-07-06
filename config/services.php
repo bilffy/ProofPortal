@@ -43,5 +43,5 @@ return [
     'exportImageLocation' => env('EXPORTIMAGELOCATION'),
     'image_upload_url' => env('IMAGE_UPLOAD_URL'),
     'image_upload_key' => env('IMAGE_UPLOAD_KEY'),
-    'proofing_cache_prefix' => env('PROOFING_CACHE_PREFIX'),
+    'proofing_cache_prefix' => env('PROOFING_CACHE_PREFIX', 'proofing_cache'),
 ];

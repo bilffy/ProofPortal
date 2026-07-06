@@ -521,7 +521,9 @@ class ExportImageService
 
     protected function cachePrefix(): string
     {
-        return config('services.proofing_cache_prefix', 'proofing_cache');
+        $prefix = config('services.proofing_cache_prefix');
+
+        return filled($prefix) ? (string) $prefix : 'proofing_cache';
     }
 
     public function findImageMatchesByImageKeys($imageKeys = null)
