@@ -230,39 +230,23 @@ class ConfigureService
             return false;
         }
 
-        $this->syncSubjectAssociations($tsJobId);
-        $this->timestoneTableService->markBlueprintSyncComplete($job->ts_jobkey, $this->statusService->success);
+        // Timestone
+        $tsSubjects = $this->timestoneTableService->getAllTimestoneSubjectsByJobID($tsJobId); // Format subjects by SubjectKey
 
-        return true;
-    }
-
-    public function updatePeopleImagesAndAssociations($tsJobId, $tsJobKey)
-    {
-        $job = \App\Models\Job::where('ts_job_id', $tsJobId)->first();
-        if (!$job || !$this->timestoneTableService->isJobEligibleForSync($tsJobKey)) {
-            return false;
-        }
-
-        $this->syncSubjectAssociations($tsJobId);
-
-        return $this->updatePeopleImage($tsJobId, $tsJobKey, checkEligibility: false);
-    }
-
-    private function syncSubjectAssociations($tsJobId): void
-    {
-        $tsSubjects = $this->timestoneTableService->getAllTimestoneSubjectsByJobID($tsJobId);
-
+        // Blueprint Folders (Pre-fetch all to eliminate N+1 lookup)
         $bpFolders = $this->folderService->getFolderByJobId($tsJobId)->pluck('ts_folder_id', 'ts_folderkey');
 
+        // Blueprint Subjects
         $bpSubjects = $this->subjectService->getByJobId($tsJobId, 'id', 'ts_folder_id', 'ts_subjectkey', 'ts_subject_id')
-            ->orderBy('ts_subjectkey', 'asc')
-            ->get();
+                ->orderBy('ts_subjectkey', 'asc')
+                ->get();
 
         $bpSubjectsUpdated = [];
         foreach ($bpSubjects as $bpSubject) {
             if (isset($tsSubjects[$bpSubject->ts_subjectkey])) {
                 $folderKey = $tsSubjects[$bpSubject->ts_subjectkey]->FolderKey;
 
+                // Memory map lookup instead of a database hit
                 if (isset($bpFolders[$folderKey]) && $bpSubject->ts_folder_id != $bpFolders[$folderKey]) {
                     $bpSubject->ts_folder_id = $bpFolders[$folderKey];
                     $bpSubjectsUpdated[] = $bpSubject;
@@ -270,11 +254,17 @@ class ConfigureService
             }
         }
 
+        // Save the updated subjects natively
         foreach ($bpSubjectsUpdated as $updatedSubject) {
-            $updatedSubject->save();
+            $updatedSubject->save(); 
         }
 
+        // Update FoldersSubjects table from Timestone using Bulk queries
         $this->recastTimestoneLinksOfSubjectsToFolders($bpSubjects->pluck('ts_subject_id'), $bpFolders->values()->toArray());
+
+        $this->timestoneTableService->markBlueprintSyncComplete($job->ts_jobkey, $this->statusService->success);
+
+        return true;
     }
     
 
@@ -356,9 +346,9 @@ class ConfigureService
         }
     }
 
-    public function updatePeopleImage($tsJobId, $tsJobKey, bool $checkEligibility = true)
+    public function updatePeopleImage($tsJobId, $tsJobKey)
     {
-        if ($checkEligibility && !$this->timestoneTableService->isJobEligibleForSync($tsJobKey)) {
+        if (!$this->timestoneTableService->isJobEligibleForSync($tsJobKey)) {
             return false;
         }
 

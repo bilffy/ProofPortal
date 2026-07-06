@@ -261,7 +261,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             //Configure Job - TNJ Refresh
             Route::post('/franchise/config-job/{action}/{hash}', [JobConfigureController::class, 'handleJobAction'])
                 ->name('config-job-action')
-                ->where('action', 'merge-duplicate-folders|merge-duplicate-subjects|update-subject-associations|update-people-images|update-people-images-and-associations')->middleware('signed'); 
+                ->where('action', 'merge-duplicate-folders|merge-duplicate-subjects|update-subject-associations|update-people-images')->middleware('signed'); 
             //Configure Job - Delete Job
             Route::post('/franchise/delete-job/{hash}', [ProofingJobController::class, 'deleteJob'])->name('dashboard.deleteJob')->middleware('signed');
         });

@@ -51,7 +51,7 @@ class CheckJobSession
                 abort(403, 'Unauthorized access to this job.');
             }
 
-            // 3. Session Sync Check
+            // 3. Session Synchronization Check
             $currentSessionJob = Session::get('selectedJob');
 
             // Check if the session is empty or points to a different job
