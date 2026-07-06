@@ -16,6 +16,10 @@ class ExportImageService
     public const EXPORT_PENDING = 0;
     public const EXPORT_SYNCED = 1;
     public const EXPORT_DOWNLOADED = 2;
+    public const EXPORT_THUMBNAIL_MISSING = -1;
+    public const EXPORT_UPLOAD_FAILED = -3;
+
+    /** @deprecated Use EXPORT_THUMBNAIL_MISSING */
     public const EXPORT_FAILED = -1;
 
     protected StatusService $statusService;
@@ -27,7 +31,7 @@ class ExportImageService
 
     /**
      * Phase 1: download Timestone thumbnails to local disk in batches of 100 (exportStatus → 2).
-     * Phase 2: bulk-upload via ImageUploader (exportStatus → 1), then delete local staging.
+     * Phase 2: bulk-upload via ImageUploader (exportStatus → 1, -3 on upload failure), then delete local staging.
      */
     public function getAllUnsyncJobsImages($jobkey)
     {
@@ -109,7 +113,7 @@ class ExportImageService
 
     /**
      * Fetch thumbnails from Timestone, save to local disk, update DB in chunks of 10.
-     * exportStatus = 2 when downloaded, -1 when missing or failed.
+     * exportStatus = 2 when downloaded, -1 when thumbnail missing / not in Timestone.
      *
      * @return array{downloaded: int, failed: int, missing: int}
      */
@@ -135,7 +139,7 @@ class ExportImageService
 
             if ($thumbnail === null) {
                 $failedBatch[] = $row->ImageKey;
-                $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize);
+                $summary['failed'] += $this->flushThumbnailMissingBatch($failedBatch, $chunkSize);
                 Log::warning('Timestone thumbnail missing for image', [
                     'jobkey' => $job->ts_jobkey,
                     'image_key' => $row->ImageKey,
@@ -187,13 +191,13 @@ class ExportImageService
             $this->updateBatchDownloadStatuses($downloadedBatch);
         }
 
-        $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize, true);
+        $summary['failed'] += $this->flushThumbnailMissingBatch($failedBatch, $chunkSize, true);
 
         $missingKeys = array_diff($imageKeys, array_unique($seenKeys));
         if (!empty($missingKeys)) {
             $summary['missing'] = count($missingKeys);
             foreach (array_chunk(array_values($missingKeys), $chunkSize) as $chunk) {
-                $summary['failed'] += $this->markImagesAsFailed($chunk, 'no_timestone_match');
+                $summary['failed'] += $this->markThumbnailMissing($chunk, 'no_timestone_match');
             }
             Log::warning('No Timestone match for image keys', [
                 'jobkey' => $job->ts_jobkey,
@@ -218,7 +222,7 @@ class ExportImageService
             $uploadSummary
         ));
 
-        if ($pendingUploads > 0 || $uploadSummary['failed'] > 0) {
+        if ($pendingUploads > 0) {
             dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addMinutes(5)));
 
             return [
@@ -369,11 +373,11 @@ class ExportImageService
             }
 
         } catch (Exception $e) {
-            // Keep localized structural storage untouched on network exceptions to ensure consistent retries
-            $summary['failed'] += count($files);
-            Log::error('Batch Image upload service failed', [
+            $summary['failed'] += $this->markUploadFailed($imageKeys, 'upload_batch_failed');
+            Log::error('Batch image upload failed', [
                 'image_keys' => $imageKeys,
-                'error'      => $e->getMessage(),
+                'export_status' => self::EXPORT_UPLOAD_FAILED,
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -388,7 +392,7 @@ class ExportImageService
                 continue;
             }
 
-            $this->markImagesAsFailed([$image->ts_imagekey], 'local_file_missing', self::EXPORT_DOWNLOADED);
+            $this->markUploadFailed([$image->ts_imagekey], 'local_file_missing');
             Log::error('Downloaded image missing local file', [
                 'jobkey' => $jobkey,
                 'image_key' => $image->ts_imagekey,
@@ -452,7 +456,7 @@ class ExportImageService
         return $updated;
     }
 
-    protected function flushFailedBatch(array &$failedBatch, int $chunkSize, bool $force = false): int
+    protected function flushThumbnailMissingBatch(array &$failedBatch, int $chunkSize, bool $force = false): int
     {
         if (empty($failedBatch)) {
             return 0;
@@ -462,26 +466,46 @@ class ExportImageService
             return 0;
         }
 
-        $count = $this->markImagesAsFailed($failedBatch, 'download_failed');
+        $count = $this->markThumbnailMissing($failedBatch, 'thumbnail_missing');
         $failedBatch = [];
 
         return $count;
     }
 
-    protected function markImagesAsFailed(array $imageKeys, string $reason = 'unknown', int $onlyStatus = self::EXPORT_PENDING): int
+    protected function markThumbnailMissing(array $imageKeys, string $reason = 'unknown'): int
     {
         if (empty($imageKeys)) {
             return 0;
         }
 
         $updated = Image::whereIn('ts_imagekey', $imageKeys)
-            ->where('exportStatus', $onlyStatus)
-            ->update(['exportStatus' => self::EXPORT_FAILED]);
+            ->where('exportStatus', self::EXPORT_PENDING)
+            ->update(['exportStatus' => self::EXPORT_THUMBNAIL_MISSING]);
 
-        Log::warning('Marked images as failed', [
+        Log::warning('Marked images as thumbnail missing', [
             'count' => $updated,
             'reason' => $reason,
-            'export_status' => self::EXPORT_FAILED,
+            'export_status' => self::EXPORT_THUMBNAIL_MISSING,
+            'image_keys' => $imageKeys,
+        ]);
+
+        return $updated;
+    }
+
+    protected function markUploadFailed(array $imageKeys, string $reason = 'unknown'): int
+    {
+        if (empty($imageKeys)) {
+            return 0;
+        }
+
+        $updated = Image::whereIn('ts_imagekey', $imageKeys)
+            ->where('exportStatus', self::EXPORT_DOWNLOADED)
+            ->update(['exportStatus' => self::EXPORT_UPLOAD_FAILED]);
+
+        Log::warning('Marked images as upload failed', [
+            'count' => $updated,
+            'reason' => $reason,
+            'export_status' => self::EXPORT_UPLOAD_FAILED,
             'image_keys' => $imageKeys,
         ]);
 

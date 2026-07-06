@@ -46,5 +46,6 @@ return [
     'proofing_cache_disk' => env('PROOFING_CACHE_DISK', 'proofing_cache'),
     // php artisan config:clear
     // mkdir -p storage/app/proofing_cache
+    // chown -R nginx:nginx storage/app/proofing_cache
     // chmod -R 775 storage/app/proofing_cache
 ];
