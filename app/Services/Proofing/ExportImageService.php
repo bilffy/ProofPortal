@@ -2,231 +2,574 @@
 
 namespace App\Services\Proofing;
 
-use App\Services\Proofing\StatusService;
+use App\Jobs\SyncImagesToProd02;
 use App\Models\Image;
 use App\Models\Job;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Services\Proofing\ImageUploader;
-use App\Jobs\SyncImagesToProd02;
 use Exception;
 use finfo;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ExportImageService
 {
-    protected $statusService;
+    public const EXPORT_PENDING = 0;
+    public const EXPORT_SYNCED = 1;
+    public const EXPORT_DOWNLOADED = 2;
+    public const EXPORT_FAILED = -1;
+    public const EXPORT_UPLOAD_FAILED = -3;
 
-    /**
-     * Create a new class instance.
-     */
+    protected StatusService $statusService;
+
     public function __construct(StatusService $statusService)
     {
         $this->statusService = $statusService;
     }
 
-    /* Export Image */
-
+    /**
+     * Phase 1: download Timestone thumbnails to local disk in batches of 100 (exportStatus → 2).
+     * Phase 2: bulk-upload via ImageUploader (exportStatus → 1, -3 on upload failure), then delete local staging.
+     */
     public function getAllUnsyncJobsImages($jobkey)
     {
-        \Log::info($jobkey);
-        // Disable logs to save RAM
+        Log::info('Image sync started', ['jobkey' => $jobkey]);
+
         DB::connection('timestone')->disableQueryLog();
         DB::disableQueryLog();
 
-        $query = $this->getAllUnsyncImagesQuery($jobkey);
-        
-        // 1. Grab exactly 100 image keys to work on
-        $images = $query->limit(100)->get();
+        $job = Job::with('seasons')->where('ts_jobkey', $jobkey)->first();
+        if (!$job) {
+            Log::warning('Image sync aborted: job not found', ['jobkey' => $jobkey]);
 
-        if ($images->isEmpty()) {
-            Job::where('ts_jobkey', $jobkey)->update(['imagesync_status_id' => $this->statusService->sync]);
-            Log::info("Sync Complete for Job: $jobkey");
-            return ['message' => 'Sync Complete'];
+            return ['message' => 'Job not found'];
         }
 
-        $imageKeys = $images->pluck('ts_imagekey')->toArray();
-
         try {
-            // 2. Process this batch of 100
-            $this->saveArtifactByImageKeyUsingMassInjection($imageKeys, 10);
+            $pendingDownloads = $this->getAllUnsyncImagesQuery($jobkey)->count();
 
-            // 3. CHECK: Are there more images left?
-            $remainingCount = $this->getAllUnsyncImagesQuery($jobkey)->count();
+            if ($pendingDownloads > 0) {
+                $images = $this->getAllUnsyncImagesQuery($jobkey)->limit(100)->get();
+                $imageKeys = $images->pluck('ts_imagekey')->toArray();
 
-            if ($remainingCount > 0) {
-                // This triggers the NEXT 100 automatically
-                dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addSeconds(3))); 
-                Log::info("Dispatched next batch for $jobkey. Remaining: $remainingCount");
+                $downloadSummary = $this->downloadBatchToLocal($job, $imageKeys);
+                $remainingDownloads = $this->getAllUnsyncImagesQuery($jobkey)->count();
+
+                Log::info('Image sync download batch finished', array_merge(
+                    ['jobkey' => $jobkey, 'remaining_pending' => $remainingDownloads],
+                    $downloadSummary
+                ));
+
+                if ($remainingDownloads > 0) {
+                    dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addSeconds(3)));
+
+                    return [
+                        'success' => true,
+                        'phase' => 'download',
+                        'processed' => count($imageKeys),
+                        'summary' => $downloadSummary,
+                    ];
+                }
             }
 
-            return ['success' => true, 'processed' => count($imageKeys)];
-
+            return $this->finishJobSync($job, $jobkey);
         } catch (Exception $e) {
-            Log::error("Image Export Error: " . $e->getMessage());
+            Log::error('Image sync error', ['jobkey' => $jobkey, 'error' => $e->getMessage()]);
             throw $e;
         }
     }
 
-    /**
-     * Get the query builder for unsync images.
-     */
     public function getAllUnsyncImagesQuery($jobkey)
     {
         return Image::query()
             ->join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
-            ->where('images.exportStatus', 0)
+            ->where('images.exportStatus', self::EXPORT_PENDING)
             ->where('images.keyorigin', 'Subject')
             ->where('jobs.imagesync_status_id', $this->statusService->unsync)
-            ->when($jobkey, function ($query) use ($jobkey) {
-                return $query->where('jobs.ts_jobkey', $jobkey);
-            })
+            ->when($jobkey, fn ($query) => $query->where('jobs.ts_jobkey', $jobkey))
             ->select([
-                'images.ts_image_id',      // Required for chunkById
-                'images.ts_imagekey',   // Required for syncing
+                'images.ts_image_id',
+                'images.ts_imagekey',
+                'images.keyvalue',
             ]);
     }
 
-    public function saveArtifactByImageKeyUsingMassInjection(array $imageKeys = [], $internalChunk = 10)
+    public function getPendingUploadImagesQuery(string $jobkey)
     {
-        if (empty($imageKeys)) return false;
-        
-        // Use cursor to stream 1 image at a time from the DB
-        $images = $this->findImageMatchesByImageKeys($imageKeys)->cursor();
-        
-        $batchData = []; // Multi-dimensional tracking array
-        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-        $uploader = new ImageUploader();
-
-        foreach ($images as $image) {
-            if (!$image->Thumbnail) continue;
-                
-            $mimeType = $fileInfo->buffer($image->Thumbnail);
-            $extension = $this->getExtensionFromMimeType($mimeType);
-            $prefix = config('services.proofing_cache_prefix');
-            $sKey = (string)$image->SubjectKey;
-            
-            // Generate partitioning subdirectories
-            $hash = hash_hmac('sha256', 'subjects', $sKey);
-            $p1 = substr($hash, 0, 2);
-            $p2 = substr($hash, 2, 2);
-            $p3 = substr($hash, 4, 2);
-            
-            $remotePath = sprintf(
-                '%s/%s/%s/%s/subjects/%s/%s/%s/%s.%s',
-                $prefix, $image->Code, $image->SchoolKey, $image->JobKey,
-                $p3, $p1, $p2, $sKey, $extension
-            );
-            $remotePath = ltrim($remotePath, '/');
-
-            // Formulate the path and filename strings
-            $databaseRelativePath = sprintf('%s/%s/%s/', $p3, $p1, $p2);
-            $filename = sprintf('%s.%s', $sKey, $extension);
-                
-            try {
-                $uploader->upload($image->Thumbnail, $remotePath, $filename);
-                
-                // Track both variables under the unique ImageKey identifier
-                $batchData[$image->ImageKey] = [
-                    'path' => $databaseRelativePath,
-                    'name' => $filename,
-                ];
-                
-                // Update DB every 10 images to show progress and free RAM
-                if (count($batchData) >= 10) {
-                    $this->updateBatchStatusesAndPaths($batchData);
-                    $batchData = []; 
-                    gc_collect_cycles(); // Force PHP memory garbage collector cycle
-                }
-            } catch (Exception $e) {
-                Log::error("Image Upload Error for {$image->ImageKey}: " . $e->getMessage());
-            }
-            
-            unset($image); // Clear binary buffer reference
-        }
-
-        // Final update for any remaining keys (the last 1-9 images)
-        if (!empty($batchData)) {
-            $this->updateBatchStatusesAndPaths($batchData);
-        }
-
-        return true;
+        return Image::query()
+            ->join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+            ->where('images.exportStatus', self::EXPORT_DOWNLOADED)
+            ->where('images.keyorigin', 'Subject')
+            ->where('jobs.ts_jobkey', $jobkey)
+            ->select([
+                'images.ts_image_id',
+                'images.ts_imagekey',
+                'images.keyvalue',
+                'images.name',
+            ]);
     }
 
     /**
-     * Executes an optimized raw SQL statement using independent CASE WHEN expressions
-     * to simultaneously update multiple custom dynamic values per image row.
+     * Fetch thumbnails from Timestone, save to local disk, update DB in chunks of 10.
+     * exportStatus = 2 when downloaded, -1 when missing or failed.
+     *
+     * @return array{downloaded: int, failed: int, missing: int}
      */
-    protected function updateBatchStatusesAndPaths(array $batchData)
+    public function downloadBatchToLocal(Job $job, array $imageKeys, int $chunkSize = 10): array
+    {
+        $summary = ['downloaded' => 0, 'failed' => 0, 'missing' => 0];
+
+        if (empty($imageKeys)) {
+            return $summary;
+        }
+
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        $seenKeys = [];
+        $downloadedBatch = [];
+        $failedBatch = [];
+
+        foreach ($this->findImageMatchesByImageKeys($imageKeys)->cursor() as $row) {
+            $seenKeys[] = $row->ImageKey;
+
+            if (!$row->Thumbnail) {
+                $failedBatch[] = $row->ImageKey;
+                $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize);
+                unset($row);
+                continue;
+            }
+
+            try {
+                $extension = $this->getExtensionFromMimeType($fileInfo->buffer($row->Thumbnail));
+                $subjectKey = (string) $row->SubjectKey;
+                $localPath = sprintf(
+                    '%s/%s.%s',
+                    $this->localDir($job, $subjectKey),
+                    $subjectKey,
+                    $extension
+                );
+
+                Storage::disk('local')->put($localPath, $row->Thumbnail);
+
+                [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
+                $downloadedBatch[$row->ImageKey] = [
+                    'path' => sprintf('%s/%s/%s/', $p3, $p1, $p2),
+                    'name' => sprintf('%s.%s', $subjectKey, $extension),
+                ];
+
+                if (count($downloadedBatch) >= $chunkSize) {
+                    $summary['downloaded'] += count($downloadedBatch);
+                    $this->updateBatchDownloadStatuses($downloadedBatch);
+                    $downloadedBatch = [];
+                    gc_collect_cycles();
+                }
+            } catch (Exception $e) {
+                Log::error('Local download failed', [
+                    'jobkey' => $job->ts_jobkey,
+                    'image_key' => $row->ImageKey,
+                    'error' => $e->getMessage(),
+                ]);
+                $failedBatch[] = $row->ImageKey;
+                $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize);
+            }
+
+            unset($row);
+        }
+
+        if (!empty($downloadedBatch)) {
+            $summary['downloaded'] += count($downloadedBatch);
+            $this->updateBatchDownloadStatuses($downloadedBatch);
+        }
+
+        $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize, true);
+
+        $missingKeys = array_diff($imageKeys, array_unique($seenKeys));
+        if (!empty($missingKeys)) {
+            $summary['missing'] = count($missingKeys);
+            foreach (array_chunk(array_values($missingKeys), $chunkSize) as $chunk) {
+                $summary['failed'] += $this->markImagesAsFailed($chunk, 'no_timestone_match');
+            }
+            Log::warning('No Timestone match for image keys', [
+                'jobkey' => $job->ts_jobkey,
+                'count' => $summary['missing'],
+                'image_keys' => array_values($missingKeys),
+            ]);
+        }
+
+        return $summary;
+    }
+
+    protected function finishJobSync(Job $job, string $jobkey): array
+    {
+        $this->reconcileMissingLocalFiles($job, $jobkey);
+
+        $uploadSummary = $this->uploadLocalImagesToProd($job, $jobkey);
+        $pendingUploads = $this->countPendingUploads($job);
+
+        Log::info('Image sync upload batch finished', array_merge(
+            ['jobkey' => $jobkey, 'pending_uploads' => $pendingUploads],
+            $uploadSummary
+        ));
+
+        if ($pendingUploads > 0) {
+            dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addMinutes(5)));
+
+            return [
+                'success' => false,
+                'phase' => 'upload',
+                'pending_uploads' => $pendingUploads,
+                'summary' => $uploadSummary,
+            ];
+        }
+
+        $this->cleanupLocalStaging($jobkey);
+
+        Job::where('ts_jobkey', $jobkey)->update(['imagesync_status_id' => $this->statusService->sync]);
+        Log::info('Image sync complete', [
+            'jobkey' => $jobkey,
+            'status_counts' => $this->exportStatusCounts($job),
+        ]);
+
+        return ['message' => 'Sync Complete', 'phase' => 'complete', 'summary' => $uploadSummary];
+    }
+
+    /**
+     * @return array{uploaded: int, failed: int, orphaned: int}
+     */
+    protected function uploadLocalImagesToProd(Job $job, string $jobkey, int $chunkSize = 10): array
+    {
+        $summary = ['uploaded' => 0, 'failed' => 0, 'orphaned' => 0];
+        $localDir = $this->localStagingDir($jobkey);
+
+        if (!Storage::disk('local')->exists($localDir)) {
+            return $summary;
+        }
+
+        $files = Storage::disk('local')->allFiles($localDir);
+        $uploader = new ImageUploader();
+        $prefix = $this->cachePrefix();
+        $uploadedKeys = [];
+        $uploadedFiles = [];
+        $uploadFailedBatch = [];
+
+        foreach ($files as $file) {
+            $subjectKey = pathinfo($file, PATHINFO_FILENAME);
+            $extension = pathinfo($file, PATHINFO_EXTENSION);
+
+            $image = Image::where('ts_job_id', $job->ts_job_id)
+                ->where('keyorigin', 'Subject')
+                ->where('keyvalue', $subjectKey)
+                ->where('exportStatus', self::EXPORT_DOWNLOADED)
+                ->first();
+
+            if (!$image) {
+                Storage::disk('local')->delete($file);
+                $summary['orphaned']++;
+                Log::warning('Removed orphaned local file during upload', [
+                    'jobkey' => $jobkey,
+                    'file' => $file,
+                ]);
+                continue;
+            }
+
+            [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
+            $seasonCode = $job->seasons?->code ?? '';
+            $remotePath = ltrim(sprintf(
+                '%s/%s/%s/%s/subjects/%s/%s/%s/%s.%s',
+                $prefix,
+                $seasonCode,
+                $job->ts_schoolkey,
+                $job->ts_jobkey,
+                $p3,
+                $p1,
+                $p2,
+                $subjectKey,
+                $extension
+            ), '/');
+            $filename = sprintf('%s.%s', $subjectKey, $extension);
+
+            try {
+                $uploader->upload(Storage::disk('local')->get($file), $remotePath, $filename);
+
+                $uploadedKeys[] = $image->ts_imagekey;
+                $uploadedFiles[] = $file;
+
+                if (count($uploadedKeys) >= $chunkSize) {
+                    $summary['uploaded'] += $this->updateBatchUploadStatuses($uploadedKeys);
+                    $uploadedKeys = [];
+                }
+            } catch (Exception $e) {
+                $uploadFailedBatch[] = $image->ts_imagekey;
+                $summary['failed'] += $this->flushUploadFailedBatch($uploadFailedBatch, $chunkSize);
+
+                Log::error('Image upload failed', [
+                    'jobkey' => $jobkey,
+                    'image_key' => $image->ts_imagekey,
+                    'subject_key' => $subjectKey,
+                    'export_status' => self::EXPORT_UPLOAD_FAILED,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if (!empty($uploadedKeys)) {
+            $summary['uploaded'] += $this->updateBatchUploadStatuses($uploadedKeys);
+        }
+
+        $summary['failed'] += $this->flushUploadFailedBatch($uploadFailedBatch, $chunkSize, true);
+
+        foreach ($uploadedFiles as $file) {
+            Storage::disk('local')->delete($file);
+        }
+
+        if ($summary['failed'] === 0) {
+            $this->cleanupLocalStaging($jobkey);
+        }
+
+        return $summary;
+    }
+
+    protected function countPendingUploads(Job $job): int
+    {
+        return Image::query()
+            ->where('ts_job_id', $job->ts_job_id)
+            ->where('keyorigin', 'Subject')
+            ->where('exportStatus', self::EXPORT_DOWNLOADED)
+            ->count();
+    }
+
+    protected function flushUploadFailedBatch(array &$uploadFailedBatch, int $chunkSize, bool $force = false): int
+    {
+        if (empty($uploadFailedBatch)) {
+            return 0;
+        }
+
+        if (!$force && count($uploadFailedBatch) < $chunkSize) {
+            return 0;
+        }
+
+        $count = $this->markImagesAsUploadFailed($uploadFailedBatch);
+        $uploadFailedBatch = [];
+
+        return $count;
+    }
+
+    protected function markImagesAsUploadFailed(array $imageKeys): int
+    {
+        if (empty($imageKeys)) {
+            return 0;
+        }
+
+        $updated = Image::whereIn('ts_imagekey', $imageKeys)
+            ->where('exportStatus', self::EXPORT_DOWNLOADED)
+            ->update(['exportStatus' => self::EXPORT_UPLOAD_FAILED]);
+
+        Log::warning('Marked images as upload failed', [
+            'count' => $updated,
+            'export_status' => self::EXPORT_UPLOAD_FAILED,
+            'image_keys' => $imageKeys,
+        ]);
+
+        return $updated;
+    }
+
+    /**
+     * Mark exportStatus=2 rows as failed when their local file is missing.
+     */
+    protected function reconcileMissingLocalFiles(Job $job, string $jobkey): void
+    {
+        foreach ($this->getPendingUploadImagesQuery($jobkey)->cursor() as $image) {
+            if ($this->localFileExists($job, (string) $image->keyvalue, $image->name)) {
+                continue;
+            }
+
+            $this->markImagesAsFailed([$image->ts_imagekey], 'local_file_missing');
+            Log::error('Downloaded image missing local file', [
+                'jobkey' => $jobkey,
+                'image_key' => $image->ts_imagekey,
+                'subject_key' => $image->keyvalue,
+                'expected_name' => $image->name,
+            ]);
+        }
+    }
+
+    protected function updateBatchDownloadStatuses(array $batchData): void
     {
         $keys = array_keys($batchData);
         $pathCases = [];
         $nameCases = [];
         $bindings = [];
 
-        // 1. Build the CASE statement fragment parameters for the image_path modifications
         foreach ($batchData as $imageKey => $data) {
-            $pathCases[] = "WHEN ts_imagekey = ? THEN ?";
+            $pathCases[] = 'WHEN ts_imagekey = ? THEN ?';
             $bindings[] = $imageKey;
             $bindings[] = $data['path'];
         }
 
-        // 2. Build the CASE statement fragment parameters for the name modifications
         foreach ($batchData as $imageKey => $data) {
-            $nameCases[] = "WHEN ts_imagekey = ? THEN ?";
+            $nameCases[] = 'WHEN ts_imagekey = ? THEN ?';
             $bindings[] = $imageKey;
             $bindings[] = $data['name'];
         }
 
-        $pathCasesSql = implode(' ', $pathCases);
-        $nameCasesSql = implode(' ', $nameCases);
-        
-        // 3. Append final whereIn comparison parameters to validate selection safety
         foreach ($keys as $key) {
             $bindings[] = $key;
         }
 
+        $pathCasesSql = implode(' ', $pathCases);
+        $nameCasesSql = implode(' ', $nameCases);
         $placeholders = implode(',', array_fill(0, count($keys), '?'));
 
-        // Executes dual CASE evaluations within a single operational database statement transaction
         DB::statement("
-            UPDATE images 
-            SET exportStatus = 1, 
-                image_path = CASE $pathCasesSql ELSE image_path END,
-                name = CASE $nameCasesSql ELSE name END
-            WHERE ts_imagekey IN ($placeholders)
-        ", $bindings);
+            UPDATE images
+            SET exportStatus = ?,
+                image_path = CASE {$pathCasesSql} ELSE image_path END,
+                name = CASE {$nameCasesSql} ELSE name END
+            WHERE ts_imagekey IN ({$placeholders})
+        ", array_merge([self::EXPORT_DOWNLOADED], $bindings));
     }
 
-    public function findImageMatchesByImageKeys($imageKeys = null) 
+    protected function updateBatchUploadStatuses(array $imageKeys): int
     {
-        $query = DB::connection('timestone')
-                ->table('ImageMatches')
-                ->join('Images', 'ImageMatches.ImageID', '=', 'Images.ImageID')
-                ->join('Subjects', 'ImageMatches.SubjectID', '=', 'Subjects.SubjectID')
-                ->join('ImageBitmaps', 'ImageMatches.ImageID', '=', 'ImageBitmaps.ImageID')
-                ->join('Jobs', 'Jobs.JobID', '=', 'Subjects.JobID')
-                ->join('JobDetails', 'JobDetails.JobID', '=', 'Jobs.JobID')
-                ->join('Seasons', 'Jobs.SeasonID', '=', 'Seasons.SeasonID')
-                ->whereIn('Images.ImageKey', $imageKeys) // Filter by the keys we found
-                ->select([
-                    'Subjects.SubjectKey',
-                    'Images.ImageKey',
-                    'ImageBitmaps.Thumbnail',
-                    'Jobs.JobKey',
-                    'JobDetails.SchoolKey',
-                    'Seasons.Code'
-                ])->orderBy('Subjects.SubjectKey');
+        if (empty($imageKeys)) {
+            return 0;
+        }
 
-        return $query; 
+        $updated = Image::whereIn('ts_imagekey', $imageKeys)
+            ->where('exportStatus', self::EXPORT_DOWNLOADED)
+            ->update(['exportStatus' => self::EXPORT_SYNCED]);
+
+        Log::info('Marked images as uploaded', [
+            'count' => $updated,
+            'export_status' => self::EXPORT_SYNCED,
+        ]);
+
+        return $updated;
     }
 
-    private function getExtensionFromMimeType($mimeType)
+    protected function flushFailedBatch(array &$failedBatch, int $chunkSize, bool $force = false): int
+    {
+        if (empty($failedBatch)) {
+            return 0;
+        }
+
+        if (!$force && count($failedBatch) < $chunkSize) {
+            return 0;
+        }
+
+        $count = $this->markImagesAsFailed($failedBatch, 'download_failed');
+        $failedBatch = [];
+
+        return $count;
+    }
+
+    protected function markImagesAsFailed(array $imageKeys, string $reason = 'unknown'): int
+    {
+        if (empty($imageKeys)) {
+            return 0;
+        }
+
+        $updated = Image::whereIn('ts_imagekey', $imageKeys)->update(['exportStatus' => self::EXPORT_FAILED]);
+
+        Log::warning('Marked images as failed', [
+            'count' => $updated,
+            'reason' => $reason,
+            'export_status' => self::EXPORT_FAILED,
+            'image_keys' => $imageKeys,
+        ]);
+
+        return $updated;
+    }
+
+    protected function exportStatusCounts(Job $job): array
+    {
+        return Image::query()
+            ->where('ts_job_id', $job->ts_job_id)
+            ->where('keyorigin', 'Subject')
+            ->selectRaw('exportStatus, COUNT(*) as total')
+            ->groupBy('exportStatus')
+            ->pluck('total', 'exportStatus')
+            ->all();
+    }
+
+    protected function localFileExists(Job $job, string $subjectKey, ?string $name = null): bool
+    {
+        if ($name) {
+            return Storage::disk('local')->exists(sprintf('%s/%s', $this->localDir($job, $subjectKey), $name));
+        }
+
+        $dir = $this->localDir($job, $subjectKey);
+        foreach (['jpg', 'jpeg', 'png'] as $extension) {
+            if (Storage::disk('local')->exists("{$dir}/{$subjectKey}.{$extension}")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function localStagingDir(string $jobkey): string
+    {
+        return sprintf('%s/%s', $this->cachePrefix(), $jobkey);
+    }
+
+    protected function cleanupLocalStaging(string $jobkey): void
+    {
+        $localDir = $this->localStagingDir($jobkey);
+
+        if (Storage::disk('local')->exists($localDir)) {
+            Storage::disk('local')->deleteDirectory($localDir);
+            Log::info('Deleted local staging directory', ['jobkey' => $jobkey]);
+        }
+    }
+
+    protected function localDir(Job $job, string $subjectKey): string
+    {
+        [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
+
+        return sprintf('%s/%s/%s/%s/%s', $this->cachePrefix(), $job->ts_jobkey, $p3, $p1, $p2);
+    }
+
+    protected function buildPartition(string $subjectKey): array
+    {
+        $hash = hash_hmac('sha256', 'subjects', $subjectKey);
+
+        return [substr($hash, 0, 2), substr($hash, 2, 2), substr($hash, 4, 2)];
+    }
+
+    protected function cachePrefix(): string
+    {
+        return config('services.proofing_cache_prefix', 'proofing_cache');
+    }
+
+    public function findImageMatchesByImageKeys($imageKeys = null)
+    {
+        return DB::connection('timestone')
+            ->table('ImageMatches')
+            ->join('Images', 'ImageMatches.ImageID', '=', 'Images.ImageID')
+            ->join('Subjects', 'ImageMatches.SubjectID', '=', 'Subjects.SubjectID')
+            ->join('ImageBitmaps', 'ImageMatches.ImageID', '=', 'ImageBitmaps.ImageID')
+            ->join('Jobs', 'Jobs.JobID', '=', 'Subjects.JobID')
+            ->join('JobDetails', 'JobDetails.JobID', '=', 'Jobs.JobID')
+            ->join('Seasons', 'Jobs.SeasonID', '=', 'Seasons.SeasonID')
+            ->whereIn('Images.ImageKey', $imageKeys)
+            ->select([
+                'Subjects.SubjectKey',
+                'Images.ImageKey',
+                'ImageBitmaps.Thumbnail',
+                'Jobs.JobKey',
+                'JobDetails.SchoolKey',
+                'Seasons.Code',
+            ])
+            ->orderBy('Subjects.SubjectKey');
+    }
+
+    private function getExtensionFromMimeType($mimeType): string
     {
         $mimes = [
             'image/jpeg' => 'jpg',
-            'image/jpg'  => 'jpg',
-            'image/png'  => 'png',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
         ];
+
         return $mimes[$mimeType] ?? 'jpg';
     }
 }
