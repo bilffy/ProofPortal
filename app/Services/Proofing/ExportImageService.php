@@ -270,7 +270,6 @@ class ExportImageService
         }
 
         $files = $this->staging()->allFiles($localDir);
-        $prefix = $this->cachePrefix();
         
         // Temporary placeholders for buffering batches
         $pendingBatchFiles = []; 
@@ -611,13 +610,6 @@ class ExportImageService
         }
 
         return $thumbnail;
-    }
-
-    protected function cachePrefix(): string
-    {
-        $prefix = config('services.proofing_cache_prefix');
-
-        return filled($prefix) ? (string) $prefix : 'proofing_cache';
     }
 
     public function findImageMatchesByImageKeys($imageKeys = null)
