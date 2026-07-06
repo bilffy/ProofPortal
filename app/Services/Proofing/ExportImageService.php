@@ -121,6 +121,8 @@ class ExportImageService
             return $summary;
         }
 
+        $this->ensureStagingRootExists();
+
         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
         $seenKeys = [];
         $downloadedBatch = [];
@@ -146,7 +148,7 @@ class ExportImageService
                     $extension
                 );
 
-                Storage::disk('local')->put($localPath, $row->Thumbnail);
+                $this->staging()->put($localPath, $row->Thumbnail);
 
                 [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
                 $downloadedBatch[$row->ImageKey] = [
@@ -240,11 +242,11 @@ class ExportImageService
         $summary = ['uploaded' => 0, 'failed' => 0, 'orphaned' => 0];
         $localDir = $this->localStagingDir($jobkey);
 
-        if (!Storage::disk('local')->exists($localDir)) {
+        if (!$this->staging()->exists($localDir)) {
             return $summary;
         }
 
-        $files = Storage::disk('local')->allFiles($localDir);
+        $files = $this->staging()->allFiles($localDir);
         $prefix = $this->cachePrefix();
         
         // Temporary placeholders for buffering batches
@@ -263,7 +265,7 @@ class ExportImageService
                 ->first();
 
             if (!$image) {
-                Storage::disk('local')->delete($file);
+                $this->staging()->delete($file);
                 $summary['orphaned']++;
                 Log::warning('Removed orphaned local file during upload', [
                     'jobkey' => $jobkey,
@@ -329,7 +331,7 @@ class ExportImageService
             // Compile unified structure conforming to ImageUploader requirements
             foreach ($files as $index => $file) {
                 $filesPayload[] = [
-                    'content'     => Storage::disk('local')->get($file),
+                    'content'     => $this->staging()->get($file),
                     'filename'    => $metaData[$index]['filename'],
                     'remote_path' => $metaData[$index]['remote_path']
                 ];
@@ -342,7 +344,7 @@ class ExportImageService
             $summary['uploaded'] += $this->updateBatchUploadStatuses($imageKeys);
 
             foreach ($files as $file) {
-                Storage::disk('local')->delete($file);
+                $this->staging()->delete($file);
             }
 
         } catch (Exception $e) {
@@ -477,12 +479,12 @@ class ExportImageService
     protected function localFileExists(Job $job, string $subjectKey, ?string $name = null): bool
     {
         if ($name) {
-            return Storage::disk('local')->exists(sprintf('%s/%s', $this->localDir($job, $subjectKey), $name));
+            return $this->staging()->exists(sprintf('%s/%s', $this->localDir($job, $subjectKey), $name));
         }
 
         $dir = $this->localDir($job, $subjectKey);
         foreach (['jpg', 'jpeg', 'png'] as $extension) {
-            if (Storage::disk('local')->exists("{$dir}/{$subjectKey}.{$extension}")) {
+            if ($this->staging()->exists("{$dir}/{$subjectKey}.{$extension}")) {
                 return true;
             }
         }
@@ -499,8 +501,8 @@ class ExportImageService
     {
         $localDir = $this->localStagingDir($jobkey);
 
-        if (Storage::disk('local')->exists($localDir)) {
-            Storage::disk('local')->deleteDirectory($localDir);
+        if ($this->staging()->exists($localDir)) {
+            $this->staging()->deleteDirectory($localDir);
             Log::info('Deleted local staging directory', ['jobkey' => $jobkey]);
         }
     }
@@ -517,6 +519,27 @@ class ExportImageService
         $hash = hash_hmac('sha256', 'subjects', $subjectKey);
 
         return [substr($hash, 0, 2), substr($hash, 2, 2), substr($hash, 4, 2)];
+    }
+
+    protected function stagingDisk(): string
+    {
+        $disk = config('services.proofing_cache_disk');
+
+        return filled($disk) ? (string) $disk : 'proofing_cache';
+    }
+
+    protected function staging()
+    {
+        return Storage::disk($this->stagingDisk());
+    }
+
+    protected function ensureStagingRootExists(): void
+    {
+        $root = $this->cachePrefix();
+
+        if (!$this->staging()->exists($root)) {
+            $this->staging()->makeDirectory($root);
+        }
     }
 
     protected function cachePrefix(): string

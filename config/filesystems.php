@@ -34,7 +34,14 @@ return [
             'driver' => 'local',
             //'root' => storage_path('app'),
             //'root' => public_path('images'),
-            'root' => base_path(env('IMAGE_REPOSITORY')),
+            'root' => base_path(env('IMAGE_REPOSITORY', 'image_repository')),
+            'throw' => true,
+            'visibility' => 'private',
+        ],
+
+        'proofing_cache' => [
+            'driver' => 'local',
+            'root' => storage_path('app/proofing_cache'),
             'throw' => true,
             'visibility' => 'private',
         ],

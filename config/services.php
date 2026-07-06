@@ -44,4 +44,8 @@ return [
     'image_upload_url' => env('IMAGE_UPLOAD_URL'),
     'image_upload_key' => env('IMAGE_UPLOAD_KEY'),
     'proofing_cache_prefix' => env('PROOFING_CACHE_PREFIX', 'proofing_cache'),
+    'proofing_cache_disk' => env('PROOFING_CACHE_DISK', 'proofing_cache'),
+    // php artisan config:clear
+    // mkdir -p storage/app/proofing_cache
+    // chmod -R 775 storage/app/proofing_cache
 ];
