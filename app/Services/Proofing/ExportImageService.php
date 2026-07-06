@@ -154,7 +154,7 @@ class ExportImageService
                     $extension
                 );
 
-                $this->staging()->put($localPath, $thumbnail);
+                $this->writeStagingFile($localPath, $thumbnail);
 
                 [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
                 $downloadedBatch[$row->ImageKey] = [
@@ -537,7 +537,7 @@ class ExportImageService
 
     protected function localStagingDir(string $jobkey): string
     {
-        return sprintf('%s/%s', $this->cachePrefix(), $jobkey);
+        return $jobkey;
     }
 
     protected function cleanupLocalStaging(string $jobkey): void
@@ -554,7 +554,7 @@ class ExportImageService
     {
         [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
 
-        return sprintf('%s/%s/%s/%s/%s', $this->cachePrefix(), $job->ts_jobkey, $p3, $p1, $p2);
+        return sprintf('%s/%s/%s/%s', $job->ts_jobkey, $p3, $p1, $p2);
     }
 
     protected function buildPartition(string $subjectKey): array
@@ -578,23 +578,23 @@ class ExportImageService
 
     protected function ensureStagingRootExists(): void
     {
-        $root = $this->cachePrefix();
+        $diskConfig = config('filesystems.disks.' . $this->stagingDisk());
+        $absoluteRoot = $diskConfig['root'] ?? storage_path('app/proofing_cache');
 
-        if ($this->staging()->exists($root)) {
-            return;
+        if (!is_dir($absoluteRoot) && !@mkdir($absoluteRoot, 0775, true) && !is_dir($absoluteRoot)) {
+            throw new Exception("Cannot create proofing staging root: {$absoluteRoot}");
+        }
+    }
+
+    protected function writeStagingFile(string $relativePath, string $contents): void
+    {
+        $directory = dirname($relativePath);
+
+        if ($directory !== '.' && $directory !== '' && !$this->staging()->exists($directory)) {
+            $this->staging()->makeDirectory($directory);
         }
 
-        try {
-            $this->staging()->makeDirectory($root);
-        } catch (Exception $e) {
-            Log::error('Unable to create proofing staging directory', [
-                'disk' => $this->stagingDisk(),
-                'root' => $this->staging()->path($root),
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
-        }
+        $this->staging()->put($relativePath, $contents);
     }
 
     protected function normalizeThumbnail(mixed $thumbnail): ?string
