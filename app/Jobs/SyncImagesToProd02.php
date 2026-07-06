@@ -4,41 +4,64 @@ namespace App\Jobs;
 
 use App\Services\Proofing\ExportImageService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
-class SyncImagesToProd02 implements ShouldQueue
+class SyncImagesToProd02 implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $jobKey;
 
-    // Give the job plenty of time to run (5 minutes)
     public $timeout = 300;
+
+    public $uniqueFor = 300;
 
     public function __construct($jobKey = null)
     {
         $this->jobKey = $jobKey;
     }
 
-    public function handle(ExportImageService $exportImageService)
+    public function uniqueId(): string
     {
-        // Try to get a lock for this specific job key for 5 minutes.
+        return (string) $this->jobKey;
+    }
+
+    public function handle(ExportImageService $exportImageService): void
+    {
         $lock = Cache::lock('sync_images_prod_' . $this->jobKey, 300);
 
-        if ($lock->get()) {
-            try {
-                \Log::info('started SyncImagesToProd02 for ' . $this->jobKey);
-                $exportImageService->getAllUnsyncJobsImages($this->jobKey);
-            } finally {
-                // Ensure the lock is released when the processing is done
-                $lock->release();
-            }
-        } else {
-            \Log::info('Skipped SyncImagesToProd02: Already running for ' . $this->jobKey);
+        if (!$lock->get()) {
+            Log::info('Skipped SyncImagesToProd02: lock held', ['jobkey' => $this->jobKey]);
+
+            return;
+        }
+
+        try {
+            Log::info('Started SyncImagesToProd02', ['jobkey' => $this->jobKey]);
+
+            $result = $exportImageService->getAllUnsyncJobsImages($this->jobKey);
+
+            Log::info('Finished SyncImagesToProd02', [
+                'jobkey' => $this->jobKey,
+                'result' => $result,
+            ]);
+        } catch (Throwable $e) {
+            Log::error('SyncImagesToProd02 failed', [
+                'jobkey' => $this->jobKey,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        } finally {
+            $lock->release();
         }
     }
 }

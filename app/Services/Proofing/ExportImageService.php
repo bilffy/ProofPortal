@@ -211,14 +211,14 @@ class ExportImageService
 
         // Increased default chunk size from 10 to 50 for optimized HTTP batch performance
         $uploadSummary = $this->uploadLocalImagesToProd($job, $jobkey, 50);
-        $pendingUploads = $uploadSummary['failed'];
+        $pendingUploads = $this->countPendingUploads($job);
 
         Log::info('Image sync upload batch finished', array_merge(
             ['jobkey' => $jobkey, 'pending_uploads' => $pendingUploads],
             $uploadSummary
         ));
 
-        if ($pendingUploads > 0) {
+        if ($pendingUploads > 0 || $uploadSummary['failed'] > 0) {
             dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addMinutes(5)));
 
             return [
@@ -226,6 +226,22 @@ class ExportImageService
                 'phase' => 'upload',
                 'pending_uploads' => $pendingUploads,
                 'summary' => $uploadSummary,
+            ];
+        }
+
+        if (!$this->canMarkJobSynced($job)) {
+            $outstanding = $this->exportStatusCounts($job);
+            Log::warning('Image sync incomplete: outstanding export work remains', [
+                'jobkey' => $jobkey,
+                'status_counts' => $outstanding,
+            ]);
+
+            dispatch((new SyncImagesToProd02($jobkey))->delay(now()->addMinutes(5)));
+
+            return [
+                'success' => false,
+                'phase' => 'incomplete',
+                'status_counts' => $outstanding,
             ];
         }
 
@@ -472,6 +488,24 @@ class ExportImageService
         ]);
 
         return $updated;
+    }
+
+    protected function countPendingUploads(Job $job): int
+    {
+        return Image::query()
+            ->where('ts_job_id', $job->ts_job_id)
+            ->where('keyorigin', 'Subject')
+            ->where('exportStatus', self::EXPORT_DOWNLOADED)
+            ->count();
+    }
+
+    protected function canMarkJobSynced(Job $job): bool
+    {
+        return !Image::query()
+            ->where('ts_job_id', $job->ts_job_id)
+            ->where('keyorigin', 'Subject')
+            ->whereIn('exportStatus', [self::EXPORT_PENDING, self::EXPORT_DOWNLOADED])
+            ->exists();
     }
 
     protected function exportStatusCounts(Job $job): array
