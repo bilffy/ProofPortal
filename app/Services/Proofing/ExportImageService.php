@@ -300,8 +300,7 @@ class ExportImageService
             [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
             $seasonCode = $job->seasons?->code ?? '';
             $remotePath = ltrim(sprintf(
-                '%s/%s/%s/%s/subjects/%s/%s/%s/%s.%s',
-                $prefix,
+                '%s/%s/%s/subjects/%s/%s/%s/%s.%s',
                 $seasonCode,
                 $job->ts_schoolkey,
                 $job->ts_jobkey,
