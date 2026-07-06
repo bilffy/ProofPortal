@@ -453,12 +453,9 @@ class ConfigureService
                         $existingImage->ts_image_id = $imageID;
                         $existingImage->is_primary  = $imageIsPrimary;
                         $existingImage->ts_job_id   = $bpSubjectImage['ts_job_id'];
-                        $needsUpdate = true;
-                    }
-
-                    // Force re-export for ALL verified images
-                    if ($existingImage->exportStatus !== $dynamicExportStatus) {
-                        $existingImage->exportStatus = $dynamicExportStatus;
+                        if ($existingImage->exportStatus !== $dynamicExportStatus) {
+                            $existingImage->exportStatus = $dynamicExportStatus;
+                        }
                         $needsUpdate = true;
                     }
                     
