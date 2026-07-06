@@ -131,15 +131,21 @@ class ExportImageService
         foreach ($this->findImageMatchesByImageKeys($imageKeys)->cursor() as $row) {
             $seenKeys[] = $row->ImageKey;
 
-            if (!$row->Thumbnail) {
+            $thumbnail = $this->normalizeThumbnail($row->Thumbnail);
+
+            if ($thumbnail === null) {
                 $failedBatch[] = $row->ImageKey;
                 $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize);
+                Log::warning('Timestone thumbnail missing for image', [
+                    'jobkey' => $job->ts_jobkey,
+                    'image_key' => $row->ImageKey,
+                ]);
                 unset($row);
                 continue;
             }
 
             try {
-                $extension = $this->getExtensionFromMimeType($fileInfo->buffer($row->Thumbnail));
+                $extension = $this->getExtensionFromMimeType($fileInfo->buffer($thumbnail));
                 $subjectKey = (string) $row->SubjectKey;
                 $localPath = sprintf(
                     '%s/%s.%s',
@@ -148,7 +154,7 @@ class ExportImageService
                     $extension
                 );
 
-                $this->staging()->put($localPath, $row->Thumbnail);
+                $this->staging()->put($localPath, $thumbnail);
 
                 [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
                 $downloadedBatch[$row->ImageKey] = [
@@ -166,10 +172,11 @@ class ExportImageService
                 Log::error('Local download failed', [
                     'jobkey' => $job->ts_jobkey,
                     'image_key' => $row->ImageKey,
+                    'disk' => $this->stagingDisk(),
+                    'path' => $this->staging()->path($this->localDir($job, (string) $row->SubjectKey)),
                     'error' => $e->getMessage(),
                 ]);
-                $failedBatch[] = $row->ImageKey;
-                $summary['failed'] += $this->flushFailedBatch($failedBatch, $chunkSize);
+                // Leave exportStatus at 0 so a later sync attempt can retry transient disk errors.
             }
 
             unset($row);
@@ -367,7 +374,7 @@ class ExportImageService
                 continue;
             }
 
-            $this->markImagesAsFailed([$image->ts_imagekey], 'local_file_missing');
+            $this->markImagesAsFailed([$image->ts_imagekey], 'local_file_missing', self::EXPORT_DOWNLOADED);
             Log::error('Downloaded image missing local file', [
                 'jobkey' => $jobkey,
                 'image_key' => $image->ts_imagekey,
@@ -447,13 +454,15 @@ class ExportImageService
         return $count;
     }
 
-    protected function markImagesAsFailed(array $imageKeys, string $reason = 'unknown'): int
+    protected function markImagesAsFailed(array $imageKeys, string $reason = 'unknown', int $onlyStatus = self::EXPORT_PENDING): int
     {
         if (empty($imageKeys)) {
             return 0;
         }
 
-        $updated = Image::whereIn('ts_imagekey', $imageKeys)->update(['exportStatus' => self::EXPORT_FAILED]);
+        $updated = Image::whereIn('ts_imagekey', $imageKeys)
+            ->where('exportStatus', $onlyStatus)
+            ->update(['exportStatus' => self::EXPORT_FAILED]);
 
         Log::warning('Marked images as failed', [
             'count' => $updated,
@@ -537,9 +546,38 @@ class ExportImageService
     {
         $root = $this->cachePrefix();
 
-        if (!$this->staging()->exists($root)) {
-            $this->staging()->makeDirectory($root);
+        if ($this->staging()->exists($root)) {
+            return;
         }
+
+        try {
+            $this->staging()->makeDirectory($root);
+        } catch (Exception $e) {
+            Log::error('Unable to create proofing staging directory', [
+                'disk' => $this->stagingDisk(),
+                'root' => $this->staging()->path($root),
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    protected function normalizeThumbnail(mixed $thumbnail): ?string
+    {
+        if ($thumbnail === null) {
+            return null;
+        }
+
+        if (is_resource($thumbnail)) {
+            $thumbnail = stream_get_contents($thumbnail);
+        }
+
+        if (!is_string($thumbnail) || $thumbnail === '') {
+            return null;
+        }
+
+        return $thumbnail;
     }
 
     protected function cachePrefix(): string
@@ -552,22 +590,17 @@ class ExportImageService
     public function findImageMatchesByImageKeys($imageKeys = null)
     {
         return DB::connection('timestone')
-            ->table('ImageMatches')
-            ->join('Images', 'ImageMatches.ImageID', '=', 'Images.ImageID')
+            ->table('Images')
+            ->join('ImageMatches', 'ImageMatches.ImageID', '=', 'Images.ImageID')
             ->join('Subjects', 'ImageMatches.SubjectID', '=', 'Subjects.SubjectID')
-            ->join('ImageBitmaps', 'ImageMatches.ImageID', '=', 'ImageBitmaps.ImageID')
-            ->join('Jobs', 'Jobs.JobID', '=', 'Subjects.JobID')
-            ->join('JobDetails', 'JobDetails.JobID', '=', 'Jobs.JobID')
-            ->join('Seasons', 'Jobs.SeasonID', '=', 'Seasons.SeasonID')
+            ->leftJoin('ImageBitmaps', 'Images.ImageID', '=', 'ImageBitmaps.ImageID')
             ->whereIn('Images.ImageKey', $imageKeys)
             ->select([
                 'Subjects.SubjectKey',
                 'Images.ImageKey',
                 'ImageBitmaps.Thumbnail',
-                'Jobs.JobKey',
-                'JobDetails.SchoolKey',
-                'Seasons.Code',
             ])
+            ->distinct()
             ->orderBy('Subjects.SubjectKey');
     }
 
