@@ -69,6 +69,16 @@
             width: 100% !important;
             flex: 1 !important;
         }
+
+        /* Folder column: match form-control text, no input border/background */
+        #GridSpellingEdits_Modal .grid-spelling-folder-label {
+            display: block;
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #3e515b;
+        }
     </style>
 @stop
 

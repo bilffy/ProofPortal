@@ -90,15 +90,7 @@
             data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}">
     </td>
     <td class="idx-class p-0">
-        <input type="text" readonly class="form-control grid-spelling {{ $skHash }}-grid-spelling-class"
-            id="{{ $skHash }}-grid-spelling-class"
-            name="{{ $skHash }}_grid_spelling_class"
-            value="{{ $subject->folder ? $subject->folder->ts_foldername : '' }}"
-            data-original-value="{{ $subject->folder ? $subject->folder->ts_foldername : '' }}"
-            data-old-value="{{ $subject->folder ? $subject->folder->ts_foldername : '' }}"
-            data-skhash="{{ $skHash }}"
-            data-skencrypted="{{ $skEncrypted }}" data-folderkeyEncrypted="{{ $folderkeyEncrypted }}"
-            style="background-color: #f2f2f2;">
+        <span class="grid-spelling-folder-label">{{ $subject->folder ? $subject->folder->ts_foldername : '' }}</span>
     </td>
     @if ($currentFolder->show_salutation_portraits)
         <td class="idx-salutation p-0">
