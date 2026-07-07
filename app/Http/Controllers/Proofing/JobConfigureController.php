@@ -214,7 +214,7 @@ class JobConfigureController extends Controller
         // We ONLY block if it is strictly 'none' AND the proof hasn't started yet.
         // If ANY of these is false (e.g., job_status_id is NOT none), it bypasses this and executes the action.
         if ($isStatusNone && $proofNotStarted) {
-            return redirect()->back()->with('message', 'Success! Job is scheduled for sync.');
+            return redirect()->back()->with('message', 'If the TNJ has been uploaded, this job is now scheduled for sync.');
         }
 
         switch ($action) {
