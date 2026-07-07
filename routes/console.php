@@ -26,3 +26,5 @@ Schedule::command('images:sync-scheduler')
     ->everyMinute()
     ->name('sync_images_scheduler')
     ->withoutOverlapping(10); // Prevents locks from hanging forever if a process crashes
+
+Schedule::command('images:cleanup-staging --days=3')->daily();
