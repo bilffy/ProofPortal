@@ -733,7 +733,7 @@ class ReportRepository
         return ProofingChangelog::query()
             ->where([
                 ['ts_jobkey', $tsJobKey],
-                ['issue_id', 102],
+                ['issue_id', 15],
             ]);
     }
 
@@ -764,7 +764,7 @@ class ReportRepository
                 ['keyvalue', $tsFolderKey],
             ])
             ->whereNotNull('user_id')
-            ->where('issue_id', 100);
+            ->where('issue_id', 12);
     }
 
     protected function resolveTsJobKey(?int $tsJobId): string
@@ -796,18 +796,18 @@ class ReportRepository
             ->select('*')
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY issue_id, ts_jobkey, keyvalue ORDER BY change_datetime DESC, id DESC) as row_num')
             ->where('ts_jobkey', $tsJobKey)
-            ->whereNotIn('issue_id', [89, 90, 91, 92, 113])
+            ->whereNotIn('issue_id', [1, 2, 3, 4, 14])
             ->where('change_to', '<>', '{"Absent":[]}')
             ->where('notes', '<>', 'Marked All Issue Recorded as "Yes"')
             ->whereNotNull('user_id')
             ->where(function ($query) use ($tsJobKey) {
-                $query->where('issue_id', '<>', 93)
+                $query->where('issue_id', '<>', 5)
                     ->orWhereExists(function ($sub) use ($tsJobKey) {
                         $sub->select(DB::raw(1))
                             ->from('changelogs as c96')
                             ->whereColumn('c96.keyvalue', 'changelogs.keyvalue')
                             ->where('c96.ts_jobkey', $tsJobKey)
-                            ->where('c96.issue_id', 96)
+                            ->where('c96.issue_id', 8)
                             ->where('c96.change_to', '<>', '{"Absent":[]}')
                             ->where('c96.notes', '<>', 'Marked All Issue Recorded as "Yes"')
                             ->whereNotNull('c96.user_id');
