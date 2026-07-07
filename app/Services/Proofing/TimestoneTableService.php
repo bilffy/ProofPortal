@@ -72,13 +72,22 @@ class TimestoneTableService
             ->orderBy('Jobs.Name', 'asc');
     }
 
+    // public function isJobEligibleForSync($tsJobKey)
+    // {
+    //     return DB::connection('timestone')
+    //         ->table('JobSync')
+    //         ->where('JobKey', $tsJobKey)
+    //         ->whereNull('BlueprintSyncDate')
+    //         ->whereNull('BlueprintSyncStatus')
+    //         ->exists();
+    // }
+
     public function isJobEligibleForSync($tsJobKey)
     {
         return DB::connection('timestone')
             ->table('JobSync')
-            ->where('JobKey', $tsJobKey)
-            ->whereNull('BlueprintSyncDate')
-            ->whereNull('BlueprintSyncStatus')
+            ->where('JobKey', $tsJobKey) // Keeps the check specific to this job
+            ->where('UploadDate', '>=', Carbon::now()->subDay())
             ->exists();
     }
 

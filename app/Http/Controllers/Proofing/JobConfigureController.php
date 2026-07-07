@@ -207,6 +207,16 @@ class JobConfigureController extends Controller
         //     return redirect()->back()->with('error', 'Unable to update for "'.$selectedJob->ts_jobname.'"! Proofing already started.');
         // }
 
+        // Define the two rules clearly
+        $isStatusNone = ($selectedJob->job_status_id === $this->statusService->none);
+        $proofNotStarted = (is_null($selectedJob->proof_start) || Carbon::parse($selectedJob->proof_start)->isFuture());
+
+        // We ONLY block if it is strictly 'none' AND the proof hasn't started yet.
+        // If ANY of these is false (e.g., job_status_id is NOT none), it bypasses this and executes the action.
+        if ($isStatusNone && $proofNotStarted) {
+            return redirect()->back()->with('message', 'Success! Job is scheduled for sync.');
+        }
+
         switch ($action) {
             case 'merge-duplicate-folders':
                 $count = $this->getDuplicateFolder($selectedJob)->count();
@@ -225,14 +235,14 @@ class JobConfigureController extends Controller
                     $message = "Linked Folders will be updated for \"$selectedJob->ts_jobname\".";
                     return redirect()->back()->with('message', 'Success! ' . $message);
                 }
-                return redirect()->back()->with('error', 'Update blocked: Job sync is already in progress or already scheduled in Timestone.');
+                return redirect()->back()->with('error', 'Error! Please upload the TNJ to update the changes.');
 
             case 'update-people-images':
                 if ($this->configureService->updatePeopleImage($selectedJob->ts_job_id, $selectedJob->ts_jobkey)) {
                     $message = "People Images will be updated for \"$selectedJob->ts_jobname\".";
                     return redirect()->back()->with('message', 'Success! ' . $message);
                 }
-                return redirect()->back()->with('error', 'Update blocked: Job sync is already in progress or already scheduled in Timestone.');
+                return redirect()->back()->with('error', 'Error! Please upload the TNJ to update the changes.');
 
             default:
                 return redirect()->back()->with('error', 'Invalid action.');
