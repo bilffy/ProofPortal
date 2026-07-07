@@ -81,7 +81,7 @@
                                             <label class="ml-1 mb-0" for="Home folder" data-toggle="tooltip" title="Homed subjects with images">
                                                 <x-icon icon="user" class="pe-1 fa-xs" /> {{$folder['students']}}
                                             </label>
-                                            <label class="ml-1 mb-0" for="Attached to folder" data-toggle="tooltip" title="Attached subjects to folder">
+                                            <label class="ml-1 mb-0" for="Attached to folder" data-toggle="tooltip" title="Attached subjects with images">
                                                 <x-icon icon="paperclip" class="pe-1 fa-xs" /> {{$folder['attached']}}
                                             </label>
                                         </div>

@@ -110,7 +110,12 @@ class JobService
     
     public function getJobsByTSJobID($TSJobID)
     {
-        return Job::with(['folders.subjects.images','folders.folderTag','folders.images'])->where('ts_job_id', $TSJobID)->first();
+        return Job::with([
+            'folders.subjects.images',
+            'folders.attachedsubjects.images',
+            'folders.folderTag',
+            'folders.images',
+        ])->where('ts_job_id', $TSJobID)->first();
     }
     
     public function toggleArchivedJobs($franchiseCode, $schoolKey, $includeArchived)
