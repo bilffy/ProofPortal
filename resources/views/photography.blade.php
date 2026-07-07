@@ -27,10 +27,10 @@
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
 
-    $user = Auth::user();
-    $canDownloadPortraits = DigitalDownloadPermissionHelper::canViewAndDownload($user, $school, DigitalDownloadPermissionHelper::FIELD_PORTRAIT);
-    $canDownloadGroups = DigitalDownloadPermissionHelper::canViewAndDownload($user, $school, DigitalDownloadPermissionHelper::FIELD_GROUP);
-    $canDownloadOthers = DigitalDownloadPermissionHelper::canViewAndDownload($user, $school, DigitalDownloadPermissionHelper::FIELD_OTHER);
+    $authUser = Auth::user();
+    $canDownloadPortraits = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_PORTRAIT);
+    $canDownloadGroups = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_GROUP);
+    $canDownloadOthers = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_OTHER);
 
     $imageService = new \App\Services\ImageService();
     $hasPortraits = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_PORTRAITS)->isNotEmpty();
