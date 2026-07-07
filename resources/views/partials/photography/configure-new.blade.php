@@ -121,6 +121,7 @@
                 <p class="mb-0">{{ implode(', ', $schoolAddress) }}</p>
             </div>
         </div>
+        <form id="digital_download_form">
         <div class="w-full p-4">
             <div>
                 <p class="mb-2"><strong>Digital Images Permissions</strong></p>
@@ -192,6 +193,7 @@
                 </div>
             </div>
         </div>
+        </form>
     </div>
 
     <h3 class="mb-4 text-black">Digital Image Configuration</h3>

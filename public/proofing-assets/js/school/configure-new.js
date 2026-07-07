@@ -552,10 +552,11 @@ function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
     var targetUrl = base_url + "/config-school/digital-download/submit";
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var schoolKey = $('#schoolHash').val();
+    var formElement = document.getElementById('digital_download_form');
+    var formData = formElement ? new FormData(formElement) : new FormData();
 
-    var formData = new FormData($('#digital_download_form')[0]);
-    formData.append("schoolKey", schoolKey); // Append the jobHash to the form data
-    formData.append(modelTag + "[" + fieldTag + "][" + roleTag + "]", isChecked);
+    formData.set("schoolKey", schoolKey);
+    formData.set(modelTag + "[" + fieldTag + "][" + roleTag + "]", isChecked ? 'true' : 'false');
 
     $.ajax({
         type: "POST",

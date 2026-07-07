@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ActivityLogHelper;
+use App\Helpers\DigitalDownloadPermissionHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\EncryptionHelper;
 use App\Helpers\ImageHelper;
@@ -129,8 +130,13 @@ class PhotographyController extends Controller
         $user = Auth::user();
         
         if (UserService::isCanAccessImage($user, $school) === false) {
-            abort(403, 'Access denied.');                    
-        }      
+            abort(403, 'Access denied.');
+        }
+
+        $tab = $request->input('tab');
+        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTab($user, $school, $tab)) {
+            abort(403, 'You do not have permission to download these images.');
+        }
 
         // get the nonce from the request header
         if ($request->header('MSP-Nonce') !== session('download-request-nonce')) {
@@ -164,7 +170,6 @@ class PhotographyController extends Controller
         $selectedFilters['class'] = [];
         $selectedFilters['details'] = empty($images) ? false : true;
         $logImgKeys = [];
-        $tab = $request->input('tab');
 
         if (empty($class)) {
             // Extract the records from the folder_tags table and return an array of tag values
@@ -625,8 +630,15 @@ class PhotographyController extends Controller
             abort(403, 'Direct access to image source is forbidden.');
         }
 
+        $school = SchoolContextHelper::getSchool();
+        $user = Auth::user();
+        $category = $request->query('category', PhotographyHelper::TAB_PORTRAITS);
+
+        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTab($user, $school, $category)) {
+            abort(403, 'You do not have permission to view these images.');
+        }
+
         $id = $request->query('id');
-        $category = $request->query('category');
         
         $key = base64_decode(base64_decode($id));
         

@@ -1,6 +1,7 @@
 @extends('layouts.authenticated')
 
 @php
+    use App\Helpers\DigitalDownloadPermissionHelper;
     use App\Helpers\SchoolContextHelper;
     use App\Helpers\RoleHelper;
     
@@ -26,28 +27,10 @@
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
 
-    $canDownloadPortraits = true;
-    $canDownloadGroups = true;
-    $canDownloadOthers = true;
-    
-    if ($school && $school->digital_download_permission_notification) {
-        $permissions = json_decode($school->digital_download_permission_notification, true);
-        if (isset($permissions['digital_download_permission'])) {
-            $userRoleName = Auth::user()->roles->first()->name ?? '';
-            $roleValueMap = [
-                RoleHelper::ROLE_PHOTO_COORDINATOR => 'photocoordinator',
-                RoleHelper::ROLE_SCHOOL_ADMIN => 'schooladmin',
-                RoleHelper::ROLE_TEACHER => 'teacher',
-            ];
-            
-            if (isset($roleValueMap[$userRoleName])) {
-                $mappedRole = $roleValueMap[$userRoleName];
-                $canDownloadPortraits = isset($permissions['digital_download_permission']['download_portrait'][$mappedRole]) && $permissions['digital_download_permission']['download_portrait'][$mappedRole] === true;
-                $canDownloadGroups = isset($permissions['digital_download_permission']['download_group'][$mappedRole]) && $permissions['digital_download_permission']['download_group'][$mappedRole] === true;
-                $canDownloadOthers = isset($permissions['digital_download_permission']['download_schoolPhoto'][$mappedRole]) && $permissions['digital_download_permission']['download_schoolPhoto'][$mappedRole] === true;
-            }
-        }
-    }
+    $user = Auth::user();
+    $canDownloadPortraits = DigitalDownloadPermissionHelper::canViewAndDownload($user, $school, DigitalDownloadPermissionHelper::FIELD_PORTRAIT);
+    $canDownloadGroups = DigitalDownloadPermissionHelper::canViewAndDownload($user, $school, DigitalDownloadPermissionHelper::FIELD_GROUP);
+    $canDownloadOthers = DigitalDownloadPermissionHelper::canViewAndDownload($user, $school, DigitalDownloadPermissionHelper::FIELD_OTHER);
 
     $imageService = new \App\Services\ImageService();
     $hasPortraits = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_PORTRAITS)->isNotEmpty();
