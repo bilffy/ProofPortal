@@ -24,7 +24,7 @@ class UserService
         // Dispatch the email sending an invitation job to the queue
         SendUserInviteJob::dispatch($user, $senderId);
         // Log SEND_INVITE activity
-        ActivityLogHelper::log(LogConstants::SEND_INVITE, ['invited_user' => $user->id]);
+        ActivityLogHelper::log(LogConstants::SEND_INVITE, ['invited_user' => $user->id], $senderId);
     }
     
     /**

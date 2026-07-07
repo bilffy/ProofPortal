@@ -336,7 +336,7 @@ class BulkInviteUsersCommand extends Command
                 ]);
             }
 
-            ActivityLogHelper::log(LogConstants::CREATE_USER, ['created_user' => $user->id]);
+            ActivityLogHelper::log(LogConstants::CREATE_USER, ['created_user' => $user->id], $senderId);
 
             DB::commit();
         } catch (\Throwable $e) {
@@ -359,7 +359,7 @@ class BulkInviteUsersCommand extends Command
     {
         if ($this->option('sync')) {
             SendUserInviteJob::dispatchSync($user, $senderId);
-            ActivityLogHelper::log(LogConstants::SEND_INVITE, ['invited_user' => $user->id]);
+            ActivityLogHelper::log(LogConstants::SEND_INVITE, ['invited_user' => $user->id], $senderId);
 
             return;
         }
