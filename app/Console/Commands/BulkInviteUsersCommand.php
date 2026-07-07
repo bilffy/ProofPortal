@@ -244,6 +244,13 @@ class BulkInviteUsersCommand extends Command
         }
 
         if ($this->option('dry-run')) {
+            $existingUser = User::where('email', $row['email'])->first();
+            if ($existingUser) {
+                $this->warn("Line {$line}: would skip {$row['email']} — user already exists.");
+
+                return 'skipped';
+            }
+
             $target = $isSchoolRole
                 ? "{$school->name} (school_id {$school->id})"
                 : $franchise->name;
@@ -254,42 +261,12 @@ class BulkInviteUsersCommand extends Command
 
         $existingUser = User::where('email', $row['email'])->first();
         if ($existingUser) {
-            return $this->handleExistingUser($existingUser, $role, $franchise, $school, (int) $row['sender_id'], $line);
+            $this->warn("Line {$line}: skipped {$row['email']} — user already exists.");
+
+            return 'skipped';
         }
 
         return $this->createAndInviteUser($row, $role, $franchise, $school, (int) $row['sender_id'], $line);
-    }
-
-    private function handleExistingUser(
-        User $user,
-        Role $role,
-        Franchise $franchise,
-        ?School $school,
-        int $senderId,
-        int $line
-    ): string {
-        if (!$user->hasRole($role->name)) {
-            $user->syncRoles([$role->name]);
-        }
-
-        if ($role->name === RoleHelper::ROLE_FRANCHISE) {
-            FranchiseUser::firstOrCreate([
-                'user_id' => $user->id,
-                'franchise_id' => $franchise->id,
-            ]);
-        }
-
-        if ($school !== null) {
-            SchoolUser::firstOrCreate([
-                'user_id' => $user->id,
-                'school_id' => $school->id,
-            ]);
-        }
-
-        $this->sendInvite($user, $senderId);
-        $this->warn("Line {$line}: user {$user->email} already exists — role/organisation updated and invite sent.");
-
-        return 'invited';
     }
 
     private function createAndInviteUser(
