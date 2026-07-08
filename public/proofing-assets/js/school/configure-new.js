@@ -491,61 +491,163 @@ jQuery(document).ready(function ($) {
     });
 });
 
+const SCHOOL_LOGO_VALID_EXTENSIONS = ['jpg', 'jpeg', 'png', 'bmp'];
+const SCHOOL_LOGO_MAX_DIMENSION = 2048;
+const SCHOOL_LOGO_MIN_LONGEST_SIDE = 1200;
+const SCHOOL_LOGO_JPEG_QUALITY = 0.88;
+
+function isValidSchoolLogoFile(file) {
+    if (!file) {
+        return false;
+    }
+
+    const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp'];
+    if (validMimeTypes.includes(file.type)) {
+        return true;
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    return SCHOOL_LOGO_VALID_EXTENSIONS.includes(extension);
+}
+
+function showSchoolLogoToast(status, message) {
+    window.dispatchEvent(new CustomEvent('show-toast-message', {
+        detail: { status, message }
+    }));
+}
+
+function normalizeSchoolLogoFile(file) {
+    return new Promise((resolve, reject) => {
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+
+        image.onload = function () {
+            URL.revokeObjectURL(objectUrl);
+
+            let width = image.naturalWidth;
+            let height = image.naturalHeight;
+
+            if (!width || !height) {
+                reject(new Error('Invalid image dimensions.'));
+                return;
+            }
+
+            const longestSide = Math.max(width, height);
+            let scale = 1;
+
+            if (longestSide > SCHOOL_LOGO_MAX_DIMENSION) {
+                scale = SCHOOL_LOGO_MAX_DIMENSION / longestSide;
+            } else if (longestSide < SCHOOL_LOGO_MIN_LONGEST_SIDE) {
+                scale = SCHOOL_LOGO_MIN_LONGEST_SIDE / longestSide;
+            }
+
+            width = Math.max(1, Math.round(width * scale));
+            height = Math.max(1, Math.round(height * scale));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, width, height);
+            context.drawImage(image, 0, 0, width, height);
+
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    reject(new Error('Failed to prepare the school logo for upload.'));
+                    return;
+                }
+
+                const filename = `school_logo_${Date.now()}.jpg`;
+                resolve(new File([blob], filename, { type: 'image/jpeg' }));
+            }, 'image/jpeg', SCHOOL_LOGO_JPEG_QUALITY);
+        };
+
+        image.onerror = function () {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Failed to read the selected image.'));
+        };
+
+        image.src = objectUrl;
+    });
+}
+
+function uploadSchoolLogoFile(file, schoolKey, preview) {
+    const formData = new FormData();
+    formData.append('schoolLogo', file);
+    formData.append('schoolKey', schoolKey);
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+    return $.ajax({
+        url: base_url + '/config-school/upload-school-logo',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Accept': 'application/json',
+        },
+    }).done(function () {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        showSchoolLogoToast('success', 'School logo uploaded successfully.');
+    });
+}
+
 $('#schoolLogoBtn').click(function (event) {
     event.preventDefault();
     $('#schoolLogo').click(); // Trigger the file input click
 });
 
-document.getElementById('schoolLogo').addEventListener('change', function(event) {
+document.getElementById('schoolLogo').addEventListener('change', async function(event) {
     const file = event.target.files[0];
     const preview = document.getElementById('schoolLogoPreview');
-    // Remove delete link since it does not match the current flow as of v1.1.30.2
-    // const deleteLink = document.getElementById('deleteSchoolLogo');
     const schoolKey = $('#schoolHash').val();
+    const validExtensionsUpper = SCHOOL_LOGO_VALID_EXTENSIONS.map(ext => ext.toUpperCase());
 
-    // Check if a file is selected and validate file type
-    // TODO: Use the ImageHelper to get valid image extensions from backend
-    const validExtensions = ['jpg', 'jpeg', 'png', 'bmp'];
-    const validExtensionsUpper = validExtensions.map(ext => ext.toUpperCase());
-    const prefixExtensions = validExtensions.map(ext => 'image/' + ext);
-    // Check if the file type is in the list of valid extensions
-    if (file && prefixExtensions.includes(file.type)) {
-        // Use FormData to handle file uploads
-        const formData = new FormData();
-        formData.append('schoolLogo', file);
-        formData.append('schoolKey', schoolKey);
-        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
-
-        $.ajax({
-            url: base_url + '/config-school/upload-school-logo',
-            method: 'POST',
-            data: formData,
-            processData: false, // Required for FormData
-            contentType: false, // Required for FormData
-            success: function (response) {
-                // Display the uploaded image as a preview if the upload is successful
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    // deleteLink.classList.remove('d-none');
-                };
-                reader.readAsDataURL(file); // Convert the file to a data URL
-            },
-            error: function () {
-                console.error('Failed to upload the school logo.');
-            }
-        });
-    } else {
-        // Display an error message or reset the preview
-        const msg = `Please upload a valid image file (${validExtensionsUpper.join(', ')}).`;
-        window.dispatchEvent(new CustomEvent('show-toast-message', { detail: { status: 'error', message: msg } }));
-        // Remove resetting preview since it does not match the current flow as of v1.1.30.2
-        // preview.src = ''; // Clear the preview image
-        // preview.style.display = 'none'; // Hide the preview
-        // deleteLink.style.display = 'none'; // Hide the delete link
-        event.target.value = ''; // Reset the file input
+    if (!file || !isValidSchoolLogoFile(file)) {
+        showSchoolLogoToast('error', `Please upload a valid image file (${validExtensionsUpper.join(', ')}).`);
+        event.target.value = '';
+        return;
     }
+
+    let uploadFile = file;
+
+    try {
+        uploadFile = await normalizeSchoolLogoFile(file);
+    } catch (error) {
+        console.error('School logo normalization failed:', error);
+        showSchoolLogoToast('error', error.message || 'Failed to prepare the school logo for upload.');
+        event.target.value = '';
+        return;
+    }
+
+    uploadSchoolLogoFile(uploadFile, schoolKey, preview)
+        .fail(function (xhr) {
+            console.error('Failed to upload the school logo.', xhr);
+
+            let message = 'Failed to upload the school logo.';
+            const response = xhr.responseJSON;
+
+            if (response?.message) {
+                message = response.message;
+            } else if (xhr.status === 403) {
+                message = 'Upload was blocked by the server. Please try a different image or contact support.';
+            } else if (xhr.status === 422 && response?.errors?.schoolLogo?.[0]) {
+                message = response.errors.schoolLogo[0];
+            }
+
+            showSchoolLogoToast('error', message);
+        })
+        .always(function () {
+            event.target.value = '';
+        });
 });
 
 function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
