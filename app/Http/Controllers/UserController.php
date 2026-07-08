@@ -23,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -188,6 +189,11 @@ class UserController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        $scopeError = $this->validateRegistrationScope($decrypted);
+        if ($scopeError !== null) {
+            return response()->json(['errors' => ['role' => [$scopeError]]], 422);
+        }
         
         DB::beginTransaction();
         try {
@@ -201,7 +207,7 @@ class UserController extends Controller
                 'firstname' => $decrypted['firstname'],
                 'lastname' => $decrypted['lastname'],
                 'status' => User::STATUS_NEW, // initialize user with NEW status
-                'password' => Hash::make(str()->random(7)), // random value for user creation
+                'password' => Hash::make(Str::random(32)),
                 'active_status_id' => $status->id,
                 'email_verified_at' => now(), // Auto-verify for immediate access
             ]);
@@ -231,7 +237,8 @@ class UserController extends Controller
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->withErrors($e->getMessage());
+            Log::error('User registration failed', ['exception' => $e]);
+            return redirect()->back()->withInput()->withErrors(['general' => 'Unable to create user. Please try again.']);
         }
         
         // Send invitation email
@@ -337,7 +344,7 @@ class UserController extends Controller
             } catch (\Throwable $e) {
                 $nonce = Str::random(40);
                 session([$editTokenName => $nonce]);
-                return response()->json(['error' => 'Invalid Request', 'nonce' => $nonce, 'message' => $e->getMessage()], 400);
+                return response()->json(['error' => 'Invalid Request', 'nonce' => $nonce], 400);
             }
         }
         if (empty($input['nonce']) || $input['nonce'] !== session($editTokenName)) {
@@ -470,9 +477,10 @@ class UserController extends Controller
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
+            Log::error('User update failed', ['exception' => $e]);
             $nonce = Str::random(40);
             session([$editTokenName => $nonce]);
-            return response()->json(['errors' => $e->getMessage(), 'nonce' => $nonce], 422);
+            return response()->json(['errors' => ['general' => ['Unable to update user. Please try again.']], 'nonce' => $nonce], 422);
         }
 
         $reponseData = [];
@@ -543,5 +551,53 @@ class UserController extends Controller
             $query->orderBy($value, $order);
         }
         return $query;        
+    }
+
+    protected function validateRegistrationScope(array $data): ?string
+    {
+        $creator = Auth::user();
+        $allowedRoleIds = collect(RoleHelper::getAllowedRoles($creator->getRole()))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (!in_array((int) $data['role'], $allowedRoleIds, true)) {
+            return 'You are not allowed to assign this role.';
+        }
+
+        $role = Role::findOrFail($data['role'])->name;
+
+        if ($role === RoleHelper::ROLE_FRANCHISE) {
+            if (!$creator->isAdmin()) {
+                $creatorFranchiseId = $creator->getFranchise()?->id;
+                if (!$creatorFranchiseId || (int) $data['franchise'] !== (int) $creatorFranchiseId) {
+                    return 'You are not allowed to assign this franchise.';
+                }
+            }
+        }
+
+        if (in_array($role, [
+            RoleHelper::ROLE_SCHOOL_ADMIN,
+            RoleHelper::ROLE_PHOTO_COORDINATOR,
+            RoleHelper::ROLE_TEACHER,
+        ], true)) {
+            $schoolId = (int) ($data['school'] ?? 0);
+            if ($creator->isAdmin()) {
+                return null;
+            }
+
+            if ($creator->isFranchiseLevel()) {
+                $allowed = School::where('id', $schoolId)
+                    ->whereHas('franchises', fn ($q) => $q->where('franchise_id', $creator->getFranchise()->id))
+                    ->exists();
+                if (!$allowed) {
+                    return 'You are not allowed to assign this school.';
+                }
+            } elseif (!$creator->isSchoolLevel() || (int) $creator->getSchool()->id !== $schoolId) {
+                return 'You are not allowed to assign this school.';
+            }
+        }
+
+        return null;
     }
 }

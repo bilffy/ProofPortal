@@ -20,7 +20,7 @@ Route::middleware(['guest', NoCacheHeaders::class])->group(function () {
 });
 
 Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
-    Route::post('register', [UserController::class, 'store'])->name('user.register');
+    // Route::post('register', [UserController::class, 'store'])->name('user.register');
     Route::get('/reset-password', ResetMyPassword::class)->name('reset.my.password');
     Route::match(['get', 'post'],'logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');

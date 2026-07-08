@@ -65,6 +65,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');
         Route::post('/invite', [InviteController::class, 'inviteMultipleUsers'])->name('invite.multiple');
         Route::get('/invite/check-user-status/{id}', [InviteController::class, 'checkUserStatus'])->name('invite.check-user-status');
+        Route::post('/register', [UserController::class, 'store'])->name('user.register');
     });
     // Edit other users
     $editPermissions = PermissionHelper::ACT_CREATE . " " . PermissionHelper::SUB_USER;
