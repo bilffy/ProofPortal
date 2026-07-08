@@ -12,11 +12,11 @@ use App\Services\Proofing\SeasonService;
 use App\Models\School;
 use App\Models\Folder;
 use App\Helpers\SchoolContextHelper;
+use App\Helpers\SchoolLogoHelper;
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\ImageHelper;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\UserResource;
 use Auth;
 use Carbon\Carbon;
@@ -51,21 +51,38 @@ class SchoolConfigureController extends Controller
     public function showSchoolLogo($encryptedPath)
     {
         try {
-            // Assuming you're decrypting the path or using it to find the file
             $filePath = Crypt::decryptString($encryptedPath);
-            $path = storage_path('app/public/' . $filePath);  // Modify based on the correct location of the file
+            $legacyPath = storage_path('app/public/' . ltrim($filePath, '/'));
 
-            // Check if the file exists
-            if (!file_exists($path)) {
-                abort(404, 'File not found');
+            if (is_file($legacyPath)) {
+                return response()->file($legacyPath, [
+                    'Content-Type' => mime_content_type($legacyPath),
+                ]);
             }
 
-            // Get the MIME type of the file
-            $mimeType = mime_content_type($path);
+            $school = $this->resolveSchoolFromLogoPath($filePath);
 
-            // Return the file as a response
-            return response()->file($path, ['Content-Type' => $mimeType]);
+            if ($school !== null) {
+                $filename = basename($filePath);
+                $localPath = SchoolLogoHelper::resolveLocalPath($school, $filename);
 
+                if ($localPath !== null) {
+                    return response()->file($localPath, [
+                        'Content-Type' => mime_content_type($localPath),
+                    ]);
+                }
+
+                $remoteContents = SchoolLogoHelper::fetchRemoteContents($school, $filename);
+
+                if ($remoteContents !== null) {
+                    return response($remoteContents)->header(
+                        'Content-Type',
+                        $this->mimeTypeFromFilename($filename)
+                    );
+                }
+            }
+
+            abort(404, 'File not found');
         } catch (\Exception $e) {
             abort(404, 'Invalid or expired URL');
         }
@@ -163,26 +180,31 @@ class SchoolConfigureController extends Controller
         ]);
     
         $decryptedSchoolKey = $this->getDecryptData($request->schoolKey);
-    
-        // Delete existing logo if it exists
+        $school = School::with('franchises')->where('schoolkey', $decryptedSchoolKey)->firstOrFail();
+
         $this->deleteExistingLogo($decryptedSchoolKey);
-    
-        // Handle file upload
+
         if ($request->hasFile('schoolLogo')) {
-            $filename = $this->storeLogoFile($request->file('schoolLogo'));
-            
-            // Save the new logo filename in the database
+            $uploadedFile = $request->file('schoolLogo');
+            $fileSize = $uploadedFile->getSize();
+            $fileType = $uploadedFile->getClientMimeType();
+            $filename = $this->storeLogoFile($uploadedFile, $school);
+
             $this->schoolService->saveSchoolData($decryptedSchoolKey, 'school_logo', $filename);
 
-            // Log UPLOAD_SCHOOL_LOGO activity
             ActivityLogHelper::log(LogConstants::UPLOAD_SCHOOL_LOGO, [
                 'file_name' => $filename,
-                'file_size' => $request->file('schoolLogo')->getSize(),
-                'file_type' => $request->file('schoolLogo')->getClientMimeType(),
+                'file_size' => $fileSize,
+                'file_type' => $fileType,
+                'remote_path' => SchoolLogoHelper::relativePath($school, $filename),
+            ], auth()->id());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'School logo uploaded successfully.',
+                'path' => SchoolLogoHelper::publicUrl($school, $filename)
+                    ?? SchoolLogoHelper::relativePath($school, $filename),
             ]);
-    
-            // Return a successful response with the new path
-            return response()->json(['success' => true, 'message' => 'School logo uploaded successfully.', 'path' => 'storage/school_logos/' . $filename]);
         }
     
         // If no file was found, return an error response
@@ -201,28 +223,62 @@ class SchoolConfigureController extends Controller
     // Helper method to delete an existing logo
     private function deleteExistingLogo($schoolKey)
     {
-        $selectedSchool = $this->schoolService->getSchoolBySchoolKey($schoolKey)->first();
+        $selectedSchool = School::with('franchises')
+            ->where('schoolkey', $schoolKey)
+            ->first();
+
         if ($selectedSchool && $selectedSchool->school_logo) {
-            if (Storage::disk('public')->exists('school_logos/' . $selectedSchool->school_logo)) {
-                // Delete the file from the storage
-                Storage::disk('public')->delete('school_logos/' . $selectedSchool->school_logo);
-                // Update the database to remove the logo reference
-                $this->schoolService->saveSchoolData($schoolKey, 'school_logo', null);
-                return true;
-            }
+            SchoolLogoHelper::delete($selectedSchool, $selectedSchool->school_logo);
+            $this->schoolService->saveSchoolData($schoolKey, 'school_logo', null);
+
+            return true;
         }
+
         return false;
     }
-    
-    // Helper method to store a new logo file
-    private function storeLogoFile($file)
+
+    private function storeLogoFile($file, School $school)
     {
-        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $uniqueSuffix = time() . '_' . uniqid(); // Adds a unique suffix based on time and a unique ID
-        $filename = $originalFilename . '_' . $uniqueSuffix . '.' . $file->getClientOriginalExtension();
-        $file->storeAs('school_logos', $filename, 'public'); // Store the file in 'public/school_logos'
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $extension = preg_replace('/[^a-z0-9]/', '', $extension) ?: 'jpg';
+        $filename = 'school_logo_' . time() . '_' . uniqid() . '.' . $extension;
+
+        SchoolLogoHelper::store($file, $school, $filename);
+
         return $filename;
-    }    
+    }
+
+    private function mimeTypeFromFilename(string $filename): string
+    {
+        return match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'bmp' => 'image/bmp',
+            default => 'image/jpeg',
+        };
+    }
+
+    private function resolveSchoolFromLogoPath(string $filePath): ?School
+    {
+        $segments = explode('/', trim($filePath, '/'));
+
+        if (count($segments) < 5 || $segments[0] !== 'school_logos') {
+            return null;
+        }
+
+        $schoolKey = $segments[2] ?? null;
+        $schoolId = $segments[3] ?? null;
+
+        if ($schoolKey === null || $schoolId === null) {
+            return null;
+        }
+
+        return School::with('franchises')
+            ->where('schoolkey', $schoolKey)
+            ->where('id', $schoolId)
+            ->first();
+    }
 
     public function configSchoolDigitalDownload(Request $request)
     {

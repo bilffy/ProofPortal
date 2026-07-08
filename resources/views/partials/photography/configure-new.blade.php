@@ -29,6 +29,7 @@
     use Carbon\Carbon;
     use App\Helpers\ImageHelper;
     use App\Helpers\SchoolContextHelper;
+    use App\Helpers\SchoolLogoHelper;
     use App\Services\Proofing\SchoolService;
     use App\Services\Proofing\SeasonService;
     use App\Services\Proofing\StatusService;
@@ -47,21 +48,25 @@
     ];
 
     $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()->schoolkey;
-    $selectedSchool = $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->first();
+    $selectedSchool = $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first();
     $filePath = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
-        $filePath = 'school_logos/' . $selectedSchool->school_logo;
+        $filePath = SchoolLogoHelper::relativePath($selectedSchool, $selectedSchool->school_logo);
     }
     $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
-    $encryptedPath = $selectedSchool->school_logo ? Crypt::encryptString($filePath) : '';
+    $encryptedPath = $filePath !== '' ? Crypt::encryptString($filePath) : '';
     $seasons = $seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
     $syncJobsbySchoolkey =  $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
     $selectedFolders = [];
 
     $notificationsMatrix = $selectedSchool->digital_download_permission_notification;
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
-    $imageUrl = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
-    $schoollogo = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
+    $imageUrl = '';
+    if ($selectedSchool && $selectedSchool->school_logo) {
+        $imageUrl = SchoolLogoHelper::publicUrl($selectedSchool, $selectedSchool->school_logo)
+            ?? ($encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '');
+    }
+    $schoollogo = $imageUrl;
 
     $seasonOptions['none'] = 'Choose a Season';
     foreach ($seasons as $season) {
