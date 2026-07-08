@@ -7,12 +7,16 @@ use App\Helpers\Constants\LogConstants;
 use App\Models\User;
 use Auth;
 use App\Helpers\SchoolContextHelper;
-use Vinkla\Hashids\Facades\Hashids;
+// use Vinkla\Hashids\Facades\Hashids;
+use App\Helpers\PermissionHelper;
 
 class ImpersonateController extends Controller
 {
     public function store(string $id)
     {
+        if (!PermissionHelper::canImpersonate($id)) {
+            abort(403, 'You are not authorized to impersonate this user.');
+        }
         // $id = Hashids::decodeHex($id);
         
         // Retrieve the user by ID

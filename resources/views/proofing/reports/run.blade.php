@@ -27,8 +27,8 @@
                                 @foreach ([
                                     'csv' => __('Download CSV'),
                                     'pdf' => __('Download PDF'),
-                                    'xlsx' => __('Download Excel'),
-                                    'xls' => __('Download Excel 2003'),
+                                    'xlsx' => __('Download Excel (.xlsx)'),
+                                    'xls' => __('Download Excel (.xls)'),
                                 ] as $format => $label)
                                     <form action="{{ route('report.download') }}" method="POST" class="d-inline">
                                         @csrf

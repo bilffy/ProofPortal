@@ -20,6 +20,8 @@ use App\Http\Middleware\CheckUserRestriction;
 use App\Http\Middleware\NoCacheHeaders;
 use App\Http\Middleware\CheckJobSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 //Proofing
 use App\Http\Controllers\Proofing\ProofingDashboardController;

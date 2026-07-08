@@ -332,6 +332,17 @@ class User extends Authenticatable
 //        return true;
 //    }
 
+    public function canBeImpersonated(): bool
+    {
+        $impersonator = Auth::user();
+
+        if (!$impersonator || $impersonator->id === $this->id) {
+            return false;
+        }
+
+        return PermissionHelper::canImpersonate((string) $this->id);
+    }
+
     /**
      * @return bool
      */
