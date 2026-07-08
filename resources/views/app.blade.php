@@ -118,9 +118,21 @@
 <body class="font-sans antialiased" oncontextmenu="return false;">
     <div id="toast-wrapper"></div>
     @if(session('success'))
-        <x-toast-success message="{{  session('success') }}" />
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                window.dispatchEvent(new CustomEvent('show-toast-message', {
+                    detail: { status: 'success', message: @json(session('success')) },
+                }));
+            });
+        </script>
     @elseif(session('error'))
-        <x-toast-error message="{{  session('error') }}" />
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                window.dispatchEvent(new CustomEvent('show-toast-message', {
+                    detail: { status: 'error', message: @json(session('error')) },
+                }));
+            });
+        </script>
     @endif
 
     @yield('main')

@@ -205,25 +205,24 @@
                 $('#disable-modal-email').text("Are you sure you want to disable this account " + fname + " " + lname + " (" + email + ")?");
             });
 
-            $('#accept-disable').on('click', async function() {
-                $(this).@disabled(true);
-                $(this).html(`<x-spinner.button />`);
+            $('#accept-disable').on('click', function() {
                 const disableRoute = $(this).attr('data-disable-route');
-                const response = await fetch(disableRoute, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                    },
-                });
+                const $button = $(this);
 
-                const data = await response.json();
-                if (data.redirect_url) {
-                    window.location.href = data.redirect_url;
-                } else {
-                    window.location.reload();
-                }
+                $button.prop('disabled', true);
+                $button.html(`<x-spinner.button />`);
+
+                const form = $('<form>', {
+                    method: 'POST',
+                    action: disableRoute,
+                });
+                form.append($('<input>', {
+                    type: 'hidden',
+                    name: '_token',
+                    value: $('meta[name="csrf-token"]').attr('content'),
+                }));
+                $('body').append(form);
+                form.submit();
             });
         }
 
