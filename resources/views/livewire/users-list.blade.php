@@ -173,7 +173,7 @@
                     const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
                     const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
                     $('#accept-invite').attr('data-invite-route', $(this).attr('data-invite-route'));
-                    $('#modal-email').html("{{ $configMessages['invite_user']['message'] }} <b>" + fname + " " + lname + " (" + email + ")?</b>");
+                    $('#modal-email').text("{{ $configMessages['invite_user']['message'] }} " + fname + " " + lname + " (" + email + ")?");
 
                     $('#accept-invite').on('click', function() {
                         $(this).@disabled(true);
@@ -188,7 +188,7 @@
                 const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
                 const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
                 $('#accept-impersonate').attr('data-impersonate-route', $(this).attr('data-impersonate-route'));
-                $('#impersonate-modal-email').html("{{ $configMessages['impersonate']['message'] }}  <b>" + fname + " " + lname + " (" + email + ")?</b>");
+                $('#impersonate-modal-email').text("{{ $configMessages['impersonate']['message'] }} " + fname + " " + lname + " (" + email + ")?");
             });
 
             $('#accept-impersonate').on('click', function() {
@@ -202,13 +202,28 @@
                 const fname = $(this).closest('tr').find('td:nth-child(2)').text().trim();
                 const lname = $(this).closest('tr').find('td:nth-child(3)').text().trim();
                 $('#accept-disable').attr('data-disable-route', $(this).attr('data-disable-route'));
-                $('#disable-modal-email').html("Are you sure you want to disable this account  <b>" + fname + " " + lname + " (" + email + ")?</b>");
+                $('#disable-modal-email').text("Are you sure you want to disable this account " + fname + " " + lname + " (" + email + ")?");
             });
 
-            $('#accept-disable').on('click', function() {
+            $('#accept-disable').on('click', async function() {
                 $(this).@disabled(true);
                 $(this).html(`<x-spinner.button />`);
-                window.location.href = $(this).attr('data-disable-route');
+                const disableRoute = $(this).attr('data-disable-route');
+                const response = await fetch(disableRoute, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    window.location.reload();
+                }
             });
         }
 

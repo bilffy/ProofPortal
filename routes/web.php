@@ -100,7 +100,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::get('/impersonate/leave', [ImpersonateController::class, 'leave'])->name('impersonate.leave');
 
     // Impersonation routes
-    Route::get('/disable/{id}', [DisableUserController::class, 'disable'])->name('disable.user');
+    Route::post('/disable/{id}', [DisableUserController::class, 'disable'])->name('disable.user');
     
     // Navbar routes
     Route::post('/navbar/toggle-collapse', [NavBarController::class, 'toggleCollapse'])->name('navbar.toggleCollapse');

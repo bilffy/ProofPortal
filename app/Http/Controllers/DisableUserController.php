@@ -7,16 +7,22 @@ use App\Helpers\Constants\LogConstants;
 use App\Models\User;
 use App\Models\Status;
 use Auth;
-use App\Helpers\SchoolContextHelper;
-use Vinkla\Hashids\Facades\Hashids;
+// use App\Helpers\SchoolContextHelper;
+use Illuminate\Http\Request;
+// use Vinkla\Hashids\Facades\Hashids;
 
 class DisableUserController extends Controller
 {
-    public function disable(string $id)
+    public function disable(Request $request, string $id)
     {
         // $id = Hashids::decodeHex($id);
         
         // Retrieve the user by ID
+        /** @var User $user */
+        if (!Auth::user()->canDisable($id)) {
+            abort(403, 'You are not authorized to disable this user.');
+        }
+
         /** @var User $user */
         $user = User::findOrFail($id);
 
@@ -30,6 +36,15 @@ class DisableUserController extends Controller
         
         ActivityLogHelper::log(LogConstants::DISABLE_USER, ['disabled_user' => $user->id]);
 
-       return redirect()->route('users')->with('success', "User {$user->email} has been disabled successfully");
+        $message = "User {$user->email} has been disabled successfully";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'redirect_url' => route('users'),
+                'message' => $message,
+            ]);
+        }
+
+       return redirect()->route('users')->with('success', $message);
     }
 }
