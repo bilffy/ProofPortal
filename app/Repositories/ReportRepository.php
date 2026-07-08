@@ -9,6 +9,7 @@ use App\Models\ProofingChangelog;
 use App\Models\GroupPosition;
 use App\Models\Franchise;
 use App\Models\User;
+use App\Services\Proofing\StatusService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -39,20 +40,15 @@ class ReportRepository
      */
     public function getSchoolsIds(?int $tsJobId = null): Collection
     {
-        $userId = $this->getUserId();
-        
-        return Job::select(
+        return $this->syncedJobsForUserQuery()
+            ->select(
                 'jobs.id',
                 'jobs.ts_job_id',
                 'jobs.ts_jobname',
                 'jobs.ts_season_id',
                 'status.status_external_name as sync_status'
             )
-            ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('users', 'users.id', '=', 'job_users.user_id')
             ->join('status', 'status.id', '=', 'jobs.jobsync_status_id')
-            ->where('users.id', $userId)
-            ->where('status.status_internal_name', 'SYNC')
             ->orderBy('jobs.ts_jobname', 'asc')
             ->get();
     }
@@ -65,17 +61,12 @@ class ReportRepository
      */
     public function getFoldersIds(?int $tsJobId = null): Collection
     {
-        $userId = $this->getUserId();
-        
-        return Folder::select(
+        return $this->foldersQuery()
+            ->select(
                 'folders.id',
                 'folders.ts_foldername',
                 'folders.ts_folder_id'
             )
-            ->join('jobs', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('users', 'users.id', '=', 'job_users.user_id')
-            ->where('users.id', $userId)
             ->orderBy('folders.ts_foldername', 'asc')
             ->get();
     }
@@ -155,14 +146,27 @@ class ReportRepository
 
     protected function schoolsQuery(): Builder
     {
-        $userId = $this->getUserId();
+        return $this->syncedJobsForUserQuery()
+            ->join('status', 'status.id', '=', 'jobs.jobsync_status_id');
+    }
+
+    /**
+     * Jobs synced to proofing and assigned to the current user.
+     */
+    protected function syncedJobsForUserQuery(): Builder
+    {
+        $statusService = app(StatusService::class);
 
         return Job::query()
             ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
             ->join('users', 'users.id', '=', 'job_users.user_id')
-            ->join('status', 'status.id', '=', 'jobs.jobsync_status_id')
-            ->where('users.id', $userId)
-            ->where('status.status_internal_name', 'SYNC');
+            ->where('users.id', $this->getUserId())
+            ->where('jobs.jobsync_status_id', $statusService->sync)
+            ->whereNotIn('jobs.job_status_id', [
+                $statusService->archived,
+                $statusService->tnjNotFound,
+                $statusService->deleted,
+            ]);
     }
 
     /**
@@ -189,13 +193,9 @@ class ReportRepository
 
     protected function foldersQuery(): Builder
     {
-        $userId = $this->getUserId();
-
         return Folder::query()
             ->join('jobs', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('users', 'users.id', '=', 'job_users.user_id')
-            ->where('users.id', $userId);
+            ->whereIn('jobs.ts_job_id', $this->syncedJobsForUserQuery()->select('jobs.ts_job_id'));
     }
 
     /**

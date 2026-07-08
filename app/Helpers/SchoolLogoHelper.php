@@ -56,6 +56,14 @@ class SchoolLogoHelper
 
     public static function resolveLocalPath(School $school, string $filename): ?string
     {
+        if (self::canUseFilesystemStorage()) {
+            $filesystemPath = self::filesystemPath($school, $filename);
+
+            if (is_file($filesystemPath)) {
+                return $filesystemPath;
+            }
+        }
+
         $structuredPath = self::localDirectory($school) . '/' . basename($filename);
 
         if (is_file($structuredPath)) {
@@ -72,47 +80,18 @@ class SchoolLogoHelper
         $filename = basename($filename);
 
         if (self::canUseHttpUpload()) {
-            $remotePath = self::remoteUploadPath($school, $filename);
+            self::storeViaHttp($file, $school, $filename);
 
-            Log::info('Uploading school logo via HTTP', [
-                'url' => config('services.image_upload_url'),
-                'path' => $remotePath,
-                'filename' => $filename,
+            return;
+        }
+
+        if (self::canUseFilesystemStorage()) {
+            self::storeOnFilesystem($file, $school, $filename);
+
+            Log::info('School logo stored on proofing cache filesystem', [
+                'path' => self::filesystemPath($school, $filename),
+                'public_url' => self::publicUrl($school, $filename),
             ]);
-
-            (new ImageUploader())->upload(
-                file_get_contents($file->getRealPath()),
-                $remotePath,
-                $filename
-            );
-
-            $publicUrl = self::publicUrl($school, $filename);
-
-            Log::info('School logo uploaded via HTTP', [
-                'path' => $remotePath,
-                'filename' => $filename,
-                'public_url' => $publicUrl,
-            ]);
-
-            if ($publicUrl !== null) {
-                try {
-                    $check = Http::timeout(15)->withoutVerifying()->head($publicUrl);
-
-                    if (!$check->successful()) {
-                        Log::warning('School logo not reachable after upload', [
-                            'status' => $check->status(),
-                            'public_url' => $publicUrl,
-                            'remote_path' => $remotePath,
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('School logo upload verification failed', [
-                        'error' => $e->getMessage(),
-                        'public_url' => $publicUrl,
-                        'remote_path' => $remotePath,
-                    ]);
-                }
-            }
 
             return;
         }
@@ -126,9 +105,106 @@ class SchoolLogoHelper
         $file->move($directory, $filename);
     }
 
+    private static function storeViaHttp(UploadedFile $file, School $school, string $filename): void
+    {
+        $remotePath = self::remoteUploadPath($school, $filename);
+        $fileContent = file_get_contents($file->getRealPath());
+
+        Log::info('Uploading school logo via HTTP batch', [
+            'url' => config('services.image_upload_url'),
+            'remote_path' => $remotePath,
+            'filename' => $filename,
+        ]);
+
+        $response = (new ImageUploader())->uploadBatchWithDetails([[
+            'content' => $fileContent,
+            'filename' => $filename,
+            'remote_path' => $remotePath,
+        ]]);
+
+        Log::info('School logo HTTP upload response', [
+            'remote_path' => $remotePath,
+            'filename' => $filename,
+            'status' => $response['status'],
+            'body' => $response['body'],
+            'metadata' => $response['metadata'],
+            'public_url' => self::publicUrl($school, $filename),
+        ]);
+
+        if (!self::verifyPublicUrl($school, $filename)) {
+            throw new RuntimeException(
+                'School logo upload was accepted by prod02 but the file is not reachable at '
+                . self::publicUrl($school, $filename)
+                . '. The /uat upload handler may need to allow nested school_logos paths.'
+            );
+        }
+    }
+
+    private static function storeOnFilesystem(UploadedFile $file, School $school, string $filename): void
+    {
+        $directory = self::filesystemDirectory($school);
+
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+            throw new RuntimeException("Cannot create school logos directory: {$directory}");
+        }
+
+        $file->move($directory, $filename);
+    }
+
+    private static function verifyPublicUrl(School $school, string $filename): bool
+    {
+        $publicUrl = self::publicUrl($school, $filename);
+
+        if ($publicUrl === null) {
+            return self::isFileOnFilesystem($school, $filename);
+        }
+
+        try {
+            $response = Http::timeout(15)->withoutVerifying()->get($publicUrl);
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::warning('School logo upload verification failed', [
+                'error' => $e->getMessage(),
+                'public_url' => $publicUrl,
+            ]);
+
+            return self::isFileOnFilesystem($school, $filename);
+        }
+    }
+
+    private static function isFileOnFilesystem(School $school, string $filename): bool
+    {
+        if (!self::canUseFilesystemStorage()) {
+            return false;
+        }
+
+        return is_file(self::filesystemPath($school, $filename));
+    }
+
+    private static function filesystemPath(School $school, string $filename): string
+    {
+        return self::filesystemDirectory($school) . '/' . basename($filename);
+    }
+
+    private static function filesystemDirectory(School $school): string
+    {
+        return rtrim((string) config('services.export_image_path'), '/\\')
+            . DIRECTORY_SEPARATOR
+            . str_replace('/', DIRECTORY_SEPARATOR, self::relativeDirectory($school));
+    }
+
     public static function delete(School $school, string $filename): void
     {
         $filename = basename($filename);
+
+        if (self::canUseFilesystemStorage()) {
+            $filesystemPath = self::filesystemPath($school, $filename);
+
+            if (is_file($filesystemPath)) {
+                @unlink($filesystemPath);
+            }
+        }
 
         $structuredPath = self::localDirectory($school) . '/' . $filename;
 
@@ -166,6 +242,13 @@ class SchoolLogoHelper
     private static function localDirectory(School $school): string
     {
         return storage_path('app/public/' . self::relativeDirectory($school));
+    }
+
+    private static function canUseFilesystemStorage(): bool
+    {
+        $path = config('services.export_image_path');
+
+        return filled($path) && !self::isUrl((string) $path) && is_dir((string) $path);
     }
 
     private static function canUseHttpUpload(): bool

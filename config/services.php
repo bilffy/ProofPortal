@@ -41,6 +41,8 @@ return [
     ],
     
     'exportImageLocation' => env('EXPORTIMAGELOCATION'),
+    // Local proofing-cache mount (portal on same server as cache). Preferred for school logos.
+    'export_image_path' => env('EXPORTIMAGEPATH'),
     'image_upload_url' => env('IMAGE_UPLOAD_URL'),
     'image_upload_key' => env('IMAGE_UPLOAD_KEY'),
     'proofing_cache_disk' => env('PROOFING_CACHE_DISK', 'proofing_cache'),

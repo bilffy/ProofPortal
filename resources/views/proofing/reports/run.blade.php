@@ -33,7 +33,7 @@
                                     <form action="{{ route('report.download') }}" method="POST" class="d-inline">
                                         @csrf
                                         <input type="hidden" name="format" value="{{ $format }}">
-                                        <input type="hidden" name="report" value="{{ $ssrsReportName }}">
+                                        <!-- <input type="hidden" name="report" value="{{ $ssrsReportName }}"> -->
                                         <input type="hidden" name="params" value="{{ $ssrsParamsEncrypt }}">
                                         <input type="hidden" name="reportName" value="{{ $downloadNameBuilder }}">
                                         <button type="submit" class="btn btn-primary mt-1 mr-3">{{ $label }}</button>
@@ -41,7 +41,7 @@
                                 @endforeach
                             </p>
                         @else
-                            <p class="mb-2">{{ __('No Jobs have been synced for proofing yet.') }}</p>
+                            <p class="mb-2">{{ __('No Changes have been made for this report.') }}</p>
                         @endif
                     </div>
 

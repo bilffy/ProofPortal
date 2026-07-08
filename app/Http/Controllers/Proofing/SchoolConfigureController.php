@@ -188,7 +188,21 @@ class SchoolConfigureController extends Controller
             $uploadedFile = $request->file('schoolLogo');
             $fileSize = $uploadedFile->getSize();
             $fileType = $uploadedFile->getClientMimeType();
-            $filename = $this->storeLogoFile($uploadedFile, $school);
+
+            try {
+                $filename = $this->storeLogoFile($uploadedFile, $school);
+            } catch (\Throwable $e) {
+                Log::error('School logo upload failed', [
+                    'school_id' => $school->id,
+                    'schoolkey' => $school->schoolkey,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'School logo upload failed. Please contact support if this continues.',
+                ], 500);
+            }
 
             $this->schoolService->saveSchoolData($decryptedSchoolKey, 'school_logo', $filename);
 

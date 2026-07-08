@@ -43,8 +43,9 @@ class ReportController extends Controller
 
     public function index(Request $request)
     {
-        $sort = $request->input('sort', 'id');
-        $direction = $request->input('direction', 'asc');
+        $allowedSorts = ['id', 'name', 'description'];
+        $sort = in_array($request->input('sort'), $allowedSorts, true) ? $request->input('sort') : 'id';
+        $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
 
         $query = Report::with('report_roles')
             ->whereHas('report_roles', function ($query) {
@@ -132,7 +133,26 @@ class ReportController extends Controller
 
         while ($passedParamCount < $requiredParamCount) {
             $nextParam = $reportParams[$passedParamCount];
+
             if ($nextParam['query']->isEmpty()) {
+                $emptyMessage = $this->emptyParamMessage($nextParam['queryName'] ?? '');
+
+                if ($emptyMessage !== null) {
+                    return view('proofing.reports.run_params', [
+                        'currentSeasonID' => $currentSeasonID,
+                        'seasonList' => $seasonList,
+                        'report' => $report,
+                        'reportName' => $report->name,
+                        'reportDescription' => $report->description,
+                        'user' => new UserResource($user),
+                        'passedParamCount' => $passedParamCount,
+                        'passedParamValues' => $passedParamValues,
+                        'reportParams' => $reportParams,
+                        'requiredParamCount' => $requiredParamCount,
+                        'emptyMessage' => $emptyMessage,
+                    ]);
+                }
+
                 $passedParamCount++;
                 continue;
             }
@@ -148,6 +168,7 @@ class ReportController extends Controller
                 'passedParamValues' => $passedParamValues,
                 'reportParams' => $reportParams,
                 'requiredParamCount' => $requiredParamCount,
+                'emptyMessage' => null,
             ]);
         }
 
@@ -175,18 +196,45 @@ class ReportController extends Controller
             'ssrsParams' => $reportParamPayload['ssrsParams'],
             'sqlParams' => $reportParamPayload['sqlParams'],
             'downloadNameBuilder' => $reportParamPayload['downloadName'],
-            'ssrsParamsEncrypt' => Crypt::encryptString(json_encode($reportParamPayload['ssrsParams'])),
+            'ssrsParamsEncrypt' => Crypt::encryptString(json_encode([
+                'ssrsParams' => $reportParamPayload['ssrsParams'],
+                'reportQuery' => $report->query,
+            ])),
         ];
 
         return view('proofing.reports.run', $data);
     }
 
+    private function emptyParamMessage(string $queryName): ?string
+    {
+        return match ($queryName) {
+            'mySchoolsIds', 'mySchools' => __('No Jobs have been synced for proofing yet.'),
+            default => null,
+        };
+    }
+
     public function downloadReport(Request $request)
     {
         $format = $request->input('format', 'csv');
-        $ssrsParams = json_decode(Crypt::decryptString($request->input('params')), true);
+        $payload = json_decode(Crypt::decryptString($request->input('params')), true);
+        $ssrsParams = $payload['ssrsParams'] ?? [];
+        $ssrsReportName = $payload['reportQuery'] ?? null;
         $downloadName = $request->input('reportName');
-        $ssrsReportName = $request->input('report');
+
+        if (empty($ssrsReportName)) {
+            abort(403, 'Invalid report request.');
+        }
+
+        $authorizedReport = Report::where('query', $ssrsReportName)
+            ->whereHas('report_roles', function ($query) {
+                $query->whereIn('role_id', Auth::user()->roles->pluck('id'));
+            })
+            ->where('is_deleted', 0)
+            ->first();
+
+        if (!$authorizedReport) {
+            abort(403, 'You are not authorized to download this report.');
+        }
 
         $result = SqlServerReportingServices::downloadFromReportServer(
             $ssrsReportName,
@@ -203,7 +251,7 @@ class ReportController extends Controller
                 'error' => $result['error'],
             ]);
 
-            return back()->with('error', $result['error']);
+            return back()->with('error', 'Report download failed. Please try again.');
         }
 
         Log::info('SSRS report download succeeded', [

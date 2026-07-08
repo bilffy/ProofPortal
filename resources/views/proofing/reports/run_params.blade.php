@@ -19,6 +19,10 @@
                         <p>{{ $reportDescription }}</p>
                     </div>
                     <div class="card-body">
+                        @if (!empty($emptyMessage))
+                                {{ $emptyMessage }}
+                        @else
+                        
                         @php
                             $query = $currentReportParam['query'];
                             $k = last(explode('.', $currentReportParam['keyField']));
@@ -28,7 +32,6 @@
                         <div class="report-text">
                             {{ __('Please select a :param', ['param' => $currentReportParam['name']]) }}
                         </div>
-                        
 
                         <div class="row mb-4">
                             <div class="col-12">
@@ -84,6 +87,7 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        @endif
                     </div>
 
                     <div class="card-footer">

@@ -39,6 +39,8 @@ class ImageUploader
                 Log::error("Upload failed", [
                     'status' => $response->status(),
                     'body'   => $response->body(),
+                    'path'   => $remotePath,
+                    'filename' => $filename,
                 ]);
 
                 throw new Exception("Upload failed: " . $response->body());
@@ -50,6 +52,43 @@ class ImageUploader
             Log::error("Upload exception: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * @return array{status:int,body:string}
+     */
+    public function uploadWithDetails($fileContent, $remotePath, $filename): array
+    {
+        $url = config('services.image_upload_url');
+        $apiKey = config('services.image_upload_key');
+
+        if (!$url || !$apiKey) {
+            throw new Exception("Upload config missing");
+        }
+
+        $response = Http::timeout(60)
+            ->withoutVerifying()
+            ->attach('image', $fileContent, $filename)
+            ->post($url, [
+                'api_key' => $apiKey,
+                'path'    => $remotePath,
+            ]);
+
+        if (!$response->successful()) {
+            Log::error("Upload failed", [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+                'path'   => $remotePath,
+                'filename' => $filename,
+            ]);
+
+            throw new Exception("Upload failed: " . $response->body());
+        }
+
+        return [
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ];
     }
 
     /**
@@ -100,6 +139,7 @@ class ImageUploader
                 Log::error("Batch Upload failed", [
                     'status' => $response->status(),
                     'body'   => $response->body(),
+                    'metadata' => $metaData,
                 ]);
 
                 throw new Exception("Batch Upload failed: " . $response->body());
@@ -111,5 +151,51 @@ class ImageUploader
             Log::error("Batch Upload exception: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * @param array<int, array{content:string,filename:string,remote_path:string}> $filesData
+     * @return array{status:int,body:string,metadata:array}
+     */
+    public function uploadBatchWithDetails(array $filesData): array
+    {
+        $url = config('services.image_upload_url');
+        $apiKey = config('services.image_upload_key');
+
+        if (!$url || !$apiKey) {
+            throw new Exception("Upload config missing");
+        }
+
+        $request = Http::timeout(90)->withoutVerifying();
+        $metaData = [];
+
+        foreach ($filesData as $file) {
+            $request->attach('images[]', $file['content'], $file['filename']);
+            $metaData[] = [
+                'filename' => $file['filename'],
+                'remote_path' => $file['remote_path'],
+            ];
+        }
+
+        $response = $request->post($url, [
+            'api_key' => $apiKey,
+            'metadata' => json_encode($metaData),
+        ]);
+
+        if (!$response->successful()) {
+            Log::error("Batch Upload failed", [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'metadata' => $metaData,
+            ]);
+
+            throw new Exception("Batch Upload failed: " . $response->body());
+        }
+
+        return [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'metadata' => $metaData,
+        ];
     }
 }
