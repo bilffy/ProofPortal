@@ -135,7 +135,7 @@ class SchoolLogoHelper
             throw new RuntimeException(
                 'School logo upload was accepted by prod02 but the file is not reachable at '
                 . self::publicUrl($school, $filename)
-                . '. The /uat upload handler may need to allow nested school_logos paths.'
+                . '. The upload handler may need to allow nested school_logos paths.'
             );
         }
     }
