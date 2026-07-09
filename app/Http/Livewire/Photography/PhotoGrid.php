@@ -138,7 +138,7 @@ class PhotoGrid extends Component
             $resetClass = key_exists('view', $this->filters) && $view != $this->filters['view'];
             $allClasses = [];
             foreach ($options as $option) {
-                $classOptions[$option->ts_folderkey] = FilenameFormatHelper::removeYearAndDelimiter($option->portal_ts_foldername, $option->year);
+                $classOptions[$option->ts_folderkey] = $option->portal_ts_foldername;
                 $allClasses[] = $option->ts_folderkey;
             }
             $this->filters['allClasses'] = $allClasses;

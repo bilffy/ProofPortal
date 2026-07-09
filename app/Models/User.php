@@ -270,7 +270,7 @@ class User extends Authenticatable
     /**
      * @return bool
      */
-    public function canImpersonate(): bool
+    public function canImpersonateUser(): bool
     {   
         if ($this->isAdmin()) {
             return true;
