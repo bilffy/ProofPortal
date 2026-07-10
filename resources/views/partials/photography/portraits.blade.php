@@ -81,7 +81,8 @@
                 $level = $isFranchiseLevel ? 'franchise_level' : 'school_level';
                 $color = $isFranchiseLevel ? 'alert' : 'neutral-300';
             @endphp
-            <div class="w-full text-center text-{{ $color  }}">{{ $photographyMessages['no_jobs'][$level] }}</div>
+            <!-- <div class="w-full text-center text-{{ $color  }}">{{ $photographyMessages['no_jobs'][$level] }}</div> -->
+            <div class="w-full text-center">{{ $photographyMessages['no_jobs'][$level] }}</div>
         @endif
     </div>
 </div>
