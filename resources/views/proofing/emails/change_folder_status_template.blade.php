@@ -138,7 +138,7 @@
                                 <tr>
                                     <td colspan="2" bgcolor="#00b3e0" style="padding: 20px 40px 20px 40px; text-align: center;">
                                         <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #ffffff; line-height: 1.4; text-align: center; margin: 0 0 15px 0;">
-                                            <strong>Please note:</strong> This is an automated email, and the mailbox is unable to receive replies. We're happy to help you with any questions or concerns you may have, please contact your <a href="https://www.msp.com.au/find-your-local-expert/" style="color: #ffffff; text-decoration: underline; font-weight: 700;">local MSP expert</a>:
+                                            <strong>Please note:</strong> This is an automated email, and the mailbox is unable to receive replies. We're happy to help you with any questions or concerns you may have, please contact your <a href="https://www.msp.com.au/find-your-local-expert/" style="color: #ffffff; text-decoration: underline; font-weight: 700;">Local MSP Photography Expert</a>:
                                         </p>
                                         <a href="mailto:{FRANCHISE_EMAIL}?subject=MSP%20Photography%20Online%20Proofing%20Enquiry">
                                             <img src="https://www.msp.com.au/wp-content/uploads/2020/02/msp_op_button_email.png" width="225" style="display: block; margin: 0 auto; border: 0;">
