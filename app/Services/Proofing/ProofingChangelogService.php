@@ -147,25 +147,25 @@ class ProofingChangelogService
             ->whereNotNull('subjects.ts_subjectkey')
             ->whereNotNull('folders.ts_folderkey')
             ->select(
-                'subjects.firstname', 
-                'subjects.lastname', 
-                'subjects.ts_subjectkey', 
-                'subjects.ts_subject_id', 
-                'folders.ts_folderkey', 
-                'folders.ts_foldername', 
-                'issues.external_issue_name', 
-                'changelogs.notes', 
-                'changelogs.user_id', 
-                'changelogs.change_from', 
+                'subjects.firstname',
+                'subjects.lastname',
+                'subjects.ts_subjectkey',
+                'subjects.ts_subject_id',
+                'folders.ts_folderkey',
+                'folders.ts_foldername',
+                'issues.external_issue_name',
+                'changelogs.notes',
+                'changelogs.user_id',
+                'changelogs.change_from',
                 'changelogs.change_datetime'
             )
             ->orderBy('changelogs.change_datetime', 'ASC')
             ->get();
-            
+
         $subjectsFolderList = $this->getAllFolderList($subjectChanges);
 
         return [
-            'subjectsFolderList' => $subjectsFolderList, 
+            'subjectsFolderList' => $subjectsFolderList,
             'subjectChanges' => $subjectChanges
         ];
 
@@ -211,25 +211,28 @@ class ProofingChangelogService
 
     public function getAllFolderList($subjectChanges){
         $subjectsFolderList = [];
-        
+
+        $subjectIds = $subjectChanges->pluck('ts_subject_id')->unique()->values()->all();
+        $attachedFoldersBySubject = $this->folderSubjectService->getAttachedFoldersForSubjects($subjectIds);
+
         foreach ($subjectChanges as $subjectChange) {
             // Initialize array if it doesn't exist
             if (!isset($subjectsFolderList[$subjectChange->ts_subjectkey])) {
                 $subjectsFolderList[$subjectChange->ts_subjectkey] = ['names' => [], 'keys' => []];
             }
-    
+
             // Add the current folder to the list
             $subjectsFolderList[$subjectChange->ts_subjectkey]['names'][] = $subjectChange->ts_foldername;
             $subjectsFolderList[$subjectChange->ts_subjectkey]['keys'][] = $subjectChange->ts_folderkey;
-    
-            // Fetch attached folders for the subject
-            $attachedFolders = $this->folderSubjectService->getAttachedFolders($subjectChange->ts_subject_id);
-    
+
+            // Attached folders for the subject, from the batched fetch above
+            $attachedFolders = $attachedFoldersBySubject->get($subjectChange->ts_subject_id, collect());
+
             foreach ($attachedFolders as $attachedFolder) {
                 $subjectsFolderList[$subjectChange->ts_subjectkey]['names'][] = $attachedFolder->ts_foldername;
                 $subjectsFolderList[$subjectChange->ts_subjectkey]['keys'][] = $attachedFolder->ts_folderkey;
             }
-    
+
             // Make names and keys unique
             $subjectsFolderList[$subjectChange->ts_subjectkey]['names'] = array_unique($subjectsFolderList[$subjectChange->ts_subjectkey]['names']);
             $subjectsFolderList[$subjectChange->ts_subjectkey]['keys'] = array_unique($subjectsFolderList[$subjectChange->ts_subjectkey]['keys']);

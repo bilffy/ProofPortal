@@ -40,7 +40,7 @@
     $statusService = new StatusService();
     $jobService = app(\App\Services\Proofing\JobService::class);
     $seasonService = new SeasonService();
-    
+
     $selectOptionsEmailTo = [
         'schooladmin' => 'School Administrator',
         'photocoordinator' => 'Photo Coordinator',

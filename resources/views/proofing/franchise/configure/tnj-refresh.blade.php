@@ -8,31 +8,14 @@
 <div class="row">
     <div class="col-9 m-auto">
         <p class="lead mb-0"><strong>{{ __('Update Images of People') }}</strong></p>
-        <ul class="list-disc pl-5">
-            @if($imageCount['totalTSSubjectImages'] != $imageCount['totalBPSubjectImages'])
-                <li>
-                    <span class="text-danger">
-                        {{ __('There are :tnj thumbnails in the TNJ and :bp thumbnails in Portal. It might be a good idea to Update Images of People.', [
-                            'tnj' => $imageCount['totalTSSubjectImages'], 
-                            'bp' => $imageCount['totalBPSubjectImages']
-                        ]) }}
-                    </span> 
-                </li>
-            @else
-                @php
-                    $missingMessage = ($imageCount['bpSubjectCount'] > $imageCount['totalTSSubjectImages']) 
-                        ? __(' (missing :count thumbnails in the TNJ)', ['count' => $imageCount['bpSubjectCount'] - $imageCount['totalTSSubjectImages']]) 
-                        : "";
-                @endphp
-                
-                <li>
-                    {{ __('There are :tnj Thumbnails in the TNJ and :sub Subjects in the School:missing.', [
-                        'tnj' => $imageCount['totalTSSubjectImages'],
-                        'sub' => $imageCount['bpSubjectCount'],
-                        'missing' => $missingMessage
-                    ]) }}
-                </li>
-            @endif
+        <ul class="list-disc pl-5"
+            id="tnj-image-count-list"
+            data-url="{{ URL::signedRoute('config-job.imageCount', ['hash' => $jobKeyHash]) }}"
+            data-msg-mismatch="{{ __('There are :tnj thumbnails in the TNJ and :bp thumbnails in Portal. It might be a good idea to Update Images of People.', ['tnj' => '__TNJ__', 'bp' => '__BP__']) }}"
+            data-msg-match="{{ __('There are :tnj Thumbnails in the TNJ and :sub Subjects in the School:missing.', ['tnj' => '__TNJ__', 'sub' => '__SUB__', 'missing' => '__MISSING__']) }}"
+            data-msg-missing="{{ __(' (missing :count thumbnails in the TNJ)', ['count' => '__COUNT__']) }}"
+            data-msg-error="{{ __('Unable to load image counts.') }}">
+            <li id="tnj-image-count-loading" class="text-muted">{{ __('Loading image counts...') }}</li>
             <li>{{ __('This will refresh all People Images for this School.') }}</li>
             <li>{{ __('Use this when you have updated or added People images in the TNJ.') }}</li>
             <li>{!! __('This will <strong>NOT</strong> refresh Personal details such as First and Last names.') !!}</li>

@@ -18,8 +18,8 @@ use Carbon\Carbon;
 use App\Models\Template;
 use App\Models\FranchiseUser;
 use App\Models\FolderUser;
-use App\Models\Job;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class JobConfigureController extends Controller
 {
@@ -56,11 +56,10 @@ class JobConfigureController extends Controller
 
     public function index($hash){
         $decryptedJobKey = $this->getDecryptData($hash);
-
         $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
 
         if (!$selectedJob) {
-            abort(404);
+            abort(404); 
         }
 
         // $subjectKeys = $selectedJob->folders->flatMap(function ($folder) {
@@ -69,6 +68,14 @@ class JobConfigureController extends Controller
 
         $compiledFolderDuplicates = $this->getDuplicateFolder($selectedJob);
         $compiledSubjectDuplicates = $this->getDuplicateSubject($selectedJob);
+
+        $imageCount = [
+    'totalTSSubjectImages' => 0,
+    'totalBPSubjectImages' => 0,
+    'bpSubjectCount' => 0,
+];
+
+$imageCount= $this->configureService->peopleImageCount($selectedJob->ts_job_id);
 
         if(!Session::has('selectedJob') || session('selectedJob')->ts_jobkey != $selectedJob->ts_jobkey){
             $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first(); // Store session data
@@ -79,33 +86,20 @@ class JobConfigureController extends Controller
             ]);
             session()->save();
         }
-
-        $selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->with(['images', 'subjects'])->orderBy('ts_foldername', 'asc')->get();
-
-        $user = Auth::user();
-
+//$selectedFolders = collect();
+        //$selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->with('images')->orderBy('ts_foldername', 'asc')->get();
+$selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->orderBy('ts_foldername', 'asc')->get();        
+$user = Auth::user();
+        
         return view('proofing.franchise.configure.configure-job',[
             'selectedJob' => $selectedJob,
-            'hash' =>$hash,
-            'selectedFolders' => $selectedFolders,
-            'compiledFolderDuplicates' => $compiledFolderDuplicates,
+            'hash' =>$hash, 
+            'selectedFolders' => $selectedFolders, 
+            'compiledFolderDuplicates' => $compiledFolderDuplicates, 
             'compiledSubjectDuplicates' => $compiledSubjectDuplicates,
+            'imageCount' => $imageCount,
             'user' => new UserResource($user)
         ]);
-    }
-
-    public function imageCount($hash)
-    {
-        $decryptedJobKey = $this->getDecryptData($hash);
-        $tsJobId = Job::where('ts_jobkey', $decryptedJobKey)->value('ts_job_id');
-
-        if (!$tsJobId) {
-            abort(404);
-        }
-
-        $imageCount = $this->configureService->peopleImageCount($tsJobId);
-
-        return response()->json($imageCount);
     }
 
     private function getDuplicateFolder($selectedJob)

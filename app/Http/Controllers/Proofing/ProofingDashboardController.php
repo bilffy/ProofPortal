@@ -15,7 +15,6 @@ use App\Services\Proofing\TimestoneTableService;
 use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\UserResource;
 use App\Helpers\RoleHelper;
-use Illuminate\Support\Facades\Log;
 use Auth;
 
 class ProofingDashboardController extends Controller
@@ -53,15 +52,15 @@ class ProofingDashboardController extends Controller
         if ($hash) {
             $decryptedJobKey = $this->getDecryptData($hash);
             $selectedJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
-            
+
             if (!$selectedJob) {
-                abort(404); 
+                abort(404);
             }
 
             if ($selectedJob->job_status_id == $this->statusService->archived) {
                 abort(403, 'This job has been archived and is no longer accessible.');
             }
-            
+
             // Maintain session compatibility for now, but prioritize URL param
             $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
              session([
@@ -74,7 +73,7 @@ class ProofingDashboardController extends Controller
         } elseif(Session::has('selectedJob') && Session::has('selectedSeason') && Session::get('openJob') === true) {
             $sessionJob = session('selectedJob');
             $selectedJob = $this->jobService->getJobByJobKey($sessionJob->ts_jobkey)->first();
-            
+
             // Check if the job was archived in another session
             if (!$selectedJob || $selectedJob->job_status_id == $this->statusService->archived) {
                 Session::forget(['selectedJob', 'selectedSeason', 'openJob']);
@@ -96,10 +95,10 @@ class ProofingDashboardController extends Controller
                 'approvedSubjectChangesCount' => $approvedSubjectChangesCount + $approvedFolderGroupChangesCount,
                 'awaitApprovalSubjectChangesCount' => $awaitApprovalSubjectChangesCount
             ]);
-        
+
             // Save session
-            session()->save(); 
-            
+            session()->save();
+
             return view('proofing.franchise.task-items', [
                 'user' => new UserResource($user)
             ]);
