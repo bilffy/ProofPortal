@@ -70,9 +70,9 @@ class ImpersonateController extends Controller
         $impersonatedId = Auth::user()->getAuthIdentifier();
         Auth::user()->leaveImpersonation();
         
-        if ($rootUserId) {
-            Auth::loginUsingId($rootUserId);
-        }
+        // if ($rootUserId) {
+        //     Auth::loginUsingId($rootUserId);
+        // }
         // Log EXIT_IMPERSONATE_USER activity
         ActivityLogHelper::log(LogConstants::EXIT_IMPERSONATE_USER, ['impersonated_user' => $impersonatedId]);
 
