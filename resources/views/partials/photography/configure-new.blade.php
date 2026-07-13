@@ -63,7 +63,8 @@
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
     $imageUrl = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
-        $imageUrl = $encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '';
+        $imageUrl = SchoolLogoHelper::publicUrl($selectedSchool, $selectedSchool->school_logo)
+            ?? ($encryptedPath ? route('school.logo', ['encryptedPath' => $encryptedPath]) : '');
     }
     $schoollogo = $imageUrl;
 
