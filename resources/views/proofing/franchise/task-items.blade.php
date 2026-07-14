@@ -113,7 +113,7 @@
                     </div>
                 @endif
 
-                @if (Session::get('approvedSubjectChangesCount') !== 0 && Session::get('approvedSubjectChangesCount') !== null && $user->hasRole('Franchise') || $user->hasRole('Photo Coordinator'))
+                @if ((int) Session::get('approvedSubjectChangesCount') > 0 && ($user->hasRole('Franchise') || $user->hasRole('Photo Coordinator')))
                 <div class="col-6 col-lg-3">
                     <a href="{{$approveChangelocation}}">
                         <div class="card">
