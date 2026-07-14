@@ -23,9 +23,9 @@ class ImpersonateController extends Controller
         /** @var User $user */
         $user = User::findOrFail($id);
 
-        // if (!session()->has('root_user_id')) {
-        //     session()->put('root_user_id', Auth::id());
-        // }
+        if (!session()->has('root_user_id')) {
+            session()->put('root_user_id', Auth::id());
+        }
         $rootUserId = Auth::id();
         Auth::user()->impersonate($user);
         // Log IMPERSONATE_USER activity
@@ -64,15 +64,15 @@ class ImpersonateController extends Controller
         ]);
     
         // Force save then regenerate ID so the browser receives a fresh session cookie
-        // session()->save();
+        session()->save();
         //code by IT
-        // $rootUserId = session()->pull('root_user_id');
+        $rootUserId = session()->pull('root_user_id');
         $impersonatedId = Auth::user()->getAuthIdentifier();
         Auth::user()->leaveImpersonation();
         
-        // if ($rootUserId) {
-        //     Auth::loginUsingId($rootUserId);
-        // }
+        if ($rootUserId) {
+            Auth::loginUsingId($rootUserId);
+        }
         // Log EXIT_IMPERSONATE_USER activity
         ActivityLogHelper::log(LogConstants::EXIT_IMPERSONATE_USER, ['impersonated_user' => $impersonatedId]);
 
