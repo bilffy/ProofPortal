@@ -40,7 +40,7 @@ class JobService
     {
         $school = SchoolContextHelper::getSchool();
         $selectedSchoolkey = $school ? $school->schoolkey : null;
-        
+
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
         $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode, $selectedSchoolkey);
@@ -50,7 +50,7 @@ class JobService
             ->where('job_users.user_id', Auth::user()->id)->count();
         $seasons = $this->seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
-        
+
         // Check if there is a default season
         $defaultSeason = $seasons->where('show_in_portal', 1)->first();
         $defaultSeasonJobs = [];
@@ -65,17 +65,17 @@ class JobService
             ->groupBy('ts_job_id');
 
         return compact(
-            'activeSyncJobs', 
-            'totalSchoolCount', 
-            'completedStatus', 
-            'statuses', 
-            'seasons', 
+            'activeSyncJobs',
+            'totalSchoolCount',
+            'completedStatus',
+            'statuses',
+            'seasons',
             'defaultSeasonJobs',
             'schools',
             'folderStatusCounts'
         );
     }
-    
+
     public function getActiveSyncJobs($franchiseCode, $schoolKey = null)
     {
         $tnjNotFound = $this->statusService->tnjNotFound;
@@ -106,24 +106,34 @@ class JobService
             ->where('jobs.ts_season_id', $seasonID)
             ->orderBy('jobs.id', 'asc')
             ->get();
-    }  
-    
+    }
+
     public function getJobsByTSJobID($TSJobID)
     {
         return Job::with([
             'folders.subjects.images',
             'folders.attachedsubjects.images',
-            'folders.folderTag',
+            'folders.folderTags',
             'folders.images',
         ])->where('ts_job_id', $TSJobID)->first();
     }
-    
+
+    public function getJobsByTSJobIDs(array $TSJobIDs)
+    {
+        return Job::with([
+            'folders.subjects.images',
+            'folders.attachedsubjects.images',
+            'folders.folderTags',
+            'folders.images',
+        ])->whereIn('ts_job_id', $TSJobIDs)->get()->keyBy('ts_job_id');
+    }
+
     public function toggleArchivedJobs($franchiseCode, $schoolKey, $includeArchived)
-    {   
+    {
         $archiveStatus = $this->statusService->archived;
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        
+
         $query = $this->queryJobs($franchiseCode,null)
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->where('job_users.user_id', Auth::user()->id);
@@ -163,22 +173,22 @@ class JobService
             'jobkey' => $job->ts_jobkey,
             'status' => $newStatusId
         ], $rootUserId);
-        
+
         $job->update(['job_status_id' => $newStatusId]);
-    
+
         $statusFields = [
             $this->statusService->modified => 'job_status_modified',
             $this->statusService->completed => 'job_status_completed',
             $this->statusService->unlocked => 'job_status_unlocked'
         ];
-    
+
         if (isset($statusFields[$newStatusId])) {
             // Only send 'modified' email if it wasn't already modified
             if ($newStatusId != $this->statusService->modified || $oldStatusId != $this->statusService->modified) {
                 $this->emailService->saveEmailContent($job->ts_jobkey, $statusFields[$newStatusId], Carbon::now(), $newStatusId);
             }
         }
-    
+
         if ($newStatusId == $this->statusService->completed) {
             $this->getFolderService()->updateFolderStatus($job->folders->pluck('ts_folder_id')->toArray(), $newStatusId);
         }
@@ -216,11 +226,11 @@ class JobService
     }
 
     public function deleteJob($tsJobKey)
-    {                    
+    {
         $job = Job::with('seasons')->where('ts_jobkey', $tsJobKey)->firstOrFail();
-                                                    
-        $tsFolderIds = $job->folders()->pluck('ts_folder_id')->toArray();                                                                
-        
+
+        $tsFolderIds = $job->folders()->pluck('ts_folder_id')->toArray();
+
         \DB::beginTransaction();
 
         try {
@@ -249,7 +259,7 @@ class JobService
             ]);
 
             \DB::commit();
-            
+
             // Delete Group Image
 
         } catch (\Exception $e) {
@@ -286,3 +296,4 @@ class JobService
         );
     }
 }
+

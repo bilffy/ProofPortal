@@ -428,7 +428,7 @@ class ImageController extends Controller
 
         $file = $request->file('file');
         $folderKey = $request->input('folder_key');
-        $extension = $file->getClientOriginalExtension();
+        $extension = strtolower($file->getClientOriginalExtension());
         $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
 
         if ($folder && $folder->job) {

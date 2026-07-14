@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Cache; // code by IT
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage; // code by IT
 class ImageService
-{   
+{
     // code by IT
     protected static $urlCache = [];
     protected static $existenceCache = [];
@@ -43,7 +43,7 @@ class ImageService
 
     /**
      * Get all the years.
-     * 
+     *
      * @param string $schoolKey
      * @param string $tab
      *
@@ -63,7 +63,7 @@ class ImageService
                 $visibilityColumn = '';
                 break;
         }
-        
+
         $query = DB::table('seasons')
             ->join('jobs', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
@@ -79,14 +79,14 @@ class ImageService
                 }
             })
             ->where('seasons.show_in_portal', 1); // code by IT
-        
+
         return $query
             ->select('seasons.id', 'seasons.ts_season_id', 'seasons.code as Year')
             ->orderBy('code', 'desc')
             ->distinct()
             ->get();
     }
-    
+
     /**
      * Get all the folder for views based on the selected season and school of selected folder tag.
      *
@@ -131,7 +131,7 @@ class ImageService
             ->where('jobs.ts_schoolkey', $schoolKey)
             ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where('folders.is_deleted', 0);
-            
+
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
                  // code by IT
@@ -150,7 +150,7 @@ class ImageService
                     $q->where('folders.folder_tag', '!=', 'SP')
                         ->orWhereNull('folders.folder_tag');
                 });
-                
+
                 if (auth()->check() && auth()->user()->isSchoolLevel()) {
                     $query->where(function ($q) {
                         $q->where('folder_tags.external_name', '!=', 'Family')
@@ -164,9 +164,9 @@ class ImageService
             ->distinct()
             ->get();
     }
-    
+
     /**
-     * Get all the folders based on the selected tag of selected column visibility. 
+     * Get all the folders based on the selected tag of selected column visibility.
      *
      * @param int $seasonId
      * @param string|null $schoolKey
@@ -178,7 +178,7 @@ class ImageService
     {
         $folderTagsQuery = DB::table('folder_tags')
             ->whereIn('external_name', $selectedTags);
-            
+
         if (auth()->check() && auth()->user()->isSchoolLevel()) {
             $folderTagsQuery->where('external_name', '!=', 'Family');
         }
@@ -215,7 +215,7 @@ class ImageService
             if ($schoolKey) {
                 $query->where('jobs.ts_schoolkey', $schoolKey);
             }
-            
+
             $query->where(function ($query) use ($folderTags, $selectedTags, $nullTag) {
                 $query->whereIn('folders.folder_tag', $folderTags);
                 if (in_array($nullTag, $selectedTags)) {
@@ -258,7 +258,7 @@ class ImageService
             });
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
-        
+
         return $query->select('subjects.portal_firstname', 'subjects.portal_lastname', 'subjects.ts_subjectkey', 'folders.portal_ts_foldername');
     }
 
@@ -271,6 +271,125 @@ class ImageService
      * @param string $searchTerm
      * @return \Illuminate\Database\Query\Builder
      */
+
+    private function applySubjectsCollectionFilters($query, int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
+    {
+        $query->where('jobs.ts_season_id', $seasonId)
+            ->where('jobs.ts_schoolkey', $schoolKey)
+            ->whereNotNull('subjects.ts_subjectkey')
+            ->whereNotNull('folders.ts_folderkey')
+            ->where('folders.is_deleted', 0)
+            ->where('subjects.is_deleted', 0)
+            ->whereIn('folders.ts_folderkey', $folderKeys)
+            ->where(function ($query) {
+                $query->where(function ($subQuery) {
+                    $subQuery->whereNull('jobs.portrait_download_date')
+                        ->whereNotNull('jobs.download_available_date')
+                        ->where('jobs.download_available_date', '<=', now());
+                })->orWhere(function ($subQuery) {
+                    $subQuery->whereNotNull('jobs.portrait_download_date')
+                        ->whereNotNull('jobs.download_available_date')
+                        ->whereRaw('GREATEST(jobs.portrait_download_date, jobs.download_available_date) <= ?', [now()]);
+                });
+            });
+
+        if ($searchTerm) {
+            $query->where(function ($query) use ($searchTerm) {
+                $query->where('subjects.portal_firstname', 'like', "%$searchTerm%")
+                    ->orWhere('subjects.portal_lastname', 'like', "%$searchTerm%")
+                    ->orWhere('folders.portal_ts_foldername', 'like', "%$searchTerm%");
+            });
+        }
+
+        return $query;
+    }
+
+    public function getSubjectsCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
+{
+    $selectColumns = [
+        'subjects.portal_firstname',
+        'subjects.portal_lastname',
+        'subjects.ts_subjectkey',
+        'seasons.code as year',
+        'subjects.external_subject_id',
+    ];
+
+    // Query 1: Homed Subjects
+    $homed = $this->applySubjectsCollectionFilters(
+        DB::table('jobs')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+            ->select($selectColumns)
+            ->distinct(),
+        $seasonId, $schoolKey, $folderKeys, $searchTerm
+    );
+
+    // Query 2: Attached Subjects
+    // Note: Removed the 'orOn' join to maintain performance
+    $attached = $this->applySubjectsCollectionFilters(
+        DB::table('jobs')
+            ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->join('folder_subjects', function ($join) {
+                $join->on('folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                     ->where('folder_subjects.is_deleted', 0);
+            })
+            ->join('subjects', 'subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id')
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+            ->select($selectColumns)
+            ->distinct(),
+        $seasonId, $schoolKey, $folderKeys, $searchTerm
+    );
+
+    return $homed
+        ->union($attached)
+        ->orderBy('portal_lastname')
+        ->orderBy('portal_firstname');
+}
+
+    /**
+     * Count of distinct subjects (matched either by homed folder or folder_subjects
+     * attachment) that also have a matching row in `images`. Built as its own
+     * homed+attached union - with the images join baked into each half before the
+     * union - rather than joining onto getSubjectsCollection()'s result, since a
+     * join appended after ->union() only applies to the first half.
+     */
+    public function getSubjectsWithImagesCount(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm): int
+    {
+        $imagesJoin = function ($join) {
+            $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
+                ->on('images.keyvalue', '=', 'subjects.ts_subjectkey');
+        };
+
+        $homed = $this->applySubjectsCollectionFilters(
+            DB::table('jobs')
+                ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+                ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+                ->join('images', $imagesJoin)
+                ->select('subjects.ts_subjectkey')
+                ->distinct(),
+            $seasonId, $schoolKey, $folderKeys, $searchTerm
+        );
+
+        $attached = $this->applySubjectsCollectionFilters(
+            DB::table('jobs')
+                ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+                ->join('folder_subjects', function ($join) {
+                    $join->on('folder_subjects.ts_folder_id', '=', 'folders.ts_folder_id')
+                        ->where('folder_subjects.is_deleted', 0);
+                })
+                ->join('subjects', 'subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id')
+                ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+                ->join('images', $imagesJoin)
+                ->select('subjects.ts_subjectkey')
+                ->distinct(),
+            $seasonId, $schoolKey, $folderKeys, $searchTerm
+        );
+
+        return $homed->union($attached)->count();
+    }
+/*
     public function getSubjectsCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
     {
         $query = DB::table(table: 'jobs')
@@ -290,7 +409,7 @@ class ImageService
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         ->where('subjects.is_deleted', 0);
-        
+
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
                 // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
@@ -315,12 +434,12 @@ class ImageService
             });
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
-        
+
         return $query
             ->select(
-                'subjects.portal_firstname', 
-                'subjects.portal_lastname', 
-                'subjects.ts_subjectkey', 
+                'subjects.portal_firstname',
+                'subjects.portal_lastname',
+                'subjects.ts_subjectkey',
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
@@ -328,7 +447,7 @@ class ImageService
             ->distinct('subjects.ts_subjectkey') //CODE BY IT
             ->orderBy('subjects.portal_lastname')
             ->orderBy('subjects.portal_firstname');
-    }
+    }*/
 
     /**
      * Get all the folders based on query filters.
@@ -352,7 +471,7 @@ class ImageService
         ->where('folders.is_deleted', 0)
         // ->where('images.keyorigin', 'Folder')
         ;
-        
+
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
                 // Case where 'group_download_date' is NULL, but 'download_available_date' is valid
@@ -368,12 +487,12 @@ class ImageService
                     ->whereRaw('GREATEST(jobs.group_download_date, jobs.download_available_date) <= ?', [now()]);
             });
         });
-        
+
         if($searchTerm) {
             $query->where('folders.portal_ts_foldername', 'like', "%$searchTerm%");
         }
         $query->whereIn('folders.ts_folderkey', $folderKeys);
-        
+
         return $query
             ->select('folders.ts_folderkey', 'folders.portal_ts_foldername', 'seasons.code as year')
             ->distinct('folders.ts_folderkey') //CODE BY IT
@@ -483,7 +602,7 @@ class ImageService
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         ->where('subjects.is_deleted', 0);
-        
+
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
                 // Case where 'portrait_download_date' is NULL, but 'download_available_date' is valid
@@ -513,11 +632,11 @@ class ImageService
         } else {
             $query->where('subjects.ts_subjectkey', $subjectKey);
         }
-        
+
         return $query
-            ->select('subjects.portal_firstname', 
-                'subjects.portal_lastname', 
-                'subjects.ts_subjectkey', 
+            ->select('subjects.portal_firstname',
+                'subjects.portal_lastname',
+                'subjects.ts_subjectkey',
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
@@ -637,7 +756,7 @@ class ImageService
             'source' => 'not-found',
         ];
     }
-    
+
     private function getFallbackNotFoundImage(): ?string
     {
         $notFoundPath = ImageHelper::NOT_FOUND_IMG;
@@ -648,7 +767,7 @@ class ImageService
 
         return null;
     }
-    
+
     private function getFallbackAbsentImage(): ?string
     {
         $notFoundPath = ImageHelper::ABSENT_IMG;
@@ -659,7 +778,7 @@ class ImageService
 
         return null;
     }
-    
+
     /**
      * Check if at least one image exists for the key
      */
@@ -696,7 +815,7 @@ class ImageService
         $upperTab = strtoupper((string)($tab ?? ''));
         $resKey = (string)($resolutionId ?? 'any');
         $cacheKey = "photography_urls_{$key}_{$resKey}_{$upperTab}";
-        
+
         return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab) {
             $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
             $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
@@ -704,7 +823,7 @@ class ImageService
             // --- DEFINE PORTRAIT URLS ---
             if ($resolutionId == 1) { // High Quality
                 $portraitUrls = ["{$baseImage}_1600.jpg"];
-            } else { 
+            } else {
                 // Default to 400 if resolutionId is 2 OR null
                 $portraitUrls = ["{$baseImage}_400.jpg"];
             }
@@ -712,7 +831,7 @@ class ImageService
             // --- DEFINE GROUP URLS ---
             if ($resolutionId == 1) { // High Quality
                 $groupUrls = ["{$baseGroup}_1600.jpg"];
-            } else { 
+            } else {
                 // Default to 400 if resolutionId is 2 OR null
                 $groupUrls = ["{$baseGroup}_400.jpg"];
             }
@@ -813,7 +932,7 @@ class ImageService
     //             }
     //         }
     //         $fileContent = $this->getImageContent($imgKey);
-            
+
     //         $dimensions = getimagesizefromstring($fileContent);
 
     //         if ($isSubject) {
@@ -896,16 +1015,16 @@ class ImageService
             $options
         );
     }
-    
+
     /**
      * Get all the images based on the selected portal subject id.
      *
      * @param string $subjectId
-     * 
+     *
      */
     public function getPortraitImagesByPortalSubjectId(string $subjectId)
     {
-        // TODO: This should return images based on the subjectId  
+        // TODO: This should return images based on the subjectId
     }
 
     /**

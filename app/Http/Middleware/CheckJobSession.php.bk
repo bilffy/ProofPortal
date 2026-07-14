@@ -27,7 +27,7 @@ class CheckJobSession
 
             // 1. Resolve Job (Checks Job -> Folder -> Subject)
             $selectedJob = Job::with('jobUsers')->where('ts_jobkey', $decryptedKey)->first();
-
+        
             if (!$selectedJob) {
                 $folder = Folder::where('ts_folderkey', $decryptedKey)->first();
                 if ($folder) {

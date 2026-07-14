@@ -14,6 +14,25 @@ class FolderSubjectService
         ->get();
     }
 
+    /**
+     * Batched version of getAttachedFolders() for multiple subjects in one query.
+     * Returns results grouped by ts_subject_id instead of one query per subject.
+     */
+    public function getAttachedFoldersForSubjects(array $subjectIds)
+    {
+        if (empty($subjectIds)) {
+            return collect();
+        }
+
+        return FolderSubject::join('folders', 'folders.ts_folder_id', '=', 'folder_subjects.ts_folder_id')
+            ->whereIn('folder_subjects.ts_subject_id', $subjectIds)
+            ->whereNotNull('folders.ts_folderkey')
+            ->where('folder_subjects.is_deleted', 0)
+            ->select('folder_subjects.ts_subject_id', 'folders.ts_foldername', 'folders.ts_folderkey')
+            ->get()
+            ->groupBy('ts_subject_id');
+    }
+
     public function getSubjectInAttachedFolder($folderId){
         return FolderSubject::with(['subject.images:id,keyvalue,ts_imagekey'])
         ->where('ts_folder_id', $folderId)
@@ -78,4 +97,4 @@ class FolderSubjectService
             ->get();
     }
 }
-        
+

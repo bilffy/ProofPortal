@@ -53,15 +53,15 @@ class PhotoGrid extends Component
         $this->category = $category;
         $this->season = $season;
         $this->schoolKey = $schoolKey;
-        
+
         $schoolService = new SchoolService();
 
         $user = Auth::user();
         $school = $schoolService->getSchoolBySchoolKey($this->schoolKey)->first();
-        
+
         if (UserService::isCanAccessImage($user, $school) === false) {
-            abort(403, 'Access denied.');                    
-        }                   
+            abort(403, 'Access denied.');
+        }
 
         $this->perPage = Session::get('photo_grid_per_page', 30);
         $this->setupFilters($season);
@@ -201,12 +201,12 @@ class PhotoGrid extends Component
             $options,
             $this->category,
             $this->perPage,       // images per page
-            $this->paginators['page'] ?? 1 // current page from Livewire													  
+            $this->paginators['page'] ?? 1 // current page from Livewire
         );
-                 
+
         // Modify the paginated items and track if any images actually exist
         $modifiedItems = $imageService->getImagesAsBase64($paginated->getCollection(), $this->category);
-        
+
         $hasAnyImage = false;
         foreach($modifiedItems as $item) {
              if ($item['hasPhoto']) {
@@ -250,7 +250,7 @@ class PhotoGrid extends Component
     }
 
     public function render()
-    {   
+    {
         $paginatedImages = $this->getImages();
         $totalWithImages = $this->getCountWithImages();
         return view('livewire.photography.photo-grid', [
@@ -275,12 +275,7 @@ class PhotoGrid extends Component
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
-                $query = $imageService->getSubjectsCollection($this->season, $this->schoolKey, $keys, $this->search);
-                $query->join('images', function ($join) {
-                    $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
-                         ->on('images.keyvalue', '=', 'subjects.ts_subjectkey');
-                });
-                return $query->count(DB::raw('DISTINCT subjects.ts_subjectkey'));
+                return $imageService->getSubjectsWithImagesCount($this->season, $this->schoolKey, $keys, $this->search);
         }
     }
 

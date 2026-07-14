@@ -17,6 +17,7 @@ use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\ImageHelper;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use App\Http\Resources\UserResource;
 use Auth;
 use Carbon\Carbon;
@@ -97,13 +98,15 @@ class SchoolConfigureController extends Controller
         $jobs = $this->jobService->getJobsBySeason($decryptedSchoolkey, $decryptedSeasonID)->where('show_portal',1)
         ->get();
 
+        // Fetch folder/subject/image relations for all jobs in one batched query
+        $jobsWithRelationsById = $this->jobService->getJobsByTSJobIDs($jobs->pluck('ts_job_id')->all());
+
         // Map through all jobs to get the job details along with folders and associated data
-        $jobsWithDetails = $jobs->map(function ($job) {
+        $jobsWithDetails = $jobs->map(function ($job) use ($jobsWithRelationsById) {
             // Initialize $selectedFolders as an empty array
             $selectedFolders = [];
 
-            // Transform folders for each job
-            $jobWithRelations = $this->jobService->getJobsByTSJobID($job->ts_job_id); 
+            $jobWithRelations = $jobsWithRelationsById->get($job->ts_job_id);
 
             if ($jobWithRelations->folders->isNotEmpty()) {
                 $selectedFolders =$jobWithRelations->folders
@@ -133,7 +136,7 @@ class SchoolConfigureController extends Controller
                     ];
                 })->toArray();
             }
-        
+
             // Prepare job details for each job
             return [
                 'ts_jobkey' => Crypt::encryptString($jobWithRelations->ts_jobkey),
