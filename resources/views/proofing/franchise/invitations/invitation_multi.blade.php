@@ -143,7 +143,7 @@
                     $validation
                         .removeClass('d-none')
                         .html(
-                            '<strong>These emails will be skipped</strong> (not in this school for this role): '
+                            '<strong>These emails will be skipped</strong> (User role is not set for this school): '
                             + invalidEmails.map(function (email) {
                                 return '<code>' + email + '</code>';
                             }).join(', ')
