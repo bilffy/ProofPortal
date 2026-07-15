@@ -324,8 +324,9 @@ class InvitationController extends Controller
 
     public function inviteSend(Request $request)
     {
-        $errorMessages = [];
+        $failedEmails = [];
         $inviteUsers = [];
+        $attemptedEmails = [];
         $user = Auth::user();
 
         $peopleArray = $request->people
@@ -337,12 +338,14 @@ class InvitationController extends Controller
 
         foreach ($peopleArray as $person) {
 
-            $email = $person[2] ?? null;
+            $email = isset($person[2]) ? strtolower(trim((string) $person[2])) : null;
             $folderKey = $person[3] ?? null;
 
             if (!$email) {
                 continue;
             }
+
+            $attemptedEmails[$email] = true;
 
             // --- 1. CHECK EMAIL EXISTS ---
             $baseQuery = User::query()
@@ -357,20 +360,28 @@ class InvitationController extends Controller
                 ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
                 ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
                 ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
-                ->where('users.email', $email);
+                ->whereRaw('LOWER(users.email) = ?', [$email]);
 
             if (!$baseQuery->exists()) {
-                $errorMessages[] = "Email {$email} does not exist. Please add the user for the role {$request->role}.";
+                $failedEmails[$email] = 'user does not exist';
                 continue;
             }
 
-            // --- 2. CHECK SCHOOL/FRANCHISE CONTEXT ---
-            if ($user->isSchoolLevel()) {
+            // --- 2. CHECK SCHOOL CONTEXT (current school for franchise or school-level inviter) ---
+            $currentSchool = SchoolContextHelper::getSchool();
+            if ($currentSchool) {
+                $contextQuery = (clone $baseQuery)->where('schools.id', $currentSchool->id);
+
+                if (!$contextQuery->exists()) {
+                    $failedEmails[$email] = 'not associated with this school';
+                    continue;
+                }
+            } elseif ($user->isSchoolLevel()) {
                 $school = $user->getSchool();
                 $contextQuery = (clone $baseQuery)->where('schools.id', $school->id);
 
                 if (!$contextQuery->exists()) {
-                    $errorMessages[] = "Email {$email} is not associated with your school.";
+                    $failedEmails[$email] = 'not associated with your school';
                     continue;
                 }
             }
@@ -383,15 +394,19 @@ class InvitationController extends Controller
             );
 
             if (!$roleCheckQuery->exists()) {
-                $errorMessages[] =
-                    "Email {$email} is not associated with the role {$request->role}. Please add the user for this role.";
+                $failedEmails[$email] = "not associated with the role {$request->role}";
                 continue;
             }
 
             // At this point → email is valid, belongs to correct role, and correct school/franchise.
 
             // Fetch the user ID
-            $inviteUser = User::where('email', $email)->select('id')->first();
+            $inviteUser = User::whereRaw('LOWER(email) = ?', [$email])->select('id')->first();
+
+            if (!$inviteUser) {
+                $failedEmails[$email] = 'could not be resolved to a user';
+                continue;
+            }
 
             // --- 4. FOLDER ASSIGNMENT ---
             $folders = $folderKey === '*'
@@ -400,6 +415,11 @@ class InvitationController extends Controller
                 : Folder::whereHas('job', fn($q) => $q->where('ts_jobkey', $request->job_key))
                     ->where('ts_folderkey', $folderKey)
                     ->select('ts_folder_id', 'ts_job_id')->get();
+
+            if ($folders->isEmpty()) {
+                $failedEmails[$email] = 'no matching class/group found';
+                continue;
+            }
 
             foreach ($folders as $folder) {
                 $this->saveFolderUser($folder->ts_job_id, $folder->ts_folder_id, $inviteUser->id, $inviteUsers);
@@ -427,21 +447,50 @@ class InvitationController extends Controller
         }
 
         // --- 6. FLASH MESSAGES ---
-        if ($errorMessages) {
-            session()->flash('errors', array_unique($errorMessages));
-        }
-
         $successDetails = [];
-        foreach (array_unique($inviteUsers) as $inviteUserId) {
-            $u = \App\Models\User::find($inviteUserId);
+        foreach ($uniqueInviteUserIds as $inviteUserId) {
+            $u = User::find($inviteUserId);
             if ($u) {
-                $successDetails[] = "{$u->firstname} {$u->lastname} <{$u->email}>";
+                $successDetails[] = "{$u->firstname} {$u->lastname} ({$u->email})";
             }
         }
 
-        if (!empty($successDetails)) {
-            $inviteeList = implode(', ', $successDetails);
-            session()->flash('success', "Success, Job is asssigned to: {$inviteeList}");
+        $successCount = count($successDetails);
+        $failCount = count($failedEmails);
+        $attemptedCount = count($attemptedEmails);
+
+        if ($attemptedCount === 0) {
+            session()->flash('error', 'No email addresses were submitted.');
+        } elseif ($successCount > 0 && $failCount === 0) {
+            session()->flash(
+                'success',
+                'All invitations were sent successfully (' . $successCount . ' of ' . $attemptedCount . '): '
+                . implode(', ', $successDetails) . '.'
+            );
+        } else {
+            if ($successCount > 0) {
+                session()->flash(
+                    'success',
+                    'Invitations sent (' . $successCount . ' of ' . $attemptedCount . '): '
+                    . implode(', ', $successDetails) . '.'
+                );
+            }
+
+            if ($failCount > 0) {
+                $failedList = [];
+                foreach ($failedEmails as $failedEmail => $reason) {
+                    $failedList[] = e($failedEmail) . ' (' . e($reason) . ')';
+                }
+
+                $prefix = $successCount > 0
+                    ? 'Some invitations failed (' . $failCount . ' of ' . $attemptedCount . ')'
+                    : 'No invitations were sent';
+
+                session()->flash(
+                    'error',
+                    $prefix . '. Failed emails: ' . implode(', ', $failedList) . '.'
+                );
+            }
         }
 
         return redirect()->back();

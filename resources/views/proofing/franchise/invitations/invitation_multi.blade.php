@@ -26,7 +26,7 @@
 
     <div class="row">
         <div class="col-md-12 col-xl-8 m-xl-auto">
-            <form method="POST" action="{{ route('invitations.inviteSend') }}">
+            <form method="POST" action="{{ route('invitations.inviteSend') }}" id="invite-multi-form">
                 @csrf
                 <div class="card">
                     <div class="card-header">
@@ -34,8 +34,12 @@
                     </div>
 
                     <div class="mt-4 mr-4 ml-4">
-                        Type directly into the Spreadsheet below or copy-and-paste from Excel.
-                    </div> 
+                        <p class="mb-2">
+                            Paste from Excel into the grid (email column is free text).
+                            Invitations are only sent to users who already belong to this school and have the {{ $title }} role.
+                        </p>
+                        <div id="invite-validation" class="alert alert-warning mt-3 d-none" role="alert"></div>
+                    </div>
                     
                     <div class="mt-4 mb-4 ml-4" id="invite-spreadsheet"></div>
 
@@ -59,19 +63,26 @@
 @endif
 
 @php
-    // Email → Firstname / Lastname lookup
-    $userLookup = $users->keyBy('email')->map(fn($u) => [
-        'firstname' => $u->firstname,
-        'lastname'  => $u->lastname
-    ]);
+    // Email → Firstname / Lastname lookup (lowercase keys for paste matching)
+    $userLookup = [];
+    foreach ($users as $u) {
+        $userLookup[strtolower(trim((string) $u->email))] = [
+            'firstname' => $u->firstname,
+            'lastname' => $u->lastname,
+            'email' => $u->email,
+        ];
+    }
 
-    $emailList = $users->pluck('email')->toArray();
+    $emailList = array_values(array_map(
+        fn ($email) => strtolower(trim((string) $email)),
+        $users->pluck('email')->toArray()
+    ));
 
     // Folder dropdown
     $sourceList = [['id' => '*', 'name' => 'All Folders']];
     foreach ($selectedJob->folders as $folder) {
         $sourceList[] = [
-            'id'   => $folder->ts_folderkey,
+            'id' => $folder->ts_folderkey,
             'name' => $folder->ts_foldername
         ];
     }
@@ -91,23 +102,98 @@
 
     <script>
         $(document).ready(function () {
-        
             var userLookup = @json($userLookup);
             var emailList = @json($emailList);
             var spreadsheetData = @json($spreadsheetData);
             var sourceList = @json($sourceList);
-        
-            var change = function (instance, cell, value) {
-                var data = $('#invite-spreadsheet').jexcel('getData');
-                $("input[name='people']").val(JSON.stringify(data));
+            var syncingNames = false;
 
-                // Enable button if at least one email is present in column 2
-                var hasEmail = data.some(function(row) {
-                    return row[2] && row[2].trim() !== "";
+            function normalizeEmail(value) {
+                return String(value || '').trim().toLowerCase();
+            }
+
+            function refreshPeoplePayloadAndValidation() {
+                var data = $('#invite-spreadsheet').jexcel('getData');
+                var invalidEmails = [];
+                var validCount = 0;
+
+                data.forEach(function (row) {
+                    var email = normalizeEmail(row[2]);
+                    if (!email) {
+                        return;
+                    }
+
+                    if (userLookup[email]) {
+                        validCount++;
+                        row[2] = userLookup[email].email;
+                    } else {
+                        invalidEmails.push(email);
+                    }
+
+                    if (!row[3]) {
+                        row[3] = '*';
+                    }
                 });
-                $('#submitButton').prop('disabled', !hasEmail);
+
+                $("input[name='people']").val(JSON.stringify(data));
+                $('#submitButton').prop('disabled', validCount === 0);
+
+                var $validation = $('#invite-validation');
+                if (invalidEmails.length) {
+                    $validation
+                        .removeClass('d-none')
+                        .html(
+                            '<strong>These emails will be skipped</strong> (not in this school for this role): '
+                            + invalidEmails.map(function (email) {
+                                return '<code>' + email + '</code>';
+                            }).join(', ')
+                        );
+                } else {
+                    $validation.addClass('d-none').empty();
+                }
+            }
+
+            var change = function () {
+                if (syncingNames) {
+                    return;
+                }
+
+                var data = $('#invite-spreadsheet').jexcel('getData');
+                syncingNames = true;
+
+                try {
+                    data.forEach(function (row, index) {
+                        var email = normalizeEmail(row[2]);
+                        if (!email) {
+                            return;
+                        }
+
+                        var user = userLookup[email];
+                        if (!user) {
+                            return;
+                        }
+
+                        var rowNumber = index + 1;
+                        if (normalizeEmail(row[2]) !== normalizeEmail(user.email)) {
+                            $('#invite-spreadsheet').jexcel('setValue', 'C' + rowNumber, user.email);
+                        }
+                        if ((row[0] || '') !== (user.firstname || '')) {
+                            $('#invite-spreadsheet').jexcel('setValue', 'A' + rowNumber, user.firstname || '');
+                        }
+                        if ((row[1] || '') !== (user.lastname || '')) {
+                            $('#invite-spreadsheet').jexcel('setValue', 'B' + rowNumber, user.lastname || '');
+                        }
+                        if (!row[3]) {
+                            $('#invite-spreadsheet').jexcel('setValue', 'D' + rowNumber, '*');
+                        }
+                    });
+                } finally {
+                    syncingNames = false;
+                }
+
+                refreshPeoplePayloadAndValidation();
             };
-        
+
             jQuery.noConflict();
             $('#invite-spreadsheet').jexcel({
                 data: spreadsheetData,
@@ -116,15 +202,25 @@
                 minDimensions: [4, 4],
                 maxDimensions: [4, 40],
                 allowInsertColumn: false,
+                allowInsertRow: true,
                 columns: [
                     { type: 'text' },
                     { type: 'text' },
-                    { type: 'dropdown', source: emailList, autocomplete: true },
+                    // plain text so Excel-pasted emails are kept even when not in the allow-list
+                    { type: 'text' },
                     { type: 'dropdown', source: sourceList }
                 ],
-                onafterchange: change
+                onafterchange: change,
+                onpaste: function () {
+                    setTimeout(change, 0);
+                }
             });
-        
+
+            $('#invite-multi-form').on('submit', function () {
+                refreshPeoplePayloadAndValidation();
+            });
+
+            refreshPeoplePayloadAndValidation();
         });
     </script>
 @stop

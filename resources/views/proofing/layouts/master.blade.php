@@ -375,6 +375,21 @@
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
+                            @elseif ($errorsList = session('errors'))
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    @if (is_array($errorsList))
+                                        <ul class="mb-0 pl-3">
+                                            @foreach ($errorsList as $errorItem)
+                                                <li>{!! $errorItem !!}</li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        {!! $errorsList !!}
+                                    @endif
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                             @endif
 
                             {{-- Generic alert for AJAX success messages (handled by ajaxcontrol.js) --}}
