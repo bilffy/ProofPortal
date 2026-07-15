@@ -120,92 +120,58 @@ class ExportImageService
     public function downloadBatchToLocal(Job $job, array $imageKeys, int $chunkSize = 10): array
     {
         $summary = ['downloaded' => 0, 'failed' => 0, 'missing' => 0];
-
-        if (empty($imageKeys)) {
-            return $summary;
-        }
-
+        if (empty($imageKeys)) return $summary;
+    
         $this->ensureStagingRootExists();
-
         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-        $seenKeys = [];
         $downloadedBatch = [];
-        $failedBatch = [];
-
+    
+        // 1. Get the list of images without the heavy blobs
         foreach ($this->findImageMatchesByImageKeys($imageKeys)->cursor() as $row) {
-            $seenKeys[] = $row->ImageKey;
-
-            $thumbnail = $this->normalizeThumbnail($row->Thumbnail);
-
+            // 2. Fetch the BLOB specifically for this ID
+            $thumbnail = DB::connection('timestone')
+                ->table('ImageBitmaps')
+                ->where('ImageID', $row->ImageID)
+                ->value('Thumbnail');
+    
+            $thumbnail = $this->normalizeThumbnail($thumbnail);
+    
             if ($thumbnail === null) {
-                $failedBatch[] = $row->ImageKey;
-                $summary['failed'] += $this->flushThumbnailMissingBatch($failedBatch, $chunkSize);
-                Log::warning('Timestone thumbnail missing for image', [
-                    'jobkey' => $job->ts_jobkey,
-                    'image_key' => $row->ImageKey,
-                ]);
-                unset($row);
+                $summary['failed']++;
                 continue;
             }
-
+    
+            // 3. Process the file
             try {
                 $extension = $this->getExtensionFromMimeType($fileInfo->buffer($thumbnail));
                 $subjectKey = (string) $row->SubjectKey;
-                $localPath = sprintf(
-                    '%s/%s.%s',
-                    $this->localDir($job, $subjectKey),
-                    $subjectKey,
-                    $extension
-                );
-
+                $localPath = sprintf('%s/%s.%s', $this->localDir($job, $subjectKey), $subjectKey, $extension);
+    
                 $this->writeStagingFile($localPath, $thumbnail);
-
+    
                 [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
                 $downloadedBatch[$row->ImageKey] = [
                     'path' => sprintf('%s/%s/%s/', $p3, $p1, $p2),
                     'name' => sprintf('%s.%s', $subjectKey, $extension),
                 ];
-
+    
                 if (count($downloadedBatch) >= $chunkSize) {
                     $summary['downloaded'] += count($downloadedBatch);
                     $this->updateBatchDownloadStatuses($downloadedBatch);
                     $downloadedBatch = [];
+                    // Clear memory after each batch
                     gc_collect_cycles();
                 }
             } catch (Exception $e) {
-                Log::error('Local download failed', [
-                    'jobkey' => $job->ts_jobkey,
-                    'image_key' => $row->ImageKey,
-                    'disk' => $this->stagingDisk(),
-                    'path' => $this->staging()->path($this->localDir($job, (string) $row->SubjectKey)),
-                    'error' => $e->getMessage(),
-                ]);
-                // Leave exportStatus at 0 so a later sync attempt can retry transient disk errors.
+                Log::error('Download failed for key ' . $row->ImageKey, ['error' => $e->getMessage()]);
             }
-
-            unset($row);
         }
-
+    
         if (!empty($downloadedBatch)) {
             $summary['downloaded'] += count($downloadedBatch);
             $this->updateBatchDownloadStatuses($downloadedBatch);
         }
-
-        $summary['failed'] += $this->flushThumbnailMissingBatch($failedBatch, $chunkSize, true);
-
-        $missingKeys = array_diff($imageKeys, array_unique($seenKeys));
-        if (!empty($missingKeys)) {
-            $summary['missing'] = count($missingKeys);
-            foreach (array_chunk(array_values($missingKeys), $chunkSize) as $chunk) {
-                $summary['failed'] += $this->markThumbnailMissing($chunk, 'no_timestone_match');
-            }
-            Log::warning('No Timestone match for image keys', [
-                'jobkey' => $job->ts_jobkey,
-                'count' => $summary['missing'],
-                'image_keys' => array_values($missingKeys),
-            ]);
-        }
-
+    
         return $summary;
     }
 
@@ -638,16 +604,16 @@ class ExportImageService
 
     public function findImageMatchesByImageKeys($imageKeys = null)
     {
+        // Fetch ONLY metadata. Do NOT join the ImageBitmaps table here.
         return DB::connection('timestone')
             ->table('Images')
             ->join('ImageMatches', 'ImageMatches.ImageID', '=', 'Images.ImageID')
             ->join('Subjects', 'ImageMatches.SubjectID', '=', 'Subjects.SubjectID')
-            ->leftJoin('ImageBitmaps', 'Images.ImageID', '=', 'ImageBitmaps.ImageID')
             ->whereIn('Images.ImageKey', $imageKeys)
             ->select([
                 'Subjects.SubjectKey',
                 'Images.ImageKey',
-                'ImageBitmaps.Thumbnail',
+                'Images.ImageID', // We only need the ID for the next step
             ])
             ->distinct()
             ->orderBy('Subjects.SubjectKey');
