@@ -310,6 +310,7 @@ class ImageService
         'subjects.portal_firstname',
         'subjects.portal_lastname',
         'subjects.ts_subjectkey',
+        'folders.portal_ts_foldername',
         'seasons.code as year',
         'subjects.external_subject_id',
     ];
@@ -637,6 +638,7 @@ class ImageService
             ->select('subjects.portal_firstname',
                 'subjects.portal_lastname',
                 'subjects.ts_subjectkey',
+                'folders.portal_ts_foldername',
                 'seasons.code as year',
                 'subjects.external_subject_id'
             )
@@ -673,28 +675,38 @@ class ImageService
         $toData = function ($image) use ($key, $category, $tab) {
             $isSubject = $category != 'FOLDER';
             $imgKey = $image->$key;
+            $classGroup = '';
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->where('is_deleted', 0)->first();
                 if ($subject) {
                     $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $hasPhoto;
-                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($subject->folder->portal_ts_foldername, $image->year ?? null); //CODE BY IT
+                    $folderName = $subject->folder?->portal_ts_foldername
+                        ?? $image->portal_ts_foldername
+                        ?? $image->ts_foldername
+                        ?? '';
                 } else {
                     $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
-                    $classGroup = FilenameFormatHelper::removeYearAndDelimiter($image->portal_ts_foldername, $image->year ?? null); //CODE BY IT
+                    $folderName = $image->portal_ts_foldername
+                        ?? $image->ts_foldername
+                        ?? '';
                 }
+                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($folderName, $image->year ?? null);
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->where('is_deleted', 0)->first();
                 if ($folder) {
                     $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $hasPhoto;
+                    $folderName = $folder->portal_ts_foldername ?? $image->portal_ts_foldername ?? '';
                 } else {
                     $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
+                    $folderName = $image->portal_ts_foldername ?? $image->ts_foldername ?? '';
                 }
+                $classGroup = FilenameFormatHelper::removeYearAndDelimiter($folderName, $image->year ?? null);
             }
             // Skip full image network download during initial grid compilation for massive speed boost
             $isPortrait = $isSubject; // Default portrait for subjects, landscape for folders
