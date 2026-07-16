@@ -26,9 +26,6 @@
         padding-right: 32px !important;
         cursor: pointer !important;
         min-height: 40px !important;
-        max-height: 96px !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
     }
     #photography-root .select2-selection.select2-selection--multiple::after {
         content: "▼" !important;
@@ -41,58 +38,6 @@
         pointer-events: none !important;
         z-index: 1000 !important;
         display: block !important;
-    }
-    #photography-root #select_portraits_class + .select2-container {
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-    #photography-root #select_portraits_class + .select2-container .select2-selection__rendered {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 2px !important;
-        max-width: 100% !important;
-        overflow: hidden !important;
-    }
-    #photography-root #select_portraits_class + .select2-container .select2-selection__choice {
-        max-width: 100% !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        display: inline-flex !important;
-        align-items: center !important;
-    }
-    #photography-root #select_portraits_class + .select2-container .select2-selection__choice__display {
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        max-width: 140px !important;
-    }
-    /* Select All: hide every chip and show one summary label */
-    #photography-root #select_portraits_class + .select2-container.select-all-active .select2-selection__choice {
-        display: none !important;
-    }
-    #photography-root #select_portraits_class + .select2-container.select-all-active .select2-selection__rendered::before {
-        content: attr(data-all-label);
-        display: inline-block;
-        padding: 2px 8px;
-        margin: 2px;
-        background: #e9ecef;
-        border-radius: 4px;
-        font-size: 13px;
-        color: #333;
-        max-width: calc(100% - 28px);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .select2-container--open .select2-results__option {
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        max-width: 100% !important;
-    }
-    .select2-dropdown {
-        max-width: 280px !important;
     }
 </style>
 <!-- Code By IT -->
@@ -152,25 +97,6 @@
             Livewire.dispatch('EV_UPDATE_SEARCH', { term: '', category: category });
         }
     }
-    function updatePortraitsClassSummary() {
-        const $classSelect = $('#select_portraits_class');
-        const $container = $classSelect.next('.select2-container');
-        const classValues = ($classSelect.val() || []).filter(v => v !== 'all');
-        const availableCount = $classSelect.find('option').filter(function () {
-            return $(this).val() !== 'all';
-        }).length;
-        const isAllSelected = availableCount > 0 && classValues.length === availableCount;
-
-        if (isAllSelected) {
-            $container.addClass('select-all-active');
-            $container.find('.select2-selection__rendered')
-                .attr('data-all-label', 'All selected (' + availableCount + ')');
-        } else {
-            $container.removeClass('select-all-active');
-            $container.find('.select2-selection__rendered').removeAttr('data-all-label');
-        }
-    }
-
     function updateGridView(event) {
         const $classSelect = $('#select_portraits_class');
         let classValues = $classSelect.val() || [];
@@ -200,8 +126,6 @@
 
             classValues = $classSelect.val() || [];
         }
-
-        updatePortraitsClassSummary();
 
         if (classValues.length > 0) {
             $('#clear_portraits_class_btn').removeClass('hidden');
