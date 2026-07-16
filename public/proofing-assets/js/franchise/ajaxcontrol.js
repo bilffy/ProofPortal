@@ -398,7 +398,7 @@ $(document).ready(function () {
                 $overlay.fadeOut(200);
                 $btn.prop('disabled', false);
                 $btn.removeData('loading');
-                alert('Server error during sync: ' + error);
+                alert('Please upload the tnj and sync after it completed.');
             }
         });
     });

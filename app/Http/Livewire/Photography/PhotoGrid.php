@@ -54,12 +54,21 @@ class PhotoGrid extends Component
         $this->season = $season;
         $this->schoolKey = $schoolKey;
 
-        $schoolService = new SchoolService();
-
         $user = Auth::user();
-        $school = $schoolService->getSchoolBySchoolKey($this->schoolKey)->first();
+        // Prefer school context — schoolkey alone is not unique across franchises (e.g. DEMO).
+        $school = \App\Helpers\SchoolContextHelper::getSchool();
 
-        if (UserService::isCanAccessImage($user, $school) === false) {
+        if (!$school && $this->schoolKey) {
+            $schoolService = new SchoolService();
+            $schoolQuery = $schoolService->getSchoolBySchoolKey($this->schoolKey);
+            $franchise = $user->getFranchise();
+            if ($franchise) {
+                $schoolQuery->whereHas('franchises', fn ($q) => $q->where('franchises.id', $franchise->id));
+            }
+            $school = $schoolQuery->first();
+        }
+
+        if (!$school || UserService::isCanAccessImage($user, $school) === false) {
             abort(403, 'Access denied.');
         }
 

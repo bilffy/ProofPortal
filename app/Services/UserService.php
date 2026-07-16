@@ -50,19 +50,25 @@ class UserService
     /**
      * Check if the user can access images of the given school.
      * @param User $user
-     * @param School $school
+     * @param School|null $school
      * @return bool
      */
-    public static function isCanAccessImage(User $user, School $school): bool
+    public static function isCanAccessImage(User $user, ?School $school): bool
     {
-        if ($user->isFranchiseLevel() && $school) {
+        if (!$school) {
+            return false;
+        }
+
+        if ($user->isFranchiseLevel()) {
             // Make sure user belongs to the same school's franchise.
-            if (!$school->franchises()->where('franchise_id', $user->getFranchise()->id)->exists()){
+            $franchise = $user->getFranchise();
+            if (!$franchise || !$school->franchises()->where('franchises.id', $franchise->id)->exists()) {
                 return false;
             }
         } else {
             // Make sure user has the same school being access with
-            if ($user->getSchool()->id !== $school->id) {
+            $userSchool = $user->getSchool();
+            if (!$userSchool || $userSchool->id !== $school->id) {
                 return false;
             }
         }
