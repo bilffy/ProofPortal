@@ -271,10 +271,16 @@ class JobService
 
     protected function queryJobs($franchiseCode = null, $schoolkey = null)
     {
-        return Job::join('schools', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
+        // Join school via franchise so duplicate schoolkeys across franchises
+        // do not multiply job rows (e.g. 27 schools sharing one schoolkey).
+        return Job::join('franchises', 'franchises.ts_account_id', '=', 'jobs.ts_account_id')
+        ->join('school_franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
+        ->join('schools', function ($join) {
+            $join->on('schools.id', '=', 'school_franchises.school_id')
+                ->on('schools.schoolkey', '=', 'jobs.ts_schoolkey');
+        })
         ->join('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
-        ->join('franchises', 'franchises.ts_account_id', '=', 'jobs.ts_account_id')
-        ->leftjoin('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
+        ->leftJoin('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
         ->when($franchiseCode, fn($query) => $query->where('franchises.alphacode', $franchiseCode))
         ->when($schoolkey, fn($query) => $query->where('jobs.ts_schoolkey', $schoolkey))
         ->with(['reviewStatuses'])
