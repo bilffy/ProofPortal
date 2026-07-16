@@ -163,6 +163,7 @@ class PhotographyController extends Controller
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
         $schoolKey = $school->schoolkey ?? '';
+        $tsAccountId = Auth::user()?->getFranchise()?->ts_account_id;
         $view = $selectedFilters['view'];
         $class = json_decode($selectedFilters['class']);
         $images = $request->input('images');
@@ -178,16 +179,26 @@ class PhotographyController extends Controller
                 $selectedFilters['year'],
                 $schoolKey,
                 $tab,
+                $tsAccountId,
             )->pluck('external_name')->toArray();
 
             $folders = $this->imageService->getFoldersByTag(
                 $selectedFilters['year'],
                 $schoolKey,
                 $tags,
-                $tab
+                $tab,
+                $tsAccountId
             )->toArray();
         } else {
             $folders = Folder::whereIn('ts_folderkey', $class)->where('is_deleted', 0)->get();
+            if ($tsAccountId !== null) {
+                $folders = $folders->filter(function ($folder) use ($tsAccountId, $schoolKey) {
+                    $job = Job::where('ts_job_id', $folder->ts_job_id)->first();
+                    return $job
+                        && $job->ts_account_id == $tsAccountId
+                        && ($schoolKey === '' || $job->ts_schoolkey === $schoolKey);
+                })->values();
+            }
         }
         
         foreach ($folders as $folder) {
@@ -245,7 +256,7 @@ class PhotographyController extends Controller
             //CODE BY CHROMEDIA
 
             //CODE BY IT
-            $imageCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+            $imageCountQuery = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
                 ->whereIn('images.id', function($query) use ($keys) {
                     $query->selectRaw('COALESCE(
                             MAX(CASE WHEN is_primary = 1 THEN id END), 
@@ -255,8 +266,11 @@ class PhotographyController extends Controller
                         ->whereIn('keyvalue', $keys)
                         ->groupBy('keyvalue');
                 })
-                ->where('jobs.ts_schoolkey', '=', $schoolKey)
-                ->count();
+                ->where('jobs.ts_schoolkey', '=', $schoolKey);
+            if ($tsAccountId !== null) {
+                $imageCountQuery->where('jobs.ts_account_id', $tsAccountId);
+            }
+            $imageCount = $imageCountQuery->count();
             //CODE BY IT
 
             if ($imageCount != count($keys)) {
@@ -272,7 +286,7 @@ class PhotographyController extends Controller
             //CODE BY CHROMEDIA
 
             //CODE BY IT
-            $foundCount = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+            $foundCountQuery = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
                 ->whereIn('images.id', function($query) use ($keys) {
                     $query->selectRaw('COALESCE(
                             MAX(CASE WHEN is_primary = 1 THEN id END), 
@@ -282,8 +296,13 @@ class PhotographyController extends Controller
                         ->whereIn('keyvalue', $keys)
                         ->groupBy('keyvalue');
                 })
-                ->where('jobs.ts_schoolkey', '!=', $schoolKey)
-                ->count();
+                ->where(function ($q) use ($schoolKey, $tsAccountId) {
+                    $q->where('jobs.ts_schoolkey', '!=', $schoolKey);
+                    if ($tsAccountId !== null) {
+                        $q->orWhere('jobs.ts_account_id', '!=', $tsAccountId);
+                    }
+                });
+            $foundCount = $foundCountQuery->count();
             //CODE BY IT
         
             if ($foundCount) {

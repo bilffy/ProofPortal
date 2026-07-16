@@ -11,6 +11,7 @@ class Lightbox extends Component
     public $images = [];
     public $subject = "";
     public $schoolKey = "";
+    public $tsAccountId = null;
     public $category = PhotographyHelper::TAB_PORTRAITS;
     public $externalSubjectId = "";
     public $subjectKey = "";
@@ -22,6 +23,7 @@ class Lightbox extends Component
     public function mount($schoolKey = "")
     {
         $this->schoolKey = $schoolKey;
+        $this->tsAccountId = auth()->user()?->getFranchise()?->ts_account_id;
     }
 
     public function updateSubject($subject, $category, $externalSubjectId, $subjectKey)
@@ -42,7 +44,8 @@ class Lightbox extends Component
                 $g = explode('-', $this->subject);
                 $images = $imageService->getGroupImages(
                     $this->schoolKey, 
-                    trim($g[0])
+                    trim($g[0]),
+                    $this->tsAccountId
                 );
                 break;
             case PhotographyHelper::TAB_PORTRAITS:
@@ -52,7 +55,8 @@ class Lightbox extends Component
                     '', 
                     '', 
                     $this->decodeKey($this->subjectKey), 
-                    $this->externalSubjectId
+                    $this->externalSubjectId,
+                    $this->tsAccountId
                 );
         }
         

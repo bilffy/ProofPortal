@@ -7,8 +7,9 @@
     $imageService = new ImageService();
     $school = SchoolContextHelper::getSchool();
     $schoolKey = $school->schoolkey ?? '';
+    $tsAccountId = Auth::user()?->getFranchise()?->ts_account_id;
 
-    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category)->toArray();
+    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category, $tsAccountId)->toArray();
     $defaultSeasonId = empty($portraitYearOptions) ? 0 : $portraitYearOptions[0]->ts_season_id;
     $yearOptions = [];
     foreach ($portraitYearOptions as $option) {

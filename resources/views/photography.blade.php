@@ -33,9 +33,10 @@
     $canDownloadOthers = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_OTHER);
 
     $imageService = new \App\Services\ImageService();
-    $hasPortraits = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_PORTRAITS)->isNotEmpty();
-    $hasGroups = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_GROUPS)->isNotEmpty();
-    $hasOthers = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_OTHERS)->isNotEmpty();
+    $tsAccountId = $authUser?->getFranchise()?->ts_account_id;
+    $hasPortraits = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_PORTRAITS, $tsAccountId)->isNotEmpty();
+    $hasGroups = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_GROUPS, $tsAccountId)->isNotEmpty();
+    $hasOthers = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_OTHERS, $tsAccountId)->isNotEmpty();
 @endphp
 
 @section('content')

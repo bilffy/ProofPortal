@@ -28,6 +28,23 @@ class ImageService
     }
     // code by IT
     /**
+     * Scope job queries by schoolkey and Timestone account (franchise).
+     * schoolkey alone is not unique across franchises (e.g. DEMO).
+     */
+    protected function applySchoolJobScope($query, ?string $schoolKey, ?int $tsAccountId = null)
+    {
+        if ($schoolKey !== null && $schoolKey !== '') {
+            $query->where('jobs.ts_schoolkey', $schoolKey);
+        }
+
+        if ($tsAccountId !== null) {
+            $query->where('jobs.ts_account_id', $tsAccountId);
+        }
+
+        return $query;
+    }
+
+    /**
      * Get all the years.
      *
      * @return \Illuminate\Support\Collection
@@ -46,10 +63,11 @@ class ImageService
      *
      * @param string $schoolKey
      * @param string $tab
+     * @param int|null $tsAccountId
      *
      * @return \Illuminate\Support\Collection
      */
-    public function getAvailableYearsForSchool($schoolKey, $tab = '')
+    public function getAvailableYearsForSchool($schoolKey, $tab = '', ?int $tsAccountId = null)
     {
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
@@ -67,7 +85,6 @@ class ImageService
         $query = DB::table('seasons')
             ->join('jobs', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
-            ->where('jobs.ts_schoolkey', $schoolKey)
             ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where('folders.is_deleted', 0)
             ->where(function ($q) use ($visibilityColumn) {
@@ -79,6 +96,8 @@ class ImageService
                 }
             })
             ->where('seasons.show_in_portal', 1); // code by IT
+
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
         return $query
             ->select('seasons.id', 'seasons.ts_season_id', 'seasons.code as Year')
@@ -120,17 +139,17 @@ class ImageService
      * @param string $tab
      * @return \Illuminate\Support\Collection
      */
-    public function getFolderForView2(int $seasonId, string $schoolKey, string $tab)
+    public function getFolderForView2(int $seasonId, string $schoolKey, string $tab, ?int $tsAccountId = null)
     {
 
-        $query = DB::table('schools')
-            ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
+        $query = DB::table('jobs')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
             ->where('jobs.ts_season_id', $seasonId)
-            ->where('jobs.ts_schoolkey', $schoolKey)
             ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where('folders.is_deleted', 0);
+
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
@@ -174,7 +193,7 @@ class ImageService
      * @param string $tab
      * @return \Illuminate\Support\Collection
      */
-    public function getFoldersByTag(int $seasonId, string|null $schoolKey, array $selectedTags, string $tab)
+    public function getFoldersByTag(int $seasonId, string|null $schoolKey, array $selectedTags, string $tab, ?int $tsAccountId = null)
     {
         $folderTagsQuery = DB::table('folder_tags')
             ->whereIn('external_name', $selectedTags);
@@ -203,8 +222,7 @@ class ImageService
                 break;
         }
 
-        $query = DB::table('schools')
-            ->join('jobs', 'jobs.ts_schoolkey', '=', 'schools.schoolkey')
+        $query = DB::table('jobs')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('jobs.ts_season_id', $seasonId)
@@ -212,9 +230,7 @@ class ImageService
             ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where('folders.is_deleted', 0);
 
-            if ($schoolKey) {
-                $query->where('jobs.ts_schoolkey', $schoolKey);
-            }
+            $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
             $query->where(function ($query) use ($folderTags, $selectedTags, $nullTag) {
                 $query->whereIn('folders.folder_tag', $folderTags);
@@ -238,17 +254,18 @@ class ImageService
      * @param string $searchTerm
      * @return \Illuminate\Database\Query\Builder
      */
-    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
+    public function getImagesAndSubjectsByFolder(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm, ?int $tsAccountId = null)
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
         ->where('jobs.ts_season_id', $seasonId)
-        ->where('jobs.ts_schoolkey', $schoolKey)
         ->whereNotNull('subjects.ts_subjectkey') // code by IT
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         ->where('subjects.is_deleted', 0);
+
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
         if($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
@@ -272,10 +289,9 @@ class ImageService
      * @return \Illuminate\Database\Query\Builder
      */
 
-    private function applySubjectsCollectionFilters($query, int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
+    private function applySubjectsCollectionFilters($query, int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm, ?int $tsAccountId = null)
     {
         $query->where('jobs.ts_season_id', $seasonId)
-            ->where('jobs.ts_schoolkey', $schoolKey)
             ->whereNotNull('subjects.ts_subjectkey')
             ->whereNotNull('folders.ts_folderkey')
             ->where('folders.is_deleted', 0)
@@ -293,6 +309,8 @@ class ImageService
                 });
             });
 
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
+
         if ($searchTerm) {
             $query->where(function ($query) use ($searchTerm) {
                 $query->where('subjects.portal_firstname', 'like', "%$searchTerm%")
@@ -304,7 +322,7 @@ class ImageService
         return $query;
     }
 
-    public function getSubjectsCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
+    public function getSubjectsCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm, ?int $tsAccountId = null)
 {
     $selectColumns = [
         'subjects.portal_firstname',
@@ -323,7 +341,7 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->select($selectColumns)
             ->distinct(),
-        $seasonId, $schoolKey, $folderKeys, $searchTerm
+        $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
     );
 
     // Query 2: Attached Subjects
@@ -339,7 +357,7 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->select($selectColumns)
             ->distinct(),
-        $seasonId, $schoolKey, $folderKeys, $searchTerm
+        $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
     );
 
     return $homed
@@ -355,7 +373,7 @@ class ImageService
      * union - rather than joining onto getSubjectsCollection()'s result, since a
      * join appended after ->union() only applies to the first half.
      */
-    public function getSubjectsWithImagesCount(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm): int
+    public function getSubjectsWithImagesCount(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm, ?int $tsAccountId = null): int
     {
         $imagesJoin = function ($join) {
             $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
@@ -370,7 +388,7 @@ class ImageService
                 ->join('images', $imagesJoin)
                 ->select('subjects.ts_subjectkey')
                 ->distinct(),
-            $seasonId, $schoolKey, $folderKeys, $searchTerm
+            $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
         );
 
         $attached = $this->applySubjectsCollectionFilters(
@@ -385,7 +403,7 @@ class ImageService
                 ->join('images', $imagesJoin)
                 ->select('subjects.ts_subjectkey')
                 ->distinct(),
-            $seasonId, $schoolKey, $folderKeys, $searchTerm
+            $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
         );
 
         return $homed->union($attached)->count();
@@ -459,7 +477,7 @@ class ImageService
      * @param string $searchTerm
      * @return \Illuminate\Database\Query\Builder
      */
-    public function getFoldersCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)
+    public function getFoldersCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm, ?int $tsAccountId = null)
     {
         $query = DB::table(table: 'jobs')
         // $query = DB::table(table: 'images')
@@ -467,11 +485,12 @@ class ImageService
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
         ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
         ->where('jobs.ts_season_id', $seasonId)
-        ->where('jobs.ts_schoolkey', $schoolKey)
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         // ->where('images.keyorigin', 'Folder')
         ;
+
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -514,15 +533,16 @@ class ImageService
         $schoolKey = $options['schoolKey'];
         $folderKeys = $options['folderKeys'];
         $search = $options['searchTerm'] ?? '';
+        $tsAccountId = isset($options['tsAccountId']) ? (int) $options['tsAccountId'] : null;
 
         switch ($tab) {
             case PhotographyHelper::TAB_GROUPS:
-                $images = $this->getFoldersCollection($seasonId, $schoolKey, $folderKeys, $search); // code by IT
+                $images = $this->getFoldersCollection($seasonId, $schoolKey, $folderKeys, $search, $tsAccountId); // code by IT
                 break; // code by IT
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
-                $images = $this->getSubjectsCollection($seasonId, $schoolKey, $folderKeys, $search);
+                $images = $this->getSubjectsCollection($seasonId, $schoolKey, $folderKeys, $search, $tsAccountId);
                 break;
         }
 
@@ -538,15 +558,16 @@ class ImageService
      * @param string $searchTerm
      * @return Collection
      */
-    public function getGroupImages($schoolKey, $searchTerm): Collection
+    public function getGroupImages($schoolKey, $searchTerm, ?int $tsAccountId = null): Collection
     {
         $query = DB::table(table: 'jobs')
             ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
-            ->where('jobs.ts_schoolkey', $schoolKey)
             ->where('folders.is_visible_for_group', 1)
             ->whereNotNull('folders.ts_folderkey') // code by IT
             ->where('folders.is_deleted', 0);
+
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
         $query->where(function ($query) {
             $query->where(function ($subQuery) {
@@ -584,7 +605,7 @@ class ImageService
      * @param string $externalSubjectId
      * @return Collection
      */
-    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2, $subjectKey, $externalSubjectId = null): Collection
+    public function getSubjectImages($schoolKey, $searchTerm, $searchTerm2, $subjectKey, $externalSubjectId = null, ?int $tsAccountId = null): Collection
     {
         $query = DB::table(table: 'jobs')
         ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
@@ -597,12 +618,13 @@ class ImageService
             $join->on('subjects.ts_folder_id', '=', 'folders.ts_folder_id')
                  ->orOn('subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id');
         })
-        ->where('jobs.ts_schoolkey', $schoolKey)
         ->where('folders.is_visible_for_portrait', 1)
         ->whereNotNull('subjects.ts_subjectkey') // code by IT
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         ->where('subjects.is_deleted', 0);
+
+        $this->applySchoolJobScope($query, $schoolKey, $tsAccountId);
 
         $query->where(function ($query) {
             $query->where(function ($subQuery) {

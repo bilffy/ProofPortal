@@ -22,6 +22,7 @@ class PhotoGrid extends Component
     public $category;
     public $season;
     public $schoolKey;
+    public $tsAccountId = null;
     public $perPage = 30;
     
     public $images = [];
@@ -72,6 +73,7 @@ class PhotoGrid extends Component
             abort(403, 'Access denied.');
         }
 
+        $this->tsAccountId = $user->getFranchise()?->ts_account_id;
         $this->perPage = Session::get('photo_grid_per_page', 30);
         $this->setupFilters($season);
     }
@@ -120,7 +122,8 @@ class PhotoGrid extends Component
             $options = $imageService->getFolderForView2(
                 $year, 
                 $this->schoolKey,
-                $this->category
+                $this->category,
+                $this->tsAccountId
             )->values()->toArray();
 
             // reset view and class when year value changes
@@ -140,7 +143,8 @@ class PhotoGrid extends Component
                 $year, 
                 $this->schoolKey,
                 $views,
-                $this->category
+                $this->category,
+                $this->tsAccountId
             )->toArray();
 
             // reset class when view value changes
@@ -192,6 +196,7 @@ class PhotoGrid extends Component
             'schoolKey' => $this->schoolKey,
             'folderKeys' => $keys,
             'searchTerm' => $this->search,
+            'tsAccountId' => $this->tsAccountId,
         ];
         //CODE BY Chromedia
         // $filteredImages = $imageService->getFilteredPhotographyImages($options, $this->category);
@@ -275,7 +280,7 @@ class PhotoGrid extends Component
         
         switch ($this->category) {
             case PhotographyHelper::TAB_GROUPS:
-                $query = $imageService->getFoldersCollection($this->season, $this->schoolKey, $keys, $this->search);
+                $query = $imageService->getFoldersCollection($this->season, $this->schoolKey, $keys, $this->search, $this->tsAccountId);
                 $query->join('images', function ($join) {
                     $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
                          ->on('images.keyvalue', '=', 'folders.ts_folderkey');
@@ -284,7 +289,7 @@ class PhotoGrid extends Component
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
-                return $imageService->getSubjectsWithImagesCount($this->season, $this->schoolKey, $keys, $this->search);
+                return $imageService->getSubjectsWithImagesCount($this->season, $this->schoolKey, $keys, $this->search, $this->tsAccountId);
         }
     }
 
