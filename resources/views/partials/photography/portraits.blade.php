@@ -26,6 +26,8 @@
         padding-right: 32px !important;
         cursor: pointer !important;
         min-height: 40px !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
     #photography-root .select2-selection.select2-selection--multiple::after {
         content: "▼" !important;
@@ -38,6 +40,69 @@
         pointer-events: none !important;
         z-index: 1000 !important;
         display: block !important;
+    }
+    /* Same stacked chips — clip long names so they stay inside the box */
+    #photography-root #select_portraits_class + .select2-container {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    #photography-root #select_portraits_class + .select2-container .select2-selection--multiple {
+        overflow-x: hidden !important;
+        display: block !important;
+        text-align: left !important;
+    }
+    #photography-root #select_portraits_class + .select2-container .select2-selection__rendered {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        text-align: left !important;
+        padding-left: 0 !important;
+        margin: 0 !important;
+    }
+    #photography-root #select_portraits_class + .select2-container .select2-selection__choice {
+        float: none !important;
+        display: block !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        margin-right: 0 !important;
+    }
+    /* Empty "All" — match Year/View left alignment (multi-select uses search input placeholder) */
+    #photography-root #select_portraits_class + .select2-container .select2-selection__placeholder {
+        float: left !important;
+        display: inline-block !important;
+        text-align: left !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+    }
+    #photography-root #select_portraits_class + .select2-container li.select2-search--inline {
+        float: none !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        text-align: left !important;
+    }
+    #photography-root #select_portraits_class + .select2-container .select2-search__field {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
+    }
+    #photography-root #select_portraits_class + .select2-container .select2-search__field::placeholder {
+        text-align: left !important;
+        opacity: 1 !important;
     }
 </style>
 <!-- Code By IT -->
@@ -172,13 +237,29 @@
     window.updateDownloadsForPortraits = updateDownloadsForPortraits;
 
     window.performPortaitSearch = performPortaitSearch;
+
+    function alignPortraitsClassPlaceholder() {
+        const field = document.querySelector('#select_portraits_class + .select2-container .select2-search__field');
+        if (!field) {
+            return;
+        }
+        // Select2 sets an inline width that can make "All" look centered; force left like Year/View.
+        field.style.setProperty('width', '100%', 'important');
+        field.style.setProperty('max-width', '100%', 'important');
+        field.style.setProperty('text-align', 'left', 'important');
+        field.style.setProperty('margin', '0', 'important');
+        field.style.setProperty('padding', '0', 'important');
+    }
+
     window.addEventListener('load', () => {
         $('#select_portraits_year').select2({placeholder: "Select a Year"});
         $('#select_portraits_year').change(updateGridView);
         $('#select_portraits_view').select2({placeholder: "Select a View", minimumResultsForSearch: Infinity});
         $('#select_portraits_view').change(updateGridView);
-        $('#select_portraits_class').select2({placeholder: "All"});
+        $('#select_portraits_class').select2({placeholder: "All", width: '100%'});
         $('#select_portraits_class').change(updateGridView);
+        $('#select_portraits_class').on('change select2:open select2:close select2:clear', alignPortraitsClassPlaceholder);
+        alignPortraitsClassPlaceholder();
 
         @if ($season == 0)
             disableForms();
