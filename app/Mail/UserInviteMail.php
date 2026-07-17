@@ -44,8 +44,8 @@ class UserInviteMail extends Mailable
             ->with([
                 'user' => $this->user,
                 'sender' => $sender,
-                'userOrgName' => $this->user->isSchoolLevel() ? $uOrgName : "MSP " . $uOrgName,
-                'senderOrgName' => $sender->isSchoolLevel() ? $sOrgName : "MSP " . $sOrgName,
+                'userOrgName' => $this->user->isSchoolLevel() ? $uOrgName : $uOrgName,
+                'senderOrgName' => $sender->isSchoolLevel() ? $sOrgName : $sOrgName,
                 'franchise' => $sender->getOrganization(),
                 'inviteLink' => $this->inviteLink,
                 'userRole' => $this->user->getRole(),

@@ -392,12 +392,14 @@ class EmailService
             $selectedFolders = $selectedFolders->where('ts_folder_id', $tsFolderIds)->get();
         }
 
-        $folderNamesArray = $selectedFolders->pluck('ts_foldername')->toArray();
-        $folderNames = implode(', ', $folderNamesArray); // kept for email subject
-    
         $selectedFolder = $selectedFolders->first();
         if (!$selectedFolder || !$selectedFolder->job) {
             return response()->json(['error' => 'No folder or job found'], 404);
+        }
+
+        $changedFolderIds = $selectedFolders->pluck('ts_folder_id')->filter()->values()->toArray();
+        if (empty($changedFolderIds)) {
+            return;
         }
     
         $notificationsMatrix = json_decode($selectedFolder->job->notifications_matrix, true) ?? [];
@@ -409,16 +411,36 @@ class EmailService
             ['Franchise', 'Photo Coordinator', 'Teacher'],
             $role
         ), $roleNames);
-        // \Log::info('saveEmailFolderContent mapped roles', ['field' => $field, 'mappedRoles' => $mappedRoleNames]);
     
         $roleIds = Role::whereIn('name', $mappedRoleNames)->pluck('id')->toArray();
+        if (empty($roleIds)) {
+            return;
+        }
 
+        // Only users with the configured role who are assigned to the changed folder(s).
         $users = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
             ->whereHas('jobs', fn($q) => $q->where('jobs.ts_job_id', $selectedFolder->job->ts_job_id))
+            ->whereExists(function ($query) use ($changedFolderIds) {
+                $query->selectRaw('1')
+                    ->from('folder_users')
+                    ->whereColumn('folder_users.user_id', 'users.id')
+                    ->whereIn('folder_users.ts_folder_id', $changedFolderIds);
+            })
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
 
-        // \Log::info('saveEmailFolderContent users found', ['count' => $users->count(), 'job' => $selectedFolder->job->ts_jobkey]);
+        if ($users->isEmpty()) {
+            return;
+        }
+
+        $userFolderNames = FolderUser::query()
+            ->whereIn('folder_users.user_id', $users->pluck('id'))
+            ->whereIn('folder_users.ts_folder_id', $changedFolderIds)
+            ->join('folders', 'folders.ts_folder_id', '=', 'folder_users.ts_folder_id')
+            ->select('folder_users.user_id', 'folders.ts_foldername')
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn ($rows) => $rows->pluck('ts_foldername')->unique()->values()->toArray());
 
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
         if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {
@@ -427,16 +449,14 @@ class EmailService
         $templateContent = File::get($templatePath);
     
         $statusName = Status::where('id', $status)->value('status_external_name') ?? '';
-        $constantData = [
-            'JOB_NAME'           => $selectedFolder->job->ts_jobname ?? '',
-            'FOLDER_NAME'        => $folderNames ?? '',   // used in email subject only
-            'FOLDER_NAMES'       => $folderNamesArray,    // used in template body as a list
-            'FOLDER_STATUS_NAME' => $statusName,
-            'APP_URL'            => Config::get('app.url'),
-            'FRANCHISE_WEB_ADDRESS' => 'www.msp.com.au',
-        ];
 
         foreach ($users as $user) {
+            $folderNamesArray = $userFolderNames->get($user->id, []);
+            if (empty($folderNamesArray)) {
+                continue;
+            }
+
+            $folderNames = implode(', ', $folderNamesArray);
             $schoolOrFranchise = $user->getSchoolOrFranchiseDetail();
             $userData = [
                 'INVITEE_FIRST_NAME' => $user->firstname ?? '',
@@ -449,6 +469,15 @@ class EmailService
                 'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
                 'FRANCHISE_POSTCODE' => $schoolOrFranchise->postcode ?? '',
             ];
+
+            $constantData = [
+                'JOB_NAME'           => $selectedFolder->job->ts_jobname ?? '',
+                'FOLDER_NAME'        => $folderNames,
+                'FOLDER_NAMES'       => $folderNamesArray,
+                'FOLDER_STATUS_NAME' => $statusName,
+                'APP_URL'            => Config::get('app.url'),
+                'FRANCHISE_WEB_ADDRESS' => 'www.msp.com.au',
+            ];
     
             $data = array_merge($constantData, $userData);
             $processedContent = $this->replaceTemplateVariables($templateContent, $data);
@@ -457,14 +486,13 @@ class EmailService
 
             // Safely replace JOB_NAME
             if (strpos($templateSubject, 'JOB_NAME') !== false) {
-                $jobName = $selectedFolder->job->ts_jobname ?? 'Unknown Job'; // Fallback if job name is null
+                $jobName = $selectedFolder->job->ts_jobname ?? 'Unknown Job';
                 $templateSubject = str_replace('JOB_NAME', $jobName, $templateSubject);
             }
 
             // Safely replace FOLDER_NAME
             if (strpos($templateSubject, 'FOLDER_NAME') !== false) {
-                $folderName = $folderNames ?? 'Unknown Folder'; // Fallback if folder name is null
-                $templateSubject = str_replace('FOLDER_NAME', $folderName, $templateSubject);
+                $templateSubject = str_replace('FOLDER_NAME', $folderNames ?: 'Unknown Folder', $templateSubject);
             }
 
             $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $date);
