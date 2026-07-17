@@ -298,13 +298,31 @@ class FolderService
             }
         }
 
+        // When folders leave Completed (e.g. unlocked), recreate proof schedule emails
+        // for users who were skipped/expired while their only folders were Completed.
+        $reopenedFromCompleted = !empty($changingFolderIds)
+            && (int) $newStatusId !== (int) $this->statusService->completed
+            && $folders->whereIn('ts_folder_id', $changingFolderIds)
+                ->contains(fn ($folder) => (int) $folder->status_id === (int) $this->statusService->completed);
+
+        if ($reopenedFromCompleted && $job && !empty($job->ts_jobkey)) {
+            $this->emailService->refreshProofScheduleEmails($job->ts_jobkey);
+        }
+
         return ['success' => true];
     }
 
     public function updateFolderData($folderIds, $field, $value)
     {
-        return Folder::whereIn('ts_folder_id', $folderIds)
-        ->update([$field => $value]);
+        $result = Folder::whereIn('ts_folder_id', $folderIds)
+            ->update([$field => $value]);
+
+        // When proofing visibility changes, refresh pending invitation {#FOLDERS} lists
+        if ($field === 'is_visible_for_proofing') {
+            $this->emailService->refreshPendingInvitationEmailsForFolders($folderIds);
+        }
+
+        return $result;
     }
 
     public function updatePrincipal($keepFolder, $principal)

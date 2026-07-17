@@ -654,16 +654,10 @@ class InvitationController extends Controller
 
             if ($pendingEmail) {
                 // Fetch remaining folder names for this user on this job (after deletion)
-                $remainingFolders = \App\Models\FolderUser::where('user_id', $user)
-                    ->whereHas('folder.job', function ($q) use ($job) {
-                        $q->where('ts_job_id', $job);
-                    })
-                    ->with('folder')
-                    ->get()
-                    ->pluck('folder.ts_foldername')
-                    ->filter()
-                    ->values()
-                    ->toArray();
+                $remainingFolders = $this->emailService->getInvitationFolderNamesForUser(
+                    (int) $user,
+                    $jobObj->ts_jobkey
+                );
 
                 // Re-render the email content with updated folder list
                 $updatedContent = $this->emailService->rebuildInvitationEmailContent(

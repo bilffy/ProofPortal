@@ -71,6 +71,57 @@ class EmailService
         ]);
       
     }
+
+    private function isProofScheduleTemplate(?string $templateName): bool
+    {
+        return in_array($templateName, [
+            'proof_start',
+            'proof_warning',
+            'proof_due',
+            'proof_catchup',
+        ], true);
+    }
+
+    /**
+     * Re-evaluate pending proof schedule emails for a job.
+     * Call after folders are unlocked/reopened so users who were skipped
+     * while their folders were Completed can receive them again.
+     */
+    public function refreshProofScheduleEmails(string $jobKey): void
+    {
+        foreach (['proof_start', 'proof_warning', 'proof_due', 'proof_catchup'] as $field) {
+            $this->updateEmailSend($field, $jobKey);
+        }
+    }
+
+    /**
+     * Folder names assigned to the user within the given job folders.
+     * Only includes folders with is_visible_for_proofing = 1.
+     * For proof schedule templates, Completed folders are also excluded.
+     */
+    private function getAssignedFolderNamesForUser($folders, int $userId, bool $excludeCompleted = false): array
+    {
+        $completedStatusId = $this->statusService->completed;
+
+        return $folders
+            ->filter(function ($folder) use ($userId, $excludeCompleted, $completedStatusId) {
+                if ((int) ($folder->is_visible_for_proofing ?? 0) !== 1) {
+                    return false;
+                }
+
+                if ($excludeCompleted && (int) $folder->status_id === (int) $completedStatusId) {
+                    return false;
+                }
+
+                return DB::table('folder_users')
+                    ->where('ts_folder_id', $folder->ts_folder_id)
+                    ->where('user_id', $userId)
+                    ->exists();
+            })
+            ->pluck('ts_foldername')
+            ->values()
+            ->toArray();
+    }
     
     public function updateEmailSend($field, $decryptedJobKey)
     {
@@ -190,38 +241,54 @@ class EmailService
          * INSERT missing emails
          * --------------------------------------------
          */
-        foreach ($users as $user) {
-            $alreadyExists = Email::where('template_id', $template->id)
-                ->where('ts_jobkey', $decryptedJobKey)
-                ->where('status_id', $this->statusService->pending)
-                ->whereDate('sentdate', $sentDateCarbon)
-                ->where('email_from', $authUser->email)
-                ->where('email_to', $user->email)
-                ->exists();
+        $excludeCompleted = $this->isProofScheduleTemplate($field);
 
-            if ($alreadyExists) {
+        $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
+        if (!File::exists($templatePath)) {
+            throw new \Exception("Email template not found: {$templatePath}");
+        }
+        $templateContent = File::get($templatePath);
+        $statusModel = Status::find($selectedJob->job_status_id);
+
+        foreach ($users as $user) {
+            $userFolders = $this->getAssignedFolderNamesForUser(
+                $selectedJob->folders,
+                $user->id,
+                $excludeCompleted
+            );
+
+            // No non-Completed folders assigned → do not send proof schedule emails
+            if ($excludeCompleted && empty($userFolders)) {
+                Email::where('template_id', $template->id)
+                    ->where('ts_jobkey', $decryptedJobKey)
+                    ->where('status_id', $this->statusService->pending)
+                    ->whereDate('sentdate', $sentDateCarbon)
+                    ->where('email_to', $user->email)
+                    ->update([
+                        'status_id' => $this->statusService->expired,
+                        'deleted_at' => now(),
+                    ]);
                 continue;
             }
 
-            $userFolders = $selectedJob->folders
-                ->filter(fn ($folder) =>
-                    DB::table('folder_users')
-                        ->where('ts_folder_id', $folder->ts_folder_id)
-                        ->where('user_id', $user->id)
-                        ->exists()
-                )
-                ->pluck('ts_foldername')
-                ->toArray();
-    
-            $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
-    
-            if (!File::exists($templatePath)) {
-                throw new \Exception("Email template not found: {$templatePath}");
+            $pendingEmailQuery = Email::where('template_id', $template->id)
+                ->where('ts_jobkey', $decryptedJobKey)
+                ->where('status_id', $this->statusService->pending)
+                ->whereDate('sentdate', $sentDateCarbon)
+                ->where('email_to', $user->email);
+
+            // Non-proof templates stay scoped to the generating user.
+            if (!$excludeCompleted) {
+                $pendingEmailQuery->where('email_from', $authUser->email);
             }
-    
-            $templateContent = File::get($templatePath);
-            $statusModel = Status::find($selectedJob->job_status_id);
-    
+
+            $emailRecord = $pendingEmailQuery->first();
+
+            // Non-proof schedule: keep existing pending email as-is.
+            if ($emailRecord && !$excludeCompleted) {
+                continue;
+            }
+
             $data = [
                 'INVITEE_FIRST_NAME' => $user->firstname ?? '',
                 'FOLDERS' => $userFolders,
@@ -241,18 +308,25 @@ class EmailService
                 'APP_URL' => Config::get('app.url'),
                 'JOB_STATUS_NAME' => $statusModel->status_external_name ?? '',
             ];
-    
+
             $processedContent = $this->replaceTemplateVariables($templateContent, $data);
-    
-            //update the subject with the job name
+
             $templateSubject = $template->template_subject;
             if (strpos($template->template_subject, 'JOB_NAME') !== false) {
                 $templateSubject = str_replace('JOB_NAME', $selectedJob->ts_jobname, $template->template_subject);
             }
             $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $sentDate);
             $emlContent = MessageConverter::toEmail($emailMessage)->toString();
-    
-            $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $decryptedJobKey);
+
+            if ($emailRecord) {
+                // Proof schedule: refresh folder list when more folders are unlocked
+                $emailRecord->update([
+                    'email_content' => $emlContent,
+                    'sentdate' => $sentDate,
+                ]);
+            } else {
+                $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $decryptedJobKey);
+            }
         }
     }
     
@@ -315,11 +389,32 @@ class EmailService
             $users = User::whereIn('id', $userIds)->select('id','name','email','firstname','lastname')->get();
             // \Log::info('saveEmailContent users found', ['count' => $users->count(), 'job' => $tsJobKey]);
     
+            $excludeCompleted = $this->isProofScheduleTemplate($field);
+
             foreach ($users as $user) {
-                $userFolders = $selectedJob->folders
-                    ->filter(fn($f) => DB::table('folder_users')->where('ts_folder_id', $f->ts_folder_id)->where('user_id', $user->id)->exists())
-                    ->pluck('ts_foldername')
-                    ->toArray();
+                $userFolders = $this->getAssignedFolderNamesForUser(
+                    $selectedJob->folders,
+                    $user->id,
+                    $excludeCompleted
+                );
+
+                // No non-Completed folders assigned → do not send proof schedule emails
+                if ($excludeCompleted && empty($userFolders)) {
+                    Email::where([
+                        'generated_from_user_id' => $authUser->id,
+                        'alphacode' => $selectedJob->franchises->alphacode ?? null,
+                        'ts_jobkey' => $tsJobKey,
+                        'ts_schoolkey' => $selectedJob->ts_schoolkey,
+                        'email_from' => $authUser->email,
+                        'email_to' => $user->email,
+                        'template_id' => $template->id,
+                        'status_id' => $this->statusService->pending,
+                    ])->update([
+                        'status_id' => $this->statusService->expired,
+                        'deleted_at' => now(),
+                    ]);
+                    continue;
+                }
 
                 $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
                 if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {
@@ -561,27 +656,33 @@ class EmailService
             $statusModel   = Status::find($selectedJob->job_status_id);
 
             foreach ($users as $user) {
-                // Skip if a pending record already exists for this user + template + job
-                $alreadyExists = Email::where('template_id', $template->id)
-                    ->where('ts_jobkey', $jobKey)
-                    ->where('email_to', $user->email)
-                    ->where('status_id', $this->statusService->pending)
-                    ->exists();
+                // Resolve visible, non-Completed folders assigned to this user.
+                $userFolders = $this->getAssignedFolderNamesForUser(
+                    $selectedJob->folders,
+                    $user->id,
+                    true
+                );
 
-                if ($alreadyExists) {
+                // No non-Completed folders assigned → do not send proof schedule emails
+                if (empty($userFolders)) {
+                    Email::where('template_id', $template->id)
+                        ->where('ts_jobkey', $jobKey)
+                        ->where('email_to', $user->email)
+                        ->where('status_id', $this->statusService->pending)
+                        ->update([
+                            'status_id' => $this->statusService->expired,
+                            'deleted_at' => now(),
+                        ]);
                     continue;
                 }
 
-                // Resolve folders the user has access to within this job
-                $userFolders = $selectedJob->folders
-                    ->filter(fn ($folder) =>
-                        DB::table('folder_users')
-                            ->where('ts_folder_id', $folder->ts_folder_id)
-                            ->where('user_id', $user->id)
-                            ->exists()
-                    )
-                    ->pluck('ts_foldername')
-                    ->toArray();
+                // Skip if a pending record already exists for this user + template + job
+                // (unless we need to refresh folder list for proof schedule templates)
+                $emailRecord = Email::where('template_id', $template->id)
+                    ->where('ts_jobkey', $jobKey)
+                    ->where('email_to', $user->email)
+                    ->where('status_id', $this->statusService->pending)
+                    ->first();
 
                 $data = [
                     'INVITEE_FIRST_NAME'    => $user->firstname ?? '',
@@ -613,7 +714,109 @@ class EmailService
                 $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $sentDate);
                 $emlContent   = MessageConverter::toEmail($emailMessage)->toString();
 
-                $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $jobKey);
+                if ($emailRecord) {
+                    $emailRecord->update([
+                        'email_content' => $emlContent,
+                        'sentdate' => $sentDate,
+                    ]);
+                } else {
+                    $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $jobKey);
+                }
+            }
+        }
+    }
+
+    /**
+     * Visible-for-proofing folder names assigned to a user on a job.
+     */
+    public function getInvitationFolderNamesForUser(int $userId, string $jobKey): array
+    {
+        return FolderUser::where('user_id', $userId)
+            ->whereHas('folder', function ($query) use ($jobKey) {
+                $query->where('is_visible_for_proofing', 1)
+                    ->whereHas('job', function ($jobQuery) use ($jobKey) {
+                        $jobQuery->where('ts_jobkey', $jobKey);
+                    });
+            })
+            ->with('folder')
+            ->get()
+            ->pluck('folder.ts_foldername')
+            ->filter()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * When folder proofing visibility changes, refresh pending invitation emails
+     * for users who have access to those folders so {#FOLDERS} stays current.
+     */
+    public function refreshPendingInvitationEmailsForFolders(array $folderIds): void
+    {
+        $folderIds = array_values(array_filter(array_map('intval', $folderIds), fn ($id) => $id > 0));
+        if ($folderIds === []) {
+            return;
+        }
+
+        $userIdsWithAccess = FolderUser::whereIn('ts_folder_id', $folderIds)
+            ->pluck('user_id')
+            ->unique()
+            ->filter()
+            ->values();
+
+        if ($userIdsWithAccess->isEmpty()) {
+            return;
+        }
+
+        $jobKeys = Folder::query()
+            ->whereIn('folders.ts_folder_id', $folderIds)
+            ->join('jobs', 'jobs.ts_job_id', '=', 'folders.ts_job_id')
+            ->distinct()
+            ->pluck('jobs.ts_jobkey')
+            ->filter()
+            ->values();
+
+        if ($jobKeys->isEmpty()) {
+            return;
+        }
+
+        $templateIds = Template::whereIn('template_name', [
+            'photocordinator_invitation',
+            'teacher_invitation',
+        ])->pluck('id');
+
+        if ($templateIds->isEmpty()) {
+            return;
+        }
+
+        $usersByEmail = User::whereIn('id', $userIdsWithAccess)
+            ->get(['id', 'email', 'firstname', 'lastname', 'name'])
+            ->keyBy('email');
+
+        $pendingEmails = Email::whereIn('ts_jobkey', $jobKeys)
+            ->whereIn('template_id', $templateIds)
+            ->where('status_id', $this->statusService->pending)
+            ->whereIn('email_to', $usersByEmail->keys())
+            ->get();
+
+        $jobsByKey = Job::whereIn('ts_jobkey', $jobKeys)->get()->keyBy('ts_jobkey');
+
+        foreach ($pendingEmails as $pendingEmail) {
+            $user = $usersByEmail->get($pendingEmail->email_to);
+            $job = $jobsByKey->get($pendingEmail->ts_jobkey);
+            if (!$user || !$job) {
+                continue;
+            }
+
+            $folderNames = $this->getInvitationFolderNamesForUser((int) $user->id, $job->ts_jobkey);
+            $updatedContent = $this->rebuildInvitationEmailContent(
+                $pendingEmail,
+                $user,
+                $folderNames,
+                $job
+            );
+
+            if ($updatedContent) {
+                $pendingEmail->update(['email_content' => $updatedContent]);
             }
         }
     }
@@ -628,13 +831,16 @@ class EmailService
         }
         $template = Template::where('template_name', $field)->first();
         $inviteUser = User::find($user);
+        $selectedFolders = $this->getInvitationFolderNamesForUser((int) $user, $jobkey);
         $folderUsers = FolderUser::where('user_id', $user)
-        ->whereHas('folder.job', function ($query) use ($jobkey) {
-            $query->where('ts_jobkey', $jobkey);
+        ->whereHas('folder', function ($query) use ($jobkey) {
+            $query->where('is_visible_for_proofing', 1)
+                ->whereHas('job', function ($jobQuery) use ($jobkey) {
+                    $jobQuery->where('ts_jobkey', $jobkey);
+                });
         })
         ->with('folder.job') // Ensure the job relationship is eager-loaded
         ->get();
-        $selectedFolders = $folderUsers->pluck('folder.ts_foldername')->toArray();
 
         $data = [
                 'INVITEE_FIRST_NAME' => $inviteUser->firstname ?? '',
@@ -642,7 +848,7 @@ class EmailService
                 'SENDER_FIRST_NAME' => $authUser->firstname ?? '',
                 'SENDER_LAST_NAME' => $authUser->lastname ?? '',
                 'JOB_NAME' => $folderUsers->first()->folder->job->ts_jobname ?? '',
-                'FOLDERS' => $selectedFolders ?? '',
+                'FOLDERS' => $selectedFolders,
                 'REVIEW_DUE' => isset($folderUsers->first()->folder->job->proof_due) ? Carbon::parse($folderUsers->first()->folder->job->proof_due)->format('l j F, Y') : '',
                 'APP_URL' => Config::get('app.url'),
                 'FRANCHISE_NAME' => $authUser->getSchoolOrFranchiseDetail()->name ?? '',
