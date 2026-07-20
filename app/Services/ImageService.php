@@ -241,6 +241,7 @@ class ImageService
 
         return $query
             ->select('folders.portal_ts_foldername', 'folders.ts_folderkey', 'folders.ts_job_id', 'seasons.code as year')
+            ->distinct()
             ->orderBy('folders.portal_ts_foldername')
             ->get();
     }
@@ -296,6 +297,8 @@ class ImageService
             ->whereNotNull('folders.ts_folderkey')
             ->where('folders.is_deleted', 0)
             ->where('subjects.is_deleted', 0)
+            ->where('folders.is_visible_for_portrait', 1)
+            ->whereColumn('subjects.ts_job_id', 'jobs.ts_job_id')
             ->whereIn('folders.ts_folderkey', $folderKeys)
             ->where(function ($query) {
                 $query->where(function ($subQuery) {
@@ -360,8 +363,24 @@ class ImageService
         $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
     );
 
-    return $homed
-        ->union($attached)
+    // One card per person within schoolkey + franchise (ts_account_id).
+    // - Same ts_subjectkey in multiple folders (homed vs attached) collapses.
+    // - Same external_subject_id across jobs collapses.
+    // - Otherwise same first+last name across jobs collapses (All/All multi-job case).
+    return DB::query()
+        ->fromSub($homed->union($attached), 'portrait_subjects')
+        ->selectRaw('
+            MIN(portal_firstname) as portal_firstname,
+            MIN(portal_lastname) as portal_lastname,
+            MIN(ts_subjectkey) as ts_subjectkey,
+            MIN(portal_ts_foldername) as portal_ts_foldername,
+            MIN(year) as year,
+            MIN(external_subject_id) as external_subject_id
+        ')
+        ->groupBy(DB::raw("COALESCE(
+            NULLIF(TRIM(external_subject_id), ''),
+            CONCAT(LOWER(TRIM(portal_firstname)), '|', LOWER(TRIM(portal_lastname)))
+        )"))
         ->orderBy('portal_lastname')
         ->orderBy('portal_firstname');
 }
@@ -380,13 +399,20 @@ class ImageService
                 ->on('images.keyvalue', '=', 'subjects.ts_subjectkey');
         };
 
+        $selectColumns = [
+            'subjects.ts_subjectkey',
+            'subjects.external_subject_id',
+            'subjects.portal_firstname',
+            'subjects.portal_lastname',
+        ];
+
         $homed = $this->applySubjectsCollectionFilters(
             DB::table('jobs')
                 ->join('folders', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
                 ->join('subjects', 'subjects.ts_folder_id', '=', 'folders.ts_folder_id')
                 ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
                 ->join('images', $imagesJoin)
-                ->select('subjects.ts_subjectkey')
+                ->select($selectColumns)
                 ->distinct(),
             $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
         );
@@ -401,12 +427,18 @@ class ImageService
                 ->join('subjects', 'subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id')
                 ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
                 ->join('images', $imagesJoin)
-                ->select('subjects.ts_subjectkey')
+                ->select($selectColumns)
                 ->distinct(),
             $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
         );
 
-        return $homed->union($attached)->count();
+        return (int) (DB::query()
+            ->fromSub($homed->union($attached), 'portrait_subjects_with_images')
+            ->selectRaw("COUNT(DISTINCT COALESCE(
+                NULLIF(TRIM(external_subject_id), ''),
+                CONCAT(LOWER(TRIM(portal_firstname)), '|', LOWER(TRIM(portal_lastname)))
+            )) as aggregate")
+            ->value('aggregate') ?? 0);
     }
 /*
     public function getSubjectsCollection(int $seasonId, string $schoolKey, array $folderKeys, string $searchTerm)

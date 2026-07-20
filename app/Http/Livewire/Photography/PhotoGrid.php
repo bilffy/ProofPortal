@@ -138,7 +138,9 @@ class PhotoGrid extends Component
         
         // If view changed, update classes options
         if ($initialState || $resetViewAndClass || $view != $this->filters['view']) {
-            $views = 'ALL' == $view ? array_keys($this->viewOptions) : [$view];
+            $views = 'ALL' == $view
+                ? array_values(array_filter(array_keys($this->viewOptions), fn ($k) => $k !== 'ALL'))
+                : [$view];
             $options = $imageService->getFoldersByTag(
                 $year, 
                 $this->schoolKey,
@@ -154,7 +156,7 @@ class PhotoGrid extends Component
                 $classOptions[$option->ts_folderkey] = $option->portal_ts_foldername;
                 $allClasses[] = $option->ts_folderkey;
             }
-            $this->filters['allClasses'] = $allClasses;
+            $this->filters['allClasses'] = array_values(array_unique($allClasses));
             $this->dispatch(PhotographyHelper::EV_UPDATE_FILTER_DATA, $this->category, 'class', $classOptions);
         }
 
