@@ -213,13 +213,36 @@ class FolderService
     /**
      * Counts folders in a job that do NOT have the specified status.
      * TNJ NOT FOUND folders are excluded from this count as they are considered inactive.
+     * When $visibleForProofingOnly is true, only folders with is_visible_for_proofing = 1 are counted.
      */
-    public function countFoldersByNotStatus($tsJobId, $statusId)
+    public function countFoldersByNotStatus($tsJobId, $statusId, bool $visibleForProofingOnly = false)
     {
-        return Folder::where('ts_job_id', $tsJobId)
+        $query = Folder::where('ts_job_id', $tsJobId)
             ->where('status_id', '!=', $statusId)
+            ->where('status_id', '!=', $this->statusService->tnjNotFound);
+
+        if ($visibleForProofingOnly) {
+            $query->where('is_visible_for_proofing', 1);
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * True when the job has at least one proofing-visible folder and all of them have $statusId.
+     */
+    public function allVisibleProofingFoldersHaveStatus($tsJobId, $statusId): bool
+    {
+        $visibleCount = Folder::where('ts_job_id', $tsJobId)
+            ->where('is_visible_for_proofing', 1)
             ->where('status_id', '!=', $this->statusService->tnjNotFound)
             ->count();
+
+        if ($visibleCount === 0) {
+            return false;
+        }
+
+        return $this->countFoldersByNotStatus($tsJobId, $statusId, true) === 0;
     }
 
     public function updateFolderStatus($folderIds, $status)
@@ -274,18 +297,14 @@ class FolderService
         }
 
         $this->updateFolderStatus($decryptedFolderIds, $newStatusId);
-        
-        // Only send emails for folders that actually changed status
-        if (!empty($changingFolderIds)) {
-            $this->sendEmailContent($changingFolderIds, $newStatusId);
-        }
 
         $tsJobId = $this->getDecryptData($data['JobId']);
         $job = $this->getJobService()->getJobById($tsJobId);
 
-        // If all active folders are now Completed, mark the Job as Completed
+        // If all proofing-visible folders are now Completed, mark the Job as Completed
         if ($newStatusId == $this->statusService->completed) {
-            if ($this->countFoldersByNotStatus($tsJobId, $this->statusService->completed) === 0) {
+            if ($this->allVisibleProofingFoldersHaveStatus($tsJobId, $this->statusService->completed)) {
+                // Expires pending emails, then creates job_status_completed notification
                 $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->completed);
             }
         } elseif ($newStatusId == $this->statusService->unlocked) {
@@ -296,6 +315,11 @@ class FolderService
             if ($allFoldersUnlocked || ($jobWasCompleted && !empty($changingFolderIds))) {
                 $this->getJobService()->updateJobStatus($tsJobId, $this->statusService->unlocked);
             }
+        }
+
+        // Send folder status emails after pending cleanup when the job was just completed
+        if (!empty($changingFolderIds)) {
+            $this->sendEmailContent($changingFolderIds, $newStatusId);
         }
 
         // When folders leave Completed (e.g. unlocked), recreate proof schedule emails

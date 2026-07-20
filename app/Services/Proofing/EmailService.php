@@ -83,12 +83,51 @@ class EmailService
     }
 
     /**
+     * Expire/soft-delete all pending emails for a job.
+     */
+    public function expirePendingEmailsForJob(string $jobKey): int
+    {
+        return Email::where('ts_jobkey', $jobKey)
+            ->where('status_id', $this->statusService->pending)
+            ->update([
+                'status_id' => $this->statusService->expired,
+                'deleted_at' => now(),
+            ]);
+    }
+
+    /**
+     * Completed jobs should not generate emails, except completion notifications
+     * created at the moment the job/folder is marked completed.
+     */
+    private function shouldBlockEmailGenerationForJob(?Job $job, ?string $templateName = null): bool
+    {
+        if (!$job || (int) $job->job_status_id !== (int) $this->statusService->completed) {
+            return false;
+        }
+
+        return !in_array($templateName, [
+            'job_status_completed',
+            'folder_status_completed',
+        ], true);
+    }
+
+    private function findJobByKey(string $jobKey): ?Job
+    {
+        return Job::where('ts_jobkey', $jobKey)->first();
+    }
+
+    /**
      * Re-evaluate pending proof schedule emails for a job.
      * Call after folders are unlocked/reopened so users who were skipped
      * while their folders were Completed can receive them again.
      */
     public function refreshProofScheduleEmails(string $jobKey): void
     {
+        $job = $this->findJobByKey($jobKey);
+        if ($this->shouldBlockEmailGenerationForJob($job)) {
+            return;
+        }
+
         foreach (['proof_start', 'proof_warning', 'proof_due', 'proof_catchup'] as $field) {
             $this->updateEmailSend($field, $jobKey);
         }
@@ -151,6 +190,10 @@ class EmailService
 
         if (!$selectedJob) {
             abort(404); 
+        }
+
+        if ($this->shouldBlockEmailGenerationForJob($selectedJob, $field)) {
+            return;
         }
     
         $sentDate = $selectedJob->$field;
@@ -340,7 +383,7 @@ class EmailService
     
         // Fetch the job data
         $hasDateColumn = Schema::hasColumn('jobs', $field);
-        $columnsToSelect = ['id', 'notifications_matrix', 'notifications_enabled', 'ts_schoolkey', 'ts_account_id', 'ts_job_id', 'ts_jobname', 'proof_due'];
+        $columnsToSelect = ['id', 'notifications_matrix', 'notifications_enabled', 'ts_schoolkey', 'ts_account_id', 'ts_job_id', 'ts_jobname', 'proof_due', 'job_status_id'];
         if ($hasDateColumn) {
             $columnsToSelect[] = $field;
         }
@@ -352,6 +395,10 @@ class EmailService
 
         if (!$selectedJob) {
             abort(404); 
+        }
+
+        if ($this->shouldBlockEmailGenerationForJob($selectedJob, $field)) {
+            return;
         }
 
         // Ensure the job object has the updated date for placeholders
@@ -492,6 +539,10 @@ class EmailService
             return response()->json(['error' => 'No folder or job found'], 404);
         }
 
+        if ($this->shouldBlockEmailGenerationForJob($selectedFolder->job, $field)) {
+            return;
+        }
+
         $changedFolderIds = $selectedFolders->pluck('ts_folder_id')->filter()->values()->toArray();
         if (empty($changedFolderIds)) {
             return;
@@ -620,6 +671,10 @@ class EmailService
             ->first();
 
         if (!$selectedJob) {
+            return;
+        }
+
+        if ($this->shouldBlockEmailGenerationForJob($selectedJob)) {
             return;
         }
 
@@ -807,6 +862,10 @@ class EmailService
                 continue;
             }
 
+            if ($this->shouldBlockEmailGenerationForJob($job)) {
+                continue;
+            }
+
             $folderNames = $this->getInvitationFolderNamesForUser((int) $user->id, $job->ts_jobkey);
             $updatedContent = $this->rebuildInvitationEmailContent(
                 $pendingEmail,
@@ -829,6 +888,12 @@ class EmailService
         } elseif($role == 'teacher') {
             $field = 'teacher_invitation';
         }
+
+        $job = $this->findJobByKey($jobkey);
+        if ($this->shouldBlockEmailGenerationForJob($job, $field ?? null)) {
+            return;
+        }
+
         $template = Template::where('template_name', $field)->first();
         $inviteUser = User::find($user);
         $selectedFolders = $this->getInvitationFolderNamesForUser((int) $user, $jobkey);

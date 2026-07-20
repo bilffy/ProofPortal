@@ -519,16 +519,31 @@ class ProofController extends Controller
             ], $rootUserId);
             $folder->status_id = $isSaveForLater ? $this->statusService->modified : $this->statusService->completed;
             $folder->save();
-            
-            $this->emailService->saveEmailFolderContent($folder->ts_folder_id, $statusFields[$folder->status_id], Carbon::now(), $folder->status_id);
 
             $job = $folder->job;
             if ($isMarkAsComplete) {
-                $incompleteFolders = $job->folders()->where('status_id', '!=', $this->statusService->completed)->count();
-                $jobStatus = ($incompleteFolders === 0) ? $this->statusService->completed : $this->statusService->incomplete;
+                $incompleteFolders = $job->folders()
+                    ->where('is_visible_for_proofing', 1)
+                    ->where('status_id', '!=', $this->statusService->completed)
+                    ->where('status_id', '!=', $this->statusService->tnjNotFound)
+                    ->count();
+                $visibleFolders = $job->folders()
+                    ->where('is_visible_for_proofing', 1)
+                    ->where('status_id', '!=', $this->statusService->tnjNotFound)
+                    ->count();
+                $jobStatus = ($visibleFolders > 0 && $incompleteFolders === 0)
+                    ? $this->statusService->completed
+                    : $this->statusService->incomplete;
             } else {
                 $jobStatus = $this->statusService->incomplete;
             }
+
+            // Clear outstanding pending emails before creating completion notifications
+            if ($jobStatus === $this->statusService->completed) {
+                $this->emailService->expirePendingEmailsForJob($job->ts_jobkey);
+            }
+
+            $this->emailService->saveEmailFolderContent($folder->ts_folder_id, $statusFields[$folder->status_id], Carbon::now(), $folder->status_id);
 
             ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
                 'jobkey' => $job->ts_jobkey,

@@ -176,6 +176,11 @@ class JobService
 
         $job->update(['job_status_id' => $newStatusId]);
 
+        // Clear outstanding pending emails before creating the completion notification
+        if ($newStatusId == $this->statusService->completed) {
+            $this->emailService->expirePendingEmailsForJob($job->ts_jobkey);
+        }
+
         $statusFields = [
             $this->statusService->modified => 'job_status_modified',
             $this->statusService->completed => 'job_status_completed',
