@@ -134,6 +134,18 @@ class EmailService
     }
 
     /**
+     * All folder names for a job that are visible for proofing.
+     */
+    private function getVisibleProofingFolderNames($folders): array
+    {
+        return $folders
+            ->filter(fn ($folder) => (int) ($folder->is_visible_for_proofing ?? 0) === 1)
+            ->pluck('ts_foldername')
+            ->values()
+            ->toArray();
+    }
+
+    /**
      * Folder names assigned to the user within the given job folders.
      * Only includes folders with is_visible_for_proofing = 1.
      * For proof schedule templates, Completed folders are also excluded.
@@ -204,7 +216,7 @@ class EmailService
     
         $sentDateCarbon = Carbon::parse($sentDate);
     
-        $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
+        $allJobFolders = $this->getVisibleProofingFolderNames($selectedJob->folders);
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true) ?? [];
     
         /**
@@ -406,7 +418,7 @@ class EmailService
             $selectedJob->$field = $date;
         }
     
-        $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
+        $allJobFolders = $this->getVisibleProofingFolderNames($selectedJob->folders);
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true);
     
         $rolesWithFieldTrue = $notificationsMatrix['schools'][$field] ?? [];
@@ -707,7 +719,7 @@ class EmailService
             }
             $templateContent = File::get($templatePath);
 
-            $allJobFolders = $selectedJob->folders->pluck('ts_foldername')->toArray();
+            $allJobFolders = $this->getVisibleProofingFolderNames($selectedJob->folders);
             $statusModel   = Status::find($selectedJob->job_status_id);
 
             foreach ($users as $user) {
