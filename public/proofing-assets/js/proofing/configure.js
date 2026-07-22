@@ -290,8 +290,18 @@
 
                     var message = 'Upload failed.';
                     var response = xhr.responseJSON;
+                    var status = xhr.status;
 
-                    if (response) {
+                    // Web server / proxy rejections often have no JSON body (e.g. nginx 413).
+                    if (status === 413) {
+                        message = 'File is too large for the server (413). Please use an image of 25MB or smaller, or ask support to raise the server upload limit.';
+                    } else if (status === 401 || status === 419) {
+                        message = 'Your session has expired. Please refresh the page and try again.';
+                    } else if (status === 403) {
+                        message = 'You do not have permission to upload this image.';
+                    } else if (status === 404) {
+                        message = 'Upload endpoint not found. Please refresh and try again.';
+                    } else if (status === 422 && response) {
                         if (response.message) {
                             message = response.message;
                         } else if (response.errors) {
@@ -300,6 +310,13 @@
                                 message = response.errors[firstKey][0];
                             }
                         }
+                    } else if (response && response.message) {
+                        message = response.message;
+                    } else if (response && response.errors) {
+                        var errKey = Object.keys(response.errors)[0];
+                        if (errKey && response.errors[errKey] && response.errors[errKey][0]) {
+                            message = response.errors[errKey][0];
+                        }
                     } else if (xhr.responseText) {
                         try {
                             var parsed = JSON.parse(xhr.responseText);
@@ -307,10 +324,16 @@
                                 message = parsed.message;
                             }
                         } catch (e) {
-                            // keep default message
+                            if (status >= 500) {
+                                message = 'Server error while uploading. Please try again.';
+                            } else if (status > 0) {
+                                message = 'Upload failed (HTTP ' + status + ').';
+                            }
                         }
-                    } else if (xhr.statusText) {
-                        message = xhr.statusText;
+                    } else if (status === 0) {
+                        message = 'Upload could not reach the server. Check your connection and try again.';
+                    } else if (status > 0) {
+                        message = 'Upload failed (HTTP ' + status + ').';
                     }
 
                     $("#" + this.folder_key + "-error").removeClass('d-none').text(message);
