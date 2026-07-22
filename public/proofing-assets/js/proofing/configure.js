@@ -194,6 +194,7 @@ $(document).ready(function () {
         this.folder_key = folder_key;
         this.folder_name = folder_name;
         this.progress_bar_id = "#progress-wrp-" + folder_key;
+        this.maxBytes = 15 * 1024 * 1024; // 15MB
     };
 
     Upload.prototype.getType = function () {
@@ -210,6 +211,12 @@ $(document).ready(function () {
 
     Upload.prototype.doUpload = function () {
         var that = this;
+
+        if (that.file && that.file.size > that.maxBytes) {
+            that.showError('Each image must be 15MB or smaller.');
+            return;
+        }
+
         var formData = new FormData();
         var targetUrl = base_url + "/franchise/config-job/upload-file";
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
@@ -230,7 +237,7 @@ $(document).ready(function () {
             processData: false, headers: {
                 'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
             },
-            timeout: 60000,
+            timeout: 120000,
 
             xhr: function () {
                 var xhr = new window.XMLHttpRequest();
@@ -285,16 +292,23 @@ $(document).ready(function () {
         }
     };
 
-    Upload.prototype.errorHandling = function (xhr) {
+    Upload.prototype.showError = function (message) {
         $("#" + this.folder_key + "-bar").addClass('d-none');
+        $("#" + this.folder_key + "-error").removeClass('d-none').text(message);
+    };
 
+    Upload.prototype.errorHandling = function (xhr) {
         var message = 'Upload failed.';
         var response = xhr.responseJSON;
         var status = xhr.status;
+        var fileTooLarge = this.file && this.file.size > this.maxBytes;
 
-        // Web server / proxy rejections often have no JSON body (e.g. nginx 413).
-        if (status === 413) {
-            message = 'File is too large for the server (413). Please use an image of 15MB or smaller, or ask support to raise the server upload limit.';
+        // Web server / proxy rejections often have no JSON body (e.g. nginx 413),
+        // and browsers may report that as status 0.
+        if (status === 413 || fileTooLarge) {
+            message = 'Each image must be 15MB or smaller.';
+        } else if (status === 0) {
+            message = 'Each image must be 15MB or smaller. If the file is under 15MB, refresh and try again.';
         } else if (status === 401 || status === 419) {
             message = 'Your session has expired. Please refresh the page and try again.';
         } else if (status === 403) {
@@ -330,13 +344,11 @@ $(document).ready(function () {
                     message = 'Upload failed (HTTP ' + status + ').';
                 }
             }
-        } else if (status === 0) {
-            message = 'Upload could not reach the server. Check your connection and try again.';
         } else if (status > 0) {
             message = 'Upload failed (HTTP ' + status + ').';
         }
 
-        $("#" + this.folder_key + "-error").removeClass('d-none').text(message);
+        this.showError(message);
     };
 
 
