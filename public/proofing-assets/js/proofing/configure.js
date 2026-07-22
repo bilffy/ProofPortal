@@ -271,17 +271,49 @@
                 Upload.prototype.successHandling = function (data) {
                     if (data.error) {
                         $("#" + this.folder_key + "-bar").addClass('d-none');
-                        $("#" + this.folder_key + "-error").removeClass('d-none').text(data.error.data.message);
+                        var errMsg = (data.error.data && data.error.data.message)
+                            ? data.error.data.message
+                            : (data.message || 'Upload failed.');
+                        $("#" + this.folder_key + "-error").removeClass('d-none').text(errMsg);
                     }
 
                     if (data.full_url) {
+                        $("#" + this.folder_key + "-bar").addClass('d-none');
                         $("#" + this.folder_key + "-image").attr('src', data.full_url);
                         $("#" + this.folder_key + "-delete").removeClass("d-none").addClass('d-block');
+                        $("#" + this.folder_key + "-error").addClass('d-none').text('');
                     }
                 };
 
-                Upload.prototype.errorHandling = function (error) {
-                   //console.log(error);
+                Upload.prototype.errorHandling = function (xhr) {
+                    $("#" + this.folder_key + "-bar").addClass('d-none');
+
+                    var message = 'Upload failed.';
+                    var response = xhr.responseJSON;
+
+                    if (response) {
+                        if (response.message) {
+                            message = response.message;
+                        } else if (response.errors) {
+                            var firstKey = Object.keys(response.errors)[0];
+                            if (firstKey && response.errors[firstKey] && response.errors[firstKey][0]) {
+                                message = response.errors[firstKey][0];
+                            }
+                        }
+                    } else if (xhr.responseText) {
+                        try {
+                            var parsed = JSON.parse(xhr.responseText);
+                            if (parsed.message) {
+                                message = parsed.message;
+                            }
+                        } catch (e) {
+                            // keep default message
+                        }
+                    } else if (xhr.statusText) {
+                        message = xhr.statusText;
+                    }
+
+                    $("#" + this.folder_key + "-error").removeClass('d-none').text(message);
                 };
 
 

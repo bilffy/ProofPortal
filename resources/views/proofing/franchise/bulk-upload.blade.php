@@ -51,14 +51,11 @@
                                     <i class="fa fa-upload"></i> {{ __('Bulk Upload Group Images') }}
                                 </div>
                                 <div class="card-body">
-                                    @php
-                                        $uploadMaxFilesize = ini_get('upload_max_filesize');
-                                    @endphp
                                     <p class="mb-0">Upload Instructions</p>
                                     <ul class="list-disc pl-5">
                                         <li>Drag multiple files from Windows Explorer or OSX Finder.</li>
                                         <li>JPG and PNG images only - other files will be rejected including zip files.</li>
-                                        <li>There is a {{ $uploadMaxFilesize }} size limit per image.</li>
+                                        <li>There is a 25MB size limit per image.</li>
                                         <li>Match Images to Folders in the next step.</li>
                                     </ul>
         
@@ -174,11 +171,23 @@
     <script src="{{ asset('proofing-assets/vendors/dropzone-5.7.0/dist/min/dropzone.min.js') }}"></script>
     <script>
         Dropzone.options.dropzoneBulkUpload = {
-            acceptedFiles: ".jpg,.jpeg,.png",
+            acceptedFiles: ".jpg,.jpeg,.png,.JPG,.JPEG,.PNG",
+            maxFilesize: 25, // MB
 
             init: function () {
                 this.on("error", function (file, message) {
-                    alert("Only JPG and PNG images are allowed.");
+                    if (file.__mspAlertShown) {
+                        this.removeFile(file);
+                        return;
+                    }
+                    file.__mspAlertShown = true;
+
+                    const isTooBig = file.size > 25 * 1024 * 1024
+                        || (typeof message === 'string' && message.toLowerCase().includes('file is too big'));
+
+                    alert(isTooBig
+                        ? "Each image must be 25MB or smaller."
+                        : "Only JPG and PNG images are allowed.");
                     this.removeFile(file);
                 });
 
@@ -186,8 +195,11 @@
                     let ext = file.name.split('.').pop().toLowerCase();
 
                     if (!["jpg", "jpeg", "png"].includes(ext)) {
+                        if (!file.__mspAlertShown) {
+                            file.__mspAlertShown = true;
+                            alert("Invalid file type. Only JPG and PNG images are allowed.");
+                        }
                         this.removeFile(file);
-                        alert("Invalid file type. Only JPG and PNG allowed.");
                     }
                 });
             }

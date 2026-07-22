@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Folder;
 
 class ImageController extends Controller
@@ -56,7 +57,7 @@ class ImageController extends Controller
                     if (!$image) return null;
                     
                     return [
-                        'path' => "{$folder->job->seasons->code}/{$folder->job->ts_schoolkey}/{$folder->job->ts_jobkey}/folders/{$image->image_path}{$image->name}",
+                        'path' => "{$folder->job->seasons->code}/{$folder->job->ts_schoolkey}/{$folder->job->ts_jobkey}/folders/{$image->image_path}{$this->normalizeImageFilename($image->name)}",
                         'version' => $image->updated_at ? strtotime($image->updated_at) : 'v1'
                     ];
                 }
@@ -79,7 +80,8 @@ class ImageController extends Controller
             // Layer 2: Fetch raw binary (tied explicitly to structural cache token version)
             $binaryKey = "zoom_bin_{$folderKey}_{$metaData['version']}";
             $imageContent = Cache::store('file')->remember($binaryKey, 600, function () use ($metaData) {
-                $response = Http::timeout(15)->withoutVerifying()->get(rtrim(config('services.exportImageLocation'), '/') . '/' . $metaData['path']);
+                $path = $this->normalizeCacheImageUrl($metaData['path']);
+                $response = Http::timeout(15)->withoutVerifying()->get(rtrim(config('services.exportImageLocation'), '/') . '/' . ltrim($path, '/'));
                 return $response->successful() ? $response->body() : null;
             });
                 
@@ -159,7 +161,8 @@ class ImageController extends Controller
             }
 
             $job = $folderContext->job;
-            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$deCryptjobKey}/{$fileOrigin}/{$image->image_path}{$image->name}";
+            $fileName = $this->normalizeImageFilename($image->name);
+            $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$deCryptjobKey}/{$fileOrigin}/{$image->image_path}{$fileName}";
 
             $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
 
@@ -250,11 +253,17 @@ class ImageController extends Controller
                     $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
                     if ($image) {
                         $job = $folder->job;
-                        return rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$image->image_path}{$image->name}";
+                        $fileName = $this->normalizeImageFilename($image->name);
+                        return rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$image->image_path}{$fileName}";
                     }
                 }
                 return null;
             });
+
+            // Cache may still hold an older URL with .JPG — always lowercase the extension.
+            if ($imageUrl) {
+                $imageUrl = $this->normalizeCacheImageUrl($imageUrl);
+            }
 
             if ($imageUrl) {
                 $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
@@ -308,7 +317,7 @@ class ImageController extends Controller
     {
         if ($request->hasFile('file')) {
             $request->validate([
-                'file'           => 'image|mimes:jpeg,png,jpg|max:15360',
+                'file'           => 'image|mimes:jpeg,png,jpg|max:25600',
                 'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/',
             ]);
 
@@ -363,7 +372,7 @@ class ImageController extends Controller
     
         foreach ($artifactToFolderMap as $artifact => $folderKey) {
             if ($folderKey !== "discard_image" && $folderKey !== "no_match") {
-                $extension = pathinfo($artifact, PATHINFO_EXTENSION);
+                $extension = strtolower(pathinfo($artifact, PATHINFO_EXTENSION));
                 
                 $folder = $foldersCollection->get($folderKey);
                 $seasonCodeLocal = null;
@@ -420,19 +429,46 @@ class ImageController extends Controller
 
     public function groupImageUploadFile(Request $request)
     {
-        $request->validate([
-            'file' => 'image|mimes:jpeg,png,jpg|max:15360', 
-            'folder_key' => 'required|string',
-            'folder_name' => 'required|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'file' => 'required|file|mimes:jpeg,png,jpg|mimetypes:image/jpeg,image/png,image/jpg|max:15360',
+                'folder_key' => 'required|string',
+                'folder_name' => 'required|string',
+            ], [
+                'file.required' => 'Please select an image to upload.',
+                'file.mimes' => 'Only JPG and PNG images are allowed.',
+                'file.mimetypes' => 'Only JPG and PNG images are allowed.',
+                'file.max' => 'Each image must be 15MB or smaller.',
+            ]);
 
-        $file = $request->file('file');
-        $folderKey = $request->input('folder_key');
-        $extension = strtolower($file->getClientOriginalExtension());
-        $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
 
-        if ($folder && $folder->job) {
+            $file = $request->file('file');
+            if (!$file || !$file->isValid()) {
+                $uploadError = $file ? $file->getErrorMessage() : 'No file received.';
+                return response()->json(['message' => $uploadError], 422);
+            }
+
+            $folderKey = $request->input('folder_key');
+            $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+            $extension = preg_replace('/[^a-z0-9]/', '', $extension) ?: 'jpg';
+
+            $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+
+            if (!$folder || !$folder->job) {
+                return response()->json(['message' => 'Folder or job not found for this upload.'], 404);
+            }
+
             $job = $folder->job;
+            if (!$job->seasons) {
+                return response()->json(['message' => 'Season not found for this job.'], 404);
+            }
+
             $seasonCode = $job->seasons->code;
             $schoolKey = $job->ts_schoolkey;
             $jobKey = $job->ts_jobkey;
@@ -445,34 +481,43 @@ class ImageController extends Controller
             $fileName = "{$folderKey}.{$extension}";
             $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$fileName}";
 
+            $uploader = new ImageUploader();
+
+            $stream = fopen($file->getRealPath(), 'r');
+            if ($stream === false) {
+                return response()->json(['message' => 'Unable to read the uploaded file.'], 500);
+            }
+
             try {
-                $uploader = new ImageUploader();
-                
-                // Optimization: Pass resource streams directly instead of copying raw values into string memory
-                $stream = fopen($file->getRealPath(), 'r');
-                $uploader->upload($stream, $remotePath, "{$fileName}");
+                $uploader->upload($stream, $remotePath, $fileName);
+            } finally {
                 if (is_resource($stream)) {
                     fclose($stream);
                 }
-                
-                $this->imageService->createGroupImage($folderKey, $path, $fileName);
-                
-                Cache::forget("zoom_meta_v2_{$folderKey}");
-                Cache::forget("group_img_meta_{$folderKey}");
-                Cache::store('file')->forget("group_img_out_{$folderKey}");
-
-                $encryptedFilename = Crypt::encryptString($fileName);
-                
-                return response()->json([
-                    'message' => 'Image uploaded successfully',
-                    'full_url' => route('image.show', ['filename' => $encryptedFilename]),
-                ]);
-            } catch (\Exception $e) {
-                Log::error("Failed to upload group image for folder: {$folderKey} - " . $e->getMessage());
             }
-        }
 
-        return response()->json(['message' => 'Upload failed'], 500);
+            $this->imageService->createGroupImage($folderKey, $path, $fileName);
+
+            Cache::forget("zoom_meta_v2_{$folderKey}");
+            Cache::forget("group_img_meta_{$folderKey}");
+            Cache::store('file')->forget("group_img_out_{$folderKey}");
+
+            $encryptedFilename = Crypt::encryptString($fileName);
+
+            return response()->json([
+                'message' => 'Image uploaded successfully',
+                'full_url' => route('image.show', ['filename' => $encryptedFilename]),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to upload group image', [
+                'folder_key' => $request->input('folder_key'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Upload failed.',
+            ], 500);
+        }
     }
 
     public function groupImageDeleteFile(Request $request)
@@ -503,5 +548,33 @@ class ImageController extends Controller
                 'message' => 'Error deleting image',
             ], 400);
         }
+    }
+
+    /**
+     * Proofing-cache is case-sensitive; stored objects use lowercase extensions (.jpg).
+     */
+    private function normalizeImageFilename(string $filename): string
+    {
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        if ($extension === '') {
+            return $filename;
+        }
+
+        return pathinfo($filename, PATHINFO_FILENAME) . '.' . strtolower($extension);
+    }
+
+    /**
+     * Lowercase only the file extension on a cache URL or relative path.
+     */
+    private function normalizeCacheImageUrl(string $urlOrPath): string
+    {
+        $basename = basename(parse_url($urlOrPath, PHP_URL_PATH) ?: $urlOrPath);
+        $normalized = $this->normalizeImageFilename($basename);
+
+        if ($basename === $normalized || $basename === '') {
+            return $urlOrPath;
+        }
+
+        return preg_replace('/' . preg_quote($basename, '/') . '$/', $normalized, $urlOrPath) ?? $urlOrPath;
     }
 }
