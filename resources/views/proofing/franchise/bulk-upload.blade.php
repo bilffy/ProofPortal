@@ -173,6 +173,8 @@
         Dropzone.options.dropzoneBulkUpload = {
             acceptedFiles: ".jpg,.jpeg,.png,.JPG,.JPEG,.PNG",
             maxFilesize: 25, // MB
+            // Default is 10MB — larger files still upload but show a grey box with no preview.
+            maxThumbnailFilesize: 25,
 
             init: function () {
                 this.on("error", function (file, message) {
