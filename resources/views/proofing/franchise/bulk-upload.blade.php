@@ -55,7 +55,7 @@
                                     <ul class="list-disc pl-5">
                                         <li>Drag multiple files from Windows Explorer or OSX Finder.</li>
                                         <li>JPG and PNG images only - other files will be rejected including zip files.</li>
-                                        <li>There is a 25MB size limit per image.</li>
+                                        <li>There is a 15MB size limit per image.</li>
                                         <li>Match Images to Folders in the next step.</li>
                                     </ul>
         
@@ -172,9 +172,9 @@
     <script>
         Dropzone.options.dropzoneBulkUpload = {
             acceptedFiles: ".jpg,.jpeg,.png,.JPG,.JPEG,.PNG",
-            maxFilesize: 25, // MB
+            maxFilesize: 15, // MB
             // Default is 10MB — larger files still upload but show a grey box with no preview.
-            maxThumbnailFilesize: 25,
+            maxThumbnailFilesize: 15,
 
             init: function () {
                 this.on("error", function (file, message) {
@@ -184,11 +184,11 @@
                     }
                     file.__mspAlertShown = true;
 
-                    const isTooBig = file.size > 25 * 1024 * 1024
+                    const isTooBig = file.size > 15 * 1024 * 1024
                         || (typeof message === 'string' && message.toLowerCase().includes('file is too big'));
 
                     alert(isTooBig
-                        ? "Each image must be 25MB or smaller."
+                        ? "Each image must be 15MB or smaller."
                         : "Only JPG and PNG images are allowed.");
                     this.removeFile(file);
                 });

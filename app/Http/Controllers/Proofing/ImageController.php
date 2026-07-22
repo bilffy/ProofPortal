@@ -317,7 +317,7 @@ class ImageController extends Controller
     {
         if ($request->hasFile('file')) {
             $request->validate([
-                'file'           => 'image|mimes:jpeg,png,jpg|max:25600',
+                'file'           => 'image|mimes:jpeg,png,jpg|max:15360',
                 'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/',
             ]);
 

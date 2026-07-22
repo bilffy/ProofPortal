@@ -122,7 +122,7 @@
                     <li>
                         There is a 
                         {{-- {{$uploadMaxFilesize}}  --}}
-                        15M
+                        15MB
                         size limit per photo.
                     </li>
                     <li>
