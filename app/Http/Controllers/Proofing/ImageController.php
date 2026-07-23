@@ -162,6 +162,9 @@ class ImageController extends Controller
 
             $job = $folderContext->job;
             $fileName = $this->normalizeImageFilename($image->name);
+            if ($fileName === '') {
+                return $this->serveFallback();
+            }
             $imageUrl = rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$deCryptjobKey}/{$fileOrigin}/{$image->image_path}{$fileName}";
 
             $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
@@ -351,6 +354,9 @@ class ImageController extends Controller
 
     public function groupImageSubmit(Request $request)
     {
+        // Bulk submit can process dozens of large JPGs in one request.
+        @ini_set('memory_limit', '512M');
+
         $request->validate([
             'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/', 
             'artifact-to-folder-map' => 'required|string', 
@@ -369,6 +375,8 @@ class ImageController extends Controller
             ->whereIn('ts_folderkey', array_values($validFolderKeys))
             ->get()
             ->keyBy('ts_folderkey');
+
+        $uploader = new ImageUploader();
     
         foreach ($artifactToFolderMap as $artifact => $folderKey) {
             if ($folderKey !== "discard_image" && $folderKey !== "no_match") {
@@ -396,14 +404,26 @@ class ImageController extends Controller
                     $fileName = "{$folderKey}.{$extension}";
 
                     if (Storage::disk('public')->exists($artifact)) {
-                        $fileContent = Storage::disk('public')->get($artifact);
-                        $uploader = new ImageUploader();
-                        $uploader->upload($fileContent, $remotePath, "{$fileName}");
-                        $this->imageService->createGroupImage($folderKey, $path, $fileName);
-                        
-                        Cache::forget("zoom_meta_v2_{$folderKey}");
-                        Cache::forget("group_img_meta_{$folderKey}");
-                        Cache::store('file')->forget("group_img_out_{$folderKey}");
+                        // Stream each file — do not load all image bodies into memory at once
+                        $stream = Storage::disk('public')->readStream($artifact);
+                        if ($stream === false) {
+                            Log::error("Unable to open group image stream: {$artifact}");
+                            continue;
+                        }
+
+                        try {
+                            $uploader->upload($stream, $remotePath, $fileName);
+                            $this->imageService->createGroupImage($folderKey, $path, $fileName);
+                            
+                            Cache::forget("zoom_meta_v2_{$folderKey}");
+                            Cache::forget("group_img_meta_{$folderKey}");
+                            Cache::store('file')->forget("group_img_out_{$folderKey}");
+                        } finally {
+                            if (is_resource($stream)) {
+                                fclose($stream);
+                            }
+                            unset($stream);
+                        }
 
                         Storage::disk('public')->delete($artifact);
                     }
@@ -553,8 +573,12 @@ class ImageController extends Controller
     /**
      * Proofing-cache is case-sensitive; stored objects use lowercase extensions (.jpg).
      */
-    private function normalizeImageFilename(string $filename): string
+    private function normalizeImageFilename(?string $filename): string
     {
+        if ($filename === null || $filename === '') {
+            return '';
+        }
+
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         if ($extension === '') {
             return $filename;

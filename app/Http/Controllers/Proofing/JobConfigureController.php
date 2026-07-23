@@ -133,7 +133,19 @@ class JobConfigureController extends Controller
     public function notificationEnable(Request $request)
     {
         $emailNotificationEnable = $request->input('isReviewDateEnabled') === 'true' ? 1 : 0;
-        $this->updateJobData($request->input('jobHash'), 'notifications_enabled', $emailNotificationEnable);
+        $jobHash = $request->input('jobHash');
+        $jobKey = $this->getDecryptData($jobHash);
+
+        $this->updateJobData($jobHash, 'notifications_enabled', $emailNotificationEnable);
+
+        if ($emailNotificationEnable === 0) {
+            // Notifications turned off → expire any outstanding pending emails for this job
+            $this->emailService->expirePendingEmailsForJob($jobKey);
+        } else {
+            // Notifications turned on → recreate/re-evaluate proof schedule emails
+            $this->emailService->refreshProofScheduleEmails($jobKey);
+        }
+
         return response()->json(['success' => true]);
     }
 

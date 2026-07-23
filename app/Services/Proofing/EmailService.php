@@ -111,6 +111,14 @@ class EmailService
         ], true);
     }
 
+    /**
+     * Master switch: matrix role flags are ignored while notifications are off.
+     */
+    private function areJobNotificationsEnabled(?Job $job): bool
+    {
+        return $job && (int) $job->notifications_enabled === 1;
+    }
+
     private function findJobByKey(string $jobKey): ?Job
     {
         return Job::where('ts_jobkey', $jobKey)->first();
@@ -124,7 +132,7 @@ class EmailService
     public function refreshProofScheduleEmails(string $jobKey): void
     {
         $job = $this->findJobByKey($jobKey);
-        if ($this->shouldBlockEmailGenerationForJob($job)) {
+        if ($this->shouldBlockEmailGenerationForJob($job) || !$this->areJobNotificationsEnabled($job)) {
             return;
         }
 
@@ -183,6 +191,7 @@ class EmailService
         $columnsToSelect = [
             'id',
             'notifications_matrix',
+            'notifications_enabled',
             'ts_schoolkey',
             'ts_account_id',
             'ts_job_id',
@@ -204,7 +213,8 @@ class EmailService
             abort(404); 
         }
 
-        if ($this->shouldBlockEmailGenerationForJob($selectedJob, $field)) {
+        // Matrix may still hold role flags; do not create/update emails while off
+        if ($this->shouldBlockEmailGenerationForJob($selectedJob, $field) || !$this->areJobNotificationsEnabled($selectedJob)) {
             return;
         }
     
@@ -430,7 +440,7 @@ class EmailService
         $templateContent = File::exists($templatePath) ? File::get($templatePath) : '';
         $statusModel = $status ? Status::find($status) : null;
     
-        if (!empty($rolesWithFieldTrue) && $selectedJob->notifications_enabled === 1) {
+        if (!empty($rolesWithFieldTrue) && $this->areJobNotificationsEnabled($selectedJob)) {
 
             $roleNames = array_map(fn($role) => str_replace(
                 ['franchise', 'photocoordinator', 'teacher'],
@@ -551,7 +561,8 @@ class EmailService
             return response()->json(['error' => 'No folder or job found'], 404);
         }
 
-        if ($this->shouldBlockEmailGenerationForJob($selectedFolder->job, $field)) {
+        if ($this->shouldBlockEmailGenerationForJob($selectedFolder->job, $field)
+            || !$this->areJobNotificationsEnabled($selectedFolder->job)) {
             return;
         }
 
@@ -679,14 +690,15 @@ class EmailService
         $selectedJob = Job::with(['franchises', 'folders'])
             ->where('ts_jobkey', $jobKey)
             ->select(['id', 'ts_job_id', 'ts_jobkey', 'ts_jobname', 'ts_schoolkey', 'ts_account_id',
-                      'proof_start', 'proof_warning', 'proof_due', 'proof_catchup', 'job_status_id', 'notifications_matrix'])
+                      'proof_start', 'proof_warning', 'proof_due', 'proof_catchup', 'job_status_id',
+                      'notifications_matrix', 'notifications_enabled'])
             ->first();
 
         if (!$selectedJob) {
             return;
         }
 
-        if ($this->shouldBlockEmailGenerationForJob($selectedJob)) {
+        if ($this->shouldBlockEmailGenerationForJob($selectedJob) || !$this->areJobNotificationsEnabled($selectedJob)) {
             return;
         }
 

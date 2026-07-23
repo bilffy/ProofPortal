@@ -150,7 +150,9 @@ class ExportImageService
                 $this->writeStagingFile($localPath, $thumbnail);
     
                 [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
-                $downloadedBatch[$row->ImageKey] = [
+                // Cast key to string: PHP converts numeric-looking keys to int, which
+                // PDO then binds as numbers and breaks alphanumeric ts_imagekey compares.
+                $downloadedBatch[(string) $row->ImageKey] = [
                     'path' => sprintf('%s/%s/%s/', $p3, $p1, $p2),
                     'name' => sprintf('%s.%s', $subjectKey, $extension),
                 ];
@@ -370,21 +372,32 @@ class ExportImageService
 
     protected function updateBatchDownloadStatuses(array $batchData): void
     {
-        $keys = array_keys($batchData);
+        if (empty($batchData)) {
+            return;
+        }
+
         $pathCases = [];
         $nameCases = [];
         $bindings = [];
+        $keys = [];
+
+        // Always bind ts_imagekey as string. PHP casts numeric-looking array keys
+        // (e.g. "52278852") to int; PDO then binds them as numbers and MySQL coerces
+        // the whole IN/CASE compare to DOUBLE, which fails for keys like "8YG2LMQC".
+        foreach ($batchData as $imageKey => $data) {
+            $keys[] = (string) $imageKey;
+        }
 
         foreach ($batchData as $imageKey => $data) {
             $pathCases[] = 'WHEN ts_imagekey = ? THEN ?';
-            $bindings[] = $imageKey;
-            $bindings[] = $data['path'];
+            $bindings[] = (string) $imageKey;
+            $bindings[] = (string) ($data['path'] ?? '');
         }
 
         foreach ($batchData as $imageKey => $data) {
             $nameCases[] = 'WHEN ts_imagekey = ? THEN ?';
-            $bindings[] = $imageKey;
-            $bindings[] = $data['name'];
+            $bindings[] = (string) $imageKey;
+            $bindings[] = (string) ($data['name'] ?? '');
         }
 
         foreach ($keys as $key) {

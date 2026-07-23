@@ -170,26 +170,113 @@
 @section('js')
     <script src="{{ asset('proofing-assets/vendors/dropzone-5.7.0/dist/min/dropzone.min.js') }}"></script>
     <script>
+        // Re-encode before upload: Cloudflare WAF sometimes 403s specific camera JPEGs
+        // (cf-mitigated: challenge) when raw multipart bodies contain false-positive patterns.
+        function normalizeProofingUploadFile(file) {
+            return new Promise(function (resolve, reject) {
+                var objectUrl = URL.createObjectURL(file);
+                var image = new Image();
+
+                image.onload = function () {
+                    URL.revokeObjectURL(objectUrl);
+
+                    var width = image.naturalWidth;
+                    var height = image.naturalHeight;
+                    if (!width || !height) {
+                        reject(new Error('Invalid image dimensions.'));
+                        return;
+                    }
+
+                    var maxSide = 4500;
+                    var scale = Math.min(1, maxSide / Math.max(width, height));
+                    width = Math.max(1, Math.round(width * scale));
+                    height = Math.max(1, Math.round(height * scale));
+
+                    var canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    var context = canvas.getContext('2d');
+                    context.fillStyle = '#ffffff';
+                    context.fillRect(0, 0, width, height);
+                    context.drawImage(image, 0, 0, width, height);
+
+                    canvas.toBlob(function (blob) {
+                        if (!blob) {
+                            reject(new Error('Failed to prepare the image for upload.'));
+                            return;
+                        }
+                        var baseName = (file.name || 'image').replace(/\.[^.]+$/, '');
+                        resolve(new File([blob], baseName + '.jpg', {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        }));
+                    }, 'image/jpeg', 0.92);
+                };
+
+                image.onerror = function () {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error('Failed to read the selected image.'));
+                };
+
+                image.src = objectUrl;
+            });
+        }
+
+        function isCloudflareUploadBlock(xhr, message) {
+            if (xhr && typeof xhr.getResponseHeader === 'function') {
+                var mitigated = xhr.getResponseHeader('cf-mitigated');
+                if (mitigated) {
+                    return true;
+                }
+            }
+            var body = (xhr && xhr.responseText) ? xhr.responseText : '';
+            if (body.indexOf('challenges.cloudflare.com') !== -1 || body.indexOf('cf-browser-verification') !== -1) {
+                return true;
+            }
+            return typeof message === 'string' && message.toLowerCase().indexOf('just a moment') !== -1;
+        }
+
         Dropzone.options.dropzoneBulkUpload = {
             acceptedFiles: ".jpg,.jpeg,.png,.JPG,.JPEG,.PNG",
             maxFilesize: 15, // MB
             // Default is 10MB — larger files still upload but show a grey box with no preview.
             maxThumbnailFilesize: 15,
+            // One file per request keeps PHP memory under the 128MB limit during large batches
+            parallelUploads: 1,
+            timeout: 180000,
+
+            transformFile: function (file, done) {
+                normalizeProofingUploadFile(file).then(done).catch(function (error) {
+                    done(error);
+                });
+            },
 
             init: function () {
-                this.on("error", function (file, message) {
+                this.on("error", function (file, message, xhr) {
                     if (file.__mspAlertShown) {
                         this.removeFile(file);
                         return;
                     }
                     file.__mspAlertShown = true;
 
-                    const isTooBig = file.size > 15 * 1024 * 1024
+                    var isTooBig = file.size > 15 * 1024 * 1024
                         || (typeof message === 'string' && message.toLowerCase().includes('file is too big'));
+                    var status = xhr && xhr.status;
 
-                    alert(isTooBig
-                        ? "Each image must be 15MB or smaller."
-                        : "Only JPG and PNG images are allowed.");
+                    var alertMessage;
+                    if (isTooBig) {
+                        alertMessage = "Each image must be 15MB or smaller.";
+                    } else if (status === 403 || isCloudflareUploadBlock(xhr, message)) {
+                        alertMessage = "Upload blocked by Cloudflare security for this file. Try again, or export/re-save the image as a standard JPG and upload that copy.";
+                    } else if (status === 401 || status === 419) {
+                        alertMessage = "Your session has expired. Please refresh the page and try again.";
+                    } else if (typeof message === 'string' && message.length && !message.toLowerCase().includes('server responded')) {
+                        alertMessage = message;
+                    } else {
+                        alertMessage = "Upload failed. Only JPG and PNG images are allowed.";
+                    }
+
+                    alert(alertMessage);
                     this.removeFile(file);
                 });
 

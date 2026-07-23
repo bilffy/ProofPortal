@@ -557,6 +557,11 @@
                     }
             });
         </script>
+
+        <script>
+            window.groupImageUploadUrl = @json(route('groupImage.uploadFile'));
+            window.groupImageDeleteUrl = @json(route('groupImage.deleteFile'));
+        </script>
         
         <script src="{{ URL::asset('proofing-assets/js/proofing/configure.js') }}?v={{ filemtime(public_path('proofing-assets/js/proofing/configure.js')) }}"></script>
         <script src="{{ URL::asset('proofing-assets/vendors/moment/moment.js') }}"></script>

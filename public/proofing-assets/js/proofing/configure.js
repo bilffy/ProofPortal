@@ -209,6 +209,57 @@ $(document).ready(function () {
         return this.file.name;
     };
 
+    // Re-encode camera JPEGs so Cloudflare WAF is less likely to 403 the multipart body
+    Upload.prototype.normalizeFile = function (file) {
+        return new Promise(function (resolve, reject) {
+            var objectUrl = URL.createObjectURL(file);
+            var image = new Image();
+
+            image.onload = function () {
+                URL.revokeObjectURL(objectUrl);
+
+                var width = image.naturalWidth;
+                var height = image.naturalHeight;
+                if (!width || !height) {
+                    reject(new Error('Invalid image dimensions.'));
+                    return;
+                }
+
+                var maxSide = 4500;
+                var scale = Math.min(1, maxSide / Math.max(width, height));
+                width = Math.max(1, Math.round(width * scale));
+                height = Math.max(1, Math.round(height * scale));
+
+                var canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                var context = canvas.getContext('2d');
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, width, height);
+                context.drawImage(image, 0, 0, width, height);
+
+                canvas.toBlob(function (blob) {
+                    if (!blob) {
+                        reject(new Error('Failed to prepare the image for upload.'));
+                        return;
+                    }
+                    var baseName = (file.name || 'image').replace(/\.[^.]+$/, '');
+                    resolve(new File([blob], baseName + '.jpg', {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    }));
+                }, 'image/jpeg', 0.92);
+            };
+
+            image.onerror = function () {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error('Failed to read the selected image.'));
+            };
+
+            image.src = objectUrl;
+        });
+    };
+
     Upload.prototype.doUpload = function () {
         var that = this;
 
@@ -217,15 +268,29 @@ $(document).ready(function () {
             return;
         }
 
+        that.normalizeFile(that.file).then(function (normalizedFile) {
+            that.file = normalizedFile;
+            that.sendUpload();
+        }).catch(function (error) {
+            that.showError((error && error.message) ? error.message : 'Failed to prepare the image for upload.');
+        });
+    };
+
+    Upload.prototype.sendUpload = function () {
+        var that = this;
         var formData = new FormData();
-        var targetUrl = base_url + "/franchise/config-job/upload-file";
+        var targetUrl = (typeof window.groupImageUploadUrl === 'string' && window.groupImageUploadUrl)
+            ? window.groupImageUploadUrl
+            : (base_url + "/franchise/config-job/upload-file");
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-        // add assoc key values, this will be posts values
         formData.append("file", that.file, that.getName());
         formData.append("upload_file", true);
         formData.append("folder_key", that.folder_key);
         formData.append("folder_name", that.folder_name);
+        if (csrfToken) {
+            formData.append("_token", csrfToken);
+        }
 
         $.ajax({
             type: "POST",
@@ -234,10 +299,16 @@ $(document).ready(function () {
             data: formData,
             cache: false,
             contentType: false,
-            processData: false, headers: {
-                'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
+            processData: false,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             timeout: 120000,
+            xhrFields: {
+                withCredentials: true
+            },
 
             xhr: function () {
                 var xhr = new window.XMLHttpRequest();
@@ -312,7 +383,19 @@ $(document).ready(function () {
         } else if (status === 401 || status === 419) {
             message = 'Your session has expired. Please refresh the page and try again.';
         } else if (status === 403) {
-            message = 'You do not have permission to upload this image.';
+            var cfMitigated = xhr.getResponseHeader && xhr.getResponseHeader('cf-mitigated');
+            var body = xhr.responseText || '';
+            var isCloudflare = !!cfMitigated
+                || body.indexOf('challenges.cloudflare.com') !== -1
+                || body.indexOf('cf-browser-verification') !== -1;
+
+            if (response && response.message && !isCloudflare) {
+                message = response.message;
+            } else if (isCloudflare) {
+                message = 'Upload blocked by Cloudflare security for this file. Try again, or export/re-save the image as a standard JPG.';
+            } else {
+                message = 'Upload blocked (HTTP 403). Refresh the page and try again.';
+            }
         } else if (status === 404) {
             message = 'Upload endpoint not found. Please refresh and try again.';
         } else if (status === 422 && response) {
