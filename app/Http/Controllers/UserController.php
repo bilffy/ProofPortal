@@ -112,15 +112,23 @@ class UserController extends Controller
         }
 
         if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('suburb', 'like', "%{$search}%");
+            });
         }
 
         $totalCount = $query->count();
-        $schools = $query->offset($offset)->limit(30)->get(['id', 'name']);
+        $schools = $query->offset($offset)->limit(30)->get(['id', 'name', 'suburb']);
 
         return response()->json([
-            'results' => $schools->map(function($school) {
-                return ['id' => $school->id, 'text' => $school->name];
+            'results' => $schools->map(function ($school) {
+                return [
+                    'id' => $school->id,
+                    'text' => $school->suburb
+                        ? $school->name . ' - ' . $school->suburb
+                        : $school->name,
+                ];
             }),
             'pagination' => [
                 'more' => ($offset + 30) < $totalCount

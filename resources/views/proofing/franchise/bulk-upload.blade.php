@@ -236,7 +236,25 @@
             return typeof message === 'string' && message.toLowerCase().indexOf('just a moment') !== -1;
         }
 
+        function fileToBase64(file) {
+            return new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function () {
+                    var dataUrl = reader.result || '';
+                    resolve(typeof dataUrl === 'string' && dataUrl.indexOf(',') !== -1
+                        ? dataUrl.split(',')[1]
+                        : dataUrl);
+                };
+                reader.onerror = function () {
+                    reject(new Error('Failed to prepare the image for upload.'));
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         Dropzone.options.dropzoneBulkUpload = {
+            url: "{{ route('groupImage.upload') }}",
+            autoProcessQueue: false,
             acceptedFiles: ".jpg,.jpeg,.png,.JPG,.JPEG,.PNG",
             maxFilesize: 15, // MB
             // Default is 10MB — larger files still upload but show a grey box with no preview.
@@ -244,14 +262,91 @@
             // One file per request keeps PHP memory under the 128MB limit during large batches
             parallelUploads: 1,
             timeout: 180000,
-
-            transformFile: function (file, done) {
-                normalizeProofingUploadFile(file).then(done).catch(function (error) {
-                    done(error);
-                });
-            },
+            createImageThumbnails: true,
 
             init: function () {
+                var dz = this;
+                var uploadUrl = "{{ route('groupImage.upload') }}";
+                var uploadSession = @json($uploadSession);
+                var jobHash = @json($jobHash);
+                var csrfToken = "{{ csrf_token() }}";
+
+                this.on("addedfile", function (file) {
+                    var ext = (file.name.split('.').pop() || '').toLowerCase();
+
+                    if (!["jpg", "jpeg", "png"].includes(ext)) {
+                        if (!file.__mspAlertShown) {
+                            file.__mspAlertShown = true;
+                            alert("Invalid file type. Only JPG and PNG images are allowed.");
+                        }
+                        this.removeFile(file);
+                        return;
+                    }
+
+                    if (file.size > 15 * 1024 * 1024) {
+                        if (!file.__mspAlertShown) {
+                            file.__mspAlertShown = true;
+                            alert("Each image must be 15MB or smaller.");
+                        }
+                        this.removeFile(file);
+                        return;
+                    }
+
+                    if (file.__mspUploading) {
+                        return;
+                    }
+                    file.__mspUploading = true;
+
+                    normalizeProofingUploadFile(file)
+                        .then(function (normalized) {
+                            return fileToBase64(normalized).then(function (base64) {
+                                return $.ajax({
+                                    type: "POST",
+                                    url: uploadUrl,
+                                    contentType: "application/json",
+                                    processData: false,
+                                    data: JSON.stringify({
+                                        file_base64: base64,
+                                        filename: normalized.name,
+                                        upload_session: uploadSession,
+                                        jobHash: jobHash,
+                                        _token: csrfToken
+                                    }),
+                                    headers: {
+                                        "X-CSRF-TOKEN": csrfToken,
+                                        "Accept": "application/json",
+                                        "X-Requested-With": "XMLHttpRequest"
+                                    },
+                                    timeout: 180000,
+                                    xhr: function () {
+                                        var xhr = $.ajaxSettings.xhr();
+                                        if (xhr.upload) {
+                                            xhr.upload.addEventListener("progress", function (e) {
+                                                if (e.lengthComputable) {
+                                                    var pct = (e.loaded / e.total) * 100;
+                                                    dz.emit("uploadprogress", file, pct, e.loaded);
+                                                }
+                                            });
+                                        }
+                                        return xhr;
+                                    }
+                                });
+                            });
+                        })
+                        .then(function () {
+                            dz.emit("success", file);
+                            dz.emit("complete", file);
+                        })
+                        .catch(function (err) {
+                            var xhr = err && typeof err.status === "number" ? err : null;
+                            var message = (xhr && xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : ((err && err.message) ? err.message : "Upload failed.");
+                            dz.emit("error", file, message, xhr);
+                            dz.emit("complete", file);
+                        });
+                });
+
                 this.on("error", function (file, message, xhr) {
                     if (file.__mspAlertShown) {
                         this.removeFile(file);
@@ -278,18 +373,6 @@
 
                     alert(alertMessage);
                     this.removeFile(file);
-                });
-
-                this.on("addedfile", function (file) {
-                    let ext = file.name.split('.').pop().toLowerCase();
-
-                    if (!["jpg", "jpeg", "png"].includes(ext)) {
-                        if (!file.__mspAlertShown) {
-                            file.__mspAlertShown = true;
-                            alert("Invalid file type. Only JPG and PNG images are allowed.");
-                        }
-                        this.removeFile(file);
-                    }
                 });
             }
         };

@@ -11,7 +11,9 @@
         $franchiseOptions[$franchise->id] = $franchise->name;
     }
     foreach ($schools as $school) {
-        $schoolOptions[$school->id] = $school->name;
+        $schoolOptions[$school->id] = $school->suburb
+            ? $school->name . ' - ' . $school->suburb
+            : $school->name;
     }
     $emailError = !empty($errors->get('email')) ? $errors->get('email')[0] : '';
     $fNameError = !empty($errors->get('firstname')) ? $errors->get('firstname')[0] : '';

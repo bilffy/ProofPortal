@@ -128,6 +128,7 @@ class EmailService
      * Re-evaluate pending proof schedule emails for a job.
      * Call after folders are unlocked/reopened so users who were skipped
      * while their folders were Completed can receive them again.
+     * Users who already received a given proof_* email are not re-queued.
      */
     public function refreshProofScheduleEmails(string $jobKey): void
     {
@@ -139,6 +140,22 @@ class EmailService
         foreach (['proof_start', 'proof_warning', 'proof_due', 'proof_catchup'] as $field) {
             $this->updateEmailSend($field, $jobKey);
         }
+    }
+
+    /**
+     * True when this recipient already received (EMAIL SENT) this proof schedule template for the job.
+     */
+    private function hasReceivedProofScheduleEmail(int $templateId, string $jobKey, string $emailTo): bool
+    {
+        if (!$this->statusService->emailSent) {
+            return false;
+        }
+
+        return Email::where('template_id', $templateId)
+            ->where('ts_jobkey', $jobKey)
+            ->where('email_to', $emailTo)
+            ->where('status_id', $this->statusService->emailSent)
+            ->exists();
     }
 
     /**
@@ -328,6 +345,19 @@ class EmailService
                     ->where('ts_jobkey', $decryptedJobKey)
                     ->where('status_id', $this->statusService->pending)
                     ->whereDate('sentdate', $sentDateCarbon)
+                    ->where('email_to', $user->email)
+                    ->update([
+                        'status_id' => $this->statusService->expired,
+                        'deleted_at' => now(),
+                    ]);
+                continue;
+            }
+
+            // Already delivered — do not create/refresh another pending send
+            if ($excludeCompleted && $this->hasReceivedProofScheduleEmail($template->id, $decryptedJobKey, $user->email)) {
+                Email::where('template_id', $template->id)
+                    ->where('ts_jobkey', $decryptedJobKey)
+                    ->where('status_id', $this->statusService->pending)
                     ->where('email_to', $user->email)
                     ->update([
                         'status_id' => $this->statusService->expired,
@@ -744,6 +774,19 @@ class EmailService
 
                 // No non-Completed folders assigned → do not send proof schedule emails
                 if (empty($userFolders)) {
+                    Email::where('template_id', $template->id)
+                        ->where('ts_jobkey', $jobKey)
+                        ->where('email_to', $user->email)
+                        ->where('status_id', $this->statusService->pending)
+                        ->update([
+                            'status_id' => $this->statusService->expired,
+                            'deleted_at' => now(),
+                        ]);
+                    continue;
+                }
+
+                // Already delivered — do not queue again
+                if ($this->hasReceivedProofScheduleEmail($template->id, $jobKey, $user->email)) {
                     Email::where('template_id', $template->id)
                         ->where('ts_jobkey', $jobKey)
                         ->where('email_to', $user->email)

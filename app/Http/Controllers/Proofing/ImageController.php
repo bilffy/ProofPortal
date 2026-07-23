@@ -318,21 +318,35 @@ class ImageController extends Controller
 
     public function groupImageUpload(Request $request)
     {
-        if ($request->hasFile('file')) {
+        try {
+            $file = $this->resolveImageUploadFile($request);
+            if (!$file) {
+                return response()->json(['message' => 'Please select an image to upload.'], 422);
+            }
+
             $request->validate([
-                'file'           => 'image|mimes:jpeg,png,jpg|max:15360',
                 'upload_session' => 'required|string|regex:/^[a-zA-Z0-9]+$/',
             ]);
 
-            $file = $request->file('file');
             $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)
-                . '.' . $file->getClientOriginalExtension();
+                . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename) ?: ('upload_' . time() . '.jpg');
 
             $file->storeAs($request->input('upload_session'), $filename, 'public');
 
             if (Session::get('upload_session') !== $request->input('upload_session')) {
                 Session::put('upload_session', $request->input('upload_session'));
             }
+
+            return response()->json(['message' => 'Image uploaded successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Failed bulk group image upload', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Upload failed.',
+            ], 422);
         }
     }
 
@@ -450,15 +464,14 @@ class ImageController extends Controller
     public function groupImageUploadFile(Request $request)
     {
         try {
+            $file = $this->resolveImageUploadFile($request);
+            if (!$file) {
+                return response()->json(['message' => 'Please select an image to upload.'], 422);
+            }
+
             $validator = Validator::make($request->all(), [
-                'file' => 'required|file|mimes:jpeg,png,jpg|mimetypes:image/jpeg,image/png,image/jpg|max:15360',
                 'folder_key' => 'required|string',
                 'folder_name' => 'required|string',
-            ], [
-                'file.required' => 'Please select an image to upload.',
-                'file.mimes' => 'Only JPG and PNG images are allowed.',
-                'file.mimetypes' => 'Only JPG and PNG images are allowed.',
-                'file.max' => 'Each image must be 15MB or smaller.',
             ]);
 
             if ($validator->fails()) {
@@ -468,10 +481,8 @@ class ImageController extends Controller
                 ], 422);
             }
 
-            $file = $request->file('file');
-            if (!$file || !$file->isValid()) {
-                $uploadError = $file ? $file->getErrorMessage() : 'No file received.';
-                return response()->json(['message' => $uploadError], 422);
+            if (!$file->isValid()) {
+                return response()->json(['message' => $file->getErrorMessage()], 422);
             }
 
             $folderKey = $request->input('folder_key');
@@ -528,6 +539,8 @@ class ImageController extends Controller
                 'message' => 'Image uploaded successfully',
                 'full_url' => route('image.show', ['filename' => $encryptedFilename]),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Failed to upload group image', [
                 'folder_key' => $request->input('folder_key'),
@@ -538,6 +551,83 @@ class ImageController extends Controller
                 'message' => $e->getMessage() ?: 'Upload failed.',
             ], 500);
         }
+    }
+
+    /**
+     * Accept either a multipart file or a JSON base64 payload.
+     * Base64 avoids Cloudflare WAF false-positives on some camera JPEG multipart bodies.
+     */
+    private function resolveImageUploadFile(Request $request): ?\Illuminate\Http\UploadedFile
+    {
+        if ($request->hasFile('file')) {
+            $request->validate([
+                'file' => 'required|file|mimes:jpeg,png,jpg|mimetypes:image/jpeg,image/png,image/jpg|max:15360',
+            ], [
+                'file.mimes' => 'Only JPG and PNG images are allowed.',
+                'file.mimetypes' => 'Only JPG and PNG images are allowed.',
+                'file.max' => 'Each image must be 15MB or smaller.',
+            ]);
+
+            return $request->file('file');
+        }
+
+        $base64 = $request->input('file_base64');
+        if (!$base64 || !is_string($base64)) {
+            return null;
+        }
+
+        if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+            $base64 = substr($base64, strpos($base64, ',') + 1);
+            $extFromDataUrl = strtolower($matches[1]);
+            if ($extFromDataUrl === 'jpeg') {
+                $extFromDataUrl = 'jpg';
+            }
+        } else {
+            $extFromDataUrl = null;
+        }
+
+        $binary = base64_decode($base64, true);
+        if ($binary === false || $binary === '') {
+            throw new \InvalidArgumentException('Invalid image data.');
+        }
+
+        $maxBytes = 15360 * 1024;
+        if (strlen($binary) > $maxBytes) {
+            throw new \InvalidArgumentException('Each image must be 15MB or smaller.');
+        }
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'mspimg');
+        if ($tmpPath === false || file_put_contents($tmpPath, $binary) === false) {
+            throw new \RuntimeException('Unable to store uploaded image.');
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($tmpPath) ?: '';
+        $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+        ];
+
+        if (!isset($allowed[$mime])) {
+            @unlink($tmpPath);
+            throw new \InvalidArgumentException('Only JPG and PNG images are allowed.');
+        }
+
+        $extension = $extFromDataUrl && in_array($extFromDataUrl, ['jpg', 'jpeg', 'png'], true)
+            ? ($extFromDataUrl === 'jpeg' ? 'jpg' : $extFromDataUrl)
+            : $allowed[$mime];
+
+        $originalName = $request->input('filename') ?: ('upload.' . $extension);
+        $originalName = pathinfo($originalName, PATHINFO_FILENAME) . '.' . $extension;
+
+        return new \Illuminate\Http\UploadedFile(
+            $tmpPath,
+            $originalName,
+            $mime,
+            UPLOAD_ERR_OK,
+            true
+        );
     }
 
     public function groupImageDeleteFile(Request $request)

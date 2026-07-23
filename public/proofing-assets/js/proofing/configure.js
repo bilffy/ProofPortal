@@ -278,58 +278,67 @@ $(document).ready(function () {
 
     Upload.prototype.sendUpload = function () {
         var that = this;
-        var formData = new FormData();
         var targetUrl = (typeof window.groupImageUploadUrl === 'string' && window.groupImageUploadUrl)
             ? window.groupImageUploadUrl
             : (base_url + "/franchise/config-job/upload-file");
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-        formData.append("file", that.file, that.getName());
-        formData.append("upload_file", true);
-        formData.append("folder_key", that.folder_key);
-        formData.append("folder_name", that.folder_name);
-        if (csrfToken) {
-            formData.append("_token", csrfToken);
-        }
+        var reader = new FileReader();
+        reader.onload = function () {
+            var dataUrl = reader.result || '';
+            var base64 = typeof dataUrl === 'string' && dataUrl.indexOf(',') !== -1
+                ? dataUrl.split(',')[1]
+                : dataUrl;
 
-        $.ajax({
-            type: "POST",
-            url: targetUrl,
-            async: true,
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false,
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            timeout: 120000,
-            xhrFields: {
-                withCredentials: true
-            },
+            $.ajax({
+                type: "POST",
+                url: targetUrl,
+                async: true,
+                data: JSON.stringify({
+                    file_base64: base64,
+                    filename: that.getName(),
+                    upload_file: true,
+                    folder_key: that.folder_key,
+                    folder_name: that.folder_name,
+                    _token: csrfToken
+                }),
+                contentType: 'application/json',
+                processData: false,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                timeout: 120000,
+                xhrFields: {
+                    withCredentials: true
+                },
 
-            xhr: function () {
-                var xhr = new window.XMLHttpRequest();
+                xhr: function () {
+                    var xhr = new window.XMLHttpRequest();
 
-                xhr.upload.progress_bar_id = that.progress_bar_id;
-                xhr.upload.addEventListener("progress", that.progressHandling, false);
+                    xhr.upload.progress_bar_id = that.progress_bar_id;
+                    xhr.upload.addEventListener("progress", that.progressHandling, false);
 
-                xhr.progress_bar_id = that.progress_bar_id;
-                xhr.addEventListener("progress", that.progressHandling, false);
+                    xhr.progress_bar_id = that.progress_bar_id;
+                    xhr.addEventListener("progress", that.progressHandling, false);
 
-                return xhr;
-            },
+                    return xhr;
+                },
 
-            success: function (data) {
-                that.successHandling(data);
-            },
+                success: function (data) {
+                    that.successHandling(data);
+                },
 
-            error: function (error) {
-                that.errorHandling(error);
-            }
-        });
+                error: function (error) {
+                    that.errorHandling(error);
+                }
+            });
+        };
+        reader.onerror = function () {
+            that.showError('Failed to prepare the image for upload.');
+        };
+        reader.readAsDataURL(that.file);
     };
 
     Upload.prototype.progressHandling = function (evt) {
