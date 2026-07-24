@@ -159,6 +159,30 @@ class EmailService
     }
 
     /**
+     * When a proof schedule date changes, mark previously sent emails for that
+     * template + job as expired so a new send can be scheduled.
+     */
+    public function expireSentEmailsForProofScheduleField(string $jobKey, string $field): int
+    {
+        if (!$this->isProofScheduleTemplate($field) || !$this->statusService->emailSent) {
+            return 0;
+        }
+
+        $template = Template::where('template_name', $field)->first();
+        if (!$template) {
+            return 0;
+        }
+
+        return Email::where('ts_jobkey', $jobKey)
+            ->where('template_id', $template->id)
+            ->where('status_id', $this->statusService->emailSent)
+            ->update([
+                'status_id' => $this->statusService->expired,
+                'deleted_at' => now(),
+            ]);
+    }
+
+    /**
      * All folder names for a job that are visible for proofing.
      */
     private function getVisibleProofingFolderNames($folders): array

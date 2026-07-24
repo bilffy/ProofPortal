@@ -227,7 +227,37 @@ class JobService
     }
 
     public function updateJobData($jobkey, $column, $value){
-        return Job::where('ts_jobkey',$jobkey)->update([$column => $value]);
+        $proofScheduleFields = ['proof_start', 'proof_warning', 'proof_due', 'proof_catchup'];
+
+        if (in_array($column, $proofScheduleFields, true)) {
+            $currentValue = Job::where('ts_jobkey', $jobkey)->value($column);
+            $result = Job::where('ts_jobkey', $jobkey)->update([$column => $value]);
+
+            if ($this->proofScheduleDateChanged($currentValue, $value)) {
+                $this->emailService->expireSentEmailsForProofScheduleField($jobkey, $column);
+            }
+
+            return $result;
+        }
+
+        return Job::where('ts_jobkey', $jobkey)->update([$column => $value]);
+    }
+
+    private function proofScheduleDateChanged($currentValue, $newValue): bool
+    {
+        if (empty($currentValue) && empty($newValue)) {
+            return false;
+        }
+
+        if (empty($currentValue) || empty($newValue)) {
+            return true;
+        }
+
+        try {
+            return !Carbon::parse($currentValue)->equalTo(Carbon::parse($newValue));
+        } catch (\Throwable $e) {
+            return (string) $currentValue !== (string) $newValue;
+        }
     }
 
     public function deleteJob($tsJobKey)
