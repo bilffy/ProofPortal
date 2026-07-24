@@ -126,7 +126,7 @@ class UserController extends Controller
                 return [
                     'id' => $school->id,
                     'text' => $school->suburb
-                        ? $school->name . ' - ' . $school->suburb
+                        ? $school->name . ' (' . $school->suburb . ')'
                         : $school->name,
                 ];
             }),
