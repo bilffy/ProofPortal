@@ -541,6 +541,9 @@ class ProofController extends Controller
             // Clear outstanding pending emails before creating completion notifications
             if ($jobStatus === $this->statusService->completed) {
                 $this->emailService->expirePendingEmailsForJob($job->ts_jobkey);
+            } elseif ($isMarkAsComplete) {
+                // Folder completed but job still open → remove it from pending proof_* emails
+                $this->emailService->refreshProofScheduleEmails($job->ts_jobkey);
             }
 
             $this->emailService->saveEmailFolderContent($folder->ts_folder_id, $statusFields[$folder->status_id], Carbon::now(), $folder->status_id);

@@ -322,15 +322,31 @@ class FolderService
             $this->sendEmailContent($changingFolderIds, $newStatusId);
         }
 
-        // When folders leave Completed (e.g. unlocked), recreate proof schedule emails
-        // for users who were skipped/expired while their only folders were Completed.
-        $reopenedFromCompleted = !empty($changingFolderIds)
-            && (int) $newStatusId !== (int) $this->statusService->completed
-            && $folders->whereIn('ts_folder_id', $changingFolderIds)
-                ->contains(fn ($folder) => (int) $folder->status_id === (int) $this->statusService->completed);
+        // Keep pending proof_* emails in sync with visible folder status:
+        // - Completed (is_visible_for_proofing = 1) → remove from {#FOLDERS}
+        // - Unlocked from Completed → include again in {#FOLDERS}
+        $shouldRefreshProofEmails = !empty($changingFolderIds)
+            && $job
+            && !empty($job->ts_jobkey)
+            && (
+                (int) $newStatusId === (int) $this->statusService->completed
+                || (
+                    (int) $newStatusId === (int) $this->statusService->unlocked
+                    && $folders->whereIn('ts_folder_id', $changingFolderIds)
+                        ->contains(fn ($folder) => (int) $folder->status_id === (int) $this->statusService->completed)
+                )
+            );
 
-        if ($reopenedFromCompleted && $job && !empty($job->ts_jobkey)) {
-            $this->emailService->refreshProofScheduleEmails($job->ts_jobkey);
+        if ($shouldRefreshProofEmails) {
+            $jobAfterUpdate = $this->getJobService()->getJobById($tsJobId);
+            // Whole-job completion already expires all pending emails
+            if (
+                $jobAfterUpdate
+                && !empty($jobAfterUpdate->ts_jobkey)
+                && (int) $jobAfterUpdate->job_status_id !== (int) $this->statusService->completed
+            ) {
+                $this->emailService->refreshProofScheduleEmails($jobAfterUpdate->ts_jobkey);
+            }
         }
 
         return ['success' => true];
@@ -341,12 +357,44 @@ class FolderService
         $result = Folder::whereIn('ts_folder_id', $folderIds)
             ->update([$field => $value]);
 
-        // When proofing visibility changes, refresh pending invitation {#FOLDERS} lists
+        // When proofing visibility changes, refresh pending invitation + proof schedule {#FOLDERS}
         if ($field === 'is_visible_for_proofing') {
             $this->emailService->refreshPendingInvitationEmailsForFolders($folderIds);
+            $this->refreshProofScheduleEmailsForFolders($folderIds);
         }
 
         return $result;
+    }
+
+    /**
+     * Re-build pending proof_* emails so {#FOLDERS} matches current is_visible_for_proofing.
+     */
+    private function refreshProofScheduleEmailsForFolders(array $folderIds): void
+    {
+        $folderIds = array_values(array_filter(array_map('intval', $folderIds), fn ($id) => $id > 0));
+        if ($folderIds === []) {
+            return;
+        }
+
+        $jobKeys = Folder::query()
+            ->whereIn('folders.ts_folder_id', $folderIds)
+            ->join('jobs', 'jobs.ts_job_id', '=', 'folders.ts_job_id')
+            ->distinct()
+            ->pluck('jobs.ts_jobkey')
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($jobKeys as $jobKey) {
+            $job = $this->getJobService()->getJobByJobKey($jobKey)->first();
+            if (
+                $job
+                && !empty($job->ts_jobkey)
+                && (int) $job->job_status_id !== (int) $this->statusService->completed
+            ) {
+                $this->emailService->refreshProofScheduleEmails($job->ts_jobkey);
+            }
+        }
     }
 
     public function updatePrincipal($keepFolder, $principal)

@@ -126,9 +126,8 @@ class EmailService
 
     /**
      * Re-evaluate pending proof schedule emails for a job.
-     * Call after folders are unlocked/reopened so users who were skipped
-     * while their folders were Completed can receive them again.
-     * Users who already received a given proof_* email are not re-queued.
+     * Completed visible folders are omitted from {#FOLDERS}; unlocking a folder
+     * from Completed puts it back into pending proof_* emails.
      */
     public function refreshProofScheduleEmails(string $jobKey): void
     {
@@ -159,30 +158,6 @@ class EmailService
     }
 
     /**
-     * When a proof schedule date changes, mark previously sent emails for that
-     * template + job as expired so a new send can be scheduled.
-     */
-    public function expireSentEmailsForProofScheduleField(string $jobKey, string $field): int
-    {
-        if (!$this->isProofScheduleTemplate($field) || !$this->statusService->emailSent) {
-            return 0;
-        }
-
-        $template = Template::where('template_name', $field)->first();
-        if (!$template) {
-            return 0;
-        }
-
-        return Email::where('ts_jobkey', $jobKey)
-            ->where('template_id', $template->id)
-            ->where('status_id', $this->statusService->emailSent)
-            ->update([
-                'status_id' => $this->statusService->expired,
-                'deleted_at' => now(),
-            ]);
-    }
-
-    /**
      * All folder names for a job that are visible for proofing.
      */
     private function getVisibleProofingFolderNames($folders): array
@@ -197,7 +172,8 @@ class EmailService
     /**
      * Folder names assigned to the user within the given job folders.
      * Only includes folders with is_visible_for_proofing = 1.
-     * For proof schedule templates, Completed folders are also excluded.
+     * For proof schedule templates, Completed folders are also excluded
+     * (they reappear after unlock).
      */
     private function getAssignedFolderNamesForUser($folders, int $userId, bool $excludeCompleted = false): array
     {
@@ -221,6 +197,18 @@ class EmailService
             ->pluck('ts_foldername')
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Pending proof schedule rows for a user+template+job (any sentdate).
+     * Refresh must update existing pending content when folder status changes.
+     */
+    private function pendingProofScheduleEmailQuery(int $templateId, string $jobKey, string $emailTo)
+    {
+        return Email::where('template_id', $templateId)
+            ->where('ts_jobkey', $jobKey)
+            ->where('status_id', $this->statusService->pending)
+            ->where('email_to', $emailTo);
     }
     
     public function updateEmailSend($field, $decryptedJobKey)
@@ -267,6 +255,9 @@ class EmailService
     
         $sentDateCarbon = Carbon::parse($sentDate);
     
+        // Always reload folders so status_id / is_visible_for_proofing are current
+        $selectedJob->load(['franchises', 'folders']);
+
         $allJobFolders = $this->getVisibleProofingFolderNames($selectedJob->folders);
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true) ?? [];
     
@@ -363,13 +354,9 @@ class EmailService
                 $excludeCompleted
             );
 
-            // No non-Completed folders assigned → do not send proof schedule emails
+            // No non-Completed visible folders assigned → expire pending proof schedule emails
             if ($excludeCompleted && empty($userFolders)) {
-                Email::where('template_id', $template->id)
-                    ->where('ts_jobkey', $decryptedJobKey)
-                    ->where('status_id', $this->statusService->pending)
-                    ->whereDate('sentdate', $sentDateCarbon)
-                    ->where('email_to', $user->email)
+                $this->pendingProofScheduleEmailQuery($template->id, $decryptedJobKey, $user->email)
                     ->update([
                         'status_id' => $this->statusService->expired,
                         'deleted_at' => now(),
@@ -379,10 +366,7 @@ class EmailService
 
             // Already delivered — do not create/refresh another pending send
             if ($excludeCompleted && $this->hasReceivedProofScheduleEmail($template->id, $decryptedJobKey, $user->email)) {
-                Email::where('template_id', $template->id)
-                    ->where('ts_jobkey', $decryptedJobKey)
-                    ->where('status_id', $this->statusService->pending)
-                    ->where('email_to', $user->email)
+                $this->pendingProofScheduleEmailQuery($template->id, $decryptedJobKey, $user->email)
                     ->update([
                         'status_id' => $this->statusService->expired,
                         'deleted_at' => now(),
@@ -390,18 +374,19 @@ class EmailService
                 continue;
             }
 
-            $pendingEmailQuery = Email::where('template_id', $template->id)
-                ->where('ts_jobkey', $decryptedJobKey)
-                ->where('status_id', $this->statusService->pending)
-                ->whereDate('sentdate', $sentDateCarbon)
-                ->where('email_to', $user->email);
-
-            // Non-proof templates stay scoped to the generating user.
-            if (!$excludeCompleted) {
-                $pendingEmailQuery->where('email_from', $authUser->email);
+            if ($excludeCompleted) {
+                // Match any pending row for this user/template/job so folder list refreshes
+                $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $decryptedJobKey, $user->email)
+                    ->first();
+            } else {
+                $emailRecord = Email::where('template_id', $template->id)
+                    ->where('ts_jobkey', $decryptedJobKey)
+                    ->where('status_id', $this->statusService->pending)
+                    ->whereDate('sentdate', $sentDateCarbon)
+                    ->where('email_to', $user->email)
+                    ->where('email_from', $authUser->email)
+                    ->first();
             }
-
-            $emailRecord = $pendingEmailQuery->first();
 
             // Non-proof schedule: keep existing pending email as-is.
             if ($emailRecord && !$excludeCompleted) {
@@ -798,10 +783,7 @@ class EmailService
 
                 // No non-Completed folders assigned → do not send proof schedule emails
                 if (empty($userFolders)) {
-                    Email::where('template_id', $template->id)
-                        ->where('ts_jobkey', $jobKey)
-                        ->where('email_to', $user->email)
-                        ->where('status_id', $this->statusService->pending)
+                    $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
                         ->update([
                             'status_id' => $this->statusService->expired,
                             'deleted_at' => now(),
@@ -811,10 +793,7 @@ class EmailService
 
                 // Already delivered — do not queue again
                 if ($this->hasReceivedProofScheduleEmail($template->id, $jobKey, $user->email)) {
-                    Email::where('template_id', $template->id)
-                        ->where('ts_jobkey', $jobKey)
-                        ->where('email_to', $user->email)
-                        ->where('status_id', $this->statusService->pending)
+                    $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
                         ->update([
                             'status_id' => $this->statusService->expired,
                             'deleted_at' => now(),
@@ -824,10 +803,7 @@ class EmailService
 
                 // Skip if a pending record already exists for this user + template + job
                 // (unless we need to refresh folder list for proof schedule templates)
-                $emailRecord = Email::where('template_id', $template->id)
-                    ->where('ts_jobkey', $jobKey)
-                    ->where('email_to', $user->email)
-                    ->where('status_id', $this->statusService->pending)
+                $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
                     ->first();
 
                 $data = [
