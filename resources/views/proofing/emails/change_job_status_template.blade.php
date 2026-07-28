@@ -103,7 +103,7 @@
                             <tr>
                                 <td colspan="2" style="padding: 0px 40px 0px 40px">
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 21px; color: #00b3e0;">
-                                        MSP Portal Proofing school status change notiifcation
+                                        MSP Portal Proofing school status change notification
                                     </p>
                                     <br/>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">

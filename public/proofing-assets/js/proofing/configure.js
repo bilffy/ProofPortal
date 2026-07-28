@@ -83,7 +83,7 @@ function adjustReviewDateIsEnabled(data) {
     var jobHash = document.querySelector('input[name="jobHash"]').value;
 
     var formData = new FormData();
-    formData.append("isReviewDateEnabled", data.is(':checked'));
+    formData.append("isReviewDateEnabled", data.is(':checked') ? 'true' : 'false');
     formData.append("jobHash", jobHash);
 
     $.ajax({

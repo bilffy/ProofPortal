@@ -83,11 +83,24 @@ class EmailService
     }
 
     /**
-     * Expire/soft-delete all pending emails for a job.
+     * Expire/soft-delete pending proof schedule emails for a job only
+     * (proof_start, proof_warning, proof_due, proof_catchup).
      */
     public function expirePendingEmailsForJob(string $jobKey): int
     {
+        $templateIds = Template::whereIn('template_name', [
+            'proof_start',
+            'proof_warning',
+            'proof_due',
+            'proof_catchup',
+        ])->pluck('id');
+
+        if ($templateIds->isEmpty()) {
+            return 0;
+        }
+
         return Email::where('ts_jobkey', $jobKey)
+            ->whereIn('template_id', $templateIds)
             ->where('status_id', $this->statusService->pending)
             ->update([
                 'status_id' => $this->statusService->expired,
@@ -119,15 +132,22 @@ class EmailService
         return $job && (int) $job->notifications_enabled === 1;
     }
 
+    /**
+     * Matrix JSON may store true, 1, or "true" depending on how it was saved.
+     */
+    private function isMatrixRoleEnabled($value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
     private function findJobByKey(string $jobKey): ?Job
     {
         return Job::where('ts_jobkey', $jobKey)->first();
     }
 
     /**
-     * Re-evaluate pending proof schedule emails for a job.
-     * Completed visible folders are omitted from {#FOLDERS}; unlocking a folder
-     * from Completed puts it back into pending proof_* emails.
+     * Create new pending proof_* emails for users who have not already received them.
+     * Used when notifications_enabled is turned back on (does not restore expired rows).
      */
     public function refreshProofScheduleEmails(string $jobKey): void
     {
@@ -137,7 +157,12 @@ class EmailService
         }
 
         foreach (['proof_start', 'proof_warning', 'proof_due', 'proof_catchup'] as $field) {
-            $this->updateEmailSend($field, $jobKey);
+            if (empty($job->$field)) {
+                continue;
+            }
+
+            // Same creation path as setting proof dates on the config-job page
+            $this->saveEmailContent($jobKey, $field, $job->$field, null);
         }
     }
 
@@ -270,7 +295,7 @@ class EmailService
     
         if (!empty($notificationsMatrix['schools'][$field])) {
             foreach ($notificationsMatrix['schools'][$field] as $role => $enabled) {
-                if ($enabled === true) {
+                if ($this->isMatrixRoleEnabled($enabled)) {
                     $rolesWithEmailEnabled[] = $role;
                 }
             }
@@ -471,7 +496,7 @@ class EmailService
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true);
     
         $rolesWithFieldTrue = $notificationsMatrix['schools'][$field] ?? [];
-        $rolesWithFieldTrue = array_keys(array_filter($rolesWithFieldTrue, fn($v) => $v === true));
+        $rolesWithFieldTrue = array_keys(array_filter($rolesWithFieldTrue, fn ($v) => $this->isMatrixRoleEnabled($v)));
         // \Log::info('saveEmailContent roles check', ['field' => $field, 'roles' => $rolesWithFieldTrue, 'notifications_enabled' => $selectedJob->notifications_enabled]);
    
         // Prepare template content
@@ -521,6 +546,11 @@ class EmailService
                         'status_id' => $this->statusService->expired,
                         'deleted_at' => now(),
                     ]);
+                    continue;
+                }
+
+                // Already EMAIL SENT — do not create another pending row
+                if ($excludeCompleted && $this->hasReceivedProofScheduleEmail($template->id, $tsJobKey, $user->email)) {
                     continue;
                 }
 
@@ -612,7 +642,7 @@ class EmailService
     
         $notificationsMatrix = json_decode($selectedFolder->job->notifications_matrix, true) ?? [];
         $rolesWithFieldTrue = $notificationsMatrix['folders'][$field] ?? [];
-        $roleNames = array_keys(array_filter($rolesWithFieldTrue, fn($value) => $value === true));
+        $roleNames = array_keys(array_filter($rolesWithFieldTrue, fn ($value) => $this->isMatrixRoleEnabled($value)));
     
         $mappedRoleNames = array_map(fn($role) => str_replace(
             ['franchise', 'photocoordinator', 'teacher'],
