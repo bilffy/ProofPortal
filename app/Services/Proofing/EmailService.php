@@ -161,8 +161,8 @@ class EmailService
                 continue;
             }
 
-            // Same creation path as setting proof dates on the config-job page
-            $this->saveEmailContent($jobKey, $field, $job->$field, null);
+            // Same creation path as setting proof dates, but skip users who already got EMAIL SENT
+            $this->saveEmailContent($jobKey, $field, $job->$field, null, true);
         }
     }
 
@@ -460,7 +460,7 @@ class EmailService
     }
     
 
-    public function saveEmailContent($tsJobKey, $field, $date, $status = null)
+    public function saveEmailContent($tsJobKey, $field, $date, $status = null, bool $skipAlreadySent = false)
     {
         $authUser = Auth::user();
     
@@ -549,8 +549,12 @@ class EmailService
                     continue;
                 }
 
-                // Already EMAIL SENT — do not create another pending row
-                if ($excludeCompleted && $this->hasReceivedProofScheduleEmail($template->id, $tsJobKey, $user->email)) {
+                // Only skip EMAIL SENT when explicitly requested (e.g. notifications re-enabled).
+                // Date changes always create/update pending for all matrix role users.
+                if ($skipAlreadySent
+                    && $excludeCompleted
+                    && $this->hasReceivedProofScheduleEmail($template->id, $tsJobKey, $user->email)
+                ) {
                     continue;
                 }
 
