@@ -54,12 +54,13 @@ class AppServiceProvider extends ServiceProvider
         view()->share('PhotographyHelper', new PhotographyHelper());
         view()->share('AppSettingsHelper', new AppSettingsHelper());
 
+        // Allow letters (incl. accents), numbers, spaces, hyphens, apostrophes, and periods
         Validator::extend('no_special_chars', function ($attribute, $value, $parameters, $validator) {
-            return preg_match('/^[a-zA-Z0-9\s\-]+$/', $value);
+            return preg_match("/^[\\p{L}\\p{N}\\s\\-'‘’\\.]+$/u", (string) $value) === 1;
         });
 
         Validator::replacer('no_special_chars', function ($message, $attribute, $rule, $parameters) {
-            return "The $attribute contains invalid characters.";
+            return "The $attribute may only contain letters, numbers, spaces, hyphens, apostrophes, and periods.";
         });
         
         JsonResource::withoutWrapping();

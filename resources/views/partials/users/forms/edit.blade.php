@@ -153,10 +153,10 @@
 
     function sanitizeText(value) {
         const textWithoutEmojis = removeEmojis(value);
-        // Regex for disallowed characters
-        const disallowed = /[!@#$%^&*()_+\=\[\]{};:"<>,\.?\/~“”]/g;
-        // Replace left and right single quotes with straight quote
-        // Replace disallowed characters with ''
+        // Disallow symbols that are not valid in person names.
+        // Apostrophes (straight and curly) and hyphens are allowed.
+        const disallowed = /[!@#$%^&*()_+\=\[\]{};:"<>,\?\/~“”]/g;
+        // Normalize curly/smart quotes to a straight apostrophe
         return textWithoutEmojis.replace(/[‘’]/g, "'").replace(disallowed, '');
     }
 
