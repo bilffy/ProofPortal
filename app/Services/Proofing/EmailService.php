@@ -140,6 +140,48 @@ class EmailService
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
+    /**
+     * Map notification-matrix keys to Spatie role names.
+     */
+    private function mapMatrixRoleKeysToRoleNames(array $roleKeys): array
+    {
+        return array_values(array_unique(array_map(
+            fn ($role) => str_replace(
+                ['franchise', 'photocoordinator', 'teacher'],
+                ['Franchise', 'Photo Coordinator', 'Teacher'],
+                $role
+            ),
+            $roleKeys
+        )));
+    }
+
+    /**
+     * Role names enabled in notifications_matrix.schools for a proof/schedule field.
+     */
+    private function getEnabledSchoolMatrixRoleNames(?array $notificationsMatrix, string $field): array
+    {
+        $roles = $notificationsMatrix['schools'][$field] ?? [];
+        if (!is_array($roles) || empty($roles)) {
+            return [];
+        }
+
+        $enabledKeys = array_keys(array_filter($roles, fn ($v) => $this->isMatrixRoleEnabled($v)));
+
+        return $this->mapMatrixRoleKeysToRoleNames($enabledKeys);
+    }
+
+    /**
+     * Whether the user has at least one of the given role names.
+     */
+    private function userHasAnyRoleNames(User $user, array $roleNames): bool
+    {
+        if (empty($roleNames)) {
+            return false;
+        }
+
+        return $user->roles()->whereIn('name', $roleNames)->exists();
+    }
+
     private function findJobByKey(string $jobKey): ?Job
     {
         return Job::where('ts_jobkey', $jobKey)->first();
@@ -291,22 +333,12 @@ class EmailService
          * Roles with email enabled
          * --------------------------------------------
          */
-        $rolesWithEmailEnabled = [];
+        $roleNames = $this->getEnabledSchoolMatrixRoleNames($notificationsMatrix, $field);
     
-        if (!empty($notificationsMatrix['schools'][$field])) {
-            foreach ($notificationsMatrix['schools'][$field] as $role => $enabled) {
-                if ($this->isMatrixRoleEnabled($enabled)) {
-                    $rolesWithEmailEnabled[] = $role;
-                }
-            }
-        }
-    
-        if (empty($rolesWithEmailEnabled)) {
-            $isDelete = Email::where('template_id', $template->id)
+        if (empty($roleNames)) {
+            Email::where('template_id', $template->id)
             ->where('ts_jobkey', $decryptedJobKey)
             ->where('status_id', $this->statusService->pending)
-            ->whereDate('sentdate', $sentDateCarbon)
-            ->where('email_from', $authUser->email)
             ->update([
                 'status_id' => $this->statusService->expired, // Sets status to Expired
                 'deleted_at' => now()
@@ -314,15 +346,6 @@ class EmailService
 
             return;
         }
-    
-        $roleNames = array_unique(array_map(fn ($role) =>
-            str_replace(
-                ['franchise', 'photocoordinator', 'teacher'],
-                ['Franchise', 'Photo Coordinator', 'Teacher'],
-                $role
-            ),
-            $rolesWithEmailEnabled
-        ));
     
         $roleIds = Role::whereIn('name', $roleNames)->pluck('id')->toArray();
     
@@ -342,17 +365,15 @@ class EmailService
     
         /**
          * --------------------------------------------
-         * DELETE stale emails (ONCE)
+         * DELETE stale emails (ONCE) — by recipient, not by who generated
          * --------------------------------------------
          */
-        $validEmails = $users->pluck('email')->toArray();
+        $validEmails = $users->pluck('email')->filter()->values()->all();
 
-        $isDelete = Email::where('template_id', $template->id)
+        Email::where('template_id', $template->id)
             ->where('ts_jobkey', $decryptedJobKey)
             ->where('status_id', $this->statusService->pending)
-            ->whereDate('sentdate', $sentDateCarbon)
-            ->where('email_from', $authUser->email)
-            ->whereNotIn('email_to', $validEmails)
+            ->when(!empty($validEmails), fn ($q) => $q->whereNotIn('email_to', $validEmails))
             ->update([
                 'status_id' => $this->statusService->expired, // Sets status to Expired
                 'deleted_at' => now()
@@ -495,24 +516,16 @@ class EmailService
         $allJobFolders = $this->getVisibleProofingFolderNames($selectedJob->folders);
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true);
     
-        $rolesWithFieldTrue = $notificationsMatrix['schools'][$field] ?? [];
-        $rolesWithFieldTrue = array_keys(array_filter($rolesWithFieldTrue, fn ($v) => $this->isMatrixRoleEnabled($v)));
-        // \Log::info('saveEmailContent roles check', ['field' => $field, 'roles' => $rolesWithFieldTrue, 'notifications_enabled' => $selectedJob->notifications_enabled]);
+        $roleNames = $this->getEnabledSchoolMatrixRoleNames($notificationsMatrix, $field);
+        // \Log::info('saveEmailContent roles check', ['field' => $field, 'roles' => $roleNames, 'notifications_enabled' => $selectedJob->notifications_enabled]);
    
         // Prepare template content
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
         $templateContent = File::exists($templatePath) ? File::get($templatePath) : '';
         $statusModel = $status ? Status::find($status) : null;
     
-        if (!empty($rolesWithFieldTrue) && $this->areJobNotificationsEnabled($selectedJob)) {
+        if (!empty($roleNames) && $this->areJobNotificationsEnabled($selectedJob)) {
 
-            $roleNames = array_map(fn($role) => str_replace(
-                ['franchise', 'photocoordinator', 'teacher'],
-                ['Franchise', 'Photo Coordinator', 'Teacher'],
-                $role // <-- only the single role
-            ), $rolesWithFieldTrue);
-            
-    
             $roleIds = Role::whereIn('name', $roleNames)->pluck('id');
     
             $userIds = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
@@ -524,6 +537,17 @@ class EmailService
     
             $excludeCompleted = $this->isProofScheduleTemplate($field);
 
+            // One pending row per recipient (template+job+email_to) — expire recipients no longer in matrix roles
+            $validEmails = $users->pluck('email')->filter()->values()->all();
+            Email::where('template_id', $template->id)
+                ->where('ts_jobkey', $tsJobKey)
+                ->where('status_id', $this->statusService->pending)
+                ->when(!empty($validEmails), fn ($q) => $q->whereNotIn('email_to', $validEmails))
+                ->update([
+                    'status_id' => $this->statusService->expired,
+                    'deleted_at' => now(),
+                ]);
+
             foreach ($users as $user) {
                 $userFolders = $this->getAssignedFolderNamesForUser(
                     $selectedJob->folders,
@@ -533,19 +557,11 @@ class EmailService
 
                 // No non-Completed folders assigned → do not send proof schedule emails
                 if ($excludeCompleted && empty($userFolders)) {
-                    Email::where([
-                        'generated_from_user_id' => $authUser->id,
-                        'alphacode' => $selectedJob->franchises->alphacode ?? null,
-                        'ts_jobkey' => $tsJobKey,
-                        'ts_schoolkey' => $selectedJob->ts_schoolkey,
-                        'email_from' => $authUser->email,
-                        'email_to' => $user->email,
-                        'template_id' => $template->id,
-                        'status_id' => $this->statusService->pending,
-                    ])->update([
-                        'status_id' => $this->statusService->expired,
-                        'deleted_at' => now(),
-                    ]);
+                    $this->pendingProofScheduleEmailQuery($template->id, $tsJobKey, $user->email)
+                        ->update([
+                            'status_id' => $this->statusService->expired,
+                            'deleted_at' => now(),
+                        ]);
                     continue;
                 }
 
@@ -592,17 +608,22 @@ class EmailService
     
                 $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-                // Save email record per user
-                $emailRecord = Email::where([
-                    'generated_from_user_id' => $authUser->id,
-                    'alphacode' => $selectedJob->franchises->alphacode ?? null,
-                    'ts_jobkey' => $tsJobKey,
-                    'ts_schoolkey' => $selectedJob->ts_schoolkey,
-                    'email_from' => $authUser->email,
-                    'email_to' => $user->email,
-                    'template_id' => $template->id,
-                    'status_id' => $this->statusService->pending
-                ])->first();
+                // Proof schedule: one pending per recipient for the job+template (ignore who generated it)
+                if ($excludeCompleted) {
+                    $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $tsJobKey, $user->email)
+                        ->first();
+                } else {
+                    $emailRecord = Email::where([
+                        'generated_from_user_id' => $authUser->id,
+                        'alphacode' => $selectedJob->franchises->alphacode ?? null,
+                        'ts_jobkey' => $tsJobKey,
+                        'ts_schoolkey' => $selectedJob->ts_schoolkey,
+                        'email_from' => $authUser->email,
+                        'email_to' => $user->email,
+                        'template_id' => $template->id,
+                        'status_id' => $this->statusService->pending
+                    ])->first();
+                }
     
                 if ($emailRecord) {
                     // Update existing
@@ -787,9 +808,17 @@ class EmailService
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
 
+        $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true) ?? [];
+
         foreach ($templateDateMap as $templateName => $sentDate) {
             // Skip if the job doesn't have this date configured
             if (empty($sentDate)) {
+                continue;
+            }
+
+            // Only queue for invitees whose role is selected in the notification matrix
+            $enabledRoleNames = $this->getEnabledSchoolMatrixRoleNames($notificationsMatrix, $templateName);
+            if (empty($enabledRoleNames)) {
                 continue;
             }
 
@@ -808,6 +837,10 @@ class EmailService
             $statusModel   = Status::find($selectedJob->job_status_id);
 
             foreach ($users as $user) {
+                if (!$this->userHasAnyRoleNames($user, $enabledRoleNames)) {
+                    continue;
+                }
+
                 // Resolve visible, non-Completed folders assigned to this user.
                 $userFolders = $this->getAssignedFolderNamesForUser(
                     $selectedJob->folders,
@@ -836,7 +869,6 @@ class EmailService
                 }
 
                 // Skip if a pending record already exists for this user + template + job
-                // (unless we need to refresh folder list for proof schedule templates)
                 $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
                     ->first();
 
