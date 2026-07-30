@@ -12,10 +12,8 @@ use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache; // code by IT
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage; // code by IT
 class ImageService
 {
@@ -30,27 +28,20 @@ class ImageService
     }
     // code by IT
     /**
-     * Scope job queries by schoolkey AND Timestone account (franchise).
-     * schoolkey alone is not unique across franchises (e.g. DEMO) — both are required.
+     * Scope job queries by schoolkey and Timestone account (franchise).
+     * schoolkey alone is not unique across franchises (e.g. DEMO).
      */
     protected function applySchoolJobScope($query, ?string $schoolKey, ?int $tsAccountId = null)
     {
-        if ($tsAccountId === null && Auth::check()) {
-            $franchiseAccountId = Auth::user()->getFranchise()?->ts_account_id;
-            $tsAccountId = $franchiseAccountId !== null ? (int) $franchiseAccountId : null;
+        if ($schoolKey !== null && $schoolKey !== '') {
+            $query->where('jobs.ts_schoolkey', $schoolKey);
         }
 
-        $hasSchoolKey = $schoolKey !== null && $schoolKey !== '';
-        $hasAccountId = $tsAccountId !== null;
-
-        // Never filter jobs by schoolkey alone — that leaks DEMO (and similar) across franchises.
-        if (!$hasSchoolKey || !$hasAccountId) {
-            return $query->whereRaw('1 = 0');
+        if ($tsAccountId !== null) {
+            $query->where('jobs.ts_account_id', $tsAccountId);
         }
 
-        return $query
-            ->where('jobs.ts_schoolkey', $schoolKey)
-            ->where('jobs.ts_account_id', $tsAccountId);
+        return $query;
     }
 
     /**
@@ -741,14 +732,8 @@ class ImageService
             $classGroup = '';
             if ($isSubject) {
                 $subject = Subject::where('ts_subjectkey', $image->$key)->where('is_deleted', 0)->first();
-                // DB-only hint for checkbox. Do not call getIsImageFound() here — it HTTP-HEADS
-                // keyimage per card and can stall/timeout All-pages (30+ subjects), while search
-                // (few rows) still works. Real bytes come from AJAX photography.image.
-                $hasPhoto = $imgKey && DB::table('images')
-                    ->where('keyvalue', $imgKey)
-                    ->where('keyorigin', 'Subject')
-                    ->exists();
                 if ($subject) {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $hasPhoto;
                     $folderName = $subject->folder?->portal_ts_foldername
@@ -756,6 +741,7 @@ class ImageService
                         ?? $image->ts_foldername
                         ?? '';
                 } else {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
                     $folderName = $image->portal_ts_foldername
                         ?? $image->ts_foldername
@@ -764,15 +750,13 @@ class ImageService
                 $classGroup = FilenameFormatHelper::removeYearAndDelimiter($folderName, $image->year ?? null);
             } else {
                 $folder = Folder::where('ts_folderkey', $image->$key)->where('is_deleted', 0)->first();
-                $hasPhoto = $imgKey && DB::table('images')
-                    ->where('keyvalue', $imgKey)
-                    ->where('keyorigin', 'Folder')
-                    ->exists();
                 if ($folder) {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();
                     $uploaded = $uploadExists && $hasPhoto;
                     $folderName = $folder->portal_ts_foldername ?? $image->portal_ts_foldername ?? '';
                 } else {
+                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
                     $folderName = $image->portal_ts_foldername ?? $image->ts_foldername ?? '';
                 }
@@ -899,21 +883,8 @@ class ImageService
         $cacheKey = "photography_urls_{$key}_{$resKey}_{$upperTab}";
 
         return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab) {
-            $portraitLocation = env('PORTRAITIMAGELOCATION');
-            $groupLocation = env('GROUPIMAGELOCATION');
-            $baseImage = $portraitLocation."{$key[0]}/{$key[1]}/{$key}";
-            $baseGroup = $groupLocation."{$key[0]}/{$key[1]}/{$key}";
-
-            Log::info('photography imageUrl', [
-                'key' => $key,
-                'tab' => $upperTab,
-                'resolutionId' => $resolutionId,
-                'PORTRAITIMAGELOCATION' => $portraitLocation,
-                'GROUPIMAGELOCATION' => $groupLocation,
-                'baseImage' => $baseImage,
-                'baseGroup' => $baseGroup,
-                'portrait_400' => "{$baseImage}_400.jpg",
-            ]);
+            $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
+            $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
 
             // --- DEFINE PORTRAIT URLS ---
             if ($resolutionId == 1) { // High Quality
@@ -940,11 +911,6 @@ class ImageService
                 // If no specific tab, show the 400px versions of both
                 $result = array_merge($portraitUrls, $groupUrls);
             }
-
-            Log::info('photography imageUrl result', [
-                'key' => $key,
-                'urls' => $result,
-            ]);
 
             return $result;
         });

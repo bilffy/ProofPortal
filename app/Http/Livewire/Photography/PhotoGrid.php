@@ -45,7 +45,7 @@ class PhotoGrid extends Component
         if ($this->perPage !== $newPerPage) {
             $this->perPage = $newPerPage;
             Session::put('photo_grid_per_page', $newPerPage);
-            // Do not resetPage() — layout recalc on remount would kick users off page 2+.
+            $this->resetPage();
         }
     }
     //CODE BY IT
@@ -74,10 +74,6 @@ class PhotoGrid extends Component
         }
 
         $this->tsAccountId = $user->getFranchise()?->ts_account_id;
-        if ($this->tsAccountId === null) {
-            abort(403, 'Franchise Timestone account is required to view photography jobs.');
-        }
-        $this->tsAccountId = (int) $this->tsAccountId;
         $this->perPage = Session::get('photo_grid_per_page', 30);
         $this->setupFilters($season);
     }
