@@ -331,6 +331,7 @@ class ImageService
         'subjects.portal_firstname',
         'subjects.portal_lastname',
         'subjects.ts_subjectkey',
+        'subjects.ts_subject_id',
         'folders.portal_ts_foldername',
         'seasons.code as year',
         'subjects.external_subject_id',
@@ -363,10 +364,10 @@ class ImageService
         $seasonId, $schoolKey, $folderKeys, $searchTerm, $tsAccountId
     );
 
-    // One card per person within schoolkey + franchise (ts_account_id).
-    // - Same ts_subjectkey in multiple folders (homed vs attached) collapses.
-    // - Same external_subject_id across jobs collapses.
-    // - Otherwise same first+last name across jobs collapses (All/All multi-job case).
+    // One card per ts_subject_id (homed + attached duplicates collapse).
+    // Do not collapse by name or external_subject_id:
+    // - null portal_firstname made many people share one name-key
+    // - two people with the same name must stay as two cards
     return DB::query()
         ->fromSub($homed->union($attached), 'portrait_subjects')
         ->selectRaw('
@@ -375,12 +376,10 @@ class ImageService
             MIN(ts_subjectkey) as ts_subjectkey,
             MIN(portal_ts_foldername) as portal_ts_foldername,
             MIN(year) as year,
-            MIN(external_subject_id) as external_subject_id
+            MIN(external_subject_id) as external_subject_id,
+            ts_subject_id
         ')
-        ->groupBy(DB::raw("COALESCE(
-            NULLIF(TRIM(external_subject_id), ''),
-            CONCAT(LOWER(TRIM(portal_firstname)), '|', LOWER(TRIM(portal_lastname)))
-        )"))
+        ->groupBy('ts_subject_id')
         ->orderBy('portal_lastname')
         ->orderBy('portal_firstname');
 }
@@ -401,6 +400,7 @@ class ImageService
 
         $selectColumns = [
             'subjects.ts_subjectkey',
+            'subjects.ts_subject_id',
             'subjects.external_subject_id',
             'subjects.portal_firstname',
             'subjects.portal_lastname',
@@ -434,10 +434,7 @@ class ImageService
 
         return (int) (DB::query()
             ->fromSub($homed->union($attached), 'portrait_subjects_with_images')
-            ->selectRaw("COUNT(DISTINCT COALESCE(
-                NULLIF(TRIM(external_subject_id), ''),
-                CONCAT(LOWER(TRIM(portal_firstname)), '|', LOWER(TRIM(portal_lastname)))
-            )) as aggregate")
+            ->selectRaw('COUNT(DISTINCT ts_subject_id) as aggregate')
             ->value('aggregate') ?? 0);
     }
 /*
