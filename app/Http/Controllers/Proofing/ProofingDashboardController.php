@@ -108,7 +108,7 @@ class ProofingDashboardController extends Controller
             $data = $this->jobService->getDashboardData($franchiseCode, Session::get('school_context-sid'));
             $user = Auth::user();
             $getSeason = $this->seasonService
-                        ->getAllSeasonData('ts_season_id')
+                        ->getAllSeasonDataForProofing('ts_season_id')
                         ->pluck('ts_season_id')
                         ->toArray();
             $currentSchoolkey = SchoolContextHelper::getSchool()?->schoolkey;

@@ -13,10 +13,16 @@ class SeasonService
         //
     }
 
-    public function getAllSeasonData(...$selectedValues)
+    public function getAllSeasonDataForPortal(...$selectedValues)
     {
         return Season::select($selectedValues)
             ->where('show_in_portal', 1);
+    }
+
+    public function getAllSeasonDataForProofing(...$selectedValues)
+    {
+        return Season::select($selectedValues)
+            ->where('show_in_proofing', 1);
     }
 
     public function getSeasonByTimestoneSeasonId($seasonId){

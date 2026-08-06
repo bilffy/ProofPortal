@@ -182,14 +182,18 @@ class UserController extends Controller
         $encryptedData = $request->input('request');
         $nonce = session('register_token');
 
+        if (empty($encryptedData) || empty($nonce)) {
+            return response()->json(['error' => 'Invalid Request'], 400);
+        }
+
         try {
             $decrypted = JsAesPhp::decrypt($encryptedData, $nonce);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Invalid Request'], 400);
         }
-        
-        if ($decrypted['nonce'] !== $nonce) {
-            return response()->json('Invalid Request', 422);
+
+        if (!is_array($decrypted) || ($decrypted['nonce'] ?? null) !== $nonce) {
+            return response()->json(['error' => 'Invalid Request'], 422);
         }
         
         $validator = $this->validator($decrypted);
@@ -348,14 +352,20 @@ class UserController extends Controller
         if (empty($input)) {
              try {
                 $encryptedData = $request->input('request');
-                $input = JsAesPhp::decrypt($encryptedData, session($editTokenName));
+                $editNonce = session($editTokenName);
+                if (empty($encryptedData) || empty($editNonce)) {
+                    $nonce = Str::random(40);
+                    session([$editTokenName => $nonce]);
+                    return response()->json(['error' => 'Invalid Request', 'nonce' => $nonce], 400);
+                }
+                $input = JsAesPhp::decrypt($encryptedData, $editNonce);
             } catch (\Throwable $e) {
                 $nonce = Str::random(40);
                 session([$editTokenName => $nonce]);
                 return response()->json(['error' => 'Invalid Request', 'nonce' => $nonce], 400);
             }
         }
-        if (empty($input['nonce']) || $input['nonce'] !== session($editTokenName)) {
+        if (!is_array($input) || empty($input['nonce']) || $input['nonce'] !== session($editTokenName)) {
             return response()->json('Invalid Request', 422);
         }
 

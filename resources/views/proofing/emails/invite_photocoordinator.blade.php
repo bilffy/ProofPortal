@@ -88,7 +88,7 @@
                                 </td>
                             </tr>
 
-                            @if ($FRANCHISE_NAME === 'MSP Sydney West')
+                            <!-- @if ($FRANCHISE_NAME === 'MSP Sydney West')
                                 <tr>
                                     <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
                                         <strong style="font-weight: 700;">Download Instructions for</strong><br>
@@ -99,7 +99,7 @@
                                         </a>
                                     </td>
                                 </tr>
-                            @endif
+                            @endif -->
 
                             <tr>
                                 <th width="30%" style="padding: 20px 40px 20px 40px;" class="stack">

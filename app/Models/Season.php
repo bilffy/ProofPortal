@@ -20,6 +20,7 @@ class Season extends Model
         'ts_season_id',
         'code',
         'show_in_portal',
+        'show_in_proofing',
         'is_default',
     ];
     

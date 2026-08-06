@@ -7,29 +7,32 @@ use Livewire\Component;
 
 class ProofingSeasonEnable extends Component
 {
-    public $seasonStates = [];
-
-    public function mount()
-    {
-        $this->seasonStates = Season::pluck('show_in_portal', 'id')
-            ->map(fn($v) => (bool)$v)
-            ->toArray();
-    }
-
-    public function toggleSeason($seasonId)
+    public function toggleSeasonPortal(string $seasonId): void
     {
         $season = Season::find($seasonId);
-        if ($season) {
-            $season->show_in_portal = !$season->show_in_portal;
-            $season->save();
-            $this->seasonStates[$seasonId] = (bool)$season->show_in_portal;
+        if (!$season) {
+            return;
         }
+
+        $season->show_in_portal = (int) $season->show_in_portal === 1 ? 0 : 1;
+        $season->save();
+    }
+
+    public function toggleSeasonProofing(string $seasonId): void
+    {
+        $season = Season::find($seasonId);
+        if (!$season) {
+            return;
+        }
+
+        $season->show_in_proofing = (int) $season->show_in_proofing === 1 ? 0 : 1;
+        $season->save();
     }
 
     public function render()
     {
         return view('livewire.settings.proofing-season-enable', [
-            'seasons' => Season::orderBy('code', 'desc')->get(),
+            'seasons' => Season::query()->orderBy('code', 'desc')->get(),
         ]);
     }
 }

@@ -35,19 +35,23 @@
         'teacher' => 'Teacher',
     ];
 
-    $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()->schoolkey;
-    $selectedSchool = $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first();
+    $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()?->schoolkey;
+    $selectedSchool = $decryptedSchoolKey
+        ? $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first()
+        : null;
     $filePath = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
         $filePath = SchoolLogoHelper::relativePath($selectedSchool, $selectedSchool->school_logo);
     }
-    $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
+    $hash = $decryptedSchoolKey ? Crypt::encryptString($decryptedSchoolKey) : '';
     $encryptedPath = $filePath !== '' ? Crypt::encryptString($filePath) : '';
-    $seasons = $seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
-    $syncJobsbySchoolkey =  $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
+    $seasons = $seasonService->getAllSeasonDataForPortal('code', 'show_in_proofing', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
+    $syncJobsbySchoolkey = $decryptedSchoolKey
+        ? $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey)
+        : collect();
     $selectedFolders = [];
 
-    $notificationsMatrix = $selectedSchool->digital_download_permission_notification;
+    $notificationsMatrix = $selectedSchool?->digital_download_permission_notification;
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
     $imageUrl = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
@@ -58,6 +62,11 @@
     $groupsTab = $AppSettingsHelper::getByPropertyKey('groups_tab');
     $groupsTabValue = $groupsTab ? $groupsTab->property_value === 'true' ? true : false : true;
 @endphp
+@if (!$selectedSchool)
+    <div class="p-4">
+        <p class="text-sm text-gray-600">Select a school from the header to configure photography settings.</p>
+    </div>
+@else
     <div class="row">
         <div class="col-lg-12">
             <h1 class="page-header">
@@ -430,6 +439,7 @@
         </div>
     </div>
 </div>
+@endif
 
 @section('js')
     <script type="module" src="{{ URL::asset('proofing-assets/js/school/configure.js') }}"></script>

@@ -120,43 +120,52 @@ class ExportImageService
     public function downloadBatchToLocal(Job $job, array $imageKeys, int $chunkSize = 10): array
     {
         $summary = ['downloaded' => 0, 'failed' => 0, 'missing' => 0];
-        if (empty($imageKeys)) return $summary;
-    
+        if (empty($imageKeys)) {
+            return $summary;
+        }
+
         $this->ensureStagingRootExists();
         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
         $downloadedBatch = [];
-    
+        $missingBatch = [];
+        $foundKeys = [];
+
         // 1. Get the list of images without the heavy blobs
         foreach ($this->findImageMatchesByImageKeys($imageKeys)->cursor() as $row) {
+            $imageKey = (string) $row->ImageKey;
+            $foundKeys[$imageKey] = true;
+
             // 2. Fetch the BLOB specifically for this ID
             $thumbnail = DB::connection('timestone')
                 ->table('ImageBitmaps')
                 ->where('ImageID', $row->ImageID)
                 ->value('Thumbnail');
-    
+
             $thumbnail = $this->normalizeThumbnail($thumbnail);
-    
+
             if ($thumbnail === null) {
-                $summary['failed']++;
+                // Mark once so we do not keep re-querying Timestone for this key
+                $missingBatch[] = $imageKey;
+                $summary['missing'] += $this->flushThumbnailMissingBatch($missingBatch, $chunkSize);
                 continue;
             }
-    
+
             // 3. Process the file
             try {
                 $extension = $this->getExtensionFromMimeType($fileInfo->buffer($thumbnail));
                 $subjectKey = (string) $row->SubjectKey;
                 $localPath = sprintf('%s/%s.%s', $this->localDir($job, $subjectKey), $subjectKey, $extension);
-    
+
                 $this->writeStagingFile($localPath, $thumbnail);
-    
+
                 [$p1, $p2, $p3] = $this->buildPartition($subjectKey);
                 // Cast key to string: PHP converts numeric-looking keys to int, which
                 // PDO then binds as numbers and breaks alphanumeric ts_imagekey compares.
-                $downloadedBatch[(string) $row->ImageKey] = [
+                $downloadedBatch[$imageKey] = [
                     'path' => sprintf('%s/%s/%s/', $p3, $p1, $p2),
                     'name' => sprintf('%s.%s', $subjectKey, $extension),
                 ];
-    
+
                 if (count($downloadedBatch) >= $chunkSize) {
                     $summary['downloaded'] += count($downloadedBatch);
                     $this->updateBatchDownloadStatuses($downloadedBatch);
@@ -165,15 +174,26 @@ class ExportImageService
                     gc_collect_cycles();
                 }
             } catch (Exception $e) {
-                Log::error('Download failed for key ' . $row->ImageKey, ['error' => $e->getMessage()]);
+                $summary['failed']++;
+                Log::error('Download failed for key ' . $imageKey, ['error' => $e->getMessage()]);
             }
         }
-    
+
+        // Image keys with no Timestone match at all — also mark missing (do not retry forever)
+        foreach ($imageKeys as $key) {
+            $key = (string) $key;
+            if (!isset($foundKeys[$key])) {
+                $missingBatch[] = $key;
+            }
+        }
+
         if (!empty($downloadedBatch)) {
             $summary['downloaded'] += count($downloadedBatch);
             $this->updateBatchDownloadStatuses($downloadedBatch);
         }
-    
+
+        $summary['missing'] += $this->flushThumbnailMissingBatch($missingBatch, $chunkSize, true);
+
         return $summary;
     }
 

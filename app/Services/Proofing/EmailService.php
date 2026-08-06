@@ -1023,31 +1023,28 @@ class EmailService
         }
 
         $job = $this->findJobByKey($jobkey);
-        if ($this->shouldBlockEmailGenerationForJob($job, $field ?? null)) {
+        if (!$job || $this->shouldBlockEmailGenerationForJob($job, $field ?? null)) {
             return;
         }
 
         $template = Template::where('template_name', $field)->first();
         $inviteUser = User::find($user);
-        $selectedFolders = $this->getInvitationFolderNamesForUser((int) $user, $jobkey);
-        $folderUsers = FolderUser::where('user_id', $user)
-        ->whereHas('folder', function ($query) use ($jobkey) {
-            $query->where('is_visible_for_proofing', 1)
-                ->whereHas('job', function ($jobQuery) use ($jobkey) {
-                    $jobQuery->where('ts_jobkey', $jobkey);
-                });
-        })
-        ->with('folder.job') // Ensure the job relationship is eager-loaded
-        ->get();
+        if (!$template || !$inviteUser) {
+            return;
+        }
 
+        $selectedFolders = $this->getInvitationFolderNamesForUser((int) $user, $jobkey);
+
+        // Prefer the job already resolved by key. Do not chain folderUsers->first()->folder->job:
+        // first() / folder can be null (franchise scope, deleted folder, or no assignments yet).
         $data = [
                 'INVITEE_FIRST_NAME' => $inviteUser->firstname ?? '',
                 'INVITEE_LAST_NAME' => $inviteUser->lastname ?? '',
                 'SENDER_FIRST_NAME' => $authUser->firstname ?? '',
                 'SENDER_LAST_NAME' => $authUser->lastname ?? '',
-                'JOB_NAME' => $folderUsers->first()->folder->job->ts_jobname ?? '',
+                'JOB_NAME' => $job->ts_jobname ?? '',
                 'FOLDERS' => $selectedFolders,
-                'REVIEW_DUE' => isset($folderUsers->first()->folder->job->proof_due) ? Carbon::parse($folderUsers->first()->folder->job->proof_due)->format('l j F, Y') : '',
+                'REVIEW_DUE' => isset($job->proof_due) ? Carbon::parse($job->proof_due)->format('l j F, Y') : '',
                 'APP_URL' => Config::get('app.url'),
                 'FRANCHISE_NAME' => $authUser->getSchoolOrFranchiseDetail()->name ?? '',
                 'FRANCHISE_PHONE' => $authUser->getSchoolOrFranchiseDetail()->phone ?? '',
@@ -1066,21 +1063,20 @@ class EmailService
         $templateContent = File::get($templatePath);
 
         $beforeProcessedContent = $this->replaceTemplateVariables($templateContent, $data);
+        $downloadInstructions = '';
 
-        if ($authUser->getSchoolOrFranchiseDetail()->name === 'Sydney West') {
-            $downloadInstructions = '
-                <tr>
-                    <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
-                        <b>Download Instructions for</b><br>
-                        <a href="https://www.msp.com.au/wp-content/uploads/blueprint/Online%20Proofing%20Guide%20Photo%20Coordinators.pdf" target="_blank">
-                            <img src="https://www.msp.com.au/wp-content/uploads/2019/10/photoco_btn.png" width="225">
-                        </a>
-                    </td>
-                </tr>
-            ';
-        } else {
-            $downloadInstructions = '';
-        }  
+        // if ($authUser->getSchoolOrFranchiseDetail()->name === 'Sydney West') {
+        //     $downloadInstructions = '
+        //         <tr>
+        //             <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
+        //                 <b>Download Instructions for</b><br>
+        //                 <a href="https://www.msp.com.au/wp-content/uploads/blueprint/Online%20Proofing%20Guide%20Photo%20Coordinators.pdf" target="_blank">
+        //                     <img src="https://www.msp.com.au/wp-content/uploads/2019/10/photoco_btn.png" width="225">
+        //                 </a>
+        //             </td>
+        //         </tr>
+        //     ';
+        // }
         
         $processedContent = str_replace("{DOWNLOAD_INSTRUCTIONS}", $downloadInstructions, $beforeProcessedContent); 
 
@@ -1096,8 +1092,7 @@ class EmailService
         }
 
         if (strpos($templateSubject, 'JOB_NAME') !== false) {
-            $jobName = $folderUsers->first()->folder->job->ts_jobname ?? 'Unknown Job'; // Fallback if job name is null
-            $templateSubject = str_replace('JOB_NAME', $jobName, $templateSubject);
+            $templateSubject = str_replace('JOB_NAME', $job->ts_jobname ?? 'Unknown Job', $templateSubject);
         }
 
 
@@ -1109,7 +1104,7 @@ class EmailService
         // $filePath = public_path("$field.eml");
         // file_put_contents($filePath, $emlContent);
 
-        $this->storeEmailRecord($authUser, $folderUsers->first()->folder->job, $inviteUser, $template, $date, $emlContent, $jobkey);
+        $this->storeEmailRecord($authUser, $job, $inviteUser, $template, $date, $emlContent, $jobkey);
     }    
 
     /**
@@ -1160,22 +1155,21 @@ class EmailService
         ];
 
         $beforeProcessedContent = $this->replaceTemplateVariables($templateContent, $data);
+        $downloadInstructions = '';
 
-        // Apply any franchise-specific download instructions (mirrors saveInvitationContent logic)
-        if ($authUser->getSchoolOrFranchiseDetail()->name === 'Sydney West') {
-            $downloadInstructions = '
-                <tr>
-                    <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
-                        <b>Download Instructions for</b><br>
-                        <a href="https://www.msp.com.au/wp-content/uploads/blueprint/Online%20Proofing%20Guide%20Photo%20Coordinators.pdf" target="_blank">
-                            <img src="https://www.msp.com.au/wp-content/uploads/2019/10/photoco_btn.png" width="225">
-                        </a>
-                    </td>
-                </tr>
-            ';
-        } else {
-            $downloadInstructions = '';
-        }
+        // // Apply any franchise-specific download instructions (mirrors saveInvitationContent logic)
+        // if ($authUser->getSchoolOrFranchiseDetail()->name === 'Sydney West') {
+        //     $downloadInstructions = '
+        //         <tr>
+        //             <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
+        //                 <b>Download Instructions for</b><br>
+        //                 <a href="https://www.msp.com.au/wp-content/uploads/blueprint/Online%20Proofing%20Guide%20Photo%20Coordinators.pdf" target="_blank">
+        //                     <img src="https://www.msp.com.au/wp-content/uploads/2019/10/photoco_btn.png" width="225">
+        //                 </a>
+        //             </td>
+        //         </tr>
+        //     ';
+        // } 
 
         $processedContent = str_replace("{DOWNLOAD_INSTRUCTIONS}", $downloadInstructions, $beforeProcessedContent);
 

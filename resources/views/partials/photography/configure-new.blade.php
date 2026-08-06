@@ -47,19 +47,24 @@
         'teacher' => 'Teacher',
     ];
 
-    $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()->schoolkey;
-    $selectedSchool = $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first();
+    $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
+    $decryptedSchoolKey = $schoolContext?->schoolkey;
+    $selectedSchool = $decryptedSchoolKey
+        ? $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first()
+        : null;
     $filePath = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
         $filePath = SchoolLogoHelper::relativePath($selectedSchool, $selectedSchool->school_logo);
     }
-    $hash = Crypt::encryptString(SchoolContextHelper::getCurrentSchoolContext()->schoolkey);
+    $hash = $decryptedSchoolKey ? Crypt::encryptString($decryptedSchoolKey) : '';
     $encryptedPath = $filePath !== '' ? Crypt::encryptString($filePath) : '';
-    $seasons = $seasonService->getAllSeasonData('code', 'show_in_portal', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
-    $syncJobsbySchoolkey =  $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey);
+    $seasons = $seasonService->getAllSeasonDataForPortal('code', 'show_in_proofing', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
+    $syncJobsbySchoolkey = $decryptedSchoolKey
+        ? $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey)
+        : collect();
     $selectedFolders = [];
 
-    $notificationsMatrix = $selectedSchool->digital_download_permission_notification;
+    $notificationsMatrix = $selectedSchool?->digital_download_permission_notification;
     $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
     $imageUrl = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
@@ -85,16 +90,23 @@
     $imageTypes = ImageHelper::getExtensionsAsString('.');
 
     $schoolAddress = [];
-    if (!empty($selectedSchool->address)) {
+    if (!empty($selectedSchool?->address)) {
         $schoolAddress[] = $selectedSchool->address;
     }
-    if (!empty($selectedSchool->suburb)) {
+    if (!empty($selectedSchool?->suburb)) {
         $schoolAddress[] = $selectedSchool->suburb;
     }
-    if (!empty($selectedSchool->postcode)) {
+    if (!empty($selectedSchool?->postcode)) {
         $schoolAddress[] = $selectedSchool->postcode;
     }
 @endphp
+
+@if (!$schoolContext || !$selectedSchool)
+<div class="relative p-6 bg-white rounded-lg border border-gray-200">
+    <h3 class="mb-2 text-black">School Settings</h3>
+    <p class="text-sm text-gray-600">Select a school from the header to configure photography settings.</p>
+</div>
+@else
 <div class="relative">
     <h3 class="mb-4 text-black">School Settings</h3>
     <div class="flex w-full mb-16 flex-col">
@@ -295,3 +307,4 @@
 <script src="{{ URL::asset('proofing-assets/plugins/select2/js/select2.min.js')}}"></script>
 <script src="{{ URL::asset('proofing-assets/js/school/configure-new.js') }}?v={{ filemtime(public_path('proofing-assets/js/school/configure-new.js')) }}"></script>
 @endpush
+@endif
