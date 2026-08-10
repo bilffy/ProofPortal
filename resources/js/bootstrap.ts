@@ -7,8 +7,14 @@ import 'flowbite';
 import 'bootstrap';
 import Tribute from "tributejs";
 
-window.$ = jquery;
-window.jQuery = jquery;
+// Prefer legacy proofing jquery (loaded in app.blade with select2/plugins) when present.
+// Overwriting it with Vite's copy breaks select2 and change handlers on Configure.
+if (!window.jQuery) {
+    window.$ = jquery;
+    window.jQuery = jquery;
+} else {
+    window.$ = window.jQuery;
+}
 window.axios = axios;
 window.moment = moment;
 window.flatpickr = flatpickr;

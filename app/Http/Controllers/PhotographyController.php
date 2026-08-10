@@ -134,7 +134,7 @@ class PhotographyController extends Controller
         }
 
         $tab = $request->input('tab');
-        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTab($user, $school, $tab)) {
+        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTabBySchoolId($user, $school->id ?? null, $tab)) {
             abort(403, 'You do not have permission to download these images.');
         }
 
@@ -162,7 +162,7 @@ class PhotographyController extends Controller
         
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
-        $schoolKey = $school->schoolkey ?? '';
+        $schoolId = $school->id ?? null;
         $tsAccountId = Auth::user()?->getFranchise()?->ts_account_id;
         $view = $selectedFilters['view'];
         $class = json_decode($selectedFilters['class']);
@@ -174,17 +174,17 @@ class PhotographyController extends Controller
 
         if (empty($class)) {
             // Extract the records from the folder_tags table and return an array of tag values
-            // based on the selected year, school key, operator, and view
+            // based on the selected year, school id, operator, and view
             $tags = $this->imageService->getFolderForView2(
                 $selectedFilters['year'],
-                $schoolKey,
+                $schoolId,
                 $tab,
                 $tsAccountId,
             )->pluck('external_name')->toArray();
 
             $folders = $this->imageService->getFoldersByTag(
                 $selectedFilters['year'],
-                $schoolKey,
+                $schoolId,
                 $tags,
                 $tab,
                 $tsAccountId
@@ -192,11 +192,11 @@ class PhotographyController extends Controller
         } else {
             $folders = Folder::whereIn('ts_folderkey', $class)->where('is_deleted', 0)->get();
             if ($tsAccountId !== null) {
-                $folders = $folders->filter(function ($folder) use ($tsAccountId, $schoolKey) {
+                $folders = $folders->filter(function ($folder) use ($tsAccountId, $schoolId) {
                     $job = Job::where('ts_job_id', $folder->ts_job_id)->first();
                     return $job
                         && $job->ts_account_id == $tsAccountId
-                        && ($schoolKey === '' || $job->ts_schoolkey === $schoolKey);
+                        && ($schoolId === null || (int) $job->school_id === (int) $schoolId);
                 })->values();
             }
         }
@@ -266,7 +266,7 @@ class PhotographyController extends Controller
                         ->whereIn('keyvalue', $keys)
                         ->groupBy('keyvalue');
                 })
-                ->where('jobs.ts_schoolkey', '=', $schoolKey);
+                ->where('jobs.school_id', '=', $schoolId);
             if ($tsAccountId !== null) {
                 $imageCountQuery->where('jobs.ts_account_id', $tsAccountId);
             }
@@ -296,8 +296,9 @@ class PhotographyController extends Controller
                         ->whereIn('keyvalue', $keys)
                         ->groupBy('keyvalue');
                 })
-                ->where(function ($q) use ($schoolKey, $tsAccountId) {
-                    $q->where('jobs.ts_schoolkey', '!=', $schoolKey);
+                ->where(function ($q) use ($schoolId, $tsAccountId) {
+                    $q->where('jobs.school_id', '!=', $schoolId)
+                      ->orWhereNull('jobs.school_id');
                     if ($tsAccountId !== null) {
                         $q->orWhere('jobs.ts_account_id', '!=', $tsAccountId);
                     }
@@ -444,7 +445,7 @@ class PhotographyController extends Controller
         // Log DOWNLOAD_PHOTOS activity
         ActivityLogHelper::log(LogConstants::DOWNLOAD_PHOTOS, [
             'school' => $school->id,
-            'school_key' => $schoolKey,
+            'school_key' => $school->schoolkey ?? '',
             'download_requested' => $downloadRequest->id,
         ]);
         
@@ -653,7 +654,7 @@ class PhotographyController extends Controller
         $user = Auth::user();
         $category = $request->query('category', PhotographyHelper::TAB_PORTRAITS);
 
-        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTab($user, $school, $category)) {
+        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTabBySchoolId($user, $school->id ?? null, $category)) {
             abort(403, 'You do not have permission to view these images.');
         }
 

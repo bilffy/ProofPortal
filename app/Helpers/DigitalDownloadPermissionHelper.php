@@ -23,6 +23,14 @@ class DigitalDownloadPermissionHelper
             return false;
         }
 
+        // Always resolve by schools.id so shared schoolkeys cannot bleed permissions
+        if ($school->id) {
+            $school = School::query()->find($school->id);
+            if (!$school) {
+                return false;
+            }
+        }
+
         if ($user->isFranchiseLevel() || $user->isRcUser() || $user->isAdmin()) {
             return true;
         }
@@ -40,6 +48,18 @@ class DigitalDownloadPermissionHelper
         return ($permissions['digital_download_permission'][$field][$roleKey] ?? false) === true;
     }
 
+    /**
+     * Role check using an explicit school primary key.
+     */
+    public static function canViewAndDownloadBySchoolId(?User $user, ?int $schoolId, string $field): bool
+    {
+        if (!$schoolId) {
+            return false;
+        }
+
+        return self::canViewAndDownload($user, School::query()->find($schoolId), $field);
+    }
+
     public static function canViewAndDownloadTab(?User $user, ?School $school, string $tab): bool
     {
         $field = match (strtoupper($tab)) {
@@ -54,6 +74,15 @@ class DigitalDownloadPermissionHelper
         }
 
         return self::canViewAndDownload($user, $school, $field);
+    }
+
+    public static function canViewAndDownloadTabBySchoolId(?User $user, ?int $schoolId, string $tab): bool
+    {
+        if (!$schoolId) {
+            return false;
+        }
+
+        return self::canViewAndDownloadTab($user, School::query()->find($schoolId), $tab);
     }
 
     private static function getRoleKey(User $user): ?string

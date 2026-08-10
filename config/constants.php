@@ -47,7 +47,7 @@ return [
     'SUBJECT_REMOVE_PICTURE_NOTE' => 'Remove picture of "FIRSTNAME LASTNAME" in Folder  "FOLDER" for reasons such as infringement or child protection.',
     'SUBJECT_ABSENT_NOTE' => '"FIRSTNAME LASTNAME" in Folder  "FOLDER" was absent on photo-day.',
 
-    'TRADITIONAL_PHOTO_TAGGED' => 'Have you named each Person in the Group Photo?',
+    'TRADITIONAL_PHOTO_TAGGED' => 'Have you named each person in the required fields above?',
     'TRADITIONAL_PHOTO_TAGGED_NOTE' => 'Tagging of Traditional Group Photo marked as "VALUE"',
 
     'DEPUTY' => 'deputy',

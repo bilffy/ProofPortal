@@ -21,7 +21,7 @@ class PhotoGrid extends Component
     use WithPagination, WithoutUrlPagination;
     public $category;
     public $season;
-    public $schoolKey;
+    public $schoolId;
     public $tsAccountId = null;
     public $perPage = 30;
     
@@ -49,24 +49,28 @@ class PhotoGrid extends Component
         }
     }
     //CODE BY IT
-    public function mount($category = 'portraits', $season = 1, $schoolKey = '')
+    public function mount($category = 'portraits', $season = 1, $schoolId = null)
     {
         $this->category = $category;
         $this->season = $season;
-        $this->schoolKey = $schoolKey;
+        $this->schoolId = $schoolId ? (int) $schoolId : null;
 
         $user = Auth::user();
-        // Prefer school context — schoolkey alone is not unique across franchises (e.g. DEMO).
+        // Prefer school context — schoolkey alone is not unique across schools in a franchise.
         $school = \App\Helpers\SchoolContextHelper::getSchool();
 
-        if (!$school && $this->schoolKey) {
+        if (!$school && $this->schoolId) {
             $schoolService = new SchoolService();
-            $schoolQuery = $schoolService->getSchoolBySchoolKey($this->schoolKey);
+            $schoolQuery = $schoolService->getSchoolById($this->schoolId);
             $franchise = $user->getFranchise();
             if ($franchise) {
                 $schoolQuery->whereHas('franchises', fn ($q) => $q->where('franchises.id', $franchise->id));
             }
             $school = $schoolQuery->first();
+        }
+
+        if ($school && !$this->schoolId) {
+            $this->schoolId = $school->id;
         }
 
         if (!$school || UserService::isCanAccessImage($user, $school) === false) {
@@ -121,7 +125,7 @@ class PhotoGrid extends Component
             $this->filters['year'] = $year;
             $options = $imageService->getFolderForView2(
                 $year, 
-                $this->schoolKey,
+                $this->schoolId,
                 $this->category,
                 $this->tsAccountId
             )->values()->toArray();
@@ -143,7 +147,7 @@ class PhotoGrid extends Component
                 : [$view];
             $options = $imageService->getFoldersByTag(
                 $year, 
-                $this->schoolKey,
+                $this->schoolId,
                 $views,
                 $this->category,
                 $this->tsAccountId
@@ -195,7 +199,7 @@ class PhotoGrid extends Component
         $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
         $options = [
             'tsSeasonId' => $this->season,
-            'schoolKey' => $this->schoolKey,
+            'schoolId' => $this->schoolId,
             'folderKeys' => $keys,
             'searchTerm' => $this->search,
             'tsAccountId' => $this->tsAccountId,
@@ -282,7 +286,7 @@ class PhotoGrid extends Component
         
         switch ($this->category) {
             case PhotographyHelper::TAB_GROUPS:
-                $query = $imageService->getFoldersCollection($this->season, $this->schoolKey, $keys, $this->search, $this->tsAccountId);
+                $query = $imageService->getFoldersCollection($this->season, $this->schoolId, $keys, $this->search, $this->tsAccountId);
                 $query->join('images', function ($join) {
                     $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
                          ->on('images.keyvalue', '=', 'folders.ts_folderkey');
@@ -291,7 +295,7 @@ class PhotoGrid extends Component
             case PhotographyHelper::TAB_OTHERS:
             case PhotographyHelper::TAB_PORTRAITS:
             default:
-                return $imageService->getSubjectsWithImagesCount($this->season, $this->schoolKey, $keys, $this->search, $this->tsAccountId);
+                return $imageService->getSubjectsWithImagesCount($this->season, $this->schoolId, $keys, $this->search, $this->tsAccountId);
         }
     }
 

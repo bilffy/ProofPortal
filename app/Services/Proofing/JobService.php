@@ -39,14 +39,14 @@ class JobService
     public function getDashboardData($franchiseCode, $schoolKey = null)
     {
         $school = SchoolContextHelper::getSchool();
-        $selectedSchoolkey = $school ? $school->schoolkey : null;
+        $selectedSchoolId = $school ? $school->id : null;
 
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode, $selectedSchoolkey);
+        $activeSyncJobs = $this->getActiveSyncJobs($franchiseCode, $selectedSchoolId);
         $statuses = $this->statusService->getAllStatusData('id', 'status_internal_name', 'status_external_name')->get();
         $completedStatus = $this->statusService->completed;
-        $totalSchoolCount = $this->queryJobs($franchiseCode, $selectedSchoolkey)->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
+        $totalSchoolCount = $this->queryJobs($franchiseCode, $selectedSchoolId)->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
             ->where('job_users.user_id', Auth::user()->id)->count();
         $seasons = $this->seasonService->getAllSeasonDataForProofing('code', 'show_in_proofing', 'is_default', 'ts_season_id')->get();
         $schools = $this->schoolService->franchiseSchools($franchiseCode)->get();
@@ -76,12 +76,12 @@ class JobService
         );
     }
 
-    public function getActiveSyncJobs($franchiseCode, $schoolKey = null)
+    public function getActiveSyncJobs($franchiseCode, $schoolId = null)
     {
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
 
-        return $this->queryJobs($franchiseCode, $schoolKey)
+        return $this->queryJobs($franchiseCode, $schoolId)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->where('job_users.user_id', Auth::user()->id)
             ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
@@ -91,9 +91,17 @@ class JobService
 
     public function getActiveSyncJobsBySchoolkey($schoolkey)
     {
+        $school = \App\Models\School::where('schoolkey', $schoolkey)->first();
+
+        return $this->getActiveSyncJobsBySchoolId($school?->id);
+    }
+
+    public function getActiveSyncJobsBySchoolId(?int $schoolId)
+    {
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
-        return $this->queryJobs(null,$schoolkey)
+
+        return $this->queryJobs(null, $schoolId)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
             ->orderBy('jobs.id', 'asc')
@@ -128,14 +136,13 @@ class JobService
         ])->whereIn('ts_job_id', $TSJobIDs)->get()->keyBy('ts_job_id');
     }
 
-    public function toggleArchivedJobs($franchiseCode, $schoolKey, $includeArchived)
+    public function toggleArchivedJobs($franchiseCode, $schoolId, $includeArchived)
     {
         $archiveStatus = $this->statusService->archived;
         $tnjNotFound = $this->statusService->tnjNotFound;
         $deleted = $this->statusService->deleted;
 
-        $query = $this->queryJobs($franchiseCode,null)
-            ->where('jobs.ts_schoolkey', $schoolKey)
+        $query = $this->queryJobs($franchiseCode, $schoolId)
             ->where('job_users.user_id', Auth::user()->id);
 
         if ($includeArchived) {
@@ -206,14 +213,46 @@ class JobService
 
     public function getJobsBySeason($schoolkey, $seasonId)
     {
-        return $this->queryJobs(null,$schoolkey)
-        ->where([
-            ['jobs.ts_season_id', $seasonId],
-            ['jobs.jobsync_status_id', $this->statusService->sync],
-            ['jobs.foldersync_status_id', $this->statusService->completed]
-        ])
-        ->distinct()
-        ->orderBy('ts_jobname', 'asc');
+        $school = \App\Models\School::where('schoolkey', $schoolkey)->first();
+
+        return $this->getJobsBySeasonAndSchoolId($school?->id, $seasonId);
+    }
+
+    public function getJobsBySeasonAndSchoolId(?int $schoolId, $seasonId)
+    {
+        return $this->queryJobs(null, $schoolId)
+            ->where([
+                ['jobs.ts_season_id', $seasonId],
+                ['jobs.jobsync_status_id', $this->statusService->sync],
+                ['jobs.foldersync_status_id', $this->statusService->completed],
+            ])
+            ->distinct()
+            ->orderBy('ts_jobname', 'asc');
+    }
+
+    /**
+     * Stamp portal school ownership when a job is selected on Configure.
+     */
+    public function assignSchoolToJob(string $jobKey, int $schoolId): bool
+    {
+        $job = Job::withoutGlobalScopes()
+            ->where('ts_jobkey', $jobKey)
+            ->first();
+
+        if (!$job) {
+            return false;
+        }
+
+        // Already owned by this school — treat as success (MySQL would report 0 affected rows)
+        if ((int) $job->school_id === $schoolId) {
+            return true;
+        }
+
+        $updated = Job::withoutGlobalScopes()
+            ->where('ts_jobkey', $jobKey)
+            ->update(['school_id' => $schoolId]);
+
+        return $updated > 0;
     }
 
     public function getJobById($id)
@@ -274,37 +313,47 @@ class JobService
         }
     }
 
-    protected function queryJobs($franchiseCode = null, $schoolkey = null)
+    protected function queryJobs($franchiseCode = null, $schoolId = null)
     {
-        // Join school via franchise so duplicate schoolkeys across franchises
-        // do not multiply job rows (e.g. 27 schools sharing one schoolkey).
+        // Prefer jobs.school_id (unique portal ownership). schoolkey alone is not unique (e.g. DEMO).
         return Job::join('franchises', 'franchises.ts_account_id', '=', 'jobs.ts_account_id')
-        ->join('school_franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
-        ->join('schools', function ($join) {
-            $join->on('schools.id', '=', 'school_franchises.school_id')
-                ->on('schools.schoolkey', '=', 'jobs.ts_schoolkey');
-        })
-        ->join('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
-        ->leftJoin('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-        ->when($franchiseCode, fn($query) => $query->where('franchises.alphacode', $franchiseCode))
-        ->when($schoolkey, fn($query) => $query->where('jobs.ts_schoolkey', $schoolkey))
-        ->with(['reviewStatuses'])
-        ->select(
-            'jobs.id',
-            'jobs.ts_job_id',
-            'jobs.ts_season_id',
-            'jobs.ts_jobkey',
-            'jobs.ts_jobname',
-            'jobs.job_status_id',
-            'jobs.proof_start',
-            'jobs.proof_warning',
-            'jobs.proof_due',
-            'jobs.download_available_date',
-            'schools.name as school_name',
-            'seasons.ts_season_id as season_id',
-            'seasons.code as season_code',
-            'show_proofing'
-        );
+            ->leftJoin('schools', 'schools.id', '=', 'jobs.school_id')
+            ->join('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
+            ->leftJoin('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
+            ->when($franchiseCode, fn ($query) => $query->where('franchises.alphacode', $franchiseCode))
+            ->when($schoolId, function ($query) use ($schoolId) {
+                $school = \App\Models\School::find($schoolId);
+                $schoolKey = $school?->schoolkey ?? '';
+
+                // Configured for this school, or unassigned Timestone rows matching schoolkey
+                $query->where(function ($q) use ($schoolId, $schoolKey) {
+                    $q->where('jobs.school_id', $schoolId);
+                    if ($schoolKey !== '') {
+                        $q->orWhere(function ($unassigned) use ($schoolKey) {
+                            $unassigned->whereNull('jobs.school_id')
+                                ->where('jobs.ts_schoolkey', $schoolKey);
+                        });
+                    }
+                });
+            })
+            ->with(['reviewStatuses'])
+            ->select(
+                'jobs.id',
+                'jobs.ts_job_id',
+                'jobs.ts_season_id',
+                'jobs.ts_jobkey',
+                'jobs.ts_jobname',
+                'jobs.job_status_id',
+                'jobs.school_id',
+                'jobs.proof_start',
+                'jobs.proof_warning',
+                'jobs.proof_due',
+                'jobs.download_available_date',
+                'schools.name as school_name',
+                'seasons.ts_season_id as season_id',
+                'seasons.code as season_code',
+                'show_proofing'
+            );
     }
 }
 

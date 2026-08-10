@@ -25,18 +25,18 @@
     $isDisabledResolution = !$highResDownloadOptionValue || !$lowResDownloadOptionValue || !$screenQualityDownloadOptionValue;
 
     $school = SchoolContextHelper::getSchool();
-    $schoolKey = $school->schoolkey ?? '';
+    $schoolId = $school->id ?? null;
 
     $authUser = Auth::user();
-    $canDownloadPortraits = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_PORTRAIT);
-    $canDownloadGroups = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_GROUP);
-    $canDownloadOthers = DigitalDownloadPermissionHelper::canViewAndDownload($authUser, $school, DigitalDownloadPermissionHelper::FIELD_OTHER);
+    $canDownloadPortraits = DigitalDownloadPermissionHelper::canViewAndDownloadBySchoolId($authUser, $schoolId, DigitalDownloadPermissionHelper::FIELD_PORTRAIT);
+    $canDownloadGroups = DigitalDownloadPermissionHelper::canViewAndDownloadBySchoolId($authUser, $schoolId, DigitalDownloadPermissionHelper::FIELD_GROUP);
+    $canDownloadOthers = DigitalDownloadPermissionHelper::canViewAndDownloadBySchoolId($authUser, $schoolId, DigitalDownloadPermissionHelper::FIELD_OTHER);
 
     $imageService = new \App\Services\ImageService();
     $tsAccountId = $authUser?->getFranchise()?->ts_account_id;
-    $hasPortraits = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_PORTRAITS, $tsAccountId)->isNotEmpty();
-    $hasGroups = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_GROUPS, $tsAccountId)->isNotEmpty();
-    $hasOthers = $imageService->getAvailableYearsForSchool($schoolKey, \App\Helpers\PhotographyHelper::TAB_OTHERS, $tsAccountId)->isNotEmpty();
+    $hasPortraits = $imageService->getAvailableYearsForSchool($schoolId, \App\Helpers\PhotographyHelper::TAB_PORTRAITS, $tsAccountId)->isNotEmpty();
+    $hasGroups = $imageService->getAvailableYearsForSchool($schoolId, \App\Helpers\PhotographyHelper::TAB_GROUPS, $tsAccountId)->isNotEmpty();
+    $hasOthers = $imageService->getAvailableYearsForSchool($schoolId, \App\Helpers\PhotographyHelper::TAB_OTHERS, $tsAccountId)->isNotEmpty();
 @endphp
 
 @section('content')
@@ -264,7 +264,7 @@
             </x-slot>
         </x-modal.base>
         <input class="hidden" type="file" id="imgUploadInput" accept="image/*" />
-        @include('partials.photography.modals.lightbox-modal', ['schoolKey' => $schoolKey])
+        @include('partials.photography.modals.lightbox-modal', ['schoolId' => $schoolId])
     </div>
 @endsection
 
@@ -477,7 +477,6 @@
         window.localStorage.setItem('selectedLightboxImages', JSON.stringify([]));
         window.localStorage.setItem('selectMode', 'true');
         updateImageCheckboxes(true);
-        window.localStorage.removeItem('reloadPhotography');
         const tabs = document.querySelectorAll('.tab-button');
         const activeTabId = getActiveTabId();
         switch (activeTabId) {
@@ -491,60 +490,52 @@
                 debouncedSetCategory('OTHERS');
                 break;
         }
+
+        // After Configure folder changes, prompt refresh when landing on Portraits/Groups/Others
+        showConfigReloadModalIfNeeded(activeTabId);
+
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
                 const url = e.currentTarget.getAttribute('href');
+                const tabId = e.currentTarget.id;
                 history.pushState({ path: url }, '', url);
-                if (window.localStorage.getItem('reloadPhotography')) {
-                    confirmReloadPageModal.show();
-                    const reloadModal = document.getElementById('confirmReloadPageModal');
-                    const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
-                    // Reload when clicking close button
-                    reloadModalCloseBtn.addEventListener('click', () => {
-                        reloadPage();
-                    });
-                    // Reload when clicking outside of the modal
-                    document.addEventListener('click', (e) => {
-                        if (e.target === reloadModal) {
-                            reloadPage();
-                        }
-                    }, false);
-                } else {
-                    const tab = e.currentTarget.id;
-                    // Hide download section and search section when in configuration tab
-                    const downloadSection = document.querySelector('#download-section');
-                    const searchSection = document.querySelector('#search-section');
-                    
-                    const tabPermissions = {
-                        'portraits-tab': {{ ($canDownloadPortraits && $hasPortraits) ? 'true' : 'false' }},
-                        'groups-tab': {{ ($canDownloadGroups && $hasGroups) ? 'true' : 'false' }},
-                        'others-tab': {{ ($canDownloadOthers && $hasOthers) ? 'true' : 'false' }}
-                    };
-
-                    if ('configure-tab' == tab || 'configure-new-tab' == tab || !tabPermissions[tab]) {
-                        downloadSection.classList.add('hidden');
-                        searchSection.classList.add('hidden');
-                    } else {
-                        downloadSection.classList.remove('hidden');
-                        searchSection.classList.remove('hidden');
-                    }
-
-                    if ('configure-tab' != tab && 'configure-new-tab' != tab) {
-                        if ('portraits-tab' == tab) {
-                            if (typeof window.updateDownloadsForPortraits === 'function') window.updateDownloadsForPortraits(tab);
-                            setCategory('PORTRAITS');
-                        } else if ('groups-tab' == tab) {
-                            if (typeof window.updateDownloadsForGroups === 'function') window.updateDownloadsForGroups(tab);
-                            setCategory('GROUPS');
-                        } else if ('others-tab' == tab) {
-                            if (typeof window.updateDownloadsForOthers === 'function') window.updateDownloadsForOthers(tab);
-                            setCategory('OTHERS');
-                        }
-                    }
-                    // reset images selected
-                    resetImages();
+                if (showConfigReloadModalIfNeeded(tabId)) {
+                    return;
                 }
+
+                // Hide download section and search section when in configuration tab
+                const downloadSection = document.querySelector('#download-section');
+                const searchSection = document.querySelector('#search-section');
+                
+                const tabPermissions = {
+                    'portraits-tab': {{ ($canDownloadPortraits && $hasPortraits) ? 'true' : 'false' }},
+                    'groups-tab': {{ ($canDownloadGroups && $hasGroups) ? 'true' : 'false' }},
+                    'others-tab': {{ ($canDownloadOthers && $hasOthers) ? 'true' : 'false' }}
+                };
+
+                if (isConfigureTab(tabId) || !tabPermissions[tabId]) {
+                    downloadSection.classList.add('hidden');
+                    searchSection.classList.add('hidden');
+                } else {
+                    downloadSection.classList.remove('hidden');
+                    searchSection.classList.remove('hidden');
+                }
+
+                if (!isConfigureTab(tabId)) {
+                    if ('portraits-tab' == tabId) {
+                        if (typeof window.updateDownloadsForPortraits === 'function') window.updateDownloadsForPortraits(tabId);
+                        setCategory('PORTRAITS');
+                    } else if ('groups-tab' == tabId) {
+                        if (typeof window.updateDownloadsForGroups === 'function') window.updateDownloadsForGroups(tabId);
+                        setCategory('GROUPS');
+                    } else if ('others-tab' == tabId) {
+                        if (typeof window.updateDownloadsForOthers === 'function') window.updateDownloadsForOthers(tabId);
+                        setCategory('OTHERS');
+                    }
+                }
+                // reset images selected
+                resetImages();
             });
         });
 
@@ -729,12 +720,49 @@
 
     function updateSchoolConfig() {
         $('#configure-tab').text('Configure*');
-        $('#configure-new-tab').text('Configure');
-        window.localStorage.setItem('reloadPhotography', true);
+        $('#configure-new-tab').text('Configure*');
+        window.localStorage.setItem('reloadPhotography', 'true');
     }
 
     function reloadPage() {
+        window.localStorage.removeItem('reloadPhotography');
         window.location.reload();
+    }
+
+    function isConfigureTab(tabId) {
+        return tabId === 'configure-tab' || tabId === 'configure-new-tab';
+    }
+
+    function bindConfigReloadModalCloseHandlers() {
+        const reloadModal = document.getElementById('confirmReloadPageModal');
+        const reloadModalCloseBtn = document.getElementById('cls-btn-confirmReloadPageModal');
+        if (reloadModalCloseBtn && !reloadModalCloseBtn.dataset.reloadBound) {
+            reloadModalCloseBtn.dataset.reloadBound = '1';
+            reloadModalCloseBtn.addEventListener('click', () => {
+                reloadPage();
+            });
+        }
+        if (reloadModal && !reloadModal.dataset.reloadBound) {
+            reloadModal.dataset.reloadBound = '1';
+            document.addEventListener('click', (e) => {
+                if (e.target === reloadModal) {
+                    reloadPage();
+                }
+            }, false);
+        }
+    }
+
+    function showConfigReloadModalIfNeeded(tabId = null) {
+        if (!window.localStorage.getItem('reloadPhotography')) {
+            return false;
+        }
+        const activeTabId = tabId || getActiveTabId();
+        if (isConfigureTab(activeTabId)) {
+            return false;
+        }
+        confirmReloadPageModal.show();
+        bindConfigReloadModalCloseHandlers();
+        return true;
     }
 
     function updateFormatOptions(options) {
@@ -759,7 +787,7 @@
     const confirmDownloadModal = new Modal(document.getElementById('confirmDownloadModal'));
     const successDownloadModal = new Modal(document.getElementById('successDownloadModal'));
     const showOptionsDownloadModal = new Modal(document.getElementById('showOptionsDownloadModal'));
-    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'))
+    const confirmReloadPageModal = new Modal(document.getElementById('confirmReloadPageModal'));
     const downloadUnavailableModal = new Modal(document.getElementById('downloadUnavailableModal'));
     const replaceOrRemovePhotoModal = new Modal(document.getElementById('replaceOrRemovePhotoModal'));
     const confirmRemovePhotoModal = new Modal(document.getElementById('confirmRemovePhotoModal'));

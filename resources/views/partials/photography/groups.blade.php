@@ -6,10 +6,10 @@
     $category = PhotographyHelper::TAB_GROUPS;
     $imageService = new ImageService();
     $school = SchoolContextHelper::getSchool();
-    $schoolKey = $school->schoolkey ?? '';
+    $schoolId = $school->id ?? null;
     $tsAccountId = Auth::user()?->getFranchise()?->ts_account_id;
 
-    $groupYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category, $tsAccountId)->toArray();
+    $groupYearOptions = $imageService->getAvailableYearsForSchool($schoolId, $category, $tsAccountId)->toArray();
     $defaultSeasonId = empty($groupYearOptions) ? 0 : $groupYearOptions[0]->ts_season_id;
     $yearOptions = [];
     foreach ($groupYearOptions as $option) {
@@ -18,7 +18,7 @@
     $isSingleYear = count($yearOptions) === 1;
     
     $season = $defaultSeasonId;
-    $key = "photo-grid-groups-$schoolKey";
+    $key = "photo-grid-groups-$schoolId";
 @endphp
 
 <div class="relative">
@@ -42,7 +42,7 @@
             <x-form.select context="groups_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
         @if ($season)
-            <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+            <livewire:photography.photo-grid :$category :$season :$schoolId :key="$key"/>
         @else
             @php
                 $isFranchiseLevel = Auth::user()->isFranchiseLevel();

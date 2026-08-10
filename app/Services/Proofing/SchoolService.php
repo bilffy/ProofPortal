@@ -25,8 +25,8 @@ class SchoolService
         return School::with('details')->where('id', $schoolid);
     }
 
-    public function saveSchoolData($decryptedSchoolKey, $field, $data){
-        $school = School::where('schoolkey',$decryptedSchoolKey)->first();
+    public function saveSchoolData($schoolId, $field, $data){
+        $school = School::find($schoolId);
         if($school) {
             $school->$field = $data;
             $school->save();

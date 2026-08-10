@@ -7,7 +7,7 @@
         <table class=" w-full">
             <thead>
                 <x-table.headerCell sortable="{{ false }}">Folder</x-table.headerCell>
-                <x-table.headerCell sortable="{{ false }}">
+                <x-table.headerCell sortable="{{ false }}" :clickable="false">
                     <input type="checkbox"
                         class="mr-1"
                         id="set-is-visible-for-portrait"
@@ -16,7 +16,7 @@
                     Portraits Tab
                 </x-table.headerCell>
                 @if($groupsTabValue)
-                    <x-table.headerCell sortable="{{ false }}">
+                    <x-table.headerCell sortable="{{ false }}" :clickable="false">
                         <input type="checkbox"
                             class="mr-1"
                             id="set-is-visible-for-group"

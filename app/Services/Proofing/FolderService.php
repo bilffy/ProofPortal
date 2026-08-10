@@ -10,6 +10,7 @@ use App\Services\Proofing\EmailService;
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class FolderService
@@ -354,8 +355,69 @@ class FolderService
 
     public function updateFolderData($folderIds, $field, $value)
     {
-        $result = Folder::whereIn('ts_folder_id', $folderIds)
+        $resolvedIds = [];
+        foreach ((array) $folderIds as $folderId) {
+            if ($folderId === null || $folderId === '' || $folderId === 0 || $folderId === '0') {
+                continue;
+            }
+            if (is_numeric($folderId) && (int) $folderId > 0) {
+                $resolvedIds[] = (int) $folderId;
+                continue;
+            }
+            try {
+                $decrypted = $this->getDecryptData($folderId);
+                if ($decrypted !== null && $decrypted !== '' && is_numeric($decrypted) && (int) $decrypted > 0) {
+                    $resolvedIds[] = (int) $decrypted;
+                }
+            } catch (\Throwable $e) {
+                // Skip undecryptable ids
+            }
+        }
+
+        $folderIds = array_values(array_unique($resolvedIds));
+        if ($folderIds === []) {
+            return 0;
+        }
+
+        $allowedFields = [
+            'is_visible_for_portrait',
+            'is_visible_for_group',
+            'is_visible_for_proofing',
+            'is_subject_list_allowed',
+            'is_edit_portraits',
+            'is_edit_groups',
+            'is_edit_job_title',
+            'is_edit_salutation',
+            'is_edit_principal',
+            'is_edit_deputy',
+            'is_edit_teacher',
+            'is_locked',
+            'pre_catchup_visible_portrait',
+            'show_salutation_portraits',
+            'show_salutation_groups',
+            'show_prefix_suffix_portraits',
+            'show_prefix_suffix_groups',
+        ];
+
+        if (!in_array($field, $allowedFields, true)) {
+            return 0;
+        }
+
+        // Cast so request "0"/"1" and bool true/false all become 0/1
+        // Note: (bool)"0" is true in PHP — never use (bool) for form values
+        $value = (int) $value ? 1 : 0;
+
+        // Bypass Eloquent global scopes (franchise/school via job.school_id) — Configure already
+        // authorized these folder IDs. Query builder update is the reliable write path.
+        DB::table('folders')
+            ->whereIn('ts_folder_id', $folderIds)
             ->update([$field => $value]);
+
+        // Count rows that now hold the intended value (MySQL "affected rows" can be 0 if unchanged)
+        $result = (int) DB::table('folders')
+            ->whereIn('ts_folder_id', $folderIds)
+            ->where($field, $value)
+            ->count();
 
         // When proofing visibility changes, refresh pending invitation + proof schedule {#FOLDERS}
         if ($field === 'is_visible_for_proofing') {

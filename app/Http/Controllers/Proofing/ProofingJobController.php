@@ -168,9 +168,9 @@ class ProofingJobController extends Controller
     public function toggleArchived(Request $request)
     {
         $includeArchived = filter_var($request->get('includeArchived'), FILTER_VALIDATE_BOOLEAN);
-        $schoolKey = SchoolContextHelper::getSchool()?->schoolkey;
+        $schoolId = SchoolContextHelper::getSchool()?->id;
         $franchiseCode = Auth::user()->getSchoolOrFranchiseDetail()->alphacode;
-        $activeSyncJobs = $this->jobService->toggleArchivedJobs($franchiseCode, $schoolKey, $includeArchived);
+        $activeSyncJobs = $this->jobService->toggleArchivedJobs($franchiseCode, $schoolId, $includeArchived);
         return response()->json(['data' => $activeSyncJobs]);
     }
     
@@ -242,9 +242,18 @@ class ProofingJobController extends Controller
                     $selectedJob->refresh(); // Sync the model instance with the DB
                 }
 
-                $this->jobService->updateJobData($jobKey, 'proof_start', Carbon::now()->addDays(20)->setTime(9, 0, 0));
-                $this->jobService->updateJobData($jobKey, 'proof_warning', Carbon::now()->addDays(25)->setTime(9, 0, 0));
-                $this->jobService->updateJobData($jobKey, 'proof_due', Carbon::now()->addDays(30)->setTime(9, 0, 0));
+                // Only set default proof timeline dates when not already configured
+                $selectedJob->refresh();
+                $proofDateDefaults = [
+                    'proof_start' => Carbon::now()->addDays(20)->setTime(9, 0, 0),
+                    'proof_warning' => Carbon::now()->addDays(25)->setTime(9, 0, 0),
+                    'proof_due' => Carbon::now()->addDays(30)->setTime(9, 0, 0),
+                ];
+                foreach ($proofDateDefaults as $column => $defaultDate) {
+                    if (empty($selectedJob->$column)) {
+                        $this->jobService->updateJobData($jobKey, $column, $defaultDate);
+                    }
+                }
                 // $this->jobService->updateJobData($jobKey, 'proof_catchup', Carbon::now()->addDays(40)->setTime(9, 0, 0));
                 \Log::info('Proof date updated', ['jobKey' => $jobKey]);
             }

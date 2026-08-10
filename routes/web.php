@@ -117,6 +117,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     //Configure School - fetch jobs by season
         Route::get('/config-school/fetch-jobs', [SchoolConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
+        Route::post('/config-school/assign-job-school', [SchoolConfigureController::class, 'assignSchoolToJob'])->name('config-school-assign-job-school');
     //Configure School - get-job-details of job
         Route::post('/config-school/folder-config', [SchoolConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
     //Configure School - Submit

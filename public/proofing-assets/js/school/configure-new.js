@@ -1,4 +1,10 @@
-jQuery(document).ready(function ($) {
+// Capture jQuery NOW (proofing jquery.min.js + select2 plugin).
+// Vite's deferred bundle later overwrites window.jQuery/window.$ with a
+// different copy that does NOT have select2 — using that copy breaks events.
+var configureJQ = window.jQuery;
+var configure$ = configureJQ;
+
+configureJQ(document).ready(function ($) {
     $('#schoolName_picker').on('keyup change', function () {
         var schoolNameNew = $(this).val();
         const schoolKey = $('#schoolHash').val();
@@ -72,92 +78,173 @@ jQuery(document).ready(function ($) {
         return returnResponse;
     }
 
-    //Job Update
-    $(document).on('change', '.folder-details-is-visible-for-portrait', function () {
-        const checkedValue = $(this).is(':checked');
-        const newValue = checkedValue ? 1 : 0;
-        const folderId = $(this).attr('data-folder-id');
-        const field = "is_visible_for_portrait";
+    // Folder visibility (Portraits / Groups) — plain ts_folder_id; never re-fire job change
+    let jobsData = [];
+    let isBulkFolderVisibilityUpdate = false;
+
+    function normalizeJobFolders(folders) {
+        if (Array.isArray(folders)) {
+            return folders;
+        }
+        if (folders && typeof folders === 'object') {
+            return Object.values(folders);
+        }
+        return [];
+    }
+
+    function syncFolderVisibilityInJobsData(folderTsId, field, newValue) {
         const selectedJobKey = $('#select_job').val();
         const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-
-        if (selectedJob && selectedJob.Folders) {
-            const folderTsId = $(this).attr('data-ts-folder-id');
-            const selectedFolderName = $(this).attr('data-folder-name');
-            const selectedFolder = folderTsId
-                ? selectedJob.Folders.find(folder => String(folder.ts_folder_id) === String(folderTsId))
-                : selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
-
-            if (selectedFolder) {
-                selectedFolder.is_visible_for_portrait = newValue;
-            }
-
-            const anyVisible = selectedJob.Folders.some(f => f.is_visible_for_portrait == 1);
+        if (!selectedJob) {
+            return;
+        }
+        selectedJob.Folders = normalizeJobFolders(selectedJob.Folders);
+        const selectedFolder = selectedJob.Folders.find(
+            folder => String(folder.ts_folder_id) === String(folderTsId)
+        );
+        if (selectedFolder) {
+            selectedFolder[field] = newValue;
+        }
+        if (field === 'is_visible_for_portrait') {
+            const anyVisible = selectedJob.Folders.some(f => Number(f.is_visible_for_portrait) === 1);
             const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
-            if (anyVisible) {
-                jobOption.data('has-visible', true).attr('data-has-visible', 'true');
-            } else {
-                jobOption.data('has-visible', false).attr('data-has-visible', 'false');
-            }
-            $('#select_job').trigger('change.select2');
+            jobOption
+                .data('has-visible', !!anyVisible)
+                .attr('data-has-visible', anyVisible ? 'true' : 'false');
         }
+    }
 
-        sendFolderChanges(folderId, field, newValue);
-    });
-
-    $(document).on('change', '.folder-details-is-visible-for-group', function () {
-        const checkedValue = $(this).is(':checked');
-        const newValue = checkedValue ? 1 : 0;
-        const folderId = $(this).attr('data-folder-id');
-        const field = "is_visible_for_group";
-        const selectedJobKey = $('#select_job').val();
-        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-
-        if (selectedJob && selectedJob.Folders) {
-            const folderTsId = $(this).attr('data-ts-folder-id');
-            const selectedFolderName = $(this).attr('data-folder-name');
-            const selectedFolder = folderTsId
-                ? selectedJob.Folders.find(folder => String(folder.ts_folder_id) === String(folderTsId))
-                : selectedJob.Folders.find(folder => folder.ts_foldername === selectedFolderName);
-
-            if (selectedFolder) {
-                selectedFolder.is_visible_for_group = newValue;
-            }
+    function syncHeaderFolderCheckbox(checkboxClass, headerSelector) {
+        const $boxes = $('#folder_config tr.folder-row .' + checkboxClass);
+        if ($boxes.length === 0) {
+            return;
         }
-
-        sendFolderChanges(folderId, field, newValue);
-    });
+        const checkedCount = $boxes.filter(':checked').length;
+        $(headerSelector).prop('checked', checkedCount === $boxes.length);
+    }
 
     function sendFolderChanges(folderId, field, newData) {
-        return new Promise((resolve, reject) => {
-            const folderIdValue = Array.isArray(folderId) ? folderId.join(',') : folderId;
-            const formData = new FormData();
-            formData.append("field", field);
-            formData.append("newValue", newData);
-            formData.append("folderId", folderIdValue);
-            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+        const ids = (Array.isArray(folderId) ? folderId : [folderId])
+            .map((id) => String(id == null ? '' : id).trim())
+            .filter((id) => /^\d+$/.test(id));
 
-            $.ajax({
-                dataType: 'json',
-                type: "POST",
-                url: base_url + "/folder-change/submit",
-                async: true,
-                data: formData,
-                cache: false,
-                contentType: false,
-                processData: false,
-                timeout: 60000,
-                success: function (response) {
-                    window.updateSchoolConfig();
-                    resolve(response);
-                },
-                error: function (error) {
-                    console.error("Error updating job:", error);
-                    reject(error);
+        if (ids.length === 0) {
+            console.error('Folder update skipped: no valid folder id', folderId);
+            window.dispatchEvent(new CustomEvent('show-toast-message', {
+                detail: { status: 'error', message: 'Folder update failed: missing folder id.' }
+            }));
+            return $.Deferred().reject(new Error('No folder id provided')).promise();
+        }
+
+        return $.ajax({
+            dataType: 'json',
+            type: 'POST',
+            url: base_url + '/folder-change/submit',
+            data: {
+                field: field,
+                newValue: newData,
+                folderId: ids.join(','),
+                _token: $('meta[name="csrf-token"]').attr('content'),
+            },
+            timeout: 60000,
+        }).done(function (response) {
+            if (response && response.success === false) {
+                console.error('Folder update rejected:', response);
+                window.dispatchEvent(new CustomEvent('show-toast-message', {
+                    detail: {
+                        status: 'error',
+                        message: (response && response.message) || 'Folder visibility was not saved.'
+                    }
+                }));
+                return;
+            }
+            ids.forEach(function (id) {
+                if (field === 'is_visible_for_portrait') {
+                    $('#is-visible-for-portrait-' + id).attr('data-value', newData);
+                } else if (field === 'is_visible_for_group') {
+                    $('#is-visible-for-group-' + id).attr('data-value', newData);
                 }
             });
+            if (typeof window.updateSchoolConfig === 'function') {
+                window.updateSchoolConfig();
+            }
+        }).fail(function (error) {
+            console.error('Error updating folder:', error);
+            window.dispatchEvent(new CustomEvent('show-toast-message', {
+                detail: { status: 'error', message: 'Folder visibility update failed. Please try again.' }
+            }));
         });
     }
+
+    function handleBulkCheckboxChange(isChecked, checkboxClass, field) {
+        // Include all folder rows (do not use :visible — it can miss rows after filter/layout quirks)
+        const $boxes = $('#folder_config tr.folder-row .' + checkboxClass);
+        if ($boxes.length === 0) {
+            console.error('Bulk folder toggle: no checkboxes found for', checkboxClass);
+            return;
+        }
+
+        const newValue = isChecked ? 1 : 0;
+        const folderIdsToUpdate = [];
+
+        isBulkFolderVisibilityUpdate = true;
+        $boxes.each(function () {
+            this.checked = isChecked;
+            $(this).attr('data-value', newValue);
+            const folderTsId = $(this).attr('data-ts-folder-id');
+            if (folderTsId) {
+                folderIdsToUpdate.push(folderTsId);
+                syncFolderVisibilityInJobsData(folderTsId, field, newValue);
+            }
+        });
+        isBulkFolderVisibilityUpdate = false;
+
+        if (folderIdsToUpdate.length > 0) {
+            sendFolderChanges(folderIdsToUpdate, field, newValue);
+        }
+    }
+
+    $(document).on('change.folderVisibility', '#folder_config .folder-details-is-visible-for-portrait', function () {
+        if (isBulkFolderVisibilityUpdate) {
+            return;
+        }
+        const newValue = this.checked ? 1 : 0;
+        const folderTsId = this.getAttribute('data-ts-folder-id');
+        $(this).attr('data-value', newValue);
+        syncFolderVisibilityInJobsData(folderTsId, 'is_visible_for_portrait', newValue);
+        syncHeaderFolderCheckbox('folder-details-is-visible-for-portrait', '#set-is-visible-for-portrait');
+        sendFolderChanges(folderTsId, 'is_visible_for_portrait', newValue);
+    });
+
+    $(document).on('change.folderVisibility', '#folder_config .folder-details-is-visible-for-group', function () {
+        if (isBulkFolderVisibilityUpdate) {
+            return;
+        }
+        const newValue = this.checked ? 1 : 0;
+        const folderTsId = this.getAttribute('data-ts-folder-id');
+        $(this).attr('data-value', newValue);
+        syncFolderVisibilityInJobsData(folderTsId, 'is_visible_for_group', newValue);
+        syncHeaderFolderCheckbox('folder-details-is-visible-for-group', '#set-is-visible-for-group');
+        sendFolderChanges(folderTsId, 'is_visible_for_group', newValue);
+    });
+
+    $(document).on('change.folderVisibility', '#folder_config #set-is-visible-for-portrait', function (e) {
+        e.stopImmediatePropagation();
+        handleBulkCheckboxChange(
+            this.checked,
+            'folder-details-is-visible-for-portrait',
+            'is_visible_for_portrait'
+        );
+    });
+
+    $(document).on('change.folderVisibility', '#folder_config #set-is-visible-for-group', function (e) {
+        e.stopImmediatePropagation();
+        handleBulkCheckboxChange(
+            this.checked,
+            'folder-details-is-visible-for-group',
+            'is_visible_for_group'
+        );
+    });
 
     function sendJobChanges(jobKey, field, newData) {
         return new Promise((resolve, reject) => {
@@ -189,57 +276,201 @@ jQuery(document).ready(function ($) {
         });
     }
 
-    let jobsData = [];
-    $('#select_season').on('change', function () {
-        const selectedSeasonId = $(this).val();
+    function refreshJobSelect(jobs) {
+        const jobSelect = $('#select_job');
+        const wasSelect2 = jobSelect.hasClass('select2-hidden-accessible');
+
+        if (wasSelect2) {
+            jobSelect.select2('destroy');
+        }
+
+        jobSelect.empty().append('<option value="">Choose a Job</option>');
+
+        (jobs || []).forEach(function (job) {
+            const option = new Option(job.ts_jobname, job.ts_jobkey, false, false);
+            if (job.has_visible_portrait) {
+                option.setAttribute('data-has-visible', 'true');
+            }
+            jobSelect.append(option);
+        });
+
+        const formatJobResult = (job) => {
+            if (!job.id) return job.text;
+            const hasVisible = $(job.element).data('has-visible');
+            if (hasVisible) {
+                return $(`<div class="flex justify-between items-center w-full">
+                            <span>${job.text}</span>
+                            <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i>
+                          </div>`);
+            }
+            return job.text;
+        };
+
+        const formatJobSelection = (job) => {
+            if (!job.id) return job.text;
+            const hasVisible = $(job.element).data('has-visible');
+            if (hasVisible) {
+                return $(`<span>${job.text} <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i></span>`);
+            }
+            return job.text;
+        };
+
+        jobSelect.select2({
+            templateResult: formatJobResult,
+            templateSelection: formatJobSelection,
+            escapeMarkup: function (m) { return m; }
+        });
+
+        jobSelect.next('.select2-container').removeClass('d-none');
+        jobSelect.parent().show();
+    }
+
+    function onSeasonSelected() {
+        // Guard against change + native listener both firing
+        if (onSeasonSelected._running) {
+            return;
+        }
+        onSeasonSelected._running = true;
+        setTimeout(function () { onSeasonSelected._running = false; }, 50);
+
+        const $season = $('#select_season');
+        const selectedSeasonId = $season.val();
         const selectedSchoolKey = $('#schoolHash').val();
-        const selectedSeasonText = $(this).find('option:selected').text();
+        const selectedSeasonText = $season.find('option:selected').text();
         $('#SeasoncodeDisplay').text(' - ' + selectedSeasonText).removeClass('d-none');
         hideOrShowJobDependentSections(false);
 
         $('#digital_download').addClass('d-none');
         $('p.alert-message').remove();
+        $('#folder_config').empty();
 
-        if ('none' === selectedSeasonId) {
+        if (!selectedSeasonId || selectedSeasonId === 'none') {
             $('#select_job').parent().hide();
-        } else {
-            $('#select_job').parent().show();
+            $('#no-jobs-msg').addClass('d-none');
+            $('#job-select-loading').addClass('d-none');
+            return;
         }
 
-        if (selectedSeasonId && 'none' !== selectedSeasonId) {
-            $('#job-select-loading').removeClass('d-none'); // show loading spinner
-            $('#select_job').next(".select2-container").addClass('d-none'); // hide dropdown container
-            $('#no-jobs-msg').addClass('d-none'); // hide spinner
-            $.ajax({
-                url: base_url + '/config-school/fetch-jobs',
-                method: 'GET',
-                data: { ts_season_id: selectedSeasonId, schoolkey: selectedSchoolKey },
-                success: function (jobs) {
-                    jobsData = jobs;
-                    const jobSelect = $('#select_job');
-                    if (jobsData.length === 0) {
-                        $('#no-jobs-msg').removeClass('d-none');
-                        $('#select_job').next(".select2-container").addClass('d-none');
-                    } else {
-                        $('#no-jobs-msg').addClass('d-none');
-                        $('#select_job').next(".select2-container").removeClass('d-none');
-                        jobSelect.empty().append('<option value="">Choose a Job</option>');
+        $('#select_job').parent().show();
+        $('#job-select-loading').removeClass('d-none');
+        $('#select_job').next('.select2-container').addClass('d-none');
+        $('#no-jobs-msg').addClass('d-none');
 
-                        $.each(jobs, function (index, job) {
-                            const hasVisible = job.has_visible_portrait ? 'data-has-visible="true"' : '';
-                            jobSelect.append(`<option value="${job.ts_jobkey}" ${hasVisible}>${job.ts_jobname}</option>`);
-                        });
-                    }
-                    $('#job-select-loading').addClass('d-none'); // hide loading spinner
-                },
-                error: function (error) {
-                    console.error('Failed to fetch jobs.');
-                    console.error(error);
+        $.ajax({
+            url: base_url + '/config-school/fetch-jobs',
+            method: 'GET',
+            dataType: 'json',
+            data: { ts_season_id: selectedSeasonId, schoolkey: selectedSchoolKey },
+            success: function (jobs) {
+                jobsData = (Array.isArray(jobs) ? jobs : []).map(function (job) {
+                    job.Folders = normalizeJobFolders(job.Folders);
+                    return job;
+                });
+                $('#job-select-loading').addClass('d-none');
+
+                if (jobsData.length === 0) {
                     $('#no-jobs-msg').removeClass('d-none');
-                    $('#job-select-loading').addClass('d-none'); // hide loading spinner
+                    const jobSelect = $('#select_job');
+                    if (jobSelect.hasClass('select2-hidden-accessible')) {
+                        jobSelect.select2('destroy');
+                    }
+                    jobSelect.empty().append('<option value="">Choose a Job</option>');
+                    jobSelect.select2();
+                    jobSelect.next('.select2-container').addClass('d-none');
+                    return;
                 }
+
+                $('#no-jobs-msg').addClass('d-none');
+                refreshJobSelect(jobsData);
+            },
+            error: function (error) {
+                console.error('Failed to fetch jobs.', error);
+                jobsData = [];
+                $('#no-jobs-msg').removeClass('d-none');
+                $('#job-select-loading').addClass('d-none');
+                $('#select_job').next('.select2-container').addClass('d-none');
+            }
+        });
+    }
+
+    // Bind on the proofing jQuery instance (same one as select2), not window.$
+    // which Vite may have replaced. Only "change" — select2:select would double-fire.
+    $(document)
+        .off('change.configureSeason', '#select_season')
+        .on('change.configureSeason', '#select_season', onSeasonSelected);
+
+    // Native fallback — survives dual-jQuery / select2 trigger quirks
+    const seasonEl = document.getElementById('select_season');
+    if (seasonEl && !seasonEl.dataset.configureSeasonBound) {
+        seasonEl.dataset.configureSeasonBound = '1';
+        seasonEl.addEventListener('change', function () {
+            onSeasonSelected();
+        });
+    }
+
+    window.onConfigureSeasonSelected = onSeasonSelected;
+
+    // Init select2 with THIS jQuery ($) — the one that has the select2 plugin.
+    // Do not use window.$ here; Vite replaces it with a second jQuery copy.
+    (function initSelect2Widgets($) {
+        if (!$.fn.select2) {
+            console.error('Configure: select2 plugin missing on configure jQuery instance');
+            return;
+        }
+        const formatJobResult = (job) => {
+            if (!job.id) return job.text;
+            const hasVisible = $(job.element).data('has-visible');
+            if (hasVisible) {
+                return $(`<div class="flex justify-between items-center w-full">
+                            <span>${job.text}</span>
+                            <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i>
+                          </div>`);
+            }
+            return job.text;
+        };
+        const formatJobSelection = (job) => {
+            if (!job.id) return job.text;
+            const hasVisible = $(job.element).data('has-visible');
+            if (hasVisible) {
+                return $(`<span>${job.text} <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i></span>`);
+            }
+            return job.text;
+        };
+
+        if ($('#select_season').length) {
+            if ($('#select_season').hasClass('select2-hidden-accessible')) {
+                $('#select_season').select2('destroy');
+            }
+            $('#select_season').select2();
+        }
+        if ($('#select_job').length) {
+            if ($('#select_job').hasClass('select2-hidden-accessible')) {
+                $('#select_job').select2('destroy');
+            }
+            $('#select_job').select2({
+                templateResult: formatJobResult,
+                templateSelection: formatJobSelection,
+                escapeMarkup: function (m) { return m; }
             });
         }
+        if ($('#select_job_access_image').length) {
+            if ($('#select_job_access_image').hasClass('select2-hidden-accessible')) {
+                $('#select_job_access_image').select2('destroy');
+            }
+            $('#select_job_access_image').select2();
+        }
+        $('#select_job').parent().hide();
+        hideOrShowJobDependentSections(false);
+    })($);
+
+    const permissionCheckboxes = document.querySelectorAll('input[type="checkbox"].img-permission');
+    permissionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            const { model, field } = this.parentElement.dataset;
+            const role = this.value;
+            const checked = this.checked;
+            insertDigitalDownload(model, field, role, checked);
+        });
     });
 
     // Listen for changes in the input field value
@@ -256,7 +487,10 @@ jQuery(document).ready(function ($) {
     });
 
 
-    $('#select_job').on('change', function () {
+    // Job select change — same jQuery instance as select2
+    $(document)
+        .off('change.configureJob select2:select.configureJob', '#select_job')
+        .on('change.configureJob select2:select.configureJob', '#select_job', function () {
         const isGroupVisible = $("#is-group-visible").val();
         const selectedJobKey = $(this).val();
         $('#jobType, #digital_download').addClass('d-none');
@@ -268,6 +502,20 @@ jQuery(document).ready(function ($) {
         let groupDateToDisplay;
 
         if (selectedJob) {
+            // Stamp portal school ownership (school_id) for this job
+            const schoolHash = $('#schoolHash').val();
+            if (schoolHash && selectedJobKey) {
+                $.ajax({
+                    url: base_url + '/config-school/assign-job-school',
+                    method: 'POST',
+                    data: { jobKey: selectedJobKey, schoolKey: schoolHash },
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    error: function () {
+                        console.error('Failed to assign school to job.');
+                    }
+                });
+            }
+
             $('#jobType, #digital_download').removeClass('d-none');
 
             if (selectedJob.download_available_date !== null) {
@@ -332,6 +580,7 @@ jQuery(document).ready(function ($) {
                 $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please set your Digital Download Date.</p>');
             }
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
+            selectedJob.Folders = normalizeJobFolders(selectedJob.Folders);
             $.ajax({
                 url: base_url + '/config-school/folder-config',
                 method: 'POST',
@@ -343,6 +592,8 @@ jQuery(document).ready(function ($) {
                     if (response.html) {
                         $('#folder_config').html(response.html); // Correctly insert the HTML from the response
                         $("#select_job_access_image").trigger('change');
+                        syncHeaderFolderCheckbox('folder-details-is-visible-for-portrait', '#set-is-visible-for-portrait');
+                        syncHeaderFolderCheckbox('folder-details-is-visible-for-group', '#set-is-visible-for-group');
                     }
                     hideOrShowJobDependentSections(true);
                 },
@@ -388,65 +639,6 @@ jQuery(document).ready(function ($) {
             setTimeout(checkVisibleRows, 500);
         }
     });
-
-    function handleBulkCheckboxChange(isChecked, checkboxClass, field) {
-        const selectedJobType = $('#select_job_access_image').val() || 'all';
-        const targetRows = selectedJobType !== 'all' ? document.querySelectorAll(`tr[data-tagid="${selectedJobType}"]`) : [document];
-        const folderIdsToUpdate = [];
-        const newValue = isChecked ? 1 : 0;
-        const selectedJobKey = $('#select_job').val();
-        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-
-        targetRows.forEach(function (row) {
-            const checkboxes = row.querySelectorAll(`.${checkboxClass}`);
-            checkboxes.forEach(function (checkbox) {
-                if (checkbox.checked !== isChecked) {
-                    checkbox.checked = isChecked;
-                    // Note: We don't trigger 'change' here to avoid individual AJAX spam
-                    const folderId = checkbox.getAttribute('data-folder-id');
-                    const folderTsId = checkbox.getAttribute('data-ts-folder-id');
-                    const folderName = checkbox.getAttribute('data-folder-name');
-                    folderIdsToUpdate.push(folderId);
-
-                    if (selectedJob && selectedJob.Folders) {
-                        const selectedFolder = folderTsId
-                            ? selectedJob.Folders.find(f => String(f.ts_folder_id) === String(folderTsId))
-                            : selectedJob.Folders.find(f => f.ts_foldername === folderName);
-                        if (selectedFolder) {
-                            selectedFolder[field] = newValue;
-                        }
-                    }
-                }
-            });
-        });
-
-        if (folderIdsToUpdate.length > 0) {
-            sendFolderChanges(folderIdsToUpdate, field, newValue);
-
-            // Update the green checkmark for the current job in real-time
-            if (field === 'is_visible_for_portrait' && selectedJob && selectedJob.Folders) {
-                const anyVisible = selectedJob.Folders.some(f => f.is_visible_for_portrait == 1);
-                const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
-
-                if (anyVisible) {
-                    jobOption.data('has-visible', true).attr('data-has-visible', 'true');
-                } else {
-                    jobOption.data('has-visible', false).attr('data-has-visible', 'false');
-                }
-                // Refresh select2 to show/hide the tick if needed
-                $('#select_job').trigger('change.select2');
-            }
-        }
-    }
-
-    $(document).on('change', '#set-is-visible-for-portrait', function () {
-        handleBulkCheckboxChange(this.checked, 'folder-details-is-visible-for-portrait', 'is_visible_for_portrait');
-    });
-
-    $(document).on('change', '#set-is-visible-for-group', function () {
-        handleBulkCheckboxChange(this.checked, 'folder-details-is-visible-for-group', 'is_visible_for_group');
-    });
-
 
     // Delete link functionality
     $('#deleteSchoolLogo').click(function (event) {
@@ -704,49 +896,3 @@ function hideOrShowJobDependentSections(show) {
         action();
     }
 }
-
-// Checkbox in Notification Email
-document.addEventListener("DOMContentLoaded", function () {
-    const formatJobResult = (job) => {
-        if (!job.id) return job.text;
-        const hasVisible = $(job.element).data('has-visible');
-        if (hasVisible) {
-            return $(`<div class="flex justify-between items-center w-full">
-                        <span>${job.text}</span>
-                        <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i>
-                      </div>`);
-        }
-        return job.text;
-    };
-
-    const formatJobSelection = (job) => {
-        if (!job.id) return job.text;
-        const hasVisible = $(job.element).data('has-visible');
-        if (hasVisible) {
-            return $(`<span>${job.text} <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i></span>`);
-        }
-        return job.text;
-    };
-
-    $("#select_season").select2();
-    $("#select_job").select2({
-        templateResult: formatJobResult,
-        templateSelection: formatJobSelection,
-        escapeMarkup: function (m) { return m; }
-    });
-    $("#select_job_access_image").select2();
-    $('#select_job').parent().hide();
-    hideOrShowJobDependentSections(false);
-    // Select all checkbox inputs with the class 'img-permission'
-    const permissionCheckboxes = document.querySelectorAll('input[type="checkbox"].img-permission');
-    // Add an 'onchange' event listener to each checkbox
-    permissionCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-            const { model, field } = this.parentElement.dataset;
-            const role = this.value;
-            const checked = this.checked;
-
-            insertDigitalDownload(model, field, role, checked);
-        });
-    });
-});

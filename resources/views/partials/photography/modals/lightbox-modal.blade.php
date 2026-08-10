@@ -1,7 +1,7 @@
 @props([
     'title' => "Lightbox Modal",
     'subject' => null,
-    'schoolKey' => '',
+    'schoolId' => null,
     'externalSubjectId' => null,
     'isLightbox' => true, //CODE BY IT
 ])
@@ -25,7 +25,7 @@
                     </div>
                 </div>
             @endif {{-- CODE BY IT --}}
-            <livewire:photography.lightbox :$subject :$schoolKey :$externalSubjectId/>
+            <livewire:photography.lightbox :$subject :$schoolId :$externalSubjectId/>
         </x-modal.body>
     </x-slot>
 </x-modal.lightbox>

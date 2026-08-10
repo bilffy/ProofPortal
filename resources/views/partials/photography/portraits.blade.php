@@ -6,10 +6,10 @@
     $category = PhotographyHelper::TAB_PORTRAITS;
     $imageService = new ImageService();
     $school = SchoolContextHelper::getSchool();
-    $schoolKey = $school->schoolkey ?? '';
+    $schoolId = $school->id ?? null;
     $tsAccountId = Auth::user()?->getFranchise()?->ts_account_id;
 
-    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolKey, $category, $tsAccountId)->toArray();
+    $portraitYearOptions = $imageService->getAvailableYearsForSchool($schoolId, $category, $tsAccountId)->toArray();
     $defaultSeasonId = empty($portraitYearOptions) ? 0 : $portraitYearOptions[0]->ts_season_id;
     $yearOptions = [];
     foreach ($portraitYearOptions as $option) {
@@ -18,7 +18,7 @@
     $isSingleYear = count($yearOptions) === 1;
 
     $season = $defaultSeasonId;
-    $key = "photo-grid-portraits-$schoolKey";
+    $key = "photo-grid-portraits-$schoolId";
 @endphp
 <!-- Code By IT -->
 <style>
@@ -140,7 +140,7 @@
             </div>
         </div>
         @if ($season)
-            <livewire:photography.photo-grid :$category :$season :$schoolKey :key="$key"/>
+            <livewire:photography.photo-grid :$category :$season :$schoolId :key="$key"/>
         @else
             @php
                 $isFranchiseLevel = Auth::user()->isFranchiseLevel();

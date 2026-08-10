@@ -92,26 +92,30 @@ class SchoolConfigureController extends Controller
     public function configSchoolFetchJobs(Request $request)
     {
         $decryptedSeasonID = $this->getDecryptData($request->ts_season_id);
-        $decryptedSchoolkey = $this->getDecryptData($request->schoolkey);
+        // schoolHash now carries schools.id (not schoolkey)
+        $schoolId = (int) $this->getDecryptData($request->schoolkey);
 
-        // Fetch all jobs by season and schoolkey
-        $jobs = $this->jobService->getJobsBySeason($decryptedSchoolkey, $decryptedSeasonID)->where('show_portal',1)
-        ->get();
+        if ($schoolId <= 0 || empty($decryptedSeasonID)) {
+            return response()->json([]);
+        }
+
+        $jobs = $this->jobService->getJobsBySeasonAndSchoolId($schoolId, $decryptedSeasonID)
+            ->where('jobs.show_portal', 1)
+            ->get();
 
         // Fetch folder/subject/image relations for all jobs in one batched query
         $jobsWithRelationsById = $this->jobService->getJobsByTSJobIDs($jobs->pluck('ts_job_id')->all());
 
         // Map through all jobs to get the job details along with folders and associated data
         $jobsWithDetails = $jobs->map(function ($job) use ($jobsWithRelationsById) {
-            // Initialize $selectedFolders as an empty array
             $selectedFolders = [];
+            $jobWithRelations = $jobsWithRelationsById->get($job->ts_job_id) ?? $job;
 
-            $jobWithRelations = $jobsWithRelationsById->get($job->ts_job_id);
-
-            if ($jobWithRelations->folders->isNotEmpty()) {
-                $selectedFolders =$jobWithRelations->folders
+            if ($jobWithRelations->relationLoaded('folders') && $jobWithRelations->folders->isNotEmpty()) {
+                $selectedFolders = $jobWithRelations->folders
                 ->filter(function ($folder) {
-                    return !is_null($folder->ts_folderkey);
+                    return !is_null($folder->ts_folderkey)
+                        && (int) ($folder->is_deleted ?? 0) !== 1;
                 })
                 ->map(function ($folder) {
                     $folderWithImage = $folder->images ?? collect();
@@ -127,7 +131,7 @@ class SchoolConfigureController extends Controller
                     return [
                         'ts_foldername' => $folder->portal_ts_foldername,
                         'ts_folder_id' => $folder->ts_folder_id,
-                        'tag' => $folder->folderTags->external_name ?? null, // Handle null if folderTags is empty
+                        'tag' => $folder->folderTags->external_name ?? null,
                         'is_visible_for_portrait' => $folder->is_visible_for_portrait,
                         'is_visible_for_group' => $folder->is_visible_for_group,
                         'groupCount' => is_countable($folderWithImage) ? $folderWithImage->count() : 0,
@@ -137,17 +141,16 @@ class SchoolConfigureController extends Controller
                 })->toArray();
             }
 
-            // Prepare job details for each job
             return [
                 'ts_jobkey' => Crypt::encryptString($jobWithRelations->ts_jobkey),
                 'ts_jobname' => $jobWithRelations->ts_jobname,
-                'download_available_date' => $jobWithRelations->download_available_date,
-                'portrait_download_date' => $jobWithRelations->portrait_download_date,
-                'group_download_date' => $jobWithRelations->group_download_date,
+                'download_available_date' => $jobWithRelations->download_available_date ?? null,
+                'portrait_download_date' => $jobWithRelations->portrait_download_date ?? null,
+                'group_download_date' => $jobWithRelations->group_download_date ?? null,
                 'has_visible_portrait' => !empty($selectedFolders) && collect($selectedFolders)->contains('is_visible_for_portrait', 1),
                 'Folders' => $selectedFolders
             ];
-        });
+        })->values();
 
         return response()->json($jobsWithDetails);
     }
@@ -168,8 +171,8 @@ class SchoolConfigureController extends Controller
 
     public function configSchoolChangeUpdate(Request $request)
     {
-        $decryptedSchoolKey = $this->getDecryptData($request->schoolKey);
-        $this->schoolService->saveSchoolData($decryptedSchoolKey, $request->field, $request->newData);
+        $schoolId = (int) $this->getDecryptData($request->schoolKey);
+        $this->schoolService->saveSchoolData($schoolId, $request->field, $request->newData);
         return response()->json(['success' => true]);
     }
 
@@ -182,10 +185,10 @@ class SchoolConfigureController extends Controller
             'schoolLogo' => $imageValidator, // Require an image of specific types and size limit
         ]);
     
-        $decryptedSchoolKey = $this->getDecryptData($request->schoolKey);
-        $school = School::with('franchises')->where('schoolkey', $decryptedSchoolKey)->firstOrFail();
+        $schoolId = (int) $this->getDecryptData($request->schoolKey);
+        $school = School::with('franchises')->findOrFail($schoolId);
 
-        $this->deleteExistingLogo($decryptedSchoolKey);
+        $this->deleteExistingLogo($schoolId);
 
         if ($request->hasFile('schoolLogo')) {
             $uploadedFile = $request->file('schoolLogo');
@@ -207,7 +210,7 @@ class SchoolConfigureController extends Controller
                 ], 500);
             }
 
-            $this->schoolService->saveSchoolData($decryptedSchoolKey, 'school_logo', $filename);
+            $this->schoolService->saveSchoolData($schoolId, 'school_logo', $filename);
 
             ActivityLogHelper::log(LogConstants::UPLOAD_SCHOOL_LOGO, [
                 'file_name' => $filename,
@@ -230,23 +233,21 @@ class SchoolConfigureController extends Controller
     
     public function deleteSchoolLogo(Request $request)
     {
-        $decryptedSchoolKey = $this->getDecryptData($request->schoolKey);
-        if ($this->deleteExistingLogo($decryptedSchoolKey)) {
+        $schoolId = (int) $this->getDecryptData($request->schoolKey);
+        if ($this->deleteExistingLogo($schoolId)) {
             return response()->json(['success' => true, 'message' => 'School logo deleted successfully.']);
         }
         return response()->json(['success' => false, 'message' => 'No logo found to delete.'], 404);
     }
     
     // Helper method to delete an existing logo
-    private function deleteExistingLogo($schoolKey)
+    private function deleteExistingLogo(int $schoolId)
     {
-        $selectedSchool = School::with('franchises')
-            ->where('schoolkey', $schoolKey)
-            ->first();
+        $selectedSchool = School::with('franchises')->find($schoolId);
 
         if ($selectedSchool && $selectedSchool->school_logo) {
             SchoolLogoHelper::delete($selectedSchool, $selectedSchool->school_logo);
-            $this->schoolService->saveSchoolData($schoolKey, 'school_logo', null);
+            $this->schoolService->saveSchoolData($schoolId, 'school_logo', null);
 
             return true;
         }
@@ -301,23 +302,30 @@ class SchoolConfigureController extends Controller
     {
         $digital_download_permission = $request->input('digital_download_permission', []);
         $digital_download_notification = $request->input('digital_download_notification', []);
-        $decryptedSchoolKey = $this->getDecryptData($request->input('schoolKey'));
-        $school = School::where('schoolkey',$decryptedSchoolKey)->first();
-        $schoolData = json_decode($school->digital_download_permission_notification, true);
-        // Prepare the matrix for digital_download_notification and digital_download_permission
+
+        // schoolHash carries schools.id (not schoolkey — keys are not unique per franchise)
+        try {
+            $schoolId = (int) $this->getDecryptData($request->input('schoolKey'));
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Invalid school.'], 422);
+        }
+
+        if ($schoolId <= 0) {
+            return response()->json(['success' => false, 'message' => 'Missing school id.'], 422);
+        }
+
+        $school = School::findOrFail($schoolId);
+        $schoolData = json_decode($school->digital_download_permission_notification, true) ?: [];
         $notificationsMatrix = [
             'digital_download_permission' => array_replace_recursive($schoolData['digital_download_permission'] ?? [], $this->convertStringToBoolean($digital_download_permission)),
-            'digital_download_notification' => array_replace_recursive($schoolData['digital_download_notification'] ?? [], $this->convertStringToBoolean($digital_download_notification))
-            // 'digital_download_permission' => $this->processDigitalDownload($digital_download_permission),
-            // 'digital_download_notification' => $this->processDigitalDownload($digital_download_notification)
+            'digital_download_notification' => array_replace_recursive($schoolData['digital_download_notification'] ?? [], $this->convertStringToBoolean($digital_download_notification)),
         ];
         
-        $this->schoolService->saveSchoolData($decryptedSchoolKey, 'digital_download_permission_notification', json_encode($notificationsMatrix));
-        $school = School::where('schoolkey',$decryptedSchoolKey)->first();
-        // Log UPDATE_SCHOOL_DOWNLOAD_PERMISSIONS activity
+        $this->schoolService->saveSchoolData($schoolId, 'digital_download_permission_notification', json_encode($notificationsMatrix));
+        $school = School::find($schoolId);
         ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_DOWNLOAD_PERMISSIONS, [
             'school' => $school->id,
-            'school_key' => $decryptedSchoolKey,
+            'school_key' => $school->schoolkey,
             'digital_download_permission_notification' => $notificationsMatrix,
         ]);
         
@@ -362,10 +370,12 @@ class SchoolConfigureController extends Controller
 
         $thisJob = $this->jobService->getJobByJobKey($decryptedJobKey)->first();
         
-        $school = School::where('schoolkey', $thisJob->ts_schoolkey)->first();
+        $school = $thisJob->school_id
+            ? School::find($thisJob->school_id)
+            : School::where('schoolkey', $thisJob->ts_schoolkey)->first();
         // Log UPDATE_SCHOOL_DOWNLOAD_TIMELINE_CONFIG activity
         ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_DOWNLOAD_TIMELINE_CONFIG, [
-            'school' => $school->id,
+            'school' => $school?->id,
             'school_key' => $thisJob->ts_schoolkey,
             'job_id' => $thisJob->ts_job_id,
             $request->field => $parsedDate->format('Y-m-d H:i:s'),
@@ -374,32 +384,95 @@ class SchoolConfigureController extends Controller
         return response()->json(['success' => true, 'message' => 'Job updated successfully.']);
     }
 
+    /**
+     * Stamp jobs.school_id when a job is selected on Configure.
+     */
+    public function assignSchoolToJob(Request $request)
+    {
+        try {
+            $jobKey = $this->getDecryptData($request->input('jobKey'));
+            $schoolId = (int) $this->getDecryptData($request->input('schoolKey'));
+        } catch (\Throwable $e) {
+            Log::warning('assignSchoolToJob decrypt failed', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Invalid job or school.'], 422);
+        }
+
+        if (!$jobKey || !$schoolId) {
+            return response()->json(['success' => false, 'message' => 'Missing job or school.'], 422);
+        }
+
+        $assigned = $this->jobService->assignSchoolToJob($jobKey, $schoolId);
+
+        if (!$assigned) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Job not found or could not be updated.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'School assigned to job.',
+        ]);
+    }
+
     public function configSchoolFolderChangeUpdate(Request $request)
     {
         $school = SchoolContextHelper::getCurrentSchoolContext();
-        $folderIds = array_filter(array_map('trim', explode(',', (string) $request->folderId)));
-        $decryptedFolderId = [];
+        $rawFolderIds = array_filter(array_map('trim', explode(',', (string) $request->folderId)));
+        $folderIds = [];
 
-        foreach ($folderIds as $folderId) {
-            $decryptedFolderId[] = $this->getDecryptData($folderId);
-        }
+        foreach ($rawFolderIds as $folderId) {
+            // Prefer plain ts_folder_id from Configure UI (avoids encrypt/decrypt issues)
+            if (ctype_digit((string) $folderId)) {
+                $folderIds[] = (int) $folderId;
+                continue;
+            }
 
-        if ($decryptedFolderId !== []) {
-            $this->folderService->updateFolderData($decryptedFolderId, $request->field, $request->newValue);
-
-            $folder = Folder::where('ts_folder_id', $decryptedFolderId[0])->first();
-            if ($folder) {
-                ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_FOLDER_CONFIG, [
-                    'school' => $school->id,
-                    'school_key' => $school->schoolkey,
-                    'job_id' => $folder->ts_job_id,
-                    'folder_key' => $folder->ts_folderkey,
-                    $request->field => $request->newValue,
+            try {
+                $decrypted = $this->getDecryptData($folderId);
+                if ($decrypted !== null && $decrypted !== '' && ctype_digit((string) $decrypted)) {
+                    $folderIds[] = (int) $decrypted;
+                }
+            } catch (\Throwable $e) {
+                Log::error('Folder visibility update decrypt failed', [
+                    'folderId' => $folderId,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
 
-        return response()->json(['success' => true, 'message' => 'Folder updated successfully.']);
+        $folderIds = array_values(array_unique($folderIds));
+
+        if ($folderIds === []) {
+            return response()->json(['success' => false, 'message' => 'No valid folders provided.'], 422);
+        }
+
+        $updated = $this->folderService->updateFolderData(
+            $folderIds,
+            $request->input('field'),
+            $request->input('newValue')
+        );
+
+        $folder = Folder::withoutGlobalScopes()
+            ->where('ts_folder_id', $folderIds[0])
+            ->first();
+
+        if ($folder && $school) {
+            ActivityLogHelper::log(LogConstants::UPDATE_SCHOOL_FOLDER_CONFIG, [
+                'school' => $school->id,
+                'school_key' => $school->schoolkey,
+                'job_id' => $folder->ts_job_id,
+                'folder_key' => $folder->ts_folderkey,
+                $request->input('field') => $request->input('newValue'),
+            ]);
+        }
+
+        return response()->json([
+            'success' => $updated > 0,
+            'message' => $updated > 0 ? 'Folder updated successfully.' : 'No folders were updated.',
+            'updated' => $updated,
+        ]);
     }
 
 }

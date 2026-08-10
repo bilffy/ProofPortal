@@ -24,6 +24,7 @@ class Job extends Model
         'ts_jobkey',
         'ts_jobname',
         'ts_schoolkey',
+        'school_id',
         'jobsync_status_id',
         'foldersync_status_id',
         'imagesync_status_id',
@@ -75,9 +76,16 @@ class Job extends Model
     public function seasons(){
         return $this->belongsTo('App\Models\Season', 'ts_season_id','ts_season_id');
     }
-    //School Table
-    public function schools(){
-        return $this->belongsTo('App\Models\School', 'ts_schoolkey','schoolkey');
+    //School Table — portal ownership (unique per school; schoolkey is not unique)
+    public function school()
+    {
+        return $this->belongsTo(School::class, 'school_id');
+    }
+
+    /** @deprecated Prefer school() via school_id — schoolkey is shared across schools (e.g. DEMO). */
+    public function schools()
+    {
+        return $this->belongsTo('App\Models\School', 'ts_schoolkey', 'schoolkey');
     }
     //Franchise Table
     public function franchises(){

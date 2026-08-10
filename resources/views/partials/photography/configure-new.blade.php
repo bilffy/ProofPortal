@@ -48,19 +48,19 @@
     ];
 
     $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
-    $decryptedSchoolKey = $schoolContext?->schoolkey;
-    $selectedSchool = $decryptedSchoolKey
-        ? $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first()
+    $selectedSchool = $schoolContext
+        ? $schoolService->getSchoolById($schoolContext->id)->with('franchises')->first()
         : null;
     $filePath = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
         $filePath = SchoolLogoHelper::relativePath($selectedSchool, $selectedSchool->school_logo);
     }
-    $hash = $decryptedSchoolKey ? Crypt::encryptString($decryptedSchoolKey) : '';
+    // schoolHash carries schools.id (portal ownership); schoolkey alone is not unique
+    $hash = $selectedSchool ? Crypt::encryptString((string) $selectedSchool->id) : '';
     $encryptedPath = $filePath !== '' ? Crypt::encryptString($filePath) : '';
     $seasons = $seasonService->getAllSeasonDataForPortal('code', 'show_in_proofing', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
-    $syncJobsbySchoolkey = $decryptedSchoolKey
-        ? $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey)
+    $syncJobsbySchoolkey = $selectedSchool
+        ? $jobService->getActiveSyncJobsBySchoolId($selectedSchool->id)
         : collect();
     $selectedFolders = [];
 
@@ -298,9 +298,6 @@
 </div>
 
 @push('scripts')
-<script type="module">
-    jQuery.noConflict();
-</script>
 <script src="{{ URL::asset('proofing-assets/vendors/moment/moment.js') }}"></script>
 <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>
 {{-- <script src="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/js/bootstrap-multiselect.js') }}"></script> --}}

@@ -35,19 +35,20 @@
         'teacher' => 'Teacher',
     ];
 
-    $decryptedSchoolKey = SchoolContextHelper::getCurrentSchoolContext()?->schoolkey;
-    $selectedSchool = $decryptedSchoolKey
-        ? $schoolService->getSchoolBySchoolKey($decryptedSchoolKey)->with('franchises')->first()
+    // Prefer schools.id — schoolkey alone is not unique across schools in a franchise
+    $schoolContext = SchoolContextHelper::getCurrentSchoolContext();
+    $selectedSchool = $schoolContext
+        ? $schoolService->getSchoolById($schoolContext->id)->with('franchises')->first()
         : null;
     $filePath = '';
     if ($selectedSchool && $selectedSchool->school_logo) {
         $filePath = SchoolLogoHelper::relativePath($selectedSchool, $selectedSchool->school_logo);
     }
-    $hash = $decryptedSchoolKey ? Crypt::encryptString($decryptedSchoolKey) : '';
+    $hash = $selectedSchool ? Crypt::encryptString((string) $selectedSchool->id) : '';
     $encryptedPath = $filePath !== '' ? Crypt::encryptString($filePath) : '';
     $seasons = $seasonService->getAllSeasonDataForPortal('code', 'show_in_proofing', 'is_default', 'ts_season_id')->orderby('code','desc')->get();
-    $syncJobsbySchoolkey = $decryptedSchoolKey
-        ? $jobService->getActiveSyncJobsBySchoolkey($decryptedSchoolKey)
+    $syncJobsbySchoolkey = $selectedSchool
+        ? $jobService->getActiveSyncJobsBySchoolId($selectedSchool->id)
         : collect();
     $selectedFolders = [];
 
