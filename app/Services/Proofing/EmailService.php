@@ -209,6 +209,116 @@ class EmailService
     }
 
     /**
+     * When jobs.proof_due changes, rebuild pending proof_start / proof_warning / proof_catchup
+     * email bodies so {REVIEW_DUE} matches the new due date. Does not create new rows or
+     * change sentdate.
+     *
+     * @param  mixed  $proofDueDate  Optional override (e.g. the date just saved); falls back to job.proof_due
+     */
+    public function refreshReviewDueInPendingProofEmails(string $jobKey, $proofDueDate = null): int
+    {
+        $job = Job::with(['franchises', 'folders'])
+            ->where('ts_jobkey', $jobKey)
+            ->first();
+
+        if (!$job) {
+            return 0;
+        }
+
+        if ($proofDueDate !== null && $proofDueDate !== '') {
+            $job->proof_due = $proofDueDate;
+        }
+
+        if (empty($job->proof_due)) {
+            return 0;
+        }
+
+        $templates = Template::whereIn('template_name', ['proof_start', 'proof_warning', 'proof_catchup'])
+            ->get()
+            ->keyBy('id');
+
+        if ($templates->isEmpty()) {
+            return 0;
+        }
+
+        $pendingEmails = Email::where('ts_jobkey', $jobKey)
+            ->whereIn('template_id', $templates->keys())
+            ->where('status_id', $this->statusService->pending)
+            ->get();
+
+        if ($pendingEmails->isEmpty()) {
+            return 0;
+        }
+
+        $authUser = Auth::user();
+        if (!$authUser) {
+            return 0;
+        }
+
+        $reviewDue = Carbon::parse($job->proof_due)->format('l j F, Y');
+        $allJobFolders = $this->getVisibleProofingFolderNames($job->folders);
+        $usersByEmail = User::whereIn(
+            'email',
+            $pendingEmails->pluck('email_to')->filter()->unique()->values()->all()
+        )
+            ->get(['id', 'email', 'firstname', 'lastname', 'name'])
+            ->keyBy('email');
+
+        $updated = 0;
+
+        foreach ($pendingEmails as $pendingEmail) {
+            $template = $templates->get($pendingEmail->template_id);
+            $user = $usersByEmail->get($pendingEmail->email_to);
+            if (!$template || !$user) {
+                continue;
+            }
+
+            $templatePath = resource_path(
+                "views/proofing/emails/{$template->template_location}{$template->template_format}"
+            );
+            if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {
+                continue;
+            }
+
+            $userFolders = $this->getAssignedFolderNamesForUser($job->folders, (int) $user->id, true);
+
+            $data = [
+                'INVITEE_FIRST_NAME' => $user->firstname ?? '',
+                'FOLDERS' => $userFolders,
+                'ALLFOLDERS' => $allJobFolders,
+                'JOB_NAME' => $job->ts_jobname ?? '',
+                'REVIEW_DUE' => $reviewDue,
+                'FRANCHISE_NAME' => $user->getSchoolOrFranchiseDetail()->name ?? '',
+                'FRANCHISE_PHONE' => $user->getSchoolOrFranchiseDetail()->phone ?? '',
+                'FRANCHISE_EMAIL' => $user->getSchoolOrFranchiseDetail()->email ?? '',
+                'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
+                'FRANCHISE_ADDRESS1' => $user->getSchoolOrFranchiseDetail()->address ?? '',
+                'FRANCHISE_SUBURB' => $user->getSchoolOrFranchiseDetail()->suburb ?? '',
+                'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
+                'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
+                'APP_URL' => Config::get('app.url'),
+                'JOB_STATUS_NAME' => '',
+            ];
+
+            $processedContent = $this->replaceTemplateVariables(File::get($templatePath), $data);
+
+            $templateSubject = $template->template_subject;
+            if (strpos($templateSubject, 'JOB_NAME') !== false) {
+                $templateSubject = str_replace('JOB_NAME', $job->ts_jobname ?? '', $templateSubject);
+            }
+
+            $sentDate = $pendingEmail->sentdate ?: $job->proof_due;
+            $emailMessage = $this->generateEmail($authUser, $user, $templateSubject, $processedContent, $sentDate);
+            $emlContent = MessageConverter::toEmail($emailMessage)->toString();
+
+            $pendingEmail->update(['email_content' => $emlContent]);
+            $updated++;
+        }
+
+        return $updated;
+    }
+
+    /**
      * True when this recipient already received (EMAIL SENT) this proof schedule template for the job.
      */
     private function hasReceivedProofScheduleEmail(int $templateId, string $jobKey, string $emailTo): bool

@@ -56,12 +56,22 @@ class ConfigureService
         if ($data['dataType'] === 'proof_catchup') {
             $this->jobService->updateJobData($tsJobKey, 'is_in_catchup', 0);
         }
+
+        // Keep {REVIEW_DUE} in pending start/warning/catchup emails in sync with the new due date
+        if ($data['dataType'] === 'proof_due') {
+            $this->emailService->refreshReviewDueInPendingProofEmails($tsJobKey, $data['date']);
+        }
     }
 
     public function sendEmailDates($data){
         $tsJobKey = $this->getDecryptData($data['jobHash']);
         if ($data['dataType'] === 'proof_start' || $data['dataType'] === 'proof_warning' || $data['dataType'] === 'proof_due'|| $data['dataType'] === 'proof_catchup') {
             $saveEmailContent = $this->emailService->saveEmailContent($tsJobKey, $data['dataType'], $data['date'], null);
+
+            // Also refresh REVIEW_DUE inside other pending proof schedule emails for this job
+            if ($data['dataType'] === 'proof_due') {
+                $this->emailService->refreshReviewDueInPendingProofEmails($tsJobKey, $data['date']);
+            }
         }
     }
 
