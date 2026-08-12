@@ -128,7 +128,8 @@ class ProofingChangelogService
                 'FOLDER_NAME_CHANGE',
                 'DEPUTY',
                 'PRINCIPAL',
-                'TEACHER'
+                'TEACHER',
+                'GROUP_COMMENTS'
             ])
             ->count();
     }
@@ -264,7 +265,7 @@ class ProofingChangelogService
             ->where('ts_jobkey', $jobkey);
     }    
 
-    public function insertFolderProofingChangeLog($decryptedFolderKey, $issue, $note, $newValue) {
+    public function insertFolderProofingChangeLog($decryptedFolderKey, $issue, $note, $newValue, $issueId = null) {
         // \Log::info('Service insertFolderProofingChangeLog called', [
         //     'folder' => $decryptedFolderKey,
         //     'issue' => $issue,
@@ -289,7 +290,13 @@ class ProofingChangelogService
         $textValue = ($newValue === "1") ? 'Yes' : (($newValue === "0") ? 'No' : null);
         $isResolved = ($newValue === "1") ? $this->statusService->active : (($newValue === "0") ? $this->statusService->inactive : null);
         $replace = [];
-        $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByDescription($issue, 'id', 'issue_name');
+        $issueObject = null;
+        if ($issueId) {
+            $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionById((int) $issueId, 'id', 'issue_name');
+        }
+        if (!$issueObject) {
+            $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByDescription($issue, 'id', 'issue_name');
+        }
         if (!$issueObject) {
             $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName($issue, 'id', 'issue_name');
         }
@@ -319,7 +326,7 @@ class ProofingChangelogService
                 $keyOrigin =  'Folder';
                 $isResolved = $this->statusService->active;
                 break;
-            case $issueName === 'TRADITIONAL_PHOTO_TAGGED' || $issueName === 'GROUP_NAMED' || $issue === $constants['TRADITIONAL_PHOTO_TAGGED']:
+            case $issueName === 'GROUP_NAMED' || $issue === $constants['GROUP_NAMED']:
                 $replace = ['VALUE' => $textValue];
                 $keyOrigin =  'Group';
                 break;
@@ -377,7 +384,19 @@ class ProofingChangelogService
                 $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('GROUP_COMMENTS', 'id');
             } elseif ($issue === $constants['GENERAL_ISSUES']) {
                 $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('GENERAL', 'id');
+            } elseif ($issue === $constants['GROUP_NAMED']) {
+                $issueObject = $this->proofingDescriptionService->getAllProofingDescriptionByIssueName('GROUP_NAMED', 'id');
             }
+        }
+
+        if (!$issueObject || !$issueObject->id) {
+            \Log::error('Cannot insert folder proofing changelog: unresolved issue_id', [
+                'issue' => $issue,
+                'issueId' => $issueId,
+                'folderKey' => $decryptedFolderKey,
+                'note' => $changeNote,
+            ]);
+            return;
         }
 
         ProofingChangelog::create([
@@ -388,7 +407,7 @@ class ProofingChangelogService
             'change_to' => $newValue,
             'notes' => $changeNote,
             'user_id' => Auth::user()->id,
-            'issue_id' => $issueObject ? $issueObject->id : 0,
+            'issue_id' => $issueObject->id,
             'change_datetime' => Carbon::now(),
             'resolved_status_id' => $isResolved
         ]);

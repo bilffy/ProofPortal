@@ -127,8 +127,8 @@
             $groupComments = $groupCommentsIssue ? $groupCommentsIssue->issue_description : Config::get('constants.GROUP_COMMENTS');
             $groupCommentsNote = Config::get('constants.GROUP_COMMENTS_NOTE');
 
-            $tradPhotoTagged = Config::get('constants.TRADITIONAL_PHOTO_TAGGED');
-            $tradPhotoTaggedNote = Config::get('constants.TRADITIONAL_PHOTO_TAGGED_NOTE');
+            $tradPhotoTagged = Config::get('constants.GROUP_NAMED');
+            $tradPhotoTaggedNote = Config::get('constants.GROUP_NAMED_NOTE');
             
             $folderBelong = Config::get('constants.FOLDER_BELONG_SUBJECTS');
             $folderBelongNote = Config::get('constants.FOLDER_BELONG_SUBJECTS_NOTE');
@@ -431,14 +431,14 @@
                     var issue = issueDescription || issueName;
                     var note = '';
 
-                    if (issueName === 'TRADITIONAL_PHOTO_TAGGED' || issueName === 'GROUP_NAMED' || issueDescription === @json($tradPhotoTagged)) {
+                    if (issueName === 'GROUP_NAMED' || issueDescription === @json($tradPhotoTagged)) {
                         issue = @json($tradPhotoTagged);
                         note = @json($tradPhotoTaggedNote);
                     }
 
                     if (issue) {
-                        console.log('Sending group select change...', {issue: issue, newValue: newValue, note: note});
-                        sendFolderChanges(location, issue, newValue, note);
+                        console.log('Sending group select change...', {issue: issue, newValue: newValue, note: note, issueId: issue_id});
+                        sendFolderChanges(location, issue, newValue, note, issue_id);
                         $('#groupPreviousValue_' + issue_id).val(newValue);
                     }
                 }
@@ -492,8 +492,8 @@
                     }
 
                     if (issue) {
-                        console.log('Sending folder select change...', {issue: issue, newValue: newValue, note: note});
-                        sendFolderChanges(location, issue, newValue, note);
+                        console.log('Sending folder select change...', {issue: issue, newValue: newValue, note: note, issueId: issue_id});
+                        sendFolderChanges(location, issue, newValue, note, issue_id);
                         $(this).data('previousValue', newValue);
                     }
                 }

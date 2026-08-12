@@ -428,6 +428,7 @@ class ProofController extends Controller
             'issue' => 'required|string',
             'note' => 'required|string',
             'newValue' => 'nullable|string',
+            'issue_id' => 'nullable|integer|min:1',
         ]);
 
         $decryptedFolderKey = $this->getDecryptData($folderKey);
@@ -442,7 +443,8 @@ class ProofController extends Controller
             $decryptedFolderKey, 
             $request->input('issue'), 
             $request->input('note'), 
-            $request->input('newValue')
+            $request->input('newValue'),
+            $request->input('issue_id')
         );
 
         return response()->json(['status' => true]);

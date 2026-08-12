@@ -1859,13 +1859,16 @@ $('#classNext').click(function () {
     }
 });
 
-function sendFolderChanges(location, issue, classNameNew, note) {
+function sendFolderChanges(location, issue, classNameNew, note, issueId) {
     var returnResponse;
 
     var formData = new FormData();
     formData.append("issue", issue);
     formData.append("note", note);
     formData.append("newValue", classNameNew);
+    if (issueId) {
+        formData.append("issue_id", issueId);
+    }
 
     formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
 

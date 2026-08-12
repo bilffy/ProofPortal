@@ -10,7 +10,7 @@ return [
     'FOLDER_CORRECTED' => 'Have all of the issues on this page been recorded for correction?',
     'SUBJECT_MISSING_NAMES' => 'subjects missing',
     'GENERAL_ISSUES' => 'general issues',
-    'GROUP_COMMENTS' => 'group comments',
+    'GROUP_COMMENTS' => 'Other Comments/Notes',
     
 
     'FOLDER_NAME_CHANGE_NOTE' => 'Class name changed from "CHANGEFROM" to "CHANGETO"',
@@ -47,8 +47,8 @@ return [
     'SUBJECT_REMOVE_PICTURE_NOTE' => 'Remove picture of "FIRSTNAME LASTNAME" in Folder  "FOLDER" for reasons such as infringement or child protection.',
     'SUBJECT_ABSENT_NOTE' => '"FIRSTNAME LASTNAME" in Folder  "FOLDER" was absent on photo-day.',
 
-    'TRADITIONAL_PHOTO_TAGGED' => 'Have you named each person in the required fields above?',
-    'TRADITIONAL_PHOTO_TAGGED_NOTE' => 'Tagging of Traditional Group Photo marked as "VALUE"',
+    'GROUP_NAMED' => 'Have you named each person in the required fields above?',
+    'GROUP_NAMED_NOTE' => 'Tagging of Traditional Group Photo marked as "VALUE"',
 
     'DEPUTY' => 'deputy',
     'DEPUTY_NOTE' => 'Deputy\'s name has been changed to "VALUE"',
