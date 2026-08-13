@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'platform' => env('APP_PLATFORM', 'uat'),
+    'platform' => env('APP_PLATFORM'),
 
     /*
     |--------------------------------------------------------------------------
