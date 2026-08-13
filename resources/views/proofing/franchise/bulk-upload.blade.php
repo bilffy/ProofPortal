@@ -135,28 +135,14 @@
                                                         $imageName = basename($image);
                                                         $normalizedImageName = $normalizeMatchName($imageName);
                                                         $matchedFolderKey = 'no_match';
-                                                        $bestPercent = 0;
 
+                                                        // Exact match only (after normalize). Avoid similar_text —
+                                                        // "Year 8 - 2026" was falsely matching "Year 8 - 2024".
                                                         foreach ($jobFolders as $folderKey => $folderName) {
-                                                            $normalizedFolderName = $normalizeMatchName($folderName);
-
-                                                            // Exact match: uploaded image name (no extension) == folders.ts_foldername
-                                                            if ($normalizedImageName === $normalizedFolderName) {
+                                                            if ($normalizedImageName === $normalizeMatchName($folderName)) {
                                                                 $matchedFolderKey = $folderKey;
-                                                                $bestPercent = 100;
                                                                 break;
                                                             }
-
-                                                            similar_text($normalizedImageName, $normalizedFolderName, $percent);
-                                                            if ($percent > $bestPercent) {
-                                                                $bestPercent = $percent;
-                                                                $matchedFolderKey = $folderKey;
-                                                            }
-                                                        }
-
-                                                        // Weak guesses stay on No Match so users must confirm
-                                                        if ($bestPercent < 80) {
-                                                            $matchedFolderKey = 'no_match';
                                                         }
                                                     @endphp
                                                     <tr>
