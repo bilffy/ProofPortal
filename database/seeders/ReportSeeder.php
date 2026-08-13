@@ -122,7 +122,7 @@ class ReportSeeder extends Seeder
             [
                 'name' => 'TNJ Import Group Position By School',
                 'description' => 'Use this to import a list into the TNJ. Filtered by School',
-                'query' => 'myGroupPhotoPositionsBySchoolForTnjImporting',
+                'query' => 'TNJImportGroupPositionBySchool',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  }]',
                 'is_deleted' => 1
             ],
@@ -136,7 +136,7 @@ class ReportSeeder extends Seeder
             [
                 'name' => 'TNJ Import Group Position By School And Folder',
                 'description' => 'Use this to import a list into the TNJ. Filtered by School and Folder.',
-                'query' => 'MyGroupPhotoPositionsBySchoolAndFolder',
+                'query' => 'TNJImportGroupPositionBySchoolAndFolder',
                 'params' => '[  {    "name": "School",    "variable": "$ts_job_id",    "queryName": "mySchoolsIds",    "keyField": "ts_job_id",    "valueField": "ts_jobname"  },  {    "name": "Folder",    "variable": "$ts_folder_id",    "queryName": "myFoldersIdsBySchool",    "keyField": "ts_folder_id",    "valueField": "ts_foldername"  }]',
                 'is_deleted' => 0
             ],

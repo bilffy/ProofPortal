@@ -557,14 +557,14 @@ class ReportRepository
      * @param int|null $tsJobId Job ID
      * @return Collection
      */
-    public function getGroupPhotoPositionsBySchoolForTnjImporting(?int $tsJobId = null): Collection
+    public function getTNJImportGroupPositionBySchool(?int $tsJobId = null): Collection
     {
-        return $this->groupPhotoPositionsBySchoolForTnjImportingQuery($tsJobId)->get();
+        return $this->TNJImportGroupPositionBySchoolQuery($tsJobId)->get();
     }
 
-    public function countGroupPhotoPositionsBySchoolForTnjImporting(?int $tsJobId = null): int
+    public function countTNJImportGroupPositionBySchool(?int $tsJobId = null): int
     {
-        return $this->groupPhotoPositionsBySchoolForTnjImportingQuery($tsJobId)->count();
+        return $this->TNJImportGroupPositionBySchoolQuery($tsJobId)->count();
     }
 
     /**
@@ -600,14 +600,14 @@ class ReportRepository
      * @param int|null $tsFolderId Folder ID
      * @return Collection
      */
-    public function getGroupPhotoPositionsBySchoolAndFolder(?int $tsJobId = null, ?int $tsFolderId = null): Collection
+    public function getTNJImportGroupPositionBySchoolAndFolder(?int $tsJobId = null, ?int $tsFolderId = null): Collection
     {
-        return $this->groupPhotoPositionsBySchoolAndFolderQuery($tsJobId, $tsFolderId)->get();
+        return $this->TNJImportGroupPositionBySchoolAndFolderQuery($tsJobId, $tsFolderId)->get();
     }
 
-    public function countGroupPhotoPositionsBySchoolAndFolder(?int $tsJobId = null, ?int $tsFolderId = null): int
+    public function countTNJImportGroupPositionBySchoolAndFolder(?int $tsJobId = null, ?int $tsFolderId = null): int
     {
-        return $this->groupPhotoPositionsBySchoolAndFolderQuery($tsJobId, $tsFolderId)->count();
+        return $this->TNJImportGroupPositionBySchoolAndFolderQuery($tsJobId, $tsFolderId)->count();
     }
 
     public function getBlueprintFullChangeList($tsJobId = null)
@@ -648,9 +648,9 @@ class ReportRepository
             'mySubjectChangesBySchool' => 'countSubjectChangesBySchool',
             'mySubjectChangesBySchoolAndFolder' => 'countSubjectChangesBySchoolAndFolder',
             'mySubjectChangesBySchoolForTimestoneImport' => 'countSubjectChangesBySchoolForTimestoneImport',
-            'myGroupPhotoPositionsBySchoolForTnjImporting' => 'countGroupPhotoPositionsBySchoolForTnjImporting',
+            'TNJImportGroupPositionBySchool' => 'countTNJImportGroupPositionBySchool',
             'myGroupPhotoPositionsByFolderForTnjImporting' => 'countGroupPhotoPositionsByFolderForTnjImporting',
-            'myGroupPhotoPositionsBySchoolAndFolder' => 'countGroupPhotoPositionsBySchoolAndFolder',
+            'TNJImportGroupPositionBySchoolAndFolder' => 'countTNJImportGroupPositionBySchoolAndFolder',
             'blueprintFullChangeList' => 'countBlueprintFullChangeList',
         ];
 
@@ -737,7 +737,7 @@ class ReportRepository
             ]);
     }
 
-    protected function groupPhotoPositionsBySchoolForTnjImportingQuery(?int $tsJobId): Builder
+    protected function TNJImportGroupPositionBySchoolQuery(?int $tsJobId): Builder
     {
         $tsJobKey = $this->resolveTsJobKey($tsJobId);
 
@@ -753,18 +753,12 @@ class ReportRepository
             ->whereNotNull('folders.ts_folderkey');
     }
 
-    protected function groupPhotoPositionsBySchoolAndFolderQuery(?int $tsJobId, ?int $tsFolderId): Builder
+    protected function TNJImportGroupPositionBySchoolAndFolderQuery(?int $tsJobId, ?int $tsFolderId): Builder
     {
         $tsJobKey = $this->resolveTsJobKey($tsJobId);
         $tsFolderKey = $this->resolveTsFolderKey($tsFolderId);
 
-        return ProofingChangelog::query()
-            ->where([
-                ['ts_jobkey', $tsJobKey],
-                ['keyvalue', $tsFolderKey],
-            ])
-            ->whereNotNull('user_id')
-            ->where('issue_id', 12);
+        return GroupPosition::query()->where('ts_jobkey', $tsJobKey)->where('ts_folderkey', $tsFolderKey);
     }
 
     protected function resolveTsJobKey(?int $tsJobId): string

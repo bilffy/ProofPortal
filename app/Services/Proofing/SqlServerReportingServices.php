@@ -17,8 +17,15 @@ class SqlServerReportingServices
     /**
      * Map portal parameter keys to SSRS report parameter names.
      */
-    public static function mapSsrsParamKey(string $paramKey): string
+    public static function mapSsrsParamKey(string $paramKey, ?string $reportName = null): string
     {
+        if ($reportName !== null) {
+            $reportMap = config("settings.ssrs_report_param_map.{$reportName}", []);
+            if (isset($reportMap[$paramKey])) {
+                return $reportMap[$paramKey];
+            }
+        }
+
         $configured = config('settings.ssrs_param_map', []);
 
         if (isset($configured[$paramKey])) {
@@ -67,15 +74,20 @@ class SqlServerReportingServices
     /**
      * Normalize portal param keys to SSRS URL parameter names.
      */
-    public static function normalizeSsrsParams(array $params): array
+    public static function normalizeSsrsParams(array $params, ?string $reportName = null): array
     {
         $normalized = [];
 
         foreach ($params as $key => $value) {
-            $normalized[self::mapSsrsParamKey($key)] = $value;
+            $normalized[self::mapSsrsParamKey($key, $reportName)] = $value;
         }
 
         return $normalized;
+    }
+
+    protected static function reportOmitsEmail(string $reportName): bool
+    {
+        return in_array($reportName, config('settings.ssrs_reports_without_email', []), true);
     }
 
     /**
@@ -83,7 +95,7 @@ class SqlServerReportingServices
      */
     public static function completeSsrsParams(string $reportName, array $params): array
     {
-        $params = self::normalizeSsrsParams($params);
+        $params = self::normalizeSsrsParams($params, $reportName);
         $params = self::applyConfiguredExtraParams($reportName, $params);
 
         $maxIterations = (int) config('settings.ssrs_param_discovery_attempts', 8);
@@ -140,10 +152,17 @@ class SqlServerReportingServices
             return $params[$paramName];
         }
 
+        // In reports, schoolid/school_id always carry jobs.ts_job_id;
+        // folderid always carries folders.ts_folder_id.
         return match ($paramName) {
             'email' => $params['email'] ?? null,
-            'schoolid' => $params['schoolid'] ?? null,
-            'folderid' => $params['folderid'] ?? null,
+            'schoolid', 'school_id', 'ts_job_id' => $params['ts_job_id']
+                ?? $params['schoolid']
+                ?? $params['school_id']
+                ?? null,
+            'folderid', 'ts_folder_id' => $params['ts_folder_id']
+                ?? $params['folderid']
+                ?? null,
             default => null,
         };
     }
@@ -214,25 +233,33 @@ class SqlServerReportingServices
     {
         $ssrsFormat = self::mapDownloadFormat($format);
         $extension = self::downloadExtension($format);
-        // Params are finalized when the run page is built; only normalize key names here.
-        $params = self::normalizeSsrsParams($params);
+        $params = self::completeSsrsParams($reportQueryName, $params);
 
-        $maxAttempts = 3;
+        $maxAttempts = 5;
 
         for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
             $result = self::attemptSsrsDownload($reportQueryName, $ssrsFormat, $extension, $params);
 
-            if ($result['success'] || $attempt === $maxAttempts - 1) {
+            if ($result['success']) {
                 return $result;
             }
 
             $unknownParam = self::parseUnknownParameterName($result['error'] ?? '');
-
-            if ($unknownParam === null || ! array_key_exists($unknownParam, $params)) {
-                return $result;
+            if ($unknownParam !== null && array_key_exists($unknownParam, $params)) {
+                unset($params[$unknownParam]);
+                continue;
             }
 
-            unset($params[$unknownParam]);
+            $missingParam = self::parseMissingParameterName($result['error'] ?? '');
+            if ($missingParam !== null && ! array_key_exists($missingParam, $params)) {
+                $value = self::resolveMissingParameterValue($missingParam, $params);
+                if ($value !== null && $value !== '') {
+                    $params[$missingParam] = $value;
+                    continue;
+                }
+            }
+
+            return $result;
         }
 
         return $result;
@@ -329,15 +356,17 @@ class SqlServerReportingServices
      * @param  array<int, array<string, mixed>>  $reportParams
      * @return array{ssrsParams: array<string, mixed>, sqlParams: array<int, array<string, mixed>>, downloadName: string}
      */
-    public static function buildReportParams(string $userEmail, array $passedParamValues, array $reportParams, string $reportDisplayName): array
+    public static function buildReportParams(string $userEmail, array $passedParamValues, array $reportParams, string $reportDisplayName, string $reportQueryName): array
     {
-        $sqlParams = [
-            [
+        $sqlParams = [];
+
+        if (! self::reportOmitsEmail($reportQueryName)) {
+            $sqlParams[] = [
                 'sqlFriendly' => 'email',
                 'urlKey' => 'email',
                 'urlValue' => $userEmail,
-            ],
-        ];
+            ];
+        }
 
         $downloadName = now()->format('Ymd-His') . ' - ' . $reportDisplayName;
         $passedParamValues = array_values($passedParamValues);
@@ -353,7 +382,7 @@ class SqlServerReportingServices
                 ? data_get($record, $reportParam['valueField'], $paramValue)
                 : $paramValue;
 
-            $urlKey = self::mapSsrsParamKey($reportParam['keyField']);
+            $urlKey = self::mapSsrsParamKey($reportParam['keyField'], $reportQueryName);
 
             $sqlParams[] = [
                 'sqlFriendly' => strtolower(str_replace('.', '_', str_replace('s.', '.', $reportParam['keyField']))),
@@ -383,7 +412,7 @@ class SqlServerReportingServices
      */
     public static function buildSsrsDownloadParams(string $reportQueryName, string $userEmail, array $passedParamValues, array $reportParams, string $reportDisplayName): array
     {
-        $payload = self::buildReportParams($userEmail, $passedParamValues, $reportParams, $reportDisplayName);
+        $payload = self::buildReportParams($userEmail, $passedParamValues, $reportParams, $reportDisplayName, $reportQueryName);
         $payload['ssrsParams'] = self::completeSsrsParams($reportQueryName, $payload['ssrsParams']);
 
         return $payload;
@@ -403,6 +432,7 @@ class SqlServerReportingServices
 
         // Merge provided options with defaults
         $opts = array_merge($defaultOptions, $opts);
+        $reportName = $opts['ssrsReport'] ?? null;
 
         // Build the base URL
         $url = '';
@@ -429,7 +459,7 @@ class SqlServerReportingServices
                     continue;
                 }
 
-                $paramK = self::mapSsrsParamKey($paramK);
+                $paramK = self::mapSsrsParamKey($paramK, $reportName);
                 $url .= "&" . urlencode($paramK) . "=" . urlencode((string) $paramV);
             }
         }

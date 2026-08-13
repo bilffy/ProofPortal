@@ -110,27 +110,66 @@
                                                 </thead>
                                                 <tbody>
                                                 @php
-                                                    $folderList = [
+                                                    $specialFolderOptions = [
                                                         'discard_image' => '----Discard Image----',
                                                         'no_match' => '----No Match----',
                                                     ];
+                                                    $jobFolders = [];
                                                     foreach ($selectedJob->folders as $folder) {
-                                                        $folderList[$folder->ts_folderkey] = $folder->ts_foldername;
+                                                        $jobFolders[$folder->ts_folderkey] = $folder->ts_foldername;
                                                     }
+                                                    $folderList = $specialFolderOptions + $jobFolders;
+
+                                                    $normalizeMatchName = static function (string $value): string {
+                                                        $value = pathinfo($value, PATHINFO_FILENAME) ?: $value;
+                                                        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                                                        // Filenames often use underscores where folder names use spaces
+                                                        $value = str_replace(['_', '-'], ' ', $value);
+                                                        $value = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+                                                        return mb_strtolower($value);
+                                                    };
                                                 @endphp
-        
+
                                                 @foreach ($uploadedImages as $image)
+                                                    @php
+                                                        $imageName = basename($image);
+                                                        $normalizedImageName = $normalizeMatchName($imageName);
+                                                        $matchedFolderKey = 'no_match';
+                                                        $bestPercent = 0;
+
+                                                        foreach ($jobFolders as $folderKey => $folderName) {
+                                                            $normalizedFolderName = $normalizeMatchName($folderName);
+
+                                                            // Exact match: uploaded image name (no extension) == folders.ts_foldername
+                                                            if ($normalizedImageName === $normalizedFolderName) {
+                                                                $matchedFolderKey = $folderKey;
+                                                                $bestPercent = 100;
+                                                                break;
+                                                            }
+
+                                                            similar_text($normalizedImageName, $normalizedFolderName, $percent);
+                                                            if ($percent > $bestPercent) {
+                                                                $bestPercent = $percent;
+                                                                $matchedFolderKey = $folderKey;
+                                                            }
+                                                        }
+
+                                                        // Weak guesses stay on No Match so users must confirm
+                                                        if ($bestPercent < 80) {
+                                                            $matchedFolderKey = 'no_match';
+                                                        }
+                                                    @endphp
                                                     <tr>
                                                         <td class="idx-image">
                                                             <img loading="lazy" src="{{ asset('storage/' . $image) }}"
                                                                 class="mx-auto d-block group-image mt-3" style="max-width: 100%;" width='200' height='133'>
-                                                            <p class="text-center mb-2">{{ basename($image) }}</p>
+                                                            <p class="text-center mb-2">{{ $imageName }}</p>
                                                         </td>
                                                         <td class="idx-folder align-middle">
                                                             <select class="form-control folder-select"
                                                                     data-artifact-token="{{ $image }}">
                                                                 @foreach ($folderList as $key => $name)
-                                                                    <option value="{{ $key }}">
+                                                                    <option value="{{ $key }}" @selected($key === $matchedFolderKey)>
                                                                         {{ $name }}
                                                                     </option>
                                                                 @endforeach
@@ -380,12 +419,13 @@
             $('#folder-matching-form').on('submit', function (e) {
                 e.preventDefault(); // Prevent default form submission
 
-                // Create an object to store the mapping of images to folder selections
                 let mapping = {};
                 $('.folder-select').each(function () {
-                    let artifactToken = $(this).data('artifact-token'); // Get the artifact token
-                    let folderKey = $(this).val(); // Get the selected folder key
-                    mapping[artifactToken] = folderKey; // Map artifact token to selected folder key
+                    let artifactToken = $(this).attr('data-artifact-token'); // Prefer attr over .data() for path strings
+                    let folderKey = $(this).val(); // Selected folder key (matched to ts_foldername)
+                    if (artifactToken) {
+                        mapping[artifactToken] = folderKey;
+                    }
                 });
 
                 // Store the mapping as JSON in the hidden input field

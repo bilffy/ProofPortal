@@ -236,9 +236,9 @@ class Report extends Model
      * @param int|null $tsJobId
      * @return \Illuminate\Support\Collection
      */
-    public static function myGroupPhotoPositionsBySchoolForTnjImporting($tsJobId = null)
+    public static function TNJImportGroupPositionBySchool($tsJobId = null)
     {
-        return self::repository()->getGroupPhotoPositionsBySchoolForTnjImporting($tsJobId);
+        return self::repository()->getTNJImportGroupPositionBySchool($tsJobId);
     }
 
     /**
@@ -259,9 +259,9 @@ class Report extends Model
      * @param int|null $tsFolderId
      * @return \Illuminate\Support\Collection
      */
-    public static function myGroupPhotoPositionsBySchoolAndFolder($tsJobId = null, $tsFolderId = null)
+    public static function TNJImportGroupPositionBySchoolAndFolder($tsJobId = null, $tsFolderId = null)
     {
-        return self::repository()->getGroupPhotoPositionsBySchoolAndFolder($tsJobId, $tsFolderId);
+        return self::repository()->getTNJImportGroupPositionBySchoolAndFolder($tsJobId, $tsFolderId);
     }
 
     /**
@@ -298,7 +298,8 @@ class Report extends Model
             'MySubjectChangesBySchool' => 'mySubjectChangesBySchool',
             'MySubjectChangesBySchoolAndFolder' => 'mySubjectChangesBySchoolAndFolder',
             'MySubjectChangesBySchoolForTimestoneImport' => 'mySubjectChangesBySchoolForTimestoneImport',
-            'MyGroupPhotoPositionsBySchoolAndFolder' => 'myGroupPhotoPositionsBySchoolAndFolder',
+            'TNJImportGroupPositionBySchoolAndFolder' => 'TNJImportGroupPositionBySchoolAndFolder',
+            'TNJImportGroupPositionBySchool' => 'TNJImportGroupPositionBySchool',
             'BlueprintFullChangeList' => 'blueprintFullChangeList',
         ];
     }

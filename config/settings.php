@@ -19,6 +19,19 @@ return [
         'ts_folder_id' => 'folderid',
     ],
 
+    // Reports whose SSRS parameter names differ from the default map above.
+    'ssrs_report_param_map' => [
+        'TNJImportGroupPositionBySchool' => [
+            'ts_job_id' => 'school_id',
+            'schoolid' => 'school_id',
+        ],
+    ],
+
+    // Reports that do not define an email parameter on Report Server.
+    'ssrs_reports_without_email' => [
+        'TNJImportGroupPositionBySchool',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Extra SSRS parameters required by specific reports on Report Server
