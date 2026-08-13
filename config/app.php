@@ -30,6 +30,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Platform
+    |--------------------------------------------------------------------------
+    |
+    | Distinguishes deployed platforms (production, staging, uat) for UI cues
+    | such as footer background colour. Set APP_PLATFORM in each environment's
+    | .env file.
+    |
+    */
+
+    'platform' => env('APP_PLATFORM', 'uat'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Platform footer colours
+    |--------------------------------------------------------------------------
+    */
+
+    'platform_footer_colors' => [
+        'production' => null,
+        'staging' => '#fde8e8',
+        'uat' => '#d8f1c3ff',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |
