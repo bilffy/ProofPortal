@@ -246,7 +246,18 @@ class SqlServerReportingServices
 
             $unknownParam = self::parseUnknownParameterName($result['error'] ?? '');
             if ($unknownParam !== null && array_key_exists($unknownParam, $params)) {
+                $value = $params[$unknownParam];
                 unset($params[$unknownParam]);
+
+                // Keep the job/folder id available under portal keys so a missing
+                // alias (schoolid vs school_id) can still be resolved on the next try.
+                if (in_array($unknownParam, ['schoolid', 'school_id', 'ts_job_id'], true)) {
+                    $params['ts_job_id'] = $params['ts_job_id'] ?? $value;
+                }
+                if (in_array($unknownParam, ['folderid', 'ts_folder_id'], true)) {
+                    $params['ts_folder_id'] = $params['ts_folder_id'] ?? $value;
+                }
+
                 continue;
             }
 
