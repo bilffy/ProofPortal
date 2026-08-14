@@ -458,17 +458,26 @@ class ConfigureService
                 if ($existingImage) {
                     $needsUpdate = false;
 
-                    // Update image metadata if it changed
-                    if ($existingImage->ts_image_id != $imageID || $existingImage->is_primary != $imageIsPrimary || $existingImage->ts_job_id != $bpSubjectImage['ts_job_id']) {
+                    if ($existingImage->ts_image_id != $imageID) {
                         $existingImage->ts_image_id = $imageID;
-                        $existingImage->is_primary  = $imageIsPrimary;
-                        $existingImage->ts_job_id   = $bpSubjectImage['ts_job_id'];
-                        if ($existingImage->exportStatus !== $dynamicExportStatus) {
-                            $existingImage->exportStatus = $dynamicExportStatus;
-                        }
                         $needsUpdate = true;
                     }
-                    
+                    if ((int) $existingImage->is_primary !== (int) $imageIsPrimary) {
+                        $existingImage->is_primary = $imageIsPrimary;
+                        $needsUpdate = true;
+                    }
+
+                    // Always recalculate exportStatus from the *current* Timestone image set.
+                    // Fixes leftover NULL on a former non-primary after siblings were removed.
+                    $resolvedExportStatus = $this->resolvePeopleImageExportStatus(
+                        $existingImage,
+                        $dynamicExportStatus
+                    );
+                    if ($existingImage->exportStatus !== $resolvedExportStatus) {
+                        $existingImage->exportStatus = $resolvedExportStatus;
+                        $needsUpdate = true;
+                    }
+
                     if ($needsUpdate) {
                         $imagesToUpdate[] = $existingImage;
                     }
@@ -518,6 +527,32 @@ class ConfigureService
         foreach ($imagesToUpdate as $imageModel) {
             $imageModel->save();
         }
+    }
+
+    /**
+     * Recalculate exportStatus for an existing portal image against current Timestone state.
+     *
+     * - Multiple Timestone images: primary → pending (0), non-primary → NULL (skip export)
+     * - Single Timestone image: always pending (0) unless already downloaded/synced with a file
+     * - Former non-primary left as NULL after siblings were deleted → reset to 0
+     */
+    private function resolvePeopleImageExportStatus($existingImage, $dynamicExportStatus)
+    {
+        // Still a non-primary among multiple Timestone matches — do not export
+        if ($dynamicExportStatus === null) {
+            return null;
+        }
+
+        $hasFile = filled($existingImage->name) && filled($existingImage->image_path);
+        $current = $existingImage->exportStatus;
+
+        // Already through the pipeline with a file on disk — leave alone
+        if ($hasFile && in_array((int) $current, [1, 2], true)) {
+            return (int) $current;
+        }
+
+        // NULL leftover, missing file, failed download/upload, or pending → ensure exportable
+        return 0;
     }
 
     public function peopleImageCount($tsJobId)
