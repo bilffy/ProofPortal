@@ -115,16 +115,14 @@ class ProofingDashboardController extends Controller
 
             $tsJobs = $this->timestoneTableService->getAllTimestoneJobsBySeasonID($getSeason, $user->getFranchise()->ts_account_id, $currentSchoolkey)->get();
 
-            $bpJobs = $this->jobService->getJobsBySeason($currentSchoolkey, $getSeason)
+            $bpJobs = $this->jobService
+                ->getJobsShownInProofing($currentSchoolkey, $getSeason)
                 ->where('job_users.user_id', $user->id)
-                ->where('show_proofing', 1)
-                ->pluck('ts_jobkey');
-                
-            $activeJobKeys = isset($data['activeSyncJobs']) ? $data['activeSyncJobs']->pluck('ts_jobkey') : collect([]);
-            $allSyncedJobKeys = $bpJobs->merge($activeJobKeys)->unique()->flip();
-    
-            $filteredTsJobs = $tsJobs->reject(function ($tsJob) use ($allSyncedJobKeys) {
-                return $allSyncedJobKeys->has($tsJob->JobKey);
+                ->pluck('jobs.ts_jobkey')
+                ->map(fn ($jobKey) => trim((string) $jobKey));
+
+            $filteredTsJobs = $tsJobs->reject(function ($tsJob) use ($bpJobs) {
+                return $bpJobs->contains(trim((string) $tsJob->JobKey));
             });
         
             // Pass both $user and $data to the view

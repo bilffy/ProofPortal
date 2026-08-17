@@ -220,14 +220,51 @@ class JobService
 
     public function getJobsBySeasonAndSchoolId(?int $schoolId, $seasonId)
     {
-        return $this->queryJobs(null, $schoolId)
-            ->where([
-                ['jobs.ts_season_id', $seasonId],
-                ['jobs.jobsync_status_id', $this->statusService->sync],
-                ['jobs.foldersync_status_id', $this->statusService->completed],
-            ])
+        $query = $this->queryJobs(null, $schoolId)
+            ->where('jobs.jobsync_status_id', $this->statusService->sync)
+            ->where('jobs.foldersync_status_id', $this->statusService->completed)
             ->distinct()
             ->orderBy('ts_jobname', 'asc');
+
+        $this->constrainJobsToSeasons($query, $seasonId);
+
+        return $query;
+    }
+
+    /**
+     * Portal jobs that should not appear on Unsynced Jobs.
+     * Match by ts_schoolkey (same as Timestone). school_id may be null.
+     */
+    public function getJobsShownInProofing(?string $schoolKey, $seasonId)
+    {
+        $query = $this->queryJobs(null, null)
+            ->where('jobs.show_proofing', 1)
+            ->where(function ($statusQuery) {
+                $statusQuery->whereNull('jobs.job_status_id')
+                    ->orWhere('jobs.job_status_id', '!=', $this->statusService->deleted);
+            })
+            ->when($schoolKey, fn ($query) => $query->where('jobs.ts_schoolkey', $schoolKey))
+            ->distinct()
+            ->orderBy('ts_jobname', 'asc');
+
+        $this->constrainJobsToSeasons($query, $seasonId);
+
+        return $query;
+    }
+
+    protected function constrainJobsToSeasons($query, $seasonId): void
+    {
+        if (is_array($seasonId)) {
+            if (!empty($seasonId)) {
+                $query->whereIn('jobs.ts_season_id', $seasonId);
+            }
+
+            return;
+        }
+
+        if ($seasonId !== null && $seasonId !== '') {
+            $query->where('jobs.ts_season_id', $seasonId);
+        }
     }
 
     /**
