@@ -63,24 +63,34 @@ class JobConfigureController extends Controller
             abort(404);
         }
 
-        // $subjectKeys = $selectedJob->folders->flatMap(function ($folder) {
-        //     return $folder->subjects->pluck('ts_subjectkey');
-        // });
-
         $compiledFolderDuplicates = $this->getDuplicateFolder($selectedJob);
         $compiledSubjectDuplicates = $this->getDuplicateSubject($selectedJob);
 
-        if(!Session::has('selectedJob') || session('selectedJob')->ts_jobkey != $selectedJob->ts_jobkey){
-            $selectedSeason = $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first(); // Store session data
-            session([
-                'selectedJob' => $selectedJob,
-                'selectedSeason' => $selectedSeason,
-                'openJob' => false
-            ]);
-            session()->save();
-        }
+        // Always store a relation-free job in session. Previously we only wrote when the
+        // job key changed, so bloated Redis sessions (folders/subjects) kept OOM'ing.
+        $selectedSeason = Session::has('selectedSeason')
+            && optional(session('selectedSeason'))->ts_season_id == $selectedJob->ts_season_id
+                ? session('selectedSeason')
+                : $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
 
-        $selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)->with(['images', 'subjects'])->orderBy('ts_foldername', 'asc')->get();
+        $selectedJob->unsetRelations();
+        session([
+            'selectedJob' => $selectedJob,
+            'selectedSeason' => $selectedSeason,
+            'openJob' => false
+        ]);
+        session()->save();
+
+        // images = hasOne group photo; sort-order flags via withExists (no full subject graphs)
+        $selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)
+            ->with(['images'])
+            ->withExists([
+                'subjects as has_subject_sort_order' => fn ($query) => $query->whereNotNull('sort_order'),
+                'attachedsubjects as has_attached_sort_order' => fn ($query) => $query
+                    ->whereHas('subject', fn ($subjectQuery) => $subjectQuery->whereNotNull('sort_order')),
+            ])
+            ->orderBy('ts_foldername', 'asc')
+            ->get();
 
         $user = Auth::user();
 
@@ -110,13 +120,19 @@ class JobConfigureController extends Controller
 
     private function getDuplicateFolder($selectedJob)
     {
-        $folderKeys = $selectedJob->folders->whereNotNull('ts_folderkey')->pluck('ts_folderkey');
+        $folderKeys = $selectedJob->folders()
+            ->whereNotNull('ts_folderkey')
+            ->pluck('ts_folderkey');
+
         return $folderKeys->duplicates();
     }
 
     private function getDuplicateSubject($selectedJob)
     {
-        $subjectKeys = $selectedJob->subjects->whereNotNull('ts_subjectkey')->pluck('ts_subjectkey');
+        $subjectKeys = $selectedJob->subjects()
+            ->whereNotNull('ts_subjectkey')
+            ->pluck('ts_subjectkey');
+
         return $subjectKeys->duplicates();
     }
 

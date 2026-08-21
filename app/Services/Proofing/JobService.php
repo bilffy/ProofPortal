@@ -299,7 +299,9 @@ class JobService
 
     public function getJobByJobKey($jobkey)
     {
-        return Job::with(['folders', 'subjects'])->where('ts_jobkey',$jobkey);
+        // Do not eager-load folders/subjects here — config-job (and Redis session)
+        // previously OOM'd serialising entire school graphs into session.
+        return Job::where('ts_jobkey', $jobkey);
     }
 
     public function updateJobData($jobkey, $column, $value){

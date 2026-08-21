@@ -47,7 +47,10 @@ class FolderService
 
     public function getFolderByJobId($tsJobId)
     {
-        return Folder::where('ts_job_id', $tsJobId)->where('status_id', '!=', $this->statusService->tnjNotFound)->with(['attachedsubjects.subject']);
+        // Callers that need subjects/attachments must eager-load explicitly.
+        // Default with(attachedsubjects.subject) OOM'd config-job for large schools.
+        return Folder::where('ts_job_id', $tsJobId)
+            ->where('status_id', '!=', $this->statusService->tnjNotFound);
     }
 
     public function getFolderByJobIdAndFolderKey($tsJobId,$folderkey)

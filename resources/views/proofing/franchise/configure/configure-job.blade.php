@@ -189,11 +189,7 @@
 
             // Iterate over folder details and update lists and counters
             foreach ($selectedFolders as $folderDetail) {
-                $hasSortOrder =
-                    $folderDetail->subjects->contains(fn($subject) => !is_null($subject->sort_order))
-                    || $folderDetail->attachedsubjects->contains(
-                        fn($item) => !is_null($item->subject?->sort_order)
-                    );
+                $hasSortOrder = (bool) ($folderDetail->has_subject_sort_order || $folderDetail->has_attached_sort_order);
 
                 $SortOrderList[$folderDetail->ts_folder_id] = $hasSortOrder
                     ? 'TNJ Sort Order' : 'Alphabetical';
