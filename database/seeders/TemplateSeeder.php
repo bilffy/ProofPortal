@@ -74,7 +74,7 @@ class TemplateSeeder extends Seeder
             [
                 'template_name' => 'folder_status_completed',
                 'template_location' => 'change_folder_status_template',
-                'template_subject' => 'Status change for JOB_NAME - FOLDER_NAMEn',
+                'template_subject' => 'Status change for JOB_NAME - FOLDER_NAME',
                 'template_format' => '.blade.php',
                 'email_category_id' => 4,
                 'created_at' => Carbon::now(),
