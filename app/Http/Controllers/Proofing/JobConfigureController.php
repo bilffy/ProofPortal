@@ -66,20 +66,27 @@ class JobConfigureController extends Controller
         $compiledFolderDuplicates = $this->getDuplicateFolder($selectedJob);
         $compiledSubjectDuplicates = $this->getDuplicateSubject($selectedJob);
 
-        // Always store a relation-free job in session. Previously we only wrote when the
-        // job key changed, so bloated Redis sessions (folders/subjects) kept OOM'ing.
-        $selectedSeason = Session::has('selectedSeason')
-            && optional(session('selectedSeason'))->ts_season_id == $selectedJob->ts_season_id
-                ? session('selectedSeason')
-                : $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
+        // Open Job → config-job: keep the open-job session.
+        // Configure link → config-job: do not create/overwrite job session.
+        $sessionJob = session('selectedJob');
+        $isOpenForThisJob = Session::get('openJob') === true
+            && $sessionJob
+            && $sessionJob->ts_jobkey === $selectedJob->ts_jobkey;
 
-        $selectedJob->unsetRelations();
-        session([
-            'selectedJob' => $selectedJob,
-            'selectedSeason' => $selectedSeason,
-            'openJob' => false
-        ]);
-        session()->save();
+        if ($isOpenForThisJob) {
+            $selectedSeason = Session::has('selectedSeason')
+                && optional(session('selectedSeason'))->ts_season_id == $selectedJob->ts_season_id
+                    ? session('selectedSeason')
+                    : $this->seasonService->getSeasonByTimestoneSeasonId($selectedJob->ts_season_id)->first();
+
+            $selectedJob->unsetRelations();
+            session([
+                'selectedJob' => $selectedJob,
+                'selectedSeason' => $selectedSeason,
+                'openJob' => true,
+            ]);
+            session()->save();
+        }
 
         // images = hasOne group photo; sort-order flags via withExists (no full subject graphs)
         $selectedFolders = $this->folderService->getFolderByJobId($selectedJob->ts_job_id)

@@ -103,7 +103,7 @@
         use App\Helpers\Helper;
     @endphp
 
-@if(Session::has('selectedJob') && Session::has('selectedSeason'))
+@if(isset($selectedJob))
     @php
         $notificationsMatrix = $selectedJob->notifications_matrix;
         $notificationsMatrix = $notificationsMatrix ? json_decode($notificationsMatrix, true) : [];
@@ -330,7 +330,7 @@
 
 @endsection
 
-@if(Session::has('selectedJob') && Session::has('selectedSeason'))
+@if(isset($selectedJob))
 
     @section('js')
     <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>

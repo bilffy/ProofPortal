@@ -51,7 +51,22 @@ class CheckJobSession
                 abort(403, 'Unauthorized access to this job.');
             }
 
-            // 3. Session Synchronization Check
+            // Configure routes: authorize only. Do not create a job session from Configure.
+            // If Open Job already established this job, keep/slim that session.
+            if ($request->routeIs('config-job', 'config-job-action', 'config-job.imageCount')) {
+                $currentSessionJob = Session::get('selectedJob');
+                $isOpenForThisJob = Session::get('openJob') === true
+                    && $currentSessionJob
+                    && (int) $currentSessionJob->ts_job_id === (int) $selectedJob->ts_job_id;
+
+                if ($isOpenForThisJob) {
+                    $this->storeSlimJobSession($selectedJob);
+                }
+
+                return $next($request);
+            }
+
+            // 3. Session Synchronization Check (proofing pages that require an open job)
             $currentSessionJob = Session::get('selectedJob');
 
             // Check if the session is empty or points to a different job
