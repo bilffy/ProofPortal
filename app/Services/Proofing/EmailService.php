@@ -19,6 +19,7 @@ use Symfony\Component\Mime\Email as SymfonyEmail;
 use Symfony\Component\Mime\MessageConverter;
 use Symfony\Component\Mime\Address;
 use Illuminate\Support\Str;
+use Symfony\Component\Mime\Part\TextPart;
 use Auth;
 use DB;
 
@@ -36,28 +37,47 @@ class EmailService
         $this->statusService = $statusService;
     }
 
+    // protected function generateEmail($authUser, $recipient, $subject, $content, $sentDate): SymfonyEmail
+    // {
+    //     // Keep subject wording unchanged, but make it safe for mail clients:
+    //     // - strip CR/LF (a mid-subject newline truncates Subject and can blank the body in Outlook)
+    //     // - avoid forcing base64 HTML (Outlook often fails to render that part)
+    //     $subject = preg_replace("/[\r\n]+/", ' ', (string) $subject);
+    //     $subject = trim(preg_replace('/\s{2,}/', ' ', $subject));
+
+    //     $dateTime = Carbon::parse($sentDate);
+    //     $email = (new SymfonyEmail())
+    //         // ->from(new Address($authUser->email, $authUser->name))
+    //         ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
+    //         ->to(new Address($recipient->email, $recipient->name))
+    //         ->subject($subject)
+    //         ->html($content)
+    //         ->date($dateTime);
+
+    //     // Prefer one Subject line so Outlook does not show only the first folded segment.
+    //     $subjectHeader = $email->getHeaders()->get('Subject');
+    //     if ($subjectHeader && method_exists($subjectHeader, 'setMaxLineLength')) {
+    //         $subjectHeader->setMaxLineLength(998);
+    //     }
+
+    //     // DO NOT manually set Message-ID here. 
+    //     // Symfony Mailer will generate a valid one automatically.
+        
+    //     return $email;
+    // }
+
     protected function generateEmail($authUser, $recipient, $subject, $content, $sentDate): SymfonyEmail
     {
-        // Keep subject wording unchanged, but make it safe for mail clients:
-        // - strip CR/LF (a mid-subject newline truncates Subject and can blank the body in Outlook)
-        // - avoid forcing base64 HTML (Outlook often fails to render that part)
-        $subject = preg_replace("/[\r\n]+/", ' ', (string) $subject);
-        $subject = trim(preg_replace('/\s{2,}/', ' ', $subject));
-
+        $htmlPart = new TextPart($content, 'utf-8', 'html', 'base64');
+		
         $dateTime = Carbon::parse($sentDate);
         $email = (new SymfonyEmail())
             // ->from(new Address($authUser->email, $authUser->name))
             ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
             ->to(new Address($recipient->email, $recipient->name))
             ->subject($subject)
-            ->html($content)
+            ->setBody($htmlPart)
             ->date($dateTime);
-
-        // Prefer one Subject line so Outlook does not show only the first folded segment.
-        $subjectHeader = $email->getHeaders()->get('Subject');
-        if ($subjectHeader && method_exists($subjectHeader, 'setMaxLineLength')) {
-            $subjectHeader->setMaxLineLength(998);
-        }
 
         // DO NOT manually set Message-ID here. 
         // Symfony Mailer will generate a valid one automatically.
