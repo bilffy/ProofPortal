@@ -1,3 +1,4 @@
+(function ($) {
 $(document).ready(function () {
 
     var successMessage = sessionStorage.getItem('successMessage');
@@ -114,7 +115,9 @@ $(document).ready(function () {
         }
     });
 
-    jQuery.noConflict();
+    // Keep the proofing jQuery (with DataTables) as `$` inside this file.
+    // Do not call jQuery.noConflict() here — on some environments it restores a
+    // different `$` that does not have DataTables, so jobs tables fail to init.
     var searchDataTable;
     if ($('#searchData').length) {
         searchDataTable = $('#searchData').DataTable({
@@ -411,3 +414,4 @@ $(document).ready(function () {
         });
     }
 });
+})(jQuery);
