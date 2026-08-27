@@ -313,6 +313,7 @@ class ConfigureService
                         $linksToInsert[] = [
                             'ts_folder_id'  => $folderId,
                             'ts_subject_id' => $subjectId,
+                            'is_deleted'    => 0,
                             'created_at'    => \Carbon\Carbon::now(),
                             'updated_at'    => \Carbon\Carbon::now()
                         ];
@@ -327,6 +328,7 @@ class ConfigureService
                     $linksToInsert[] = [
                         'ts_folder_id'  => $folderId,
                         'ts_subject_id' => $subjectId,
+                        'is_deleted'    => 0,
                         'created_at'    => \Carbon\Carbon::now(),
                         'updated_at'    => \Carbon\Carbon::now()
                     ];
