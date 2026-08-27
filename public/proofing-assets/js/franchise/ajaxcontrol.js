@@ -114,6 +114,7 @@ $(document).ready(function () {
         }
     });
 
+    jQuery.noConflict();
     var searchDataTable;
     if ($('#searchData').length) {
         searchDataTable = $('#searchData').DataTable({
@@ -141,7 +142,7 @@ $(document).ready(function () {
 
     // Update search on input change
     $('#searchData_filter').on('keyup', function () {
-        if(searchDataTable) searchDataTable.search(this.value).draw();
+        if (searchDataTable) searchDataTable.search(this.value).draw();
     });
 
     var schoolsTable;
@@ -171,7 +172,7 @@ $(document).ready(function () {
 
     // Update search on input change
     $('#schools-table_filter').on('keyup', function () {
-        if(schoolsTable) schoolsTable.search(this.value).draw();
+        if (schoolsTable) schoolsTable.search(this.value).draw();
     });
 
     // Hide and Show Archived Jobs
