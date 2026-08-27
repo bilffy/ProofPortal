@@ -1,4 +1,3 @@
-(function ($) {
 $(document).ready(function () {
 
     var successMessage = sessionStorage.getItem('successMessage');
