@@ -164,7 +164,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         });
     });
 
-    Route::middleware(['proofing_menu'])->group(function () use ($permissionCanProof, $permissionCanConfigProof, $permissionCanManageInvite, $permissionCanProofChange, $permissionCanBulkUpload, $permissionCanReport) {
+    Route::middleware(['proofing_menu', 'school_context'])->group(function () use ($permissionCanProof, $permissionCanConfigProof, $permissionCanManageInvite, $permissionCanProofChange, $permissionCanBulkUpload, $permissionCanReport) {
         Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class]], function () {
             //Dashboard
             Route::get('/proofing', [ProofingDashboardController::class, 'index'])->name('proofing');
