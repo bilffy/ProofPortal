@@ -142,7 +142,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     $permissionCanProofChange = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOF_CHANGE;
     $permissionCanBulkUpload = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_BULK_UPLOAD;
     $permissionCanReport = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_REPORTS;
-    Route::group(['middleware' => ["permission:{$permissionCanReport}", CheckUserRestriction::class]], function () {
+    Route::group(['middleware' => ["permission:{$permissionCanReport}", CheckUserRestriction::class, 'school_context']], function () {
         //Reports
         Route::get('/reports', [ReportController::class, 'index'])->name('reports');
         //Report - Run

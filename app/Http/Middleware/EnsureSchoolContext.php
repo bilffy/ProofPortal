@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureSchoolContext
 {
     /**
-     * Block proofing routes for franchise users until a school is selected.
+     * Block proofing/reports routes for franchise users until a school is selected.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -27,7 +27,7 @@ class EnsureSchoolContext
             return $next($request);
         }
 
-        $message = 'Please select a school before accessing Proofing.';
+        $message = 'Please select a school before continuing.';
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json(['message' => $message], 403);
