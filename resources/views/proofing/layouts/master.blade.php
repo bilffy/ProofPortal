@@ -320,6 +320,12 @@
                         'w-full bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden',
                         'p-4' => !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false,
                     ]) }}">
+                        @php
+                            $proofingMainPadded = !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false;
+                        @endphp
+                        <div @class(['px-4 pt-4' => ! $proofingMainPadded])>
+                            <x-layout.environment-banner />
+                        </div>
                         
                         {{-- Job Open Notification --}}
                         {{-- @if(session()->get('openJob') === true && session()->has('selectedJob') && session()->has('selectedSeason')) --}}

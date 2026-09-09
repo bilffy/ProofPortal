@@ -8,18 +8,9 @@
         $address = $franchise->name . ' - ' . $franchise->address . ' ' . $franchise->state . ' ' . $franchise->postcode;
         $contact = $franchise->phone . ' | ' . $franchise->email;
     }
-
-    $platform = strtolower((string) config('app.platform', 'production'));
-    $footerBg = config("app.platform_footer_colors.{$platform}")
-        ?? config('app.platform_footer_colors.production');
 @endphp
 
-<footer
-    class="p-4 w-full flex justify-evenly text-sm"
-    @if ($footerBg)
-        style="background-color: {{ $footerBg }}"
-    @endif
->
+<footer class="p-4 w-full flex justify-evenly text-sm">
     <!-- <div>Copyright ⓒ 2026 MSP Photography - v{{ config('app.version') }}</div> -->
     <div>Copyright ⓒ 2026 MSP Photography. All rights reserved.</div>
     <!-- <div>You're logged in as <strong>[User]</strong> with <strong>[privilege]</strong> privileges</div> -->

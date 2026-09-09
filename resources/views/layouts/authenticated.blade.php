@@ -112,6 +112,7 @@
                 </div>
             </header>
             <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4">
+                <x-layout.environment-banner />
                 @if (isset($slot))
                     {{ $slot }}
                 @else
