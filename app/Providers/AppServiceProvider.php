@@ -17,6 +17,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Storage\StorageServiceInterface;
 use App\Services\Storage\StorageFactory;
+use Illuminate\Auth\AuthManager;
+use Illuminate\Foundation\Application;
+use App\Auth\ImpersonateSessionGuard;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -64,5 +67,34 @@ class AppServiceProvider extends ServiceProvider
         });
         
         JsonResource::withoutWrapping();
+
+        $this->registerImpersonateSessionGuard();
+    }
+
+    /**
+     * Override lab404's session guard so impersonation does not rotate the session ID.
+     */
+    protected function registerImpersonateSessionGuard(): void
+    {
+        $this->app->make(AuthManager::class)->extend('session', function (Application $app, string $name, array $config) {
+            $auth = $app->make(AuthManager::class);
+            $provider = $auth->createUserProvider($config['provider']);
+
+            $guard = new ImpersonateSessionGuard($name, $provider, $app['session.store']);
+
+            if (method_exists($guard, 'setCookieJar')) {
+                $guard->setCookieJar($app['cookie']);
+            }
+
+            if (method_exists($guard, 'setDispatcher')) {
+                $guard->setDispatcher($app['events']);
+            }
+
+            if (method_exists($guard, 'setRequest')) {
+                $guard->setRequest($app->refresh('request', $guard, 'setRequest'));
+            }
+
+            return $guard;
+        });
     }
 }

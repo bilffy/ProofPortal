@@ -31,6 +31,12 @@
         <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
     @endif
 
+    @role($RoleHelper::ROLE_FRANCHISE)
+        @if (!$SchoolContextHelper->isSchoolContext())
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabFranchiseDashboard" navIcon="tachometer" href="{{ route('franchise.dashboard') }}" :activeNav="request()->routeIs('franchise.dashboard')">Dashboard</x-layout.navItem>
+        @endif
+    @endrole
+
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PHOTOGRAPHY))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
             <x-layout.navItem visibility="{{ $visibility }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
@@ -39,7 +45,7 @@
 
     @hasanyrole(implode("|", $nonSchoolLevelRoles))
         @if ($SchoolContextHelper->isSchoolContext())
-            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography.configure-new') }}" :activeNav="request()->routeIs('photography.configure-new', 'photography', 'photography.portraits', 'photography.groups', 'photography.others')">Photography</x-layout.navItem>
         @endif
     @endhasanyrole
     
@@ -64,6 +70,9 @@
                 {{-- Reports are not yet implemented, hide for now until the blueprint implemented into the system--}}
                 <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('reports') }}">Reports</x-layout.navItem>
             @endcan
+            @role($RoleHelper::ROLE_FRANCHISE)
+                <x-layout.navItem visibility="{{ $visibility }}" id="tabEmails" navIcon="envelope" href="{{ route('emails.index') }}" :activeNav="request()->routeIs('emails.*')">Emails</x-layout.navItem>
+            @endrole
         @endif
     @endcan
 
@@ -78,8 +87,14 @@
     let navCollapsed = "{{ $visibility == 'hidden' ? true : false }}"
     
     window.addEventListener("load", function () {
-        const targetElement = `#${getNavTabId(getCurrentNav())}`;
+        let tabId = getNavTabId(getCurrentNav());
+        if (window.location.pathname.includes('/franchise-dashboard')) {
+            tabId = 'tabFranchiseDashboard';
+        } else if (window.location.pathname.includes('/emails')) {
+            tabId = 'tabEmails';
+        }
 
+        const targetElement = `#${tabId}`;
         $(targetElement).addClass('bg-primary text-white rounded-e-md');
     }, false);
 </script>

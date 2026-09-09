@@ -1,33 +1,6 @@
 
 {{-- code by IT --}}
-<div class="w-full text-center" x-data="{
-    calculateAndSet() {
-        let gridEl = this.$el.querySelector('.grid');
-        if (!gridEl) return;
-        
-        let computed = window.getComputedStyle(gridEl);
-        let colsStr = computed.getPropertyValue('grid-template-columns');
-        let cols = colsStr ? colsStr.trim().split(/\s+/).length : 1;
-        if (cols < 1) cols = 1;
-        
-        let targetPerPage = cols * 3;
-        
-        if (targetPerPage < 30) {
-            // Find how many rows it takes to hold at least 30 images
-            // and multiply by the exact columns to ensure a completely flat bottom row
-            targetPerPage = Math.ceil(30 / cols) * cols;
-        }
-        
-        if (this.$wire.perPage !== targetPerPage) {
-            this.$wire.setPerPage(targetPerPage);
-        }
-    }
-}" x-init="
-    $nextTick(() => {
-        setTimeout(() => calculateAndSet(), 150);
-    });
-    window.addEventListener('resize', () => { setTimeout(() => calculateAndSet(), 300); });
-">
+<div class="w-full text-center">
 
     <div class="w-full text-center">
         <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $totalWithImages }}">
@@ -49,7 +22,7 @@
                 {{-- code by IT--}}
             @endforeach
         </div>
-        <div class="mt-4 mb-4 flex justify-center">
+        <div class="mt-4 mb-4 flex flex-col items-center gap-2">
             <div>
                 @if (count($paginatedImages) == 0)
                     @if ($this->search)
@@ -58,6 +31,13 @@
                         Your MSP photos are currently being processed and will appear here shortly.
                     @endif
                 @else
+                    <p class="text-sm text-neutral-600 mb-3">
+                        Showing {{ $paginatedImages->firstItem() }}&ndash;{{ $paginatedImages->lastItem() }}
+                        of {{ number_format($paginatedImages->total()) }}
+                        @if ($paginatedImages->hasMorePages())
+                            <span class="text-neutral-500">— more available below</span>
+                        @endif
+                    </p>
                     {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }} {{-- code by IT --}}
                     {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}} {{-- code by chromedia --}}
                 @endif

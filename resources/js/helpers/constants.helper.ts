@@ -1,5 +1,6 @@
 export const NAV_TABS = {
     HOME: 'Home',
+    FRANCHISE_DASHBOARD: 'Dashboard',
     PHOTOGRAPHY: 'Photography',
     PORTRAITS: 'Portraits',
     GROUP: 'Group',
@@ -8,6 +9,7 @@ export const NAV_TABS = {
     PROOFING: 'Proofing',
     MANAGE_USERS: 'Manage Users',
     REPORTS: 'Reports',
+    EMAILS: 'Emails',
     ORDER: 'Ordering',
     CONFIG_SCHOOL: 'School Config',
     APP_SETTINGS: 'App Settings',

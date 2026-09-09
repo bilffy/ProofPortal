@@ -20,7 +20,7 @@ class ImageService
     {
         return Image::where('keyorigin', 'Subject')
             ->where('keyvalue', $subjectKey)
-            ->where('exportStatus', 1)
+            ->notDeleted()
             ->get();
     }
 
@@ -87,16 +87,19 @@ class ImageService
 
         // Check if folder data exists
         if ($folderData !== null) {
-            Image::updateOrCreate(
+            $image = Image::updateOrCreate(
                 ['keyvalue' => $folderData->ts_folderkey],
                 [
                     'name' => $fileName,
                     'image_path' => $path,
                     'ts_job_id' => $folderData->ts_job_id,  // Use null if ts_job_id is not provided
                     'keyorigin' => 'Folder',
-                    'created_at' => Carbon::now()
                 ]
             );
+
+            // Re-uploads keep the same name/path, so Eloquent may not dirty attributes.
+            // Always bump updated_at so zoom/image caches invalidate.
+            $image->forceFill(['updated_at' => Carbon::now()])->save();
         }
     }
 

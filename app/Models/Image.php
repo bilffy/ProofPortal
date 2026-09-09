@@ -27,8 +27,17 @@ class Image extends Model
         'keyvalue',
         'keyorigin',
         'protected',
-        'portal_subject_id'
+        'portal_subject_id',
+        'is_deleted',
     ];
+
+    /**
+     * Active (non-deleted) image rows. Treats NULL as not deleted.
+     */
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('is_deleted', 0)->orWhereNull('is_deleted');
+    }
     
     //Subjects Table
     public function subjects(){

@@ -2,6 +2,7 @@
 
 namespace App\Services\Proofing;
 
+use App\Models\Folder;
 use App\Models\Job;
 use App\Services\Proofing\StatusService;
 use App\Services\Proofing\SchoolService;
@@ -11,6 +12,7 @@ use App\Helpers\ActivityLogHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Helpers\Constants\LogConstants;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
@@ -136,6 +138,311 @@ class JobService
         ])->whereIn('ts_job_id', $TSJobIDs)->get()->keyBy('ts_job_id');
     }
 
+    /**
+     * Lean job list for Photography Configure season dropdown (no franchise/season/job_users joins).
+     */
+    public function getPortalConfigureJobsList(int $schoolId, $seasonId)
+    {
+        $query = $this->portalConfigureJobsBaseQuery($schoolId);
+        $this->constrainJobsToSeasons($query, $seasonId);
+
+        return $query
+            ->select([
+                'jobs.ts_job_id',
+                'jobs.ts_jobkey',
+                'jobs.ts_jobname',
+            ])
+            ->selectRaw($this->portalConfigureJobsPortraitExistsSql())
+            ->orderBy('jobs.ts_jobname')
+            ->get();
+    }
+
+    /**
+     * All portal configure jobs for a school, grouped by ts_season_id (single query).
+     *
+     * @return array<int|string, list<array{ts_jobkey: string, ts_jobname: string, has_visible_portrait: bool}>>
+     */
+    public function getPortalConfigureJobsGroupedBySeason(int $schoolId): array
+    {
+        $jobs = $this->portalConfigureJobsBaseQuery($schoolId)
+            ->select([
+                'jobs.ts_job_id',
+                'jobs.ts_jobkey',
+                'jobs.ts_jobname',
+                'jobs.ts_season_id',
+            ])
+            ->selectRaw($this->portalConfigureJobsPortraitExistsSql())
+            ->orderBy('jobs.ts_jobname')
+            ->get();
+
+        $grouped = [];
+        foreach ($jobs as $job) {
+            $grouped[$job->ts_season_id][] = [
+                'ts_jobkey' => $job->ts_jobkey,
+                'ts_jobname' => $job->ts_jobname,
+                'has_visible_portrait' => (bool) $job->has_visible_portrait,
+            ];
+        }
+
+        return $grouped;
+    }
+
+    protected function portalConfigureJobsBaseQuery(int $schoolId)
+    {
+        $school = \App\Models\School::find($schoolId, ['id', 'schoolkey']);
+        $schoolKey = $school?->schoolkey ?? '';
+
+        $query = Job::query()
+            ->where('jobs.show_portal', 1)
+            ->where('jobs.jobsync_status_id', $this->statusService->sync)
+            ->where('jobs.foldersync_status_id', $this->statusService->completed)
+            ->where(function ($q) use ($schoolId, $schoolKey) {
+                $q->where('jobs.school_id', $schoolId);
+                if ($schoolKey !== '') {
+                    $q->orWhere(function ($unassigned) use ($schoolKey) {
+                        $unassigned->whereNull('jobs.school_id')
+                            ->where('jobs.ts_schoolkey', $schoolKey);
+                    });
+                }
+            });
+
+        \App\Helpers\PhotographyJobQueryHelper::applyDownloadAvailableJobFilter($query);
+
+        return $query;
+    }
+
+    protected function portalConfigureJobsPortraitExistsSql(): string
+    {
+        return 'EXISTS (
+                SELECT 1 FROM folders
+                WHERE folders.ts_job_id = jobs.ts_job_id
+                  AND folders.ts_folderkey IS NOT NULL
+                  AND (folders.is_deleted = 0 OR folders.is_deleted IS NULL)
+                  AND folders.is_visible_for_portrait = 1
+            ) as has_visible_portrait';
+    }
+
+    /**
+     * Proofing jobs that must be archived before they appear in Photography configure/portraits.
+     */
+    public function getProofingJobsNeedingArchive(int $schoolId): \Illuminate\Support\Collection
+    {
+        $school = \App\Models\School::find($schoolId, ['id', 'schoolkey']);
+        $schoolKey = $school?->schoolkey ?? '';
+        $archivedId = $this->statusService->archived;
+        $completedId = $this->statusService->completed;
+
+        return Job::query()
+            ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
+            ->leftJoin('status', 'status.id', '=', 'jobs.job_status_id')
+            ->where('jobs.show_proofing', 1)
+            ->where('jobs.job_status_id', '!=', $archivedId)
+            ->where(function ($q) use ($completedId) {
+                $q->where('jobs.job_status_id', $completedId)
+                    ->orWhere(function ($dueQuery) {
+                        $dueQuery->whereNotNull('jobs.proof_due')
+                            ->where('jobs.proof_due', '<', now());
+                    });
+            })
+            ->where(function ($q) use ($schoolId, $schoolKey) {
+                $q->where('jobs.school_id', $schoolId);
+                if ($schoolKey !== '') {
+                    $q->orWhere(function ($unassigned) use ($schoolKey) {
+                        $unassigned->whereNull('jobs.school_id')
+                            ->where('jobs.ts_schoolkey', $schoolKey);
+                    });
+                }
+            })
+            ->select([
+                'jobs.ts_job_id',
+                'jobs.ts_jobkey',
+                'jobs.ts_jobname',
+                'jobs.proof_due',
+                'jobs.job_status_id',
+                'seasons.code as season_code',
+                'status.status_external_name as job_status_name',
+                'status.status_internal_name as job_status_internal_name',
+            ])
+            ->orderBy('jobs.ts_jobname')
+            ->get();
+    }
+
+    /**
+     * @param  list<int>  $tsJobIds
+     * @return array{archived: list<int>, failed: list<int>}
+     */
+    public function archiveProofingJobsForSchool(array $tsJobIds, int $schoolId): array
+    {
+        $eligibleIds = $this->getProofingJobsNeedingArchive($schoolId)
+            ->pluck('ts_job_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $archived = [];
+        $failed = [];
+
+        foreach ($tsJobIds as $tsJobId) {
+            $tsJobId = (int) $tsJobId;
+            if ($tsJobId <= 0 || ! in_array($tsJobId, $eligibleIds, true)) {
+                $failed[] = $tsJobId;
+                continue;
+            }
+
+            try {
+                $this->updateJobStatus($tsJobId, $this->statusService->archived);
+                $archived[] = $tsJobId;
+            } catch (\Throwable) {
+                $failed[] = $tsJobId;
+            }
+        }
+
+        return ['archived' => $archived, 'failed' => $failed];
+    }
+
+    /**
+     * Folder rows for portal digital-image configure (counts via SQL, no image eager load).
+     */
+    public function getPortalJobFolderConfig(int $tsJobId): array
+    {
+        $folders = Folder::query()
+            ->where('ts_job_id', $tsJobId)
+            ->whereNotNull('ts_folderkey')
+            ->where(function ($query) {
+                $query->where('is_deleted', 0)->orWhereNull('is_deleted');
+            })
+            ->with(['folderTags'])
+            ->select([
+                'folders.ts_folder_id',
+                'folders.portal_ts_foldername',
+                'folders.folder_tag',
+                'folders.is_visible_for_portrait',
+                'folders.is_visible_for_group',
+            ])
+            ->orderBy('portal_ts_foldername')
+            ->get();
+
+        if ($folders->isEmpty()) {
+            return [];
+        }
+
+        $counts = $this->getPortalFolderImageCounts($folders->pluck('ts_folder_id')->all());
+
+        return $folders
+            ->map(fn ($folder) => [
+                'ts_foldername' => $folder->portal_ts_foldername,
+                'ts_folder_id' => $folder->ts_folder_id,
+                'tag' => $folder->folderTags->external_name ?? null,
+                'is_visible_for_portrait' => $folder->is_visible_for_portrait,
+                'is_visible_for_group' => $folder->is_visible_for_group,
+                'groupCount' => $counts['group'][$folder->ts_folder_id] ?? 0,
+                'students' => $counts['students'][$folder->ts_folder_id] ?? 0,
+                'attached' => $counts['attached'][$folder->ts_folder_id] ?? 0,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Batch portrait/group counts for configure folders (3 queries instead of per-folder subqueries).
+     *
+     * @return array{group: array<int, int>, students: array<int, int>, attached: array<int, int>}
+     */
+    protected function getPortalFolderImageCounts(array $folderIds): array
+    {
+        if ($folderIds === []) {
+            return ['group' => [], 'students' => [], 'attached' => []];
+        }
+
+        $students = DB::table('subjects')
+            ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
+            ->whereIn('subjects.ts_folder_id', $folderIds)
+            ->where(function ($query) {
+                $query->where('subjects.is_deleted', 0)
+                    ->orWhereNull('subjects.is_deleted');
+            })
+            ->where(function ($query) {
+                $query->where('images.is_deleted', 0)
+                    ->orWhereNull('images.is_deleted');
+            })
+            ->select('subjects.ts_folder_id', DB::raw('COUNT(DISTINCT subjects.ts_subject_id) as total'))
+            ->groupBy('subjects.ts_folder_id')
+            ->pluck('total', 'ts_folder_id');
+
+        $attached = DB::table('folder_subjects')
+            ->join('subjects', 'subjects.ts_subject_id', '=', 'folder_subjects.ts_subject_id')
+            ->join('images', 'images.keyvalue', '=', 'subjects.ts_subjectkey')
+            ->whereIn('folder_subjects.ts_folder_id', $folderIds)
+            ->where(function ($query) {
+                $query->where('folder_subjects.is_deleted', 0)
+                    ->orWhereNull('folder_subjects.is_deleted');
+            })
+            ->where(function ($query) {
+                $query->where('subjects.is_deleted', 0)
+                    ->orWhereNull('subjects.is_deleted');
+            })
+            ->where(function ($query) {
+                $query->where('images.is_deleted', 0)
+                    ->orWhereNull('images.is_deleted');
+            })
+            ->select('folder_subjects.ts_folder_id', DB::raw('COUNT(DISTINCT folder_subjects.ts_subject_id) as total'))
+            ->groupBy('folder_subjects.ts_folder_id')
+            ->pluck('total', 'ts_folder_id');
+
+        $group = DB::table('folders')
+            ->join('images', 'images.keyvalue', '=', 'folders.ts_folderkey')
+            ->whereIn('folders.ts_folder_id', $folderIds)
+            ->where(function ($query) {
+                $query->where('images.is_deleted', 0)
+                    ->orWhereNull('images.is_deleted');
+            })
+            ->select('folders.ts_folder_id', DB::raw('COUNT(*) as total'))
+            ->groupBy('folders.ts_folder_id')
+            ->pluck('total', 'ts_folder_id');
+
+        return [
+            'group' => $group->all(),
+            'students' => $students->all(),
+            'attached' => $attached->all(),
+        ];
+    }
+
+    public function findPortalJobForSchool(string $jobKey, int $schoolId): ?Job
+    {
+        if ($jobKey === '' || $schoolId <= 0) {
+            return null;
+        }
+
+        $school = \App\Models\School::find($schoolId, ['id', 'schoolkey']);
+        $schoolKey = $school?->schoolkey ?? '';
+
+        $query = Job::query()
+            ->where('jobs.ts_jobkey', $jobKey)
+            ->where('jobs.show_portal', 1)
+            ->where('jobs.jobsync_status_id', $this->statusService->sync)
+            ->where('jobs.foldersync_status_id', $this->statusService->completed)
+            ->where(function ($q) use ($schoolId, $schoolKey) {
+                $q->where('jobs.school_id', $schoolId);
+                if ($schoolKey !== '') {
+                    $q->orWhere(function ($unassigned) use ($schoolKey) {
+                        $unassigned->whereNull('jobs.school_id')
+                            ->where('jobs.ts_schoolkey', $schoolKey);
+                    });
+                }
+            });
+
+        \App\Helpers\PhotographyJobQueryHelper::applyDownloadAvailableJobFilter($query);
+
+        return $query->select(
+                'jobs.ts_job_id',
+                'jobs.ts_jobkey',
+                'jobs.ts_jobname',
+                'jobs.download_available_date',
+                'jobs.portrait_download_date',
+                'jobs.group_download_date'
+            )
+            ->first();
+    }
+
     public function toggleArchivedJobs($franchiseCode, $schoolId, $includeArchived)
     {
         $archiveStatus = $this->statusService->archived;
@@ -146,21 +453,24 @@ class JobService
             ->where('job_users.user_id', Auth::user()->id);
 
         if ($includeArchived) {
-            $jobs = $query->where('jobs.job_status_id', $this->statusService->archived)->get();
+            $jobs = $query->where('jobs.job_status_id', $this->statusService->archived)->with('folders')->get();
         } else {
             $jobs = $query->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound, $deleted])
                           ->where('jobs.jobsync_status_id', $this->statusService->sync)
+                          ->with('folders')
                           ->get();
         }
 
-        return $jobs->map(function ($job) {
+        $allStatusIds = $jobs->flatMap(fn ($job) => $job->folders->pluck('status_id'))->unique()->filter()->values();
+        $statusNamesById = $this->statusService->getDataById($allStatusIds)->pluck('status_external_name', 'id');
+
+        return $jobs->map(function ($job) use ($statusNamesById) {
             $job->hash = Crypt::encryptString($job->ts_job_id);
             $job->jobKeyHash = Crypt::encryptString($job->ts_jobkey);
             $job->config_url = \URL::signedRoute('config-job', ['hash' => $job->jobKeyHash]);
             $job->folderCounts = $job->folders->groupBy('status_id')->map->count();
-            $statusNames = $this->statusService->getDataById($job->folderCounts->keys())->pluck('status_external_name', 'id');
-            $job->folderCounts = $job->folderCounts->mapWithKeys(function ($count, $statusId) use ($statusNames) {
-                return [$statusNames[$statusId] ?? 'Unknown Status' => $count];
+            $job->folderCounts = $job->folderCounts->mapWithKeys(function ($count, $statusId) use ($statusNamesById) {
+                return [$statusNamesById[$statusId] ?? 'Unknown Status' => $count];
             })->toArray();
             return $job;
         });
@@ -181,7 +491,12 @@ class JobService
             'status' => $newStatusId
         ], $rootUserId);
 
-        $job->update(['job_status_id' => $newStatusId]);
+        $jobUpdates = ['job_status_id' => $newStatusId];
+        // Archived jobs must appear in Photography configure / portraits.
+        if ((int) $newStatusId === (int) $this->statusService->archived) {
+            $jobUpdates['show_portal'] = 1;
+        }
+        $job->update($jobUpdates);
 
         // Clear outstanding pending emails before creating the completion notification
         if ($newStatusId == $this->statusService->completed) {

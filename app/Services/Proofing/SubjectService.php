@@ -72,6 +72,19 @@ class SubjectService
             ->get();
     }
 
+    public function getAllSubjectAssociationsByKeys(array $subjectKeys)
+    {
+        $subjectKeys = array_values(array_filter($subjectKeys));
+        if ($subjectKeys === []) {
+            return collect();
+        }
+
+        return Subject::with(['images', 'attachedsubjects'])
+            ->whereIn('ts_subjectkey', $subjectKeys)
+            ->get()
+            ->groupBy('ts_subjectkey');
+    }
+
     public function getByJobId($tsJobId,...$selectedValues)
     {
         return Subject::select($selectedValues)

@@ -89,6 +89,57 @@ class SchoolConfigureController extends Controller
         }
     }
 
+    public function archivePhotographyJobs(Request $request)
+    {
+        try {
+            $schoolId = (int) $this->getDecryptData($request->input('schoolKey'));
+        } catch (\Throwable) {
+            return response()->json(['success' => false, 'message' => 'Invalid school.'], 422);
+        }
+
+        if ($schoolId <= 0) {
+            return response()->json(['success' => false, 'message' => 'Invalid school.'], 422);
+        }
+
+        $encryptedJobs = $request->input('jobs', []);
+        if (! is_array($encryptedJobs)) {
+            $encryptedJobs = [$encryptedJobs];
+        }
+
+        $tsJobIds = [];
+        foreach ($encryptedJobs as $encryptedJob) {
+            if ($encryptedJob === null || $encryptedJob === '') {
+                continue;
+            }
+            try {
+                $tsJobIds[] = (int) $this->getDecryptData($encryptedJob);
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        $tsJobIds = array_values(array_filter($tsJobIds, fn ($id) => $id > 0));
+        if ($tsJobIds === []) {
+            return response()->json(['success' => false, 'message' => 'No valid jobs provided.'], 422);
+        }
+
+        $result = $this->jobService->archiveProofingJobsForSchool($tsJobIds, $schoolId);
+        $archivedCount = count($result['archived']);
+        $failedCount = count($result['failed']);
+
+        return response()->json([
+            'success' => $failedCount === 0,
+            'archived' => $archivedCount,
+            'failed' => $failedCount,
+            'remaining' => $this->jobService->getProofingJobsNeedingArchive($schoolId)->count(),
+            'message' => $archivedCount > 0
+                ? ($archivedCount === 1
+                    ? '1 job has been archived.'
+                    : "{$archivedCount} jobs have been archived.")
+                : 'No jobs were archived.',
+        ]);
+    }
+
     public function configSchoolFetchJobs(Request $request)
     {
         $decryptedSeasonID = $this->getDecryptData($request->ts_season_id);
@@ -99,74 +150,64 @@ class SchoolConfigureController extends Controller
             return response()->json([]);
         }
 
-        $jobs = $this->jobService->getJobsBySeasonAndSchoolId($schoolId, $decryptedSeasonID)
-            ->where('jobs.show_portal', 1)
-            ->get();
+        $jobs = $this->jobService->getPortalConfigureJobsList($schoolId, $decryptedSeasonID);
 
-        // Fetch folder/subject/image relations for all jobs in one batched query
-        $jobsWithRelationsById = $this->jobService->getJobsByTSJobIDs($jobs->pluck('ts_job_id')->all());
-
-        // Map through all jobs to get the job details along with folders and associated data
-        $jobsWithDetails = $jobs->map(function ($job) use ($jobsWithRelationsById) {
-            $selectedFolders = [];
-            $jobWithRelations = $jobsWithRelationsById->get($job->ts_job_id) ?? $job;
-
-            if ($jobWithRelations->relationLoaded('folders') && $jobWithRelations->folders->isNotEmpty()) {
-                $selectedFolders = $jobWithRelations->folders
-                ->filter(function ($folder) {
-                    return !is_null($folder->ts_folderkey)
-                        && (int) ($folder->is_deleted ?? 0) !== 1;
-                })
-                ->map(function ($folder) {
-                    $folderWithImage = $folder->images ?? collect();
-
-                    $subjectsWithImages = $folder->subjects->filter(function ($subject) {
-                        return $subject->images !== null;
-                    });
-
-                    $attachedSubjectsWithImages = $folder->attachedsubjects->filter(function ($attachedSubject) {
-                        return $attachedSubject->images !== null;
-                    });
-    
-                    return [
-                        'ts_foldername' => $folder->portal_ts_foldername,
-                        'ts_folder_id' => $folder->ts_folder_id,
-                        'tag' => $folder->folderTags->external_name ?? null,
-                        'is_visible_for_portrait' => $folder->is_visible_for_portrait,
-                        'is_visible_for_group' => $folder->is_visible_for_group,
-                        'groupCount' => is_countable($folderWithImage) ? $folderWithImage->count() : 0,
-                        'students' => $subjectsWithImages->count(),
-                        'attached' => $attachedSubjectsWithImages->count(),
-                    ];
-                })->toArray();
-            }
-
+        $jobsWithDetails = $jobs->map(function ($job) {
             return [
-                'ts_jobkey' => Crypt::encryptString($jobWithRelations->ts_jobkey),
-                'ts_jobname' => $jobWithRelations->ts_jobname,
-                'download_available_date' => $jobWithRelations->download_available_date ?? null,
-                'portrait_download_date' => $jobWithRelations->portrait_download_date ?? null,
-                'group_download_date' => $jobWithRelations->group_download_date ?? null,
-                'has_visible_portrait' => !empty($selectedFolders) && collect($selectedFolders)->contains('is_visible_for_portrait', 1),
-                'Folders' => $selectedFolders
+                'ts_jobkey' => Crypt::encryptString($job->ts_jobkey),
+                'ts_jobname' => $job->ts_jobname,
+                'has_visible_portrait' => (bool) $job->has_visible_portrait,
             ];
         })->values();
 
         return response()->json($jobsWithDetails);
     }
 
+    public function configSchoolFetchJobDetails(Request $request)
+    {
+        try {
+            $jobKey = $this->getDecryptData($request->jobKey);
+            $schoolId = (int) $this->getDecryptData($request->schoolkey);
+        } catch (\Throwable) {
+            return response()->json(['error' => 'Invalid job or school.'], 422);
+        }
+
+        if ($jobKey === '' || $schoolId <= 0) {
+            return response()->json(['error' => 'Invalid job or school.'], 422);
+        }
+
+        $job = $this->jobService->findPortalJobForSchool($jobKey, $schoolId);
+        if (!$job) {
+            return response()->json(['error' => 'Job not found.'], 404);
+        }
+
+        $folders = $this->jobService->getPortalJobFolderConfig((int) $job->ts_job_id);
+        $selectedFolders = $folders;
+
+        return response()->json([
+            'ts_jobkey' => Crypt::encryptString($job->ts_jobkey),
+            'ts_jobname' => $job->ts_jobname,
+            'download_available_date' => $job->download_available_date,
+            'portrait_download_date' => $job->portrait_download_date,
+            'group_download_date' => $job->group_download_date,
+            'has_visible_portrait' => collect($folders)->contains('is_visible_for_portrait', 1),
+            'Folders' => $folders,
+            'foldersHtml' => $this->renderConfigureFoldersHtml($selectedFolders),
+        ]);
+    }
+
     public function configSchoolFolderConfig(Request $request)
     {
-        // Get the selected folders from the request
         $selectedFolders = $request->folders;
 
-        // Render the folder configuration view with the selected folders
-        $foldersHtml = view('partials.photography.configure.folders', compact('selectedFolders'))->render();
-
-        // Return the rendered HTML in the JSON response
         return response()->json([
-            'html' => $foldersHtml
+            'html' => $this->renderConfigureFoldersHtml($selectedFolders ?? []),
         ]);
+    }
+
+    private function renderConfigureFoldersHtml(array $selectedFolders): string
+    {
+        return view('partials.photography.configure.folders', compact('selectedFolders'))->render();
     }
 
     public function configSchoolChangeUpdate(Request $request)

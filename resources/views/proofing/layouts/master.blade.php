@@ -323,7 +323,7 @@
                         
                         {{-- Job Open Notification --}}
                         {{-- @if(session()->get('openJob') === true && session()->has('selectedJob') && session()->has('selectedSeason')) --}}
-                        @if(session()->get('openJob') === true && !empty($selectedJob['ts_jobname']) && !empty($selectedSeason['code']) && !(($user->resource->isPhotoCoordinator() || $user->resource->isTeacher()) && $user->resource->jobs()->count() === 1))
+                        @if(session()->get('openJob') === true && !empty($selectedJob['ts_jobname']) && !empty($selectedSeason['code']) && !(($user->resource->isPhotoCoordinator() || $user->resource->isTeacher()) && $user->resource->getJobsCount() === 1))
                             <div class="row text-right p-2 mb-3 bg-job-select header-color d-none">
                                 <div class="col-12">
                                     <span class="lead m-0 mr-2">
@@ -448,7 +448,7 @@
             }
 
             // TODO: Implement cloudflare-friendly encryption for session polling
-            import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
+            import { startSessionPolling, createApiToken, ensureUserIsAuthenticated } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
             // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
             const editProfileOptions = {
                 onShow: async () => {
@@ -514,14 +514,9 @@
                 }, 5000); // Auto-hide after 5 seconds
             });
             
-            document.addEventListener('DOMContentLoaded', (event) => {
+            document.addEventListener('DOMContentLoaded', async () => {
                 window.showEditProfile = showEditProfile;
-                const token = localStorage.getItem('api_token') || '';
-                // const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
-                const id = localStorage.getItem('api_token_id') === null ? 0 : localStorage.getItem('api_token_id');
-                if (token === '' || id != {{ $user->id }}) {
-                    createApiToken();
-                }
+                await ensureUserIsAuthenticated({{ $user->id }}, @json(is_impersonating()));
                 startSessionPolling();
             });
             
@@ -570,27 +565,31 @@
                 });
             }
 
-            // Bootstrap 5 jQuery Compatibility Bridge
-                if (typeof jQuery !== 'undefined') {
-                    const $ = jQuery;
-                    const bootstrap = window.bootstrap; // Assuming bootstrap is loaded globally
+            // Only bridge when Bootstrap 5 Modal API exists. This app ships Bootstrap 4.0,
+            // whose jQuery $.fn.modal must not be overwritten with getOrCreateInstance.
+            if (
+                typeof jQuery !== 'undefined'
+                && window.bootstrap
+                && bootstrap.Modal
+                && typeof bootstrap.Modal.getOrCreateInstance === 'function'
+            ) {
+                const $ = jQuery;
 
-                    $.fn.modal = function(option) {
-                        return this.each(function() {
-                            const instance = bootstrap.Modal.getOrCreateInstance(this);
-                            if (typeof option === 'string') {
-                                instance[option]();
-                            }
-                        });
-                    };
-                    
-                    // Repeat for tooltips or popovers if you use them
-                    $.fn.tooltip = function() {
-                        return this.each(function() {
-                            new bootstrap.Tooltip(this);
-                        });
-                    };
-                }
+                $.fn.modal = function (option) {
+                    return this.each(function () {
+                        const instance = bootstrap.Modal.getOrCreateInstance(this);
+                        if (typeof option === 'string') {
+                            instance[option]();
+                        }
+                    });
+                };
+
+                $.fn.tooltip = function () {
+                    return this.each(function () {
+                        new bootstrap.Tooltip(this);
+                    });
+                };
+            }
         </script>
         
         {{-- Bootstrap and necessary plugins --}}

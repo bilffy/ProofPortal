@@ -140,7 +140,7 @@
             </div>
         </div>
         @if ($season)
-            <livewire:photography.photo-grid :$category :$season :$schoolId :key="$key"/>
+            <livewire:photography.photo-grid :$category :$season :$schoolId :key="$key" lazy />
         @else
             @php
                 $isFranchiseLevel = Auth::user()->isFranchiseLevel();

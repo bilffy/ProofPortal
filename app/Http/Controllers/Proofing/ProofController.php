@@ -19,6 +19,7 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use App\Models\Subject;
 use App\Models\ProofingIssue;
+use App\Models\ProofingChangelog;
 use Carbon\Carbon;
 use URL;
 use Auth;
@@ -99,7 +100,14 @@ class ProofController extends Controller
             ->get();
         $changelogKeysMap = $getChangelog->pluck('keyvalue')->unique()->flip();
 
-        $preparedFolders = $selectedFolders->map(function ($folder) use ($selectedJob, $changelogKeysMap) {
+        $folderSubjectChangeCounts = $this->proofingChangelogService->getSubjectChangedFolderCountsByFolderIds(
+            $selectedFolders->pluck('id')
+        );
+
+        $foldersToPromote = [];
+        $modifiedStatus = $this->statusService->modified;
+
+        $preparedFolders = $selectedFolders->map(function ($folder) use ($selectedJob, $changelogKeysMap, $folderSubjectChangeCounts, &$foldersToPromote, $modifiedStatus) {
             $hasChanges = false;
             
             // 1. Check if the folder key itself has changes
@@ -119,39 +127,19 @@ class ProofController extends Controller
 
             // 3. Check for specific subject-folder-change entries
             if (!$hasChanges) {
-                 if ($this->proofingChangelogService->subjectChangedFolderCount($folder->id) > 0) {
-                     $hasChanges = true;
-                 }
+                $changeKey = 'Folder From: ' . $folder->id;
+                if (($folderSubjectChangeCounts[$changeKey] ?? 0) > 0) {
+                    $hasChanges = true;
+                }
             }
 
-            $rootUserId = Auth::id();
             $displayStatusId = $folder->status_id;
             $isManuallyModified = 0;
 
-            // Auto-promotion logic: Transition to 'Modified' if changes detected and not already 'Modified'
             if ($folder->status_id == $this->statusService->none && $hasChanges) {
                 $isManuallyModified = 1;
-                $displayStatusId = $this->statusService->modified;
-                
-                // Perform updates
-                ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
-                    'folderkey' => $folder->ts_folderkey,
-                    'status' => $this->statusService->modified
-                ], $rootUserId);
-                $folder->update(['status_id' => $this->statusService->modified]);
-                
-                // If the job itself wasn't already modified, update it and send job notification
-                if ($selectedJob->job_status_id != $this->statusService->modified) {
-                    ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
-                        'jobkey' => $selectedJob->ts_jobkey,
-                        'status' => $this->statusService->modified
-                    ], $rootUserId);
-                    $selectedJob->update(['job_status_id' => $this->statusService->modified]);
-                    $this->emailService->saveEmailContent($selectedJob->ts_jobkey, 'job_status_modified', Carbon::now(), $this->statusService->modified);
-                }
-
-                // Send folder notification for the transition to 'Modified'
-                $this->emailService->saveEmailFolderContent($folder->ts_folder_id, 'folder_status_modified', Carbon::now(), $this->statusService->modified);                                                        
+                $displayStatusId = $modifiedStatus;
+                $foldersToPromote[] = $folder;
             }
 
             return [
@@ -160,6 +148,37 @@ class ProofController extends Controller
                 'isManuallyModified' => $isManuallyModified
             ];
         });
+
+        if ($foldersToPromote !== []) {
+            $rootUserId = Auth::id();
+
+            foreach ($foldersToPromote as $folder) {
+                ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
+                    'folderkey' => $folder->ts_folderkey,
+                    'status' => $modifiedStatus
+                ], $rootUserId);
+            }
+
+            \App\Models\Folder::whereIn('id', collect($foldersToPromote)->pluck('id'))
+                ->update(['status_id' => $modifiedStatus]);
+
+            foreach ($foldersToPromote as $folder) {
+                $folder->status_id = $modifiedStatus;
+            }
+
+            if ($selectedJob->job_status_id != $modifiedStatus) {
+                ActivityLogHelper::log(LogConstants::JOB_STATUS_CHANGED, [
+                    'jobkey' => $selectedJob->ts_jobkey,
+                    'status' => $modifiedStatus
+                ], $rootUserId);
+                $selectedJob->update(['job_status_id' => $modifiedStatus]);
+                $this->emailService->saveEmailContent($selectedJob->ts_jobkey, 'job_status_modified', Carbon::now(), $modifiedStatus);
+            }
+
+            foreach ($foldersToPromote as $folder) {
+                $this->emailService->saveEmailFolderContent($folder->ts_folder_id, 'folder_status_modified', Carbon::now(), $modifiedStatus);
+            }
+        }
 
         return view('proofing.franchise.proof-my-people.folder-proofing', [
             'selectedJob' => $selectedJob,
@@ -242,6 +261,18 @@ class ProofController extends Controller
 
             $allSubjects = $sortedAttached->concat($sortedHomed);
         }
+
+        $subjectKeys = $allSubjects->pluck('ts_subjectkey')->filter()->unique()->values();
+        $changelogsBySubject = collect();
+        if ($subjectKeys->isNotEmpty()) {
+            $changelogsBySubject = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+                ->whereIn('changelogs.keyvalue', $subjectKeys)
+                ->where('changelogs.keyorigin', 'Subject')
+                ->whereIn('issues.issue_name', ['SUBJECT_ISSUE_PICTURE', 'SUBJECT_ISSUE_CLASS'])
+                ->select('changelogs.keyvalue', 'changelogs.change_to', 'issues.issue_name')
+                ->get()
+                ->groupBy('keyvalue');
+        }
         
         $allSubjectsByJob = $this->subjectService->getSubjectByJobId($selectedJob->ts_job_id)
                             ->select([
@@ -301,6 +332,7 @@ class ProofController extends Controller
             'selectedSeason' => $selectedSeason,
             'selectedJob' => $selectedJob,
             'allSubjects' => $allSubjects,
+            'changelogsBySubject' => $changelogsBySubject,
             'formattedFoldersWithChanges' => $formattedFoldersWithChanges,
             'subjectChangeFlags' => $subjectChangeFlags,
             'folder_questions' => $folder_questions,
@@ -367,7 +399,8 @@ class ProofController extends Controller
             });
         }
     
-        $subjects = $query->orderBy('ts_subject_id')
+        $subjects = $query->with(['images', 'folder:ts_folder_id,ts_foldername'])
+            ->orderBy('ts_subject_id')
             ->paginate($perPage, ['*'], 'page', $page);
     
         $html = view(

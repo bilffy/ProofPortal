@@ -80,7 +80,66 @@ configureJQ(document).ready(function ($) {
 
     // Folder visibility (Portraits / Groups) — plain ts_folder_id; never re-fire job change
     let jobsData = [];
+    let selectedJobDetail = null;
+    let jobsBySeasonId = (window.configureJobsBySeason && typeof window.configureJobsBySeason === 'object')
+        ? window.configureJobsBySeason
+        : {};
+    let jobsFetchRequest = null;
+    let jobDetailsFetchRequest = null;
+    let configureJobLoadToken = 0;
     let isBulkFolderVisibilityUpdate = false;
+
+    function destroyConfigureFlatpickr() {
+        ['portrait_download_start_picker', 'group_download_start_picker'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el && el._flatpickr) {
+                el._flatpickr.destroy();
+            }
+        });
+        document.querySelectorAll('body > .flatpickr-calendar').forEach(function (node) {
+            node.remove();
+        });
+    }
+
+    function teardownConfigureJobUi() {
+        destroyConfigureFlatpickr();
+
+        const $job = $('#select_job');
+        if ($job.length && $job.hasClass('select2-hidden-accessible')) {
+            try {
+                $job.select2('close');
+            } catch (e) {
+                // ignore select2 close errors during teardown
+            }
+        }
+
+        document.querySelectorAll('.select2-container--open').forEach(function (node) {
+            node.classList.remove('select2-container--open');
+        });
+        document.body.classList.remove('select2-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.documentElement.style.overflow = '';
+    }
+
+    function restoreConfigureScroll() {
+        const main = document.querySelector('main');
+        if (!main) {
+            return;
+        }
+
+        const computed = window.getComputedStyle(main);
+        if (computed.overflowY === 'hidden' || computed.overflow === 'hidden') {
+            main.style.overflowY = 'auto';
+        }
+
+        requestAnimationFrame(function () {
+            const maxScroll = Math.max(0, main.scrollHeight - main.clientHeight);
+            if (main.scrollTop > maxScroll) {
+                main.scrollTop = maxScroll;
+            }
+        });
+    }
 
     function normalizeJobFolders(folders) {
         if (Array.isArray(folders)) {
@@ -94,24 +153,68 @@ configureJQ(document).ready(function ($) {
 
     function syncFolderVisibilityInJobsData(folderTsId, field, newValue) {
         const selectedJobKey = $('#select_job').val();
-        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
-        if (!selectedJob) {
+        // Do not compare encrypted ts_jobkey values — Crypt::encryptString differs per request.
+        if (!selectedJobDetail || !selectedJobKey) {
             return;
         }
-        selectedJob.Folders = normalizeJobFolders(selectedJob.Folders);
-        const selectedFolder = selectedJob.Folders.find(
+
+        selectedJobDetail.Folders = normalizeJobFolders(selectedJobDetail.Folders);
+        const selectedFolder = selectedJobDetail.Folders.find(
             folder => String(folder.ts_folder_id) === String(folderTsId)
         );
         if (selectedFolder) {
             selectedFolder[field] = newValue;
         }
+
         if (field === 'is_visible_for_portrait') {
-            const anyVisible = selectedJob.Folders.some(f => Number(f.is_visible_for_portrait) === 1);
-            const jobOption = $(`#select_job option[value="${selectedJobKey}"]`);
+            const anyVisible = selectedJobDetail.Folders.some(f => Number(f.is_visible_for_portrait) === 1);
+            const summary = jobsData.find(job => job.ts_jobkey === selectedJobKey);
+            if (summary) {
+                summary.has_visible_portrait = anyVisible;
+            }
+            const seasonId = $('#select_season').val();
+            if (seasonId && jobsBySeasonId[seasonId]) {
+                const cached = jobsBySeasonId[seasonId].find(job => job.ts_jobkey === selectedJobKey);
+                if (cached) {
+                    cached.has_visible_portrait = anyVisible;
+                }
+            }
+            const jobOption = $('#select_job option').filter(function () {
+                return this.value === selectedJobKey;
+            });
             jobOption
                 .data('has-visible', !!anyVisible)
                 .attr('data-has-visible', anyVisible ? 'true' : 'false');
+            refreshJobCheckmarkDisplay(selectedJobKey, anyVisible);
         }
+    }
+
+    function refreshJobCheckmarkDisplay(selectedJobKey, anyVisible) {
+        const $job = $('#select_job');
+        if (!$job.length || !$job.hasClass('select2-hidden-accessible')) {
+            return;
+        }
+        if ($job.val() !== selectedJobKey) {
+            return;
+        }
+
+        const jobName = $job.find('option').filter(function () {
+            return this.value === selectedJobKey;
+        }).first().text() || selectedJobDetail?.ts_jobname || '';
+
+        const $rendered = $job.next('.select2-container').find('.select2-selection__rendered');
+        if (!$rendered.length) {
+            return;
+        }
+
+        if (anyVisible) {
+            $rendered.empty()
+                .append(document.createTextNode(jobName + ' '))
+                .append($('<i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i>'));
+        } else {
+            $rendered.text(jobName);
+        }
+        $rendered.attr('title', jobName);
     }
 
     function syncHeaderFolderCheckbox(checkboxClass, headerSelector) {
@@ -279,24 +382,30 @@ configureJQ(document).ready(function ($) {
     function refreshJobSelect(jobs) {
         const jobSelect = $('#select_job');
         const wasSelect2 = jobSelect.hasClass('select2-hidden-accessible');
+        const selectEl = jobSelect[0];
 
-        if (wasSelect2) {
-            jobSelect.select2('destroy');
-        }
-
-        jobSelect.empty().append('<option value="">Choose a Job</option>');
+        const fragment = document.createDocumentFragment();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Choose a Job';
+        fragment.appendChild(placeholder);
 
         (jobs || []).forEach(function (job) {
-            const option = new Option(job.ts_jobname, job.ts_jobkey, false, false);
+            const option = document.createElement('option');
+            option.value = job.ts_jobkey;
+            option.textContent = job.ts_jobname;
             if (job.has_visible_portrait) {
                 option.setAttribute('data-has-visible', 'true');
             }
-            jobSelect.append(option);
+            fragment.appendChild(option);
         });
+
+        selectEl.replaceChildren(fragment);
 
         const formatJobResult = (job) => {
             if (!job.id) return job.text;
-            const hasVisible = $(job.element).data('has-visible');
+            const hasVisible = $(job.element).attr('data-has-visible') === 'true'
+                || $(job.element).data('has-visible') === true;
             if (hasVisible) {
                 return $(`<div class="flex justify-between items-center w-full">
                             <span>${job.text}</span>
@@ -308,21 +417,103 @@ configureJQ(document).ready(function ($) {
 
         const formatJobSelection = (job) => {
             if (!job.id) return job.text;
-            const hasVisible = $(job.element).data('has-visible');
+            const hasVisible = $(job.element).attr('data-has-visible') === 'true'
+                || $(job.element).data('has-visible') === true;
             if (hasVisible) {
                 return $(`<span>${job.text} <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i></span>`);
             }
             return job.text;
         };
 
-        jobSelect.select2({
-            templateResult: formatJobResult,
-            templateSelection: formatJobSelection,
-            escapeMarkup: function (m) { return m; }
-        });
+        if (!wasSelect2) {
+            jobSelect.select2({
+                templateResult: formatJobResult,
+                templateSelection: formatJobSelection,
+                escapeMarkup: function (m) { return m; },
+                minimumResultsForSearch: 10,
+                dropdownParent: $(document.body),
+            });
+        } else {
+            jobSelect.val('').trigger('change.select2');
+        }
 
         jobSelect.next('.select2-container').removeClass('d-none');
         jobSelect.parent().show();
+    }
+
+    function applySeasonJobs(selectedSeasonId) {
+        jobsData = jobsBySeasonId[selectedSeasonId] || [];
+        $('#job-select-loading').addClass('d-none');
+
+        if (jobsData.length === 0) {
+            $('#no-jobs-msg').removeClass('d-none');
+            $('#select_job').empty().append('<option value="">Choose a Job</option>').trigger('change.select2');
+            $('#select_job').next('.select2-container').addClass('d-none');
+            return;
+        }
+
+        $('#no-jobs-msg').addClass('d-none');
+        refreshJobSelect(jobsData);
+    }
+
+    function clearConfigureJobsCache() {
+        jobsBySeasonId = {};
+        if (window.configureJobsBySeason && typeof window.configureJobsBySeason === 'object') {
+            window.configureJobsBySeason = {};
+        }
+    }
+
+    function fetchJobsForSeason(selectedSeasonId) {
+        const selectedSchoolKey = $('#schoolHash').val();
+        if (!selectedSeasonId || selectedSeasonId === 'none' || !selectedSchoolKey) {
+            return;
+        }
+
+        $('#job-select-loading').removeClass('d-none');
+        $('#select_job').next('.select2-container').addClass('d-none');
+        $('#no-jobs-msg').addClass('d-none');
+
+        if (jobsFetchRequest) {
+            jobsFetchRequest.abort();
+            jobsFetchRequest = null;
+        }
+
+        jobsFetchRequest = $.ajax({
+            url: base_url + '/config-school/fetch-jobs',
+            method: 'GET',
+            dataType: 'json',
+            data: { ts_season_id: selectedSeasonId, schoolkey: selectedSchoolKey },
+            success: function (jobs) {
+                jobsData = Array.isArray(jobs) ? jobs : [];
+                jobsBySeasonId[selectedSeasonId] = jobsData;
+                applySeasonJobs(selectedSeasonId);
+            },
+            error: function (xhr, status) {
+                if (status === 'abort') {
+                    return;
+                }
+                console.error('Failed to fetch jobs.', xhr);
+                jobsData = [];
+                $('#no-jobs-msg').removeClass('d-none');
+                $('#job-select-loading').addClass('d-none');
+                $('#select_job').next('.select2-container').addClass('d-none');
+            },
+            complete: function () {
+                jobsFetchRequest = null;
+            }
+        });
+    }
+
+    function refreshConfigureJobsAfterArchive() {
+        clearConfigureJobsCache();
+
+        const selectedSeasonId = $('#select_season').val();
+        if (!selectedSeasonId || selectedSeasonId === 'none') {
+            return;
+        }
+
+        // Keep current season selected; reload its job dropdown from the server.
+        fetchJobsForSeason(selectedSeasonId);
     }
 
     function onSeasonSelected() {
@@ -335,7 +526,6 @@ configureJQ(document).ready(function ($) {
 
         const $season = $('#select_season');
         const selectedSeasonId = $season.val();
-        const selectedSchoolKey = $('#schoolHash').val();
         const selectedSeasonText = $season.find('option:selected').text();
         $('#SeasoncodeDisplay').text(' - ' + selectedSeasonText).removeClass('d-none');
         hideOrShowJobDependentSections(false);
@@ -343,6 +533,7 @@ configureJQ(document).ready(function ($) {
         $('#digital_download').addClass('d-none');
         $('p.alert-message').remove();
         $('#folder_config').empty();
+        selectedJobDetail = null;
 
         if (!selectedSeasonId || selectedSeasonId === 'none') {
             $('#select_job').parent().hide();
@@ -352,61 +543,22 @@ configureJQ(document).ready(function ($) {
         }
 
         $('#select_job').parent().show();
-        $('#job-select-loading').removeClass('d-none');
-        $('#select_job').next('.select2-container').addClass('d-none');
         $('#no-jobs-msg').addClass('d-none');
 
-        $.ajax({
-            url: base_url + '/config-school/fetch-jobs',
-            method: 'GET',
-            dataType: 'json',
-            data: { ts_season_id: selectedSeasonId, schoolkey: selectedSchoolKey },
-            success: function (jobs) {
-                jobsData = (Array.isArray(jobs) ? jobs : []).map(function (job) {
-                    job.Folders = normalizeJobFolders(job.Folders);
-                    return job;
-                });
-                $('#job-select-loading').addClass('d-none');
+        if (Object.prototype.hasOwnProperty.call(jobsBySeasonId, selectedSeasonId)) {
+            requestAnimationFrame(function () {
+                applySeasonJobs(selectedSeasonId);
+            });
+            return;
+        }
 
-                if (jobsData.length === 0) {
-                    $('#no-jobs-msg').removeClass('d-none');
-                    const jobSelect = $('#select_job');
-                    if (jobSelect.hasClass('select2-hidden-accessible')) {
-                        jobSelect.select2('destroy');
-                    }
-                    jobSelect.empty().append('<option value="">Choose a Job</option>');
-                    jobSelect.select2();
-                    jobSelect.next('.select2-container').addClass('d-none');
-                    return;
-                }
-
-                $('#no-jobs-msg').addClass('d-none');
-                refreshJobSelect(jobsData);
-            },
-            error: function (error) {
-                console.error('Failed to fetch jobs.', error);
-                jobsData = [];
-                $('#no-jobs-msg').removeClass('d-none');
-                $('#job-select-loading').addClass('d-none');
-                $('#select_job').next('.select2-container').addClass('d-none');
-            }
-        });
+        fetchJobsForSeason(selectedSeasonId);
     }
 
     // Bind on the proofing jQuery instance (same one as select2), not window.$
-    // which Vite may have replaced. Only "change" — select2:select would double-fire.
     $(document)
         .off('change.configureSeason', '#select_season')
         .on('change.configureSeason', '#select_season', onSeasonSelected);
-
-    // Native fallback — survives dual-jQuery / select2 trigger quirks
-    const seasonEl = document.getElementById('select_season');
-    if (seasonEl && !seasonEl.dataset.configureSeasonBound) {
-        seasonEl.dataset.configureSeasonBound = '1';
-        seasonEl.addEventListener('change', function () {
-            onSeasonSelected();
-        });
-    }
 
     window.onConfigureSeasonSelected = onSeasonSelected;
 
@@ -419,7 +571,8 @@ configureJQ(document).ready(function ($) {
         }
         const formatJobResult = (job) => {
             if (!job.id) return job.text;
-            const hasVisible = $(job.element).data('has-visible');
+            const hasVisible = $(job.element).attr('data-has-visible') === 'true'
+                || $(job.element).data('has-visible') === true;
             if (hasVisible) {
                 return $(`<div class="flex justify-between items-center w-full">
                             <span>${job.text}</span>
@@ -430,18 +583,22 @@ configureJQ(document).ready(function ($) {
         };
         const formatJobSelection = (job) => {
             if (!job.id) return job.text;
-            const hasVisible = $(job.element).data('has-visible');
+            const hasVisible = $(job.element).attr('data-has-visible') === 'true'
+                || $(job.element).data('has-visible') === true;
             if (hasVisible) {
                 return $(`<span>${job.text} <i class="fa fa-check" title="Folders with visible portraits" style="color: #b5d334;"></i></span>`);
             }
             return job.text;
         };
 
+        const select2DropdownParent = $(document.body);
         if ($('#select_season').length) {
             if ($('#select_season').hasClass('select2-hidden-accessible')) {
                 $('#select_season').select2('destroy');
             }
-            $('#select_season').select2();
+            $('#select_season').select2({
+                dropdownParent: select2DropdownParent,
+            });
         }
         if ($('#select_job').length) {
             if ($('#select_job').hasClass('select2-hidden-accessible')) {
@@ -450,7 +607,8 @@ configureJQ(document).ready(function ($) {
             $('#select_job').select2({
                 templateResult: formatJobResult,
                 templateSelection: formatJobSelection,
-                escapeMarkup: function (m) { return m; }
+                escapeMarkup: function (m) { return m; },
+                dropdownParent: select2DropdownParent,
             });
         }
         if ($('#select_job_access_image').length) {
@@ -476,135 +634,183 @@ configureJQ(document).ready(function ($) {
     // Listen for changes in the input field value
     $('#portrait_download_start_picker').on('change', function () {
         const formattedPortraitDate = $('#portrait_download_start_picker').val();
-        const selectedJob = jobsData.find(job => job.ts_jobkey === $('#select_job').val());
-        sendJobChanges(selectedJob.ts_jobkey, 'portrait_download_date', formattedPortraitDate);
+        if (!selectedJobDetail) {
+            return;
+        }
+        sendJobChanges(selectedJobDetail.ts_jobkey, 'portrait_download_date', formattedPortraitDate);
     });
 
     $('#group_download_start_picker').on('change', function () {
         const formattedGroupDate = $('#group_download_start_picker').val();
-        const selectedJob = jobsData.find(job => job.ts_jobkey === $('#select_job').val());
-        sendJobChanges(selectedJob.ts_jobkey, 'group_download_date', formattedGroupDate);
+        if (!selectedJobDetail) {
+            return;
+        }
+        sendJobChanges(selectedJobDetail.ts_jobkey, 'group_download_date', formattedGroupDate);
     });
 
+    function applyFolderConfigHtml(html) {
+        if (html) {
+            $('#folder_config').html(html);
+            syncHeaderFolderCheckbox('folder-details-is-visible-for-portrait', '#set-is-visible-for-portrait');
+            syncHeaderFolderCheckbox('folder-details-is-visible-for-group', '#set-is-visible-for-group');
+        }
+        hideOrShowJobDependentSections(true);
+        restoreConfigureScroll();
+    }
 
-    // Job select change — same jQuery instance as select2
-    $(document)
-        .off('change.configureJob select2:select.configureJob', '#select_job')
-        .on('change.configureJob select2:select.configureJob', '#select_job', function () {
-        const isGroupVisible = $("#is-group-visible").val();
-        const selectedJobKey = $(this).val();
+    function renderSelectedJobDetails(selectedJob) {
         $('#jobType, #digital_download').addClass('d-none');
         $('p.alert-message').remove();
 
-        const selectedJob = jobsData.find(job => job.ts_jobkey === selectedJobKey);
+        if (!selectedJob) {
+            hideOrShowJobDependentSections(false);
+            return;
+        }
 
         let portraitDateToDisplay;
         let groupDateToDisplay;
 
-        if (selectedJob) {
-            // Stamp portal school ownership (school_id) for this job
-            const schoolHash = $('#schoolHash').val();
-            if (schoolHash && selectedJobKey) {
-                $.ajax({
-                    url: base_url + '/config-school/assign-job-school',
-                    method: 'POST',
-                    data: { jobKey: selectedJobKey, schoolKey: schoolHash },
-                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                    error: function () {
-                        console.error('Failed to assign school to job.');
-                    }
+        $('#jobType, #digital_download').removeClass('d-none');
+
+        if (selectedJob.download_available_date !== null) {
+            function parseDate(dateString) {
+                return dateString ? moment(dateString, 'YYYY-MM-DD HH:mm:ss') : null;
+            }
+
+            const downloadAvailableDate = parseDate(selectedJob.download_available_date);
+            const portraitDownloadDate = parseDate(selectedJob.portrait_download_date);
+            const groupDownloadDate = parseDate(selectedJob.group_download_date);
+
+            let downloadAvailableDateInFormat = new Date(downloadAvailableDate.format('YYYY-MM-DD HH:mm:ss'));
+            let portraitDownloadDateInFormat = portraitDownloadDate ? new Date(portraitDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
+            let groupDownloadDateInFormat = groupDownloadDate ? new Date(groupDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
+
+            destroyConfigureFlatpickr();
+
+            portraitDateToDisplay = downloadAvailableDateInFormat;
+            groupDateToDisplay = downloadAvailableDateInFormat;
+
+            if (portraitDateToDisplay || groupDateToDisplay) {
+                if (downloadAvailableDateInFormat < portraitDownloadDateInFormat) {
+                    portraitDateToDisplay = portraitDownloadDateInFormat;
+                }
+
+                if (downloadAvailableDateInFormat < groupDownloadDateInFormat) {
+                    groupDateToDisplay = groupDownloadDateInFormat;
+                }
+
+                flatpickr('#portrait_download_start_picker', {
+                    enableTime: true,
+                    dateFormat: "d/m/Y H:i K",
+                    disableMobile: true,
+                    defaultDate: portraitDateToDisplay,
+                    minDate: downloadAvailableDateInFormat
+                });
+
+                flatpickr('#group_download_start_picker', {
+                    enableTime: true,
+                    dateFormat: "d/m/Y H:i K",
+                    disableMobile: true,
+                    defaultDate: groupDateToDisplay,
+                    minDate: downloadAvailableDateInFormat
                 });
             }
 
-            $('#jobType, #digital_download').removeClass('d-none');
-
-            if (selectedJob.download_available_date !== null) {
-                function parseDate(dateString) {
-                    return dateString ? moment(dateString, 'YYYY-MM-DD HH:mm:ss') : null;
-                }
-
-                const downloadAvailableDate = parseDate(selectedJob.download_available_date);
-                const portraitDownloadDate = parseDate(selectedJob.portrait_download_date);
-                const groupDownloadDate = parseDate(selectedJob.group_download_date);
-
-
-                let downloadAvailableDateInFormat = new Date(downloadAvailableDate.format('YYYY-MM-DD HH:mm:ss'));
-                let portraitDownloadDateInFormat = portraitDownloadDate ? new Date(portraitDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
-                let groupDownloadDateInFormat = groupDownloadDate ? new Date(groupDownloadDate.format('YYYY-MM-DD HH:mm:ss')) : null;
-
-                // Only destroy datetimepicker if it's already initialized
-                if ($('#portrait_download_start_picker').data("flatpickr")) {
-                    $('#portrait_download_start_picker')[0]._flatpickr.destroy();
-                }
-                if ($('#group_download_start_picker').data("flatpickr")) {
-                    $('#group_download_start_picker')[0]._flatpickr.destroy();
-                }
-
-                portraitDateToDisplay = downloadAvailableDateInFormat;
-                groupDateToDisplay = downloadAvailableDateInFormat;
-
-                if (portraitDateToDisplay || groupDateToDisplay) {
-                    // Update display date if conditions are met
-                    if (downloadAvailableDateInFormat < portraitDownloadDateInFormat) {
-                        portraitDateToDisplay = portraitDownloadDateInFormat;
-                    }
-
-                    if (downloadAvailableDateInFormat < groupDownloadDateInFormat) {
-                        groupDateToDisplay = groupDownloadDateInFormat;
-                    }
-
-                    // Event listener for when a date is selected from the portrait download date picker
-                    flatpickr('#portrait_download_start_picker', {
-                        enableTime: true,
-                        dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
-                        disableMobile: true,
-                        defaultDate: portraitDateToDisplay, // Set default date
-                        minDate: downloadAvailableDateInFormat
-                    });
-
-                    // Event listener for when a date is selected from the group download date picker
-                    flatpickr('#group_download_start_picker', {
-                        enableTime: true,
-                        dateFormat: "d/m/Y H:i K", // Same format as 'DD/MM/YYYY HH:mm A'
-                        disableMobile: true,
-                        defaultDate: groupDateToDisplay, // Set default date
-                        minDate: downloadAvailableDateInFormat
-                    });
-                }
-
-                $("#portrait_download_allowed").prop("checked", !!$("#portrait_download_start_picker").val());
-                $("#group_download_allowed").prop("checked", !!$("#group_download_start_picker").val());
-
-            } else {
-                $('#digital_download').addClass('d-none');
-                $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please set your Digital Download Date.</p>');
-            }
-            var csrfToken = $('meta[name="csrf-token"]').attr('content');
-            selectedJob.Folders = normalizeJobFolders(selectedJob.Folders);
-            $.ajax({
-                url: base_url + '/config-school/folder-config',
-                method: 'POST',
-                data: { folders: selectedJob.Folders },
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken // Include CSRF token in the request headers
-                },
-                success: function (response) {
-                    if (response.html) {
-                        $('#folder_config').html(response.html); // Correctly insert the HTML from the response
-                        $("#select_job_access_image").trigger('change');
-                        syncHeaderFolderCheckbox('folder-details-is-visible-for-portrait', '#set-is-visible-for-portrait');
-                        syncHeaderFolderCheckbox('folder-details-is-visible-for-group', '#set-is-visible-for-group');
-                    }
-                    hideOrShowJobDependentSections(true);
-                },
-                error: function () {
-                    console.error('Failed to load folder configuration.');
-                    hideOrShowJobDependentSections(false);
-                }
-            });
+            $("#portrait_download_allowed").prop("checked", !!$("#portrait_download_start_picker").val());
+            $("#group_download_allowed").prop("checked", !!$("#group_download_start_picker").val());
         } else {
-            hideOrShowJobDependentSections(false);
+            $('#digital_download').addClass('d-none');
+            $('#jobTypeMsg').after('<p class="alert-message" style="color:red;">**Currently photos are not processed in Lab. Please set your Digital Download Date.</p>');
         }
+
+        selectedJob.Folders = normalizeJobFolders(selectedJob.Folders);
+
+        if (selectedJob.foldersHtml) {
+            applyFolderConfigHtml(selectedJob.foldersHtml);
+            return;
+        }
+
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        $.ajax({
+            url: base_url + '/config-school/folder-config',
+            method: 'POST',
+            data: { folders: selectedJob.Folders },
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
+            success: function (response) {
+                applyFolderConfigHtml(response.html);
+            },
+            error: function () {
+                console.error('Failed to load folder configuration.');
+                hideOrShowJobDependentSections(false);
+            }
+        });
+    }
+
+    function loadSelectedJobDetails(selectedJobKey) {
+        const schoolKey = $('#schoolHash').val();
+        const loadToken = ++configureJobLoadToken;
+        selectedJobDetail = null;
+        teardownConfigureJobUi();
+        hideOrShowJobDependentSections(false);
+        $('#digital_download').addClass('d-none');
+        $('p.alert-message').remove();
+        $('#folder_config').empty();
+
+        if (!selectedJobKey || !schoolKey) {
+            return;
+        }
+
+        if (jobDetailsFetchRequest) {
+            jobDetailsFetchRequest.abort();
+            jobDetailsFetchRequest = null;
+        }
+
+        $.ajax({
+            url: base_url + '/config-school/assign-job-school',
+            method: 'POST',
+            data: { jobKey: selectedJobKey, schoolKey: schoolKey },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            error: function () {
+                console.error('Failed to assign school to job.');
+            }
+        });
+
+        jobDetailsFetchRequest = $.ajax({
+            url: base_url + '/config-school/fetch-job-details',
+            method: 'GET',
+            dataType: 'json',
+            data: { jobKey: selectedJobKey, schoolkey: schoolKey },
+            success: function (detail) {
+                if (loadToken !== configureJobLoadToken) {
+                    return;
+                }
+                selectedJobDetail = detail;
+                // Keep the same encrypted key as the dropdown option (encryptString differs each call).
+                selectedJobDetail.ts_jobkey = selectedJobKey;
+                selectedJobDetail.Folders = normalizeJobFolders(selectedJobDetail.Folders);
+                renderSelectedJobDetails(selectedJobDetail);
+            },
+            error: function (xhr, status) {
+                if (status === 'abort' || loadToken !== configureJobLoadToken) {
+                    return;
+                }
+                console.error('Failed to fetch job details.', xhr);
+                hideOrShowJobDependentSections(false);
+            },
+            complete: function () {
+                jobDetailsFetchRequest = null;
+            }
+        });
+    }
+
+
+    // Job select change — select2 triggers `change` after selection (avoid double fetch)
+    $(document)
+        .off('change.configureJob', '#select_job')
+        .on('change.configureJob', '#select_job', function () {
+        loadSelectedJobDetails($(this).val());
     });
 
     $('#jobType').on('change', function () {
@@ -680,6 +886,143 @@ configureJQ(document).ready(function ($) {
         preview.src = ''; // Clear the preview image
         preview.style.display = 'none'; // Hide the preview
         deleteLink.classList.add('d-none');
+    });
+
+    function openJobsNeedingArchiveModal() {
+        const $modal = $('#jobsNeedingArchiveModal');
+        if (!$modal.length) {
+            return;
+        }
+        $modal.removeClass('hidden').addClass('flex');
+        $('body').addClass('overflow-hidden');
+    }
+
+    function closeJobsNeedingArchiveModal() {
+        const $modal = $('#jobsNeedingArchiveModal');
+        if (!$modal.length) {
+            return;
+        }
+        $modal.addClass('hidden').removeClass('flex');
+        $('body').removeClass('overflow-hidden');
+    }
+
+    $(document).on('click', '#open-jobs-needing-archive-modal', function () {
+        openJobsNeedingArchiveModal();
+    });
+
+    $(document).on('click', '.jobs-archive-modal-close, #jobsNeedingArchiveModal [data-modal-hide="jobsNeedingArchiveModal"]', function () {
+        closeJobsNeedingArchiveModal();
+    });
+
+    $(document).on('click', '#jobsNeedingArchiveModal', function (event) {
+        if (event.target === this) {
+            closeJobsNeedingArchiveModal();
+        }
+    });
+
+    $(document).on('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeJobsNeedingArchiveModal();
+        }
+    });
+
+    function updateJobsNeedingArchiveBanner(remaining) {
+        const $banner = $('#jobs-needing-archive-banner');
+
+        if (!$banner.length) {
+            return;
+        }
+
+        if (remaining <= 0) {
+            $banner.remove();
+            closeJobsNeedingArchiveModal();
+            return;
+        }
+
+        const suffix = remaining === 1 ? ' job' : ' jobs';
+        $('#jobs-needing-archive-count-label').html(
+            '<span id="jobs-needing-archive-count">' + remaining + '</span>' + suffix
+        );
+        $('#jobs-needing-archive-badge-count').text(remaining);
+    }
+
+    function archivePhotographyJobs(jobIds, $triggerBtn) {
+        const schoolKey = $('#schoolHash').val();
+        if (!schoolKey || !jobIds.length) {
+            return;
+        }
+
+        const $buttons = $('.archive-photography-job-btn, #archive-all-photography-jobs-btn');
+        $buttons.prop('disabled', true);
+        if ($triggerBtn) {
+            $triggerBtn.prop('disabled', true);
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: base_url + '/config-school/archive-photography-jobs',
+            dataType: 'json',
+            data: {
+                schoolKey: schoolKey,
+                jobs: jobIds,
+                _token: $('meta[name="csrf-token"]').attr('content'),
+            },
+            success: function (response) {
+                if (response.archived > 0) {
+                    jobIds.forEach(function (jobId) {
+                        $('.archive-job-row[data-job-id="' + jobId + '"]').remove();
+                    });
+                    // Job list is cached from page load — refresh so archived jobs appear immediately.
+                    refreshConfigureJobsAfterArchive();
+                }
+
+                const remaining = response.remaining ?? 0;
+                updateJobsNeedingArchiveBanner(remaining);
+            },
+            error: function (xhr) {
+                console.error('Failed to archive jobs.', xhr);
+                alert('Failed to archive job(s). Please try again.');
+            },
+            complete: function () {
+                $buttons.prop('disabled', false);
+            }
+        });
+    }
+
+    $(document).on('click', '.archive-photography-job-btn', function () {
+        const jobId = $(this).attr('data-job-id');
+        const jobName = $(this).attr('data-job-name');
+
+        if (!jobId) {
+            return;
+        }
+
+        if (!confirm('Archive "' + jobName + '"?')) {
+            return;
+        }
+
+        archivePhotographyJobs([jobId], $(this));
+    });
+
+    $('#archive-all-photography-jobs-btn').on('click', function () {
+        const jobIds = [];
+
+        $('#jobs-needing-archive-list .archive-job-row').each(function () {
+            const jobId = $(this).attr('data-job-id');
+            if (jobId) {
+                jobIds.push(jobId);
+            }
+        });
+
+        if (!jobIds.length) {
+            return;
+        }
+
+        if (!confirm('Archive all ' + jobIds.length + ' listed jobs?')) {
+            return;
+        }
+
+        archivePhotographyJobs(jobIds, $(this));
     });
 });
 
@@ -873,26 +1216,7 @@ function insertDigitalDownload(modelTag, fieldTag, roleTag, isChecked) {
 
 function hideOrShowJobDependentSections(show) {
     const elements = document.querySelectorAll('.job-dependent-section');
-    const action = () => {
-        elements.forEach(element => {
-            element.style.display = show ? 'block' : 'none';
-        });
-
-        if (show) {
-            const section = document.getElementById('select_job_access_image');
-            if (section) {
-                section.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest'
-                });
-            }
-        }
-    };
-
-    if (show) {
-        setTimeout(action, 200);
-    } else {
-        action();
-    }
+    elements.forEach(element => {
+        element.style.display = show ? 'block' : 'none';
+    });
 }

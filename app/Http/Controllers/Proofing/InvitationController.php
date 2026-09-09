@@ -63,7 +63,8 @@ class InvitationController extends Controller
             RoleHelper::ROLE_FRANCHISE,
         ];
 
-        $users = User::whereHas('roles', fn($q) =>
+        $users = User::with('roles')
+            ->whereHas('roles', fn($q) =>
             $q->whereIn('name', $roles)
         )
         ->whereHas('jobs', fn($q) =>
@@ -117,13 +118,21 @@ class InvitationController extends Controller
                 } elseif ($user->hasRole('Teacher')) {
                     $teachers[] = $user;
                 } else {
-                    $userLevel = $user->getRoleId();
+                    $userLevel = $user->roles->first()?->id;
                     if ($canDisableMap[$user->id] || $userLevel == $currentUserLevel) {
                         $otherList[] = $user;
                     }
                 }
             }
         }
+
+        $foldersByUserId = FolderUser::query()
+            ->whereIn('user_id', $users->pluck('id'))
+            ->whereHas('folder', fn ($q) => $q->where('ts_job_id', $tsJobId))
+            ->with(['folder' => fn ($q) => $q->select('ts_folder_id', 'ts_foldername', 'ts_job_id')])
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn ($rows) => $rows->pluck('folder')->filter()->values());
 
         $user = $currentUser;
         return view('proofing.franchise.invitations.manage_photocoordinator_teacher', [
@@ -132,6 +141,7 @@ class InvitationController extends Controller
             'teachers'          => $teachers,
             'otherList'         => $otherList,
             'canDisableMap'     => $canDisableMap,
+            'foldersByUserId'   => $foldersByUserId,
             'user'              => new UserResource($user)
         ]);
     }
@@ -329,92 +339,84 @@ class InvitationController extends Controller
         $attemptedEmails = [];
         $user = Auth::user();
 
+        if ($user->isSchoolLevel()) {
+            $user->load('schools');
+        }
+
         $peopleArray = $request->people
             ? json_decode($request->people, true)
             : [[null, null, $request->email, $request->folder]];
 
-        // Normalize role ("Photo Coordinator" => "photocoordinator")
         $normalizedRole = strtolower(str_replace(' ', '', $request->role));
+        $currentSchool = SchoolContextHelper::getSchool();
 
+        $entries = [];
         foreach ($peopleArray as $person) {
-
             $email = isset($person[2]) ? strtolower(trim((string) $person[2])) : null;
-            $folderKey = $person[3] ?? null;
-
             if (!$email) {
                 continue;
             }
 
             $attemptedEmails[$email] = true;
+            $entries[] = [
+                'email' => $email,
+                'folder_key' => $person[3] ?? null,
+            ];
+        }
 
-            // --- 1. CHECK EMAIL EXISTS ---
-            $baseQuery = User::query()
-                ->join('model_has_roles', function ($join) {
-                    $join->on('users.id', '=', 'model_has_roles.model_id')
-                        ->where('model_has_roles.model_type', '=', User::class);
-                })
-                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                ->leftJoin('franchise_users', 'franchise_users.user_id', '=', 'users.id')
-                ->leftJoin('franchises', 'franchises.id', '=', 'franchise_users.franchise_id')
-                ->leftJoin('school_users', 'school_users.user_id', '=', 'users.id')
-                ->leftJoin('schools', 'schools.id', '=', 'school_users.school_id')
-                ->leftJoin('school_franchises', 'school_franchises.school_id', '=', 'school_users.school_id')
-                ->leftJoin('franchises as sf', 'sf.id', '=', 'school_franchises.franchise_id')
-                ->whereRaw('LOWER(users.email) = ?', [$email]);
+        if ($entries === []) {
+            session()->flash('error', 'No email addresses were submitted.');
+            return redirect()->back();
+        }
 
-            if (!$baseQuery->exists()) {
+        $emails = collect($entries)->pluck('email')->unique()->values()->all();
+        $emailPlaceholders = implode(',', array_fill(0, count($emails), '?'));
+
+        $usersByEmail = User::with(['roles:id,name', 'schools:id'])
+            ->whereRaw("LOWER(email) IN ({$emailPlaceholders})", $emails)
+            ->get()
+            ->keyBy(fn ($inviteUser) => strtolower($inviteUser->email));
+
+        $folderKeys = collect($entries)->pluck('folder_key')->filter()->unique()->values();
+        $needsAllFolders = $folderKeys->contains('*');
+        $specificFolderKeys = $folderKeys->filter(fn ($key) => $key !== '*')->values()->all();
+
+        $jobFoldersQuery = Folder::whereHas('job', fn ($q) => $q->where('ts_jobkey', $request->job_key))
+            ->select('ts_folder_id', 'ts_job_id', 'ts_folderkey');
+
+        $allJobFolders = $needsAllFolders ? $jobFoldersQuery->get() : collect();
+        $foldersByKey = $specificFolderKeys !== []
+            ? (clone $jobFoldersQuery)->whereIn('ts_folderkey', $specificFolderKeys)->get()->groupBy('ts_folderkey')
+            : collect();
+
+        $folderAssignments = [];
+
+        foreach ($entries as $entry) {
+            $email = $entry['email'];
+            $folderKey = $entry['folder_key'];
+            $inviteUser = $usersByEmail->get($email);
+
+            if (!$inviteUser) {
                 $failedEmails[$email] = 'user does not exist';
                 continue;
             }
 
-            // --- 2. CHECK SCHOOL CONTEXT (current school for franchise or school-level inviter) ---
-            $currentSchool = SchoolContextHelper::getSchool();
-            if ($currentSchool) {
-                $contextQuery = (clone $baseQuery)->where('schools.id', $currentSchool->id);
-
-                if (!$contextQuery->exists()) {
-                    $failedEmails[$email] = 'not associated with this school';
-                    continue;
-                }
-            } elseif ($user->isSchoolLevel()) {
-                $school = $user->getSchool();
-                $contextQuery = (clone $baseQuery)->where('schools.id', $school->id);
-
-                if (!$contextQuery->exists()) {
-                    $failedEmails[$email] = 'not associated with your school';
-                    continue;
-                }
-            }
-
-            // --- 3. CHECK ROLE MATCH (CASE INSENSITIVE, SPACE-INSENSITIVE) ---
-            $roleCheckQuery = clone $baseQuery;
-            $roleCheckQuery->whereRaw(
-                "REPLACE(LOWER(roles.name), ' ', '') = ?",
-                [$normalizedRole]
+            $validationError = $this->validateInviteUser(
+                $inviteUser,
+                $normalizedRole,
+                $request->role,
+                $currentSchool,
+                $user
             );
 
-            if (!$roleCheckQuery->exists()) {
-                $failedEmails[$email] = "not associated with the role {$request->role}";
+            if ($validationError) {
+                $failedEmails[$email] = $validationError;
                 continue;
             }
 
-            // At this point → email is valid, belongs to correct role, and correct school/franchise.
-
-            // Fetch the user ID
-            $inviteUser = User::whereRaw('LOWER(email) = ?', [$email])->select('id')->first();
-
-            if (!$inviteUser) {
-                $failedEmails[$email] = 'could not be resolved to a user';
-                continue;
-            }
-
-            // --- 4. FOLDER ASSIGNMENT ---
             $folders = $folderKey === '*'
-                ? Folder::whereHas('job', fn($q) => $q->where('ts_jobkey', $request->job_key))
-                    ->select('ts_folder_id', 'ts_job_id')->get()
-                : Folder::whereHas('job', fn($q) => $q->where('ts_jobkey', $request->job_key))
-                    ->where('ts_folderkey', $folderKey)
-                    ->select('ts_folder_id', 'ts_job_id')->get();
+                ? $allJobFolders
+                : $foldersByKey->get($folderKey, collect());
 
             if ($folders->isEmpty()) {
                 $failedEmails[$email] = 'no matching class/group found';
@@ -422,12 +424,17 @@ class InvitationController extends Controller
             }
 
             foreach ($folders as $folder) {
-                $this->saveFolderUser($folder->ts_job_id, $folder->ts_folder_id, $inviteUser->id, $inviteUsers);
+                $folderAssignments[] = [
+                    'user_id' => $inviteUser->id,
+                    'ts_job_id' => $folder->ts_job_id,
+                    'ts_folder_id' => $folder->ts_folder_id,
+                ];
             }
         }
 
-        // --- 5. SAVE INVITATION CONTENT FOR UNIQUE USERS ---
-        $uniqueInviteUserIds = array_unique($inviteUsers);
+        $this->bulkAssignInviteFolders($folderAssignments, $inviteUsers);
+
+        $uniqueInviteUserIds = array_values(array_unique($inviteUsers));
 
         foreach ($uniqueInviteUserIds as $inviteUserId) {
             $this->emailService->saveInvitationContent(
@@ -438,30 +445,24 @@ class InvitationController extends Controller
             );
         }
 
-        // --- 5b. SAVE SCHEDULED EMAIL RECORDS (templates 1-4) FOR EACH INVITED USER ---
-        if (!empty($uniqueInviteUserIds)) {
+        if ($uniqueInviteUserIds !== []) {
             $this->emailService->saveScheduledEmailsForInviteUsers(
                 $uniqueInviteUserIds,
                 $request->job_key
             );
         }
 
-        // --- 6. FLASH MESSAGES ---
-        $successDetails = [];
-        foreach ($uniqueInviteUserIds as $inviteUserId) {
-            $u = User::find($inviteUserId);
-            if ($u) {
-                $successDetails[] = "{$u->firstname} {$u->lastname} ({$u->email})";
-            }
-        }
+        $successDetails = User::whereIn('id', $uniqueInviteUserIds)
+            ->select('id', 'firstname', 'lastname', 'email')
+            ->get()
+            ->map(fn ($inviteUser) => "{$inviteUser->firstname} {$inviteUser->lastname} ({$inviteUser->email})")
+            ->all();
 
         $successCount = count($successDetails);
         $failCount = count($failedEmails);
         $attemptedCount = count($attemptedEmails);
 
-        if ($attemptedCount === 0) {
-            session()->flash('error', 'No email addresses were submitted.');
-        } elseif ($successCount > 0 && $failCount === 0) {
+        if ($successCount > 0 && $failCount === 0) {
             session()->flash(
                 'success',
                 'All invitations were sent successfully (' . $successCount . ' of ' . $attemptedCount . '): '
@@ -576,26 +577,96 @@ class InvitationController extends Controller
     //     return redirect()->back();
     // }
 
-    /**
-     * Save user-folder association without duplication.
-     */
-    private function saveFolderUser($tsJobId, $folderId, $userId, &$inviteUsers)
+    private function validateInviteUser(
+        User $inviteUser,
+        string $normalizedRole,
+        string $requestRole,
+        $currentSchool,
+        User $inviter
+    ): ?string {
+        if ($currentSchool) {
+            if (!$inviteUser->schools->contains('id', $currentSchool->id)) {
+                return 'not associated with this school';
+            }
+        } elseif ($inviter->isSchoolLevel()) {
+            $school = $inviter->schools->first();
+            if (!$school || !$inviteUser->schools->contains('id', $school->id)) {
+                return 'not associated with your school';
+            }
+        }
+
+        $hasRole = $inviteUser->roles->contains(
+            fn ($role) => strtolower(str_replace(' ', '', $role->name)) === $normalizedRole
+        );
+
+        if (!$hasRole) {
+            return "not associated with the role {$requestRole}";
+        }
+
+        return null;
+    }
+
+    private function bulkAssignInviteFolders(array $assignments, array &$inviteUsers): void
     {
-        if (!JobUser::where([['ts_job_id', $tsJobId], ['user_id', $userId]])->exists()) {
-            JobUser::create([
-                'ts_job_id' => $tsJobId,
-                'user_id' => $userId,
-            ]);
+        if ($assignments === []) {
+            return;
         }
 
-        if (!FolderUser::where([['ts_folder_id', $folderId], ['user_id', $userId]])->exists()) {
-            FolderUser::create([
-                'ts_folder_id' => $folderId,
-                'user_id' => $userId,
-            ]);
+        $userIds = collect($assignments)->pluck('user_id')->unique()->values();
+        $jobIds = collect($assignments)->pluck('ts_job_id')->unique()->values();
+        $folderIds = collect($assignments)->pluck('ts_folder_id')->unique()->values();
+
+        $existingJobUsers = JobUser::whereIn('user_id', $userIds)
+            ->whereIn('ts_job_id', $jobIds)
+            ->get()
+            ->mapWithKeys(fn ($row) => ["{$row->ts_job_id}|{$row->user_id}" => true]);
+
+        $existingFolderUsers = FolderUser::whereIn('user_id', $userIds)
+            ->whereIn('ts_folder_id', $folderIds)
+            ->get()
+            ->mapWithKeys(fn ($row) => ["{$row->ts_folder_id}|{$row->user_id}" => true]);
+
+        $now = now();
+        $newJobUsers = [];
+        $newFolderUsers = [];
+
+        foreach ($assignments as $assignment) {
+            $userId = $assignment['user_id'];
+            $jobId = $assignment['ts_job_id'];
+            $folderId = $assignment['ts_folder_id'];
+
+            $inviteUsers[] = $userId;
+
+            $jobUserKey = "{$jobId}|{$userId}";
+            if (!isset($existingJobUsers[$jobUserKey])) {
+                $newJobUsers[] = [
+                    'ts_job_id' => $jobId,
+                    'user_id' => $userId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                $existingJobUsers[$jobUserKey] = true;
+            }
+
+            $folderUserKey = "{$folderId}|{$userId}";
+            if (!isset($existingFolderUsers[$folderUserKey])) {
+                $newFolderUsers[] = [
+                    'ts_folder_id' => $folderId,
+                    'user_id' => $userId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                $existingFolderUsers[$folderUserKey] = true;
+            }
         }
 
-        $inviteUsers[] = $userId;
+        if ($newJobUsers !== []) {
+            JobUser::insert($newJobUsers);
+        }
+
+        if ($newFolderUsers !== []) {
+            FolderUser::insert($newFolderUsers);
+        }
     }
     
     public function revokeJobUser($userId, $tsJobId)

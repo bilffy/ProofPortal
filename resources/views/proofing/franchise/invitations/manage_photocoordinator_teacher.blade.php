@@ -7,7 +7,6 @@
 @section('content')
     @php
         use Illuminate\Support\Facades\Crypt;
-        use App\Models\Folder;
     @endphp
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
         <div class="py-4 flex items-center justify-between">
@@ -55,10 +54,7 @@
                                     <tbody>
                                         @foreach ($photocoordinators as $photocoordinator)
                                             @php
-                                                $pcFolders = Folder::where('ts_job_id', $selectedJob->ts_job_id)
-                                                    ->whereHas('folderUsers', fn($q) => $q->where('user_id', $photocoordinator->id))
-                                                    ->select('ts_foldername', 'ts_folder_id')
-                                                    ->get();
+                                                $pcFolders = $foldersByUserId->get($photocoordinator->id, collect());
                                             @endphp
                                             <tr>
                                                 <td class="idx-first-name">{{ $photocoordinator->firstname }}</td>
@@ -148,10 +144,7 @@
                                     <tbody>
                                         @foreach ($teachers as $teacher)
                                             @php
-                                                $teacherFolders = Folder::where('ts_job_id', $selectedJob->ts_job_id)
-                                                    ->whereHas('folderUsers', fn($q) => $q->where('user_id', $teacher->id))
-                                                    ->select('ts_foldername', 'ts_folder_id')
-                                                    ->get();
+                                                $teacherFolders = $foldersByUserId->get($teacher->id, collect());
                                             @endphp
                                             <tr>
                                                 <td class="idx-first-name">{{ $teacher->firstname }}</td>
@@ -232,10 +225,7 @@
                                     <tbody>
                                         @foreach ($otherList as $otherListuser)
                                             @php
-                                                $usersFolders = Folder::where('ts_job_id', $selectedJob->ts_job_id)
-                                                    ->whereHas('folderUsers', fn($q) => $q->where('user_id', $otherListuser->id))
-                                                    ->select('ts_foldername')
-                                                    ->get();
+                                                $usersFolders = $foldersByUserId->get($otherListuser->id, collect());
                                             @endphp
                                             <tr>
                                                 <td class="idx-first-name">{{ $otherListuser->firstname }}</td>

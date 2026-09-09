@@ -12,6 +12,12 @@ class SchoolContextHelper
     // Fetch list of schools by a given franchise
     public static function getSchoolsByFranchise(Franchise $franchise): mixed
     {
+        static $cache = [];
+
+        if (isset($cache[$franchise->id])) {
+            return $cache[$franchise->id];
+        }
+
         $schools = School::query()
             ->leftJoin('school_franchises', 'schools.id', '=', 'school_franchises.school_id')
             ->leftJoin('franchises', 'school_franchises.franchise_id', '=', 'franchises.id')
@@ -19,7 +25,7 @@ class SchoolContextHelper
             ->where('franchises.id', $franchise->id)
             ->orderBy('schools.name', 'ASC');
         
-        return $schools->get();
+        return $cache[$franchise->id] = $schools->get();
     }
     
     public static function isSchoolContext(): bool

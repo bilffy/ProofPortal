@@ -13,6 +13,8 @@ use App\Services\Proofing\EmailService;
 use App\Services\Proofing\StatusService;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\SyncImagesToProd02;
+use App\Models\FolderSubject;
+use App\Models\Image;
 
 class ConfigureService
 {
@@ -49,23 +51,113 @@ class ConfigureService
         return $this->encryptDecryptService->decryptStringMethod($hash);
     }
 
-    public function insertProofingTimeline($data){
+    public function insertProofingTimeline($data)
+    {
         $tsJobKey = $this->getDecryptData($data['jobHash']);
-        $getJobData = $this->jobService->updateJobData($tsJobKey, $data['dataType'], $data['date']);
+        $dataType = $data['dataType'] ?? null;
+        $date = $data['date'] ?? null;
 
-        if ($data['dataType'] === 'proof_catchup') {
+        if ($dataType === 'proof_start') {
+            $validationError = $this->validateProofStartAgainstWarningAndDue($tsJobKey, $date);
+            if ($validationError !== null) {
+                return [
+                    'success' => false,
+                    'message' => $validationError,
+                ];
+            }
+        }
+
+        $this->jobService->updateJobData($tsJobKey, $dataType, $date);
+
+        if ($dataType === 'proof_catchup') {
             $this->jobService->updateJobData($tsJobKey, 'is_in_catchup', 0);
         }
 
         // Keep {REVIEW_DUE} in pending start/warning/catchup emails in sync with the new due date
-        if ($data['dataType'] === 'proof_due') {
-            $this->emailService->refreshReviewDueInPendingProofEmails($tsJobKey, $data['date']);
+        if ($dataType === 'proof_due') {
+            $this->emailService->refreshReviewDueInPendingProofEmails($tsJobKey, $date);
+        }
+
+        // After Start or Due is saved: activate when Due is after Start, both future, status not none.
+        if (in_array($dataType, ['proof_start', 'proof_due'], true)) {
+            $this->activateJobIfFutureTimeline($tsJobKey);
+        }
+
+        return ['success' => true];
+    }
+
+    /**
+     * When Start Date is set, Warning/Due must be empty or after Start Date.
+     */
+    protected function validateProofStartAgainstWarningAndDue(string $tsJobKey, $startDate): ?string
+    {
+        if (empty($startDate)) {
+            return null;
+        }
+
+        $job = $this->jobService->getJobByJobKey($tsJobKey)
+            ->select('proof_warning', 'proof_due')
+            ->first();
+
+        if (!$job) {
+            return null;
+        }
+
+        $start = \Carbon\Carbon::parse($startDate);
+        $warningBeforeStart = !empty($job->proof_warning)
+            && \Carbon\Carbon::parse($job->proof_warning)->lte($start);
+        $dueBeforeStart = !empty($job->proof_due)
+            && \Carbon\Carbon::parse($job->proof_due)->lte($start);
+
+        if ($warningBeforeStart || $dueBeforeStart) {
+            return 'Please reset the Warning Date and the Due Date as it should be after the Start Date';
+        }
+
+        return null;
+    }
+
+    /**
+     * If status is not "none", Due is after Start, and both dates are in the future → set Active.
+     * Runs after Start Date or Due Date is saved.
+     */
+    protected function activateJobIfFutureTimeline(string $tsJobKey): void
+    {
+        $job = $this->jobService->getJobByJobKey($tsJobKey)
+            ->select('ts_job_id', 'ts_jobkey', 'job_status_id', 'proof_start', 'proof_due')
+            ->first();
+
+        if (!$job || empty($job->proof_start) || empty($job->proof_due)) {
+            return;
+        }
+
+        $noneStatusId = $this->statusService->none;
+        if ((int) $job->job_status_id === (int) $noneStatusId) {
+            return;
+        }
+
+        $start = \Carbon\Carbon::parse($job->proof_start);
+        $due = \Carbon\Carbon::parse($job->proof_due);
+        $now = \Carbon\Carbon::now();
+
+        if ($due->greaterThan($start) && $start->greaterThan($now) && $due->greaterThan($now)) {
+            $this->jobService->updateJobStatus((int) $job->ts_job_id, $this->statusService->active);
         }
     }
 
     public function sendEmailDates($data){
         $tsJobKey = $this->getDecryptData($data['jobHash']);
         if ($data['dataType'] === 'proof_start' || $data['dataType'] === 'proof_warning' || $data['dataType'] === 'proof_due'|| $data['dataType'] === 'proof_catchup') {
+            // Do not queue emails for an invalid Start Date that was rejected on submit.
+            if (($data['dataType'] ?? null) === 'proof_start') {
+                $validationError = $this->validateProofStartAgainstWarningAndDue($tsJobKey, $data['date'] ?? null);
+                if ($validationError !== null) {
+                    return [
+                        'success' => false,
+                        'message' => $validationError,
+                    ];
+                }
+            }
+
             $saveEmailContent = $this->emailService->saveEmailContent($tsJobKey, $data['dataType'], $data['date'], null);
 
             // Also refresh REVIEW_DUE inside other pending proof schedule emails for this job
@@ -73,6 +165,8 @@ class ConfigureService
                 $this->emailService->refreshReviewDueInPendingProofEmails($tsJobKey, $data['date']);
             }
         }
+
+        return ['success' => true];
     }
 
     public function mergeDuplicateFolders($tsJobId){
@@ -82,6 +176,14 @@ class ConfigureService
             ->groupBy('ts_folderkey')
             ->having('total', '>', 1)
             ->get();
+
+        if ($duplicateFolders->isEmpty()) {
+            return;
+        }
+
+        $foldersByKey = $this->folderService->getAllFolderAssociationsByKeys(
+            $duplicateFolders->pluck('ts_folderkey')->all()
+        );
         
         $deleteFolders = 0;
         $deletedSubjects = 0;
@@ -90,14 +192,17 @@ class ConfigureService
         $deletedTraditionalPhoto = 0;
         
         foreach ($duplicateFolders as $duplicateFolder) {
-            $folders = $this->folderService->getAllFolderAssociationByKey($duplicateFolder->ts_folderkey)
-                ->get(); // Eager load relationships
+            $folders = $foldersByKey->get($duplicateFolder->ts_folderkey, collect());
+            if ($folders->isEmpty()) {
+                continue;
+            }
 
-            $keepFolder = $folders->first(); // Keep the first folder
+            $keepFolder = $folders->first();
             
             // Collect IDs for bulk deletes
             $attachedSubjectIdsToDelete = [];
             $changelogIdsToDelete = [];
+            $attachedSubjectIdsToReassign = [];
 
             foreach ($folders as $folder) {
                 if ($folder->id !== $keepFolder->id) {
@@ -112,13 +217,11 @@ class ConfigureService
                         $this->folderService->updateTeacher($keepFolder, $folder->teacher);
                     }
 
-                    // 1. Merge attached subjects
-                    $attachedSubjectsToMerge = $folder->attachedsubjects()
-                        ->whereNotIn('ts_subject_id', $keepFolder->subjects->pluck('ts_subject_id'))
-                        ->get();
-                    if ($attachedSubjectsToMerge->isNotEmpty()) {
-                        foreach ($attachedSubjectsToMerge as $attachedSubject) {
-                            $keepFolder->attachedsubjects()->save($attachedSubject); // Save each attached subject individually
+                    // 1. Merge attached subjects (in-memory filter; bulk reassign below)
+                    $keepSubjectIds = $keepFolder->subjects->pluck('ts_subject_id')->flip();
+                    foreach ($folder->attachedsubjects as $attachedSubject) {
+                        if (!isset($keepSubjectIds[$attachedSubject->ts_subject_id])) {
+                            $attachedSubjectIdsToReassign[] = $attachedSubject->id;
                         }
                     }
 
@@ -129,17 +232,19 @@ class ConfigureService
                         $deletedAttachedSubjects++;
                     }
 
-                    // 2. Merge proofing changelogs and delete duplicates
-                    $changelogToMerge = $folder->proofingChangelogs()
-                        ->where('notes', 'LIKE', 'Traditional Photo People Row Positions for Folder%')
-                        ->whereNotIn('keyvalue', $keepFolder->proofingChangelogs()
-                            ->where('notes', 'LIKE', 'Traditional Photo People Row Positions for Folder%')
-                            ->pluck('keyvalue'))
-                        ->get();
+                    // 2. Merge proofing changelogs and delete duplicates (use eager-loaded relations)
+                    $keepTraditionalKeyvalues = $keepFolder->proofingChangelogs
+                        ->filter(fn ($changelog) => str_starts_with((string) $changelog->notes, 'Traditional Photo People Row Positions for Folder'))
+                        ->pluck('keyvalue')
+                        ->flip();
+
+                    $changelogToMerge = $folder->proofingChangelogs
+                        ->filter(fn ($changelog) => str_starts_with((string) $changelog->notes, 'Traditional Photo People Row Positions for Folder'))
+                        ->reject(fn ($changelog) => isset($keepTraditionalKeyvalues[$changelog->keyvalue]));
 
                     if ($changelogToMerge->isNotEmpty()) {
                         foreach ($changelogToMerge as $changelog) {
-                            $keepFolder->proofingChangelogs()->save($changelog); // Save each attached subject individually
+                            $keepFolder->proofingChangelogs()->save($changelog);
                         }
                     }
 
@@ -153,6 +258,11 @@ class ConfigureService
                     $folder->delete(); // Delete the duplicate folder
                     $deleteFolders++;
                 }
+            }
+
+            if ($attachedSubjectIdsToReassign !== []) {
+                FolderSubject::whereIn('id', $attachedSubjectIdsToReassign)
+                    ->update(['ts_folder_id' => $keepFolder->ts_folder_id]);
             }
 
             // Bulk delete attached subjects, and changelogs
@@ -172,59 +282,85 @@ class ConfigureService
             ->groupBy('ts_subjectkey')
             ->having('total', '>', 1)
             ->get();
+
+        if ($duplicateSubjects->isEmpty()) {
+            return;
+        }
+
+        $subjectsByKey = $this->subjectService->getAllSubjectAssociationsByKeys(
+            $duplicateSubjects->pluck('ts_subjectkey')->all()
+        );
     
         $deletedSubjects = 0;
         $deletedImages = 0;
         $deletedAttachedSubjects = 0;
 
         foreach ($duplicateSubjects as $duplicateSubject) {
-            $subjects = $this->subjectService->getAllSubjectAssociationByKey($duplicateSubject->ts_subjectkey);
+            $subjects = $subjectsByKey->get($duplicateSubject->ts_subjectkey, collect());
+            if ($subjects->isEmpty()) {
+                continue;
+            }
             
-            $keepSubject = $subjects->first();// keep the first subject
+            $keepSubject = $subjects->first();
 
             $imagesToDelete = [];
             $attachedSubjectsToDelete = [];
+            $imageIdsToReassign = [];
+            $attachedSubjectIdsToReassign = [];
 
-            // Delete the remaining subjects in the group (if any)
+            $keepImageKeys = Image::query()
+                ->where('keyvalue', $keepSubject->ts_subjectkey)
+                ->pluck('ts_imagekey')
+                ->flip();
+            $keepAttachedSubjectIds = $keepSubject->attachedsubjects->pluck('ts_subject_id')->flip();
+
             foreach ($subjects as $subject) {
-                if ($subject->id !== $keepSubject->id) {
-                // Merge images exists in subjects other than image in keepSubject (batch insert)
-                $imagesToMerge = $subject->images()->whereNotIn('ts_imagekey', $keepSubject->images->pluck('ts_imagekey'))->get();
-                if ($imagesToMerge->isNotEmpty()) {
-                    foreach ($imagesToMerge as $image) {
-                        $keepSubject->images()->save($image); // Save each image individually
+                if ($subject->id === $keepSubject->id) {
+                    continue;
+                }
+
+                $subjectImages = Image::query()
+                    ->where('keyvalue', $subject->ts_subjectkey)
+                    ->get();
+
+                foreach ($subjectImages as $image) {
+                    if (!isset($keepImageKeys[$image->ts_imagekey])) {
+                        $imageIdsToReassign[] = $image->id;
+                        $keepImageKeys[$image->ts_imagekey] = true;
                     }
                 }
 
-                // Collect images for batch deletion
-                $subjectImages = $subject->images->groupBy('ts_imagekey');
-                foreach ($subjectImages as $imageGroup) {
-                    $imagesToDelete = array_merge($imagesToDelete, $imageGroup->slice(1)->pluck('id')->toArray());  // Keep first, delete rest
+                foreach ($subjectImages->groupBy('ts_imagekey') as $imageGroup) {
+                    $imagesToDelete = array_merge($imagesToDelete, $imageGroup->slice(1)->pluck('id')->toArray());
                 }
 
-                // Merge attached subjects exists in subjects other than attached subjects in keepSubject (batch insert)
-                $attachedSubjectsToMerge = $subject->attachedsubjects()->whereNotIn('ts_subject_id', $keepSubject->attachedsubjects()->pluck('ts_subject_id'))->get();
-                if ($attachedSubjectsToMerge->isNotEmpty()) {
-                    foreach ($attachedSubjectsToMerge as $attachedSubject) {
-                        $keepSubject->attachedsubjects()->save($attachedSubject); // Save each attached subject individually
+                foreach ($subject->attachedsubjects as $attachedSubject) {
+                    if (!isset($keepAttachedSubjectIds[$attachedSubject->ts_subject_id])) {
+                        $attachedSubjectIdsToReassign[] = $attachedSubject->id;
+                        $keepAttachedSubjectIds[$attachedSubject->ts_subject_id] = true;
                     }
                 }
 
-                // Collect attached subjects for batch deletion
-                $subjectAttachedSubjects = $subject->attachedsubjects->groupBy(function ($attachedSubject) {
+                foreach ($subject->attachedsubjects->groupBy(function ($attachedSubject) {
                     return $attachedSubject->ts_folder_id . '-' . $attachedSubject->ts_subject_id;
-                });
-                foreach ($subjectAttachedSubjects as $attachedSubjectGroup) {
+                }) as $attachedSubjectGroup) {
                     $attachedSubjectsToDelete = array_merge($attachedSubjectsToDelete, $attachedSubjectGroup->slice(1)->pluck('id')->toArray());
                 }
 
-                // Delete subject
                 $subject->delete();
                 $deletedSubjects++;
-                }
             }
 
-            // Batch delete collected images and attached subjects
+            if ($imageIdsToReassign !== []) {
+                Image::whereIn('id', $imageIdsToReassign)
+                    ->update(['keyvalue' => $keepSubject->ts_subjectkey]);
+            }
+
+            if ($attachedSubjectIdsToReassign !== []) {
+                FolderSubject::whereIn('id', $attachedSubjectIdsToReassign)
+                    ->update(['ts_subject_id' => $keepSubject->ts_subject_id]);
+            }
+
             $this->imageService->deleteImage($imagesToDelete);
             $this->folderSubjectService->deleteFolderSubject($attachedSubjectsToDelete);
 

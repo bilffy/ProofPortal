@@ -385,12 +385,14 @@ $(document).ready(function () {
         }).removeClass('d-none').show();
 
         var artifactNameCrypt = $(this).data('artifact-name');
+        var imageVersion = $(this).data('image-version') || '';
 
         var zoomedImageUrl = base_url + "/franchise/zoom?imgClientSizeW=" + encodeURIComponent(imgClientSizeW) +
             "&imgClientSizeH=" + encodeURIComponent(imgClientSizeH) +
             "&mousePosPercentX=" + encodeURIComponent(mousePosPercentX) +
             "&mousePosPercentY=" + encodeURIComponent(mousePosPercentY) +
-            "&artifactNameCrypt=" + artifactNameCrypt;
+            "&artifactNameCrypt=" + encodeURIComponent(artifactNameCrypt) +
+            "&v=" + encodeURIComponent(imageVersion);
 
         // Update the src of the zoomed image
         $('#group-image-zoom-placeholder').attr('src', zoomedImageUrl);

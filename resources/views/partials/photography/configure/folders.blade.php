@@ -54,7 +54,6 @@
                         @foreach($group['items'] as $folder)
                             @php
                                 $folderName = $folder['ts_foldername'];
-                                $fIdHash = Crypt::encryptString($folder['ts_folder_id']);
                                 $allowPortraitVisible = isset($folder['is_visible_for_portrait']) && $folder['is_visible_for_portrait'] == 1;
                                 $allowGroupVisible = isset($folder['is_visible_for_group']) && $folder['is_visible_for_group'] == 1;
                             @endphp
@@ -65,7 +64,7 @@
                                         class="folder-details-is-visible-for-portrait mr-1"
                                         id="is-visible-for-portrait-{{ $folder['ts_folder_id'] }}"
                                         name="is-visible-for-portrait-{{ $folderName }}"
-                                        data-folder-id="{{ $fIdHash }}"
+                                        data-folder-id="{{ $folder['ts_folder_id'] }}"
                                         data-ts-folder-id="{{ $folder['ts_folder_id'] }}"
                                         data-folder-name="{{ $folderName }}"
                                         data-value="{{$folder['is_visible_for_portrait']}}"
@@ -93,7 +92,7 @@
                                             class="folder-details-is-visible-for-group mr-1"
                                             id="is-visible-for-group-{{ $folder['ts_folder_id'] }}"
                                             name="is-visible-for-group-{{ $folderName }}"
-                                            data-folder-id="{{ $fIdHash }}"
+                                            data-folder-id="{{ $folder['ts_folder_id'] }}"
                                             data-ts-folder-id="{{ $folder['ts_folder_id'] }}"
                                             data-folder-name="{{ $folderName }}"
                                             data-value="{{$folder['is_visible_for_group']}}"

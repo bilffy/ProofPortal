@@ -138,7 +138,7 @@
     @push('scripts')
     <script type="module">
         // TODO: Implement cloudflare-friendly encryption for session polling
-        import { startSessionPolling, createApiToken } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
+        import { startSessionPolling, createApiToken, ensureUserIsAuthenticated } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
         {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
         const editProfileOptions = {
             onShow: async () => {
@@ -196,14 +196,9 @@
             editProfileModal.show();
         }
         
-        document.addEventListener('DOMContentLoaded', (event) => {
+        document.addEventListener('DOMContentLoaded', async () => {
             window.showEditProfile = showEditProfile;
-            const token = localStorage.getItem('api_token') || '';
-            // const id = localStorage.getItem('api_token_id') === null ? 0 : decryptData(localStorage.getItem('api_token_id'));
-            const id = localStorage.getItem('api_token_id') === null ? 0 : localStorage.getItem('api_token_id');
-            if (token === '' || id != {{ $user->id }}) {
-                createApiToken();
-            }
+            await ensureUserIsAuthenticated({{ $user->id }}, @json(is_impersonating()));
             startSessionPolling();
         });
         

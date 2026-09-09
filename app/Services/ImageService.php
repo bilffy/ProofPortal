@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\FilenameFormatHelper;
 use App\Helpers\ImageHelper;
 use App\Helpers\PhotographyHelper;
+use App\Helpers\PhotographyJobQueryHelper;
 use App\Models\Folder;
 use App\Models\Image;
 use App\Models\SchoolPhotoUpload;
@@ -151,6 +152,10 @@ class ImageService
 
         $this->applySchoolJobScope($query, $schoolId, $tsAccountId);
 
+        if ($tab === PhotographyHelper::TAB_PORTRAITS) {
+            PhotographyJobQueryHelper::applyDownloadAvailableJobFilter($query);
+        }
+
         switch($tab) {
             case PhotographyHelper::TAB_GROUPS:
                  // code by IT
@@ -232,6 +237,10 @@ class ImageService
 
             $this->applySchoolJobScope($query, $schoolId, $tsAccountId);
 
+            if ($tab === PhotographyHelper::TAB_PORTRAITS) {
+                PhotographyJobQueryHelper::applyDownloadAvailableJobFilter($query);
+            }
+
             $query->where(function ($query) use ($folderTags, $selectedTags, $nullTag) {
                 $query->whereIn('folders.folder_tag', $folderTags);
                 if (in_array($nullTag, $selectedTags)) {
@@ -300,6 +309,8 @@ class ImageService
             ->where('folders.is_visible_for_portrait', 1)
             ->whereColumn('subjects.ts_job_id', 'jobs.ts_job_id')
             ->whereIn('folders.ts_folderkey', $folderKeys)
+            // Keep subjects even when their image row is soft-deleted (is_deleted = 1);
+            // the grid/serve path shows getFallbackNotFoundImage for those.
             ->where(function ($query) {
                 $query->where(function ($subQuery) {
                     $subQuery->whereNull('jobs.portrait_download_date')
@@ -395,7 +406,11 @@ class ImageService
     {
         $imagesJoin = function ($join) {
             $join->on('images.ts_job_id', '=', 'jobs.ts_job_id')
-                ->on('images.keyvalue', '=', 'subjects.ts_subjectkey');
+                ->on('images.keyvalue', '=', 'subjects.ts_subjectkey')
+                ->where(function ($q) {
+                    $q->where('images.is_deleted', 0)
+                        ->orWhereNull('images.is_deleted');
+                });
         };
 
         $selectColumns = [
@@ -517,7 +532,12 @@ class ImageService
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         // ->where('images.keyorigin', 'Folder')
-        ;
+        ->whereNotExists(function ($subQuery) {
+            $subQuery->select(DB::raw(1))
+                ->from('images')
+                ->whereColumn('images.keyvalue', 'folders.ts_folderkey')
+                ->where('images.is_deleted', 1);
+        });
 
         $this->applySchoolJobScope($query, $schoolId, $tsAccountId);
 
@@ -594,7 +614,13 @@ class ImageService
             ->join('seasons', 'seasons.ts_season_id', '=', 'jobs.ts_season_id')
             ->where('folders.is_visible_for_group', 1)
             ->whereNotNull('folders.ts_folderkey') // code by IT
-            ->where('folders.is_deleted', 0);
+            ->where('folders.is_deleted', 0)
+            ->whereNotExists(function ($subQuery) {
+                $subQuery->select(DB::raw(1))
+                    ->from('images')
+                    ->whereColumn('images.keyvalue', 'folders.ts_folderkey')
+                    ->where('images.is_deleted', 1);
+            });
 
         $this->applySchoolJobScope($query, $schoolId, $tsAccountId);
 
@@ -652,6 +678,7 @@ class ImageService
         ->whereNotNull('folders.ts_folderkey') // code by IT
         ->where('folders.is_deleted', 0)
         ->where('subjects.is_deleted', 0);
+        // Subjects with soft-deleted images still appear; serve uses not-found fallback.
 
         $this->applySchoolJobScope($query, $schoolId, $tsAccountId);
 
@@ -723,22 +750,71 @@ class ImageService
                 break;
         }
 
-        $toData = function ($image) use ($key, $category, $tab) {
-            $isSubject = $category != 'FOLDER';
+        $isSubject = $category !== 'FOLDER';
+        $lookupKeys = $images->pluck($key)->filter()->unique()->values()->all();
+
+        $subjectsByKey = collect();
+        $foldersByKey = collect();
+        $uploadsBySubjectId = collect();
+        $uploadsByFolderId = collect();
+        $existingImageKeys = collect();
+
+        if ($lookupKeys !== []) {
+            $existingImageKeys = Image::query()
+                ->whereIn('keyvalue', $lookupKeys)
+                ->notDeleted()
+                ->pluck('keyvalue')
+                ->flip();
+        }
+
+        if ($isSubject && $lookupKeys !== []) {
+            $subjectsByKey = Subject::query()
+                ->whereIn('ts_subjectkey', $lookupKeys)
+                ->where('is_deleted', 0)
+                ->with('folder')
+                ->get()
+                ->keyBy('ts_subjectkey');
+
+            $subjectIds = $subjectsByKey->pluck('id')->filter()->values();
+            if ($subjectIds->isNotEmpty()) {
+                $uploadsBySubjectId = SchoolPhotoUpload::query()
+                    ->whereIn('subject_id', $subjectIds)
+                    ->whereNull('deleted_at')
+                    ->pluck('subject_id')
+                    ->flip();
+            }
+        } elseif (!$isSubject && $lookupKeys !== []) {
+            $foldersByKey = Folder::query()
+                ->whereIn('ts_folderkey', $lookupKeys)
+                ->where('is_deleted', 0)
+                ->get()
+                ->keyBy('ts_folderkey');
+
+            $folderIds = $foldersByKey->pluck('id')->filter()->values();
+            if ($folderIds->isNotEmpty()) {
+                $uploadsByFolderId = SchoolPhotoUpload::query()
+                    ->whereIn('folder_id', $folderIds)
+                    ->whereNull('deleted_at')
+                    ->pluck('folder_id')
+                    ->flip();
+            }
+        }
+
+        $toData = function ($image) use ($key, $category, $tab, $isSubject, $subjectsByKey, $foldersByKey, $uploadsBySubjectId, $uploadsByFolderId, $existingImageKeys) {
             $imgKey = $image->$key;
+            // Trust images table for grid flags; actual file fetch corrects checkbox via X-Photography-Source.
+            $hasPhoto = $imgKey && isset($existingImageKeys[$imgKey]);
             $classGroup = '';
             if ($isSubject) {
-                $subject = Subject::where('ts_subjectkey', $image->$key)->where('is_deleted', 0)->first();
+                $subject = $subjectsByKey->get($image->$key);
                 if ($subject) {
-                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
-                    $uploadExists = SchoolPhotoUpload::where('subject_id', $subject->id)->whereNull('deleted_at')->exists();
+                    $uploadExists = isset($uploadsBySubjectId[$subject->id]);
                     $uploaded = $uploadExists && $hasPhoto;
                     $folderName = $subject->folder?->portal_ts_foldername
                         ?? $image->portal_ts_foldername
                         ?? $image->ts_foldername
                         ?? '';
                 } else {
-                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
                     $folderName = $image->portal_ts_foldername
                         ?? $image->ts_foldername
@@ -746,14 +822,12 @@ class ImageService
                 }
                 $classGroup = FilenameFormatHelper::removeYearAndDelimiter($folderName, $image->year ?? null);
             } else {
-                $folder = Folder::where('ts_folderkey', $image->$key)->where('is_deleted', 0)->first();
+                $folder = $foldersByKey->get($image->$key);
                 if ($folder) {
-                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
-                    $uploadExists = SchoolPhotoUpload::where('folder_id', $folder->id)->whereNull('deleted_at')->exists();
+                    $uploadExists = isset($uploadsByFolderId[$folder->id]);
                     $uploaded = $uploadExists && $hasPhoto;
                     $folderName = $folder->portal_ts_foldername ?? $image->portal_ts_foldername ?? '';
                 } else {
-                    $hasPhoto = $this->getIsImageFound($imgKey, $tab);
                     $uploaded = false;
                     $folderName = $image->portal_ts_foldername ?? $image->ts_foldername ?? '';
                 }
@@ -791,26 +865,31 @@ class ImageService
      */
     public function getImageServeResult(string $key, $resolutionId = null, $tab = ''): array
     {
-        $imageRecordExists = Image::where('keyvalue', $key)->exists();
+        $imageRecordExists = Image::where('keyvalue', $key)->notDeleted()->exists();
 
         if (!$imageRecordExists) {
+            // Soft-deleted image row(s) still mean "photo was known" → not-found placeholder.
+            // No image row at all → absent placeholder.
+            $hasDeletedImage = Image::where('keyvalue', $key)->where('is_deleted', 1)->exists();
+
             return [
-                'content' => $this->getFallbackAbsentImage(),
-                'source' => 'absent',
+                'content' => $hasDeletedImage
+                    ? $this->getFallbackNotFoundImage()
+                    : $this->getFallbackAbsentImage(),
+                'source' => $hasDeletedImage ? 'not-found' : 'absent',
             ];
         }
 
         $urls = $this->getImageUrls($key, $resolutionId, $tab);
 
+        // Single GET per candidate URL — avoid separate HEAD/Range existence probes.
         foreach ($urls as $url) {
-            if ($this->urlExists($url)) {
-                $binary = @file_get_contents($url);
-                if ($binary !== false) {
-                    return [
-                        'content' => base64_encode($binary),
-                        'source' => 'file',
-                    ];
-                }
+            $binary = $this->fetchImageBinary($url);
+            if ($binary !== null) {
+                return [
+                    'content' => base64_encode($binary),
+                    'source' => 'file',
+                ];
             }
         }
 
@@ -843,7 +922,8 @@ class ImageService
     }
 
     /**
-     * Check if at least one image exists for the key
+     * Check if at least one image exists for the key.
+     * Uses the images table only — no remote HEAD/GET probes (those happen on serve).
      */
     public function getIsImageFound(string $key, $tab = ''): bool
     {
@@ -854,22 +934,8 @@ class ImageService
         $upperTab = strtoupper((string)($tab ?? ''));
         $cacheKey = "photography_exists_{$key}_{$upperTab}";
 
-        return Cache::remember($cacheKey, 600, function() use ($key, $upperTab) {
-            $imageRecordExists = Image::where('keyvalue', $key)->exists();
-
-            if (!$imageRecordExists) {
-                return false;
-            }
-
-            $urls = $this->getImageUrls($key, null, $upperTab);
-
-            foreach ($urls as $url) {
-                if ($this->urlExists($url)) {
-                    return true;
-                }
-            }
-
-            return false;
+        return Cache::remember($cacheKey, 600, function () use ($key) {
+            return Image::where('keyvalue', $key)->notDeleted()->exists();
         });
     }
 
@@ -914,42 +980,28 @@ class ImageService
     }
 
     /**
-     * Check if URL exists (HTTP 200)
+     * Fetch image bytes from a remote URL once. Returns null on failure.
      */
-    private function urlExists(string $url): bool
+    private function fetchImageBinary(string $url): ?string
     {
-        // Prefer HEAD to avoid downloading full image payloads
-        $headContext = stream_context_create([
-            'http' => [
-                'method' => 'HEAD',
-                'timeout' => 2,
-                'ignore_errors' => true,
-            ],
-        ]);
-
-        $headers = @get_headers($url, 0, $headContext);
-        if ($headers && str_contains($headers[0], '200')) {
-            return true;
-        }
-
-        // Some image servers reject HEAD while GET still works (same as getImageContent)
-        $rangeContext = stream_context_create([
+        $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
-                'header' => "Range: bytes=0-0\r\n",
-                'timeout' => 3,
+                'timeout' => 8,
                 'ignore_errors' => true,
             ],
         ]);
 
-        $headers = @get_headers($url, 1, $rangeContext);
-        if (!$headers) {
-            return false;
+        $binary = @file_get_contents($url, false, $context);
+        if ($binary === false || $binary === '') {
+            return null;
         }
 
-        $statusLine = is_array($headers[0]) ? end($headers[0]) : $headers[0];
+        if (isset($http_response_header[0]) && !preg_match('/\s(200|206)\s/', $http_response_header[0])) {
+            return null;
+        }
 
-        return str_contains($statusLine, '200') || str_contains($statusLine, '206');
+        return $binary;
     }
     //CODE BY IT
 

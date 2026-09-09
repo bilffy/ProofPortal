@@ -104,7 +104,6 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            jQuery.noConflict();
             filterChoicesTable();
 
             $('#choice-name-filter').keyup(filterChoicesTable);

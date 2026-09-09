@@ -89,29 +89,44 @@
             {{-- code by chromedia --}}
 
             {{-- code by IT --}}
-                <div x-data="{ src: '', fetchSpinner: true }" x-init="
-                    let url = '{{ route('photography.image') }}?id={{urlencode($id)}}&category={{$category ?? ''}}';
-
-                    fetch(url, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(res => {
-                        if (!res.ok) throw new Error('Fetch failed');
-                        const imageSource = res.headers.get('X-Photography-Source');
-                        return res.blob().then(blob => ({ blob, imageSource }));
-                    })
-                    .then(({ blob, imageSource }) => {
-                        src = URL.createObjectURL(blob);
-                        fetchSpinner = false;
-                        if (imageSource === 'file' && typeof window.revealPortraitCheckbox === 'function') {
-                            window.revealPortraitCheckbox('{{ $imgId }}');
-                        } else if (imageSource !== 'file' && typeof window.hidePortraitCheckbox === 'function') {
-                            window.hidePortraitCheckbox('{{ $imgId }}');
+                <div x-data="{ src: '', fetchSpinner: true, started: false }" x-init="
+                    const startFetch = () => {
+                        if (started) return;
+                        started = true;
+                        let url = '{{ route('photography.image') }}?id={{urlencode($id)}}&category={{$category ?? ''}}';
+                        fetch(url, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(res => {
+                            if (!res.ok) throw new Error('Fetch failed');
+                            const imageSource = res.headers.get('X-Photography-Source');
+                            return res.blob().then(blob => ({ blob, imageSource }));
+                        })
+                        .then(({ blob, imageSource }) => {
+                            src = URL.createObjectURL(blob);
+                            fetchSpinner = false;
+                            if (imageSource === 'file' && typeof window.revealPortraitCheckbox === 'function') {
+                                window.revealPortraitCheckbox('{{ $imgId }}');
+                            } else if (imageSource !== 'file' && typeof window.hidePortraitCheckbox === 'function') {
+                                window.hidePortraitCheckbox('{{ $imgId }}');
+                            }
+                        })
+                        .catch(() => {
+                            fetchSpinner = false;
+                        });
+                    };
+                    const panel = $el.closest('[role=tabpanel]');
+                    const isPanelVisible = () => !panel || !panel.classList.contains('hidden');
+                    const maybeStart = () => {
+                        if (isPanelVisible()) {
+                            startFetch();
                         }
-                    })
-                    .catch(() => { 
-                        fetchSpinner = false; 
-                    });
+                    };
+                    maybeStart();
+                    if (panel && !isPanelVisible()) {
+                        const observer = new MutationObserver(maybeStart);
+                        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+                    }
                 " class="h-full w-full">
                     <template x-if="fetchSpinner">
                         <x-spinner.image />

@@ -287,12 +287,18 @@ class EmailService
 
         $reviewDue = Carbon::parse($job->proof_due)->format('l j F, Y');
         $allJobFolders = $this->getVisibleProofingFolderNames($job->folders);
-        $usersByEmail = User::whereIn(
+        $usersByEmail = $this->usersWithOrganizationRelationsQuery()
+            ->whereIn(
             'email',
             $pendingEmails->pluck('email_to')->filter()->unique()->values()->all()
         )
             ->get(['id', 'email', 'firstname', 'lastname', 'name'])
             ->keyBy('email');
+
+        $folderIdsByUserId = $this->loadFolderAssignmentsByUserIds(
+            $usersByEmail->pluck('id'),
+            $job->folders
+        );
 
         $updated = 0;
 
@@ -310,25 +316,19 @@ class EmailService
                 continue;
             }
 
-            $userFolders = $this->getAssignedFolderNamesForUser($job->folders, (int) $user->id, true);
+            $userFolders = $this->getAssignedFolderNamesForUser($job->folders, (int) $user->id, true, $folderIdsByUserId);
+            $franchiseDetail = $this->resolveSchoolOrFranchiseDetail($user);
 
-            $data = [
+            $data = array_merge([
                 'INVITEE_FIRST_NAME' => $user->firstname ?? '',
                 'FOLDERS' => $userFolders,
                 'ALLFOLDERS' => $allJobFolders,
                 'JOB_NAME' => $job->ts_jobname ?? '',
                 'REVIEW_DUE' => $reviewDue,
-                'FRANCHISE_NAME' => $user->getSchoolOrFranchiseDetail()->name ?? '',
-                'FRANCHISE_PHONE' => $user->getSchoolOrFranchiseDetail()->phone ?? '',
-                'FRANCHISE_EMAIL' => $user->getSchoolOrFranchiseDetail()->email ?? '',
                 'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
-                'FRANCHISE_ADDRESS1' => $user->getSchoolOrFranchiseDetail()->address ?? '',
-                'FRANCHISE_SUBURB' => $user->getSchoolOrFranchiseDetail()->suburb ?? '',
-                'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
-                'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
                 'APP_URL' => Config::get('app.url'),
                 'JOB_STATUS_NAME' => '',
-            ];
+            ], $this->franchiseTemplatePlaceholders($franchiseDetail));
 
             $processedContent = $this->replaceTemplateVariables(File::get($templatePath), $data);
 
@@ -382,18 +382,27 @@ class EmailService
      * For proof schedule templates, Completed folders are also excluded
      * (they reappear after unlock).
      */
-    private function getAssignedFolderNamesForUser($folders, int $userId, bool $excludeCompleted = false): array
-    {
+    private function getAssignedFolderNamesForUser(
+        $folders,
+        int $userId,
+        bool $excludeCompleted = false,
+        $folderIdsByUserId = null
+    ): array {
         $completedStatusId = $this->statusService->completed;
+        $assignedFolderIds = $folderIdsByUserId?->get($userId);
 
         return $folders
-            ->filter(function ($folder) use ($userId, $excludeCompleted, $completedStatusId) {
+            ->filter(function ($folder) use ($userId, $excludeCompleted, $completedStatusId, $assignedFolderIds, $folderIdsByUserId) {
                 if ((int) ($folder->is_visible_for_proofing ?? 0) !== 1) {
                     return false;
                 }
 
                 if ($excludeCompleted && (int) $folder->status_id === (int) $completedStatusId) {
                     return false;
+                }
+
+                if ($folderIdsByUserId !== null) {
+                    return $assignedFolderIds !== null && isset($assignedFolderIds[$folder->ts_folder_id]);
                 }
 
                 return DB::table('folder_users')
@@ -407,6 +416,69 @@ class EmailService
     }
 
     /**
+     * Batch-load folder assignments for many users in one query.
+     * Returns user_id => [ts_folder_id => true, ...] for O(1) lookups.
+     */
+    private function loadFolderAssignmentsByUserIds($userIds, $folders)
+    {
+        $userIds = collect($userIds)->filter()->unique()->values();
+        $folderIds = collect($folders)->pluck('ts_folder_id')->filter()->unique()->values();
+
+        if ($userIds->isEmpty() || $folderIds->isEmpty()) {
+            return collect();
+        }
+
+        return FolderUser::whereIn('user_id', $userIds)
+            ->whereIn('ts_folder_id', $folderIds)
+            ->get(['user_id', 'ts_folder_id'])
+            ->groupBy('user_id')
+            ->map(fn ($rows) => $rows->pluck('ts_folder_id')->flip());
+    }
+
+    private function usersWithOrganizationRelationsQuery()
+    {
+        return User::query()->with(['schools.franchises', 'franchises', 'roles']);
+    }
+
+    private function resolveSchoolOrFranchiseDetail(User $user)
+    {
+        if ($user->isAdmin()) {
+            return null;
+        }
+
+        if ($user->isFranchiseLevel()) {
+            return $user->franchises->first();
+        }
+
+        return $user->schools->first()?->franchises->first();
+    }
+
+    private function franchiseTemplatePlaceholders($detail): array
+    {
+        if (!$detail || !is_object($detail)) {
+            return [
+                'FRANCHISE_NAME' => '',
+                'FRANCHISE_PHONE' => '',
+                'FRANCHISE_EMAIL' => '',
+                'FRANCHISE_ADDRESS1' => '',
+                'FRANCHISE_SUBURB' => '',
+                'FRANCHISE_STATE' => '',
+                'FRANCHISE_POSTCODE' => '',
+            ];
+        }
+
+        return [
+            'FRANCHISE_NAME' => $detail->name ?? '',
+            'FRANCHISE_PHONE' => $detail->phone ?? '',
+            'FRANCHISE_EMAIL' => $detail->email ?? '',
+            'FRANCHISE_ADDRESS1' => $detail->address ?? '',
+            'FRANCHISE_SUBURB' => $detail->suburb ?? '',
+            'FRANCHISE_STATE' => $detail->state ?? '',
+            'FRANCHISE_POSTCODE' => $detail->postcode ?? '',
+        ];
+    }
+
+    /**
      * Pending proof schedule rows for a user+template+job (any sentdate).
      * Refresh must update existing pending content when folder status changes.
      */
@@ -416,6 +488,103 @@ class EmailService
             ->where('ts_jobkey', $jobKey)
             ->where('status_id', $this->statusService->pending)
             ->where('email_to', $emailTo);
+    }
+
+    private function loadPendingProofScheduleEmailsByRecipients(int $templateId, string $jobKey, array $emails)
+    {
+        $emails = array_values(array_filter($emails));
+        if ($emails === []) {
+            return collect();
+        }
+
+        return Email::where('template_id', $templateId)
+            ->where('ts_jobkey', $jobKey)
+            ->where('status_id', $this->statusService->pending)
+            ->whereIn('email_to', $emails)
+            ->get()
+            ->keyBy('email_to');
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function loadReceivedProofScheduleEmailRecipients(int $templateId, string $jobKey, array $emails): array
+    {
+        $emails = array_values(array_filter($emails));
+        if ($emails === [] || !$this->statusService->emailSent) {
+            return [];
+        }
+
+        return Email::where('template_id', $templateId)
+            ->where('ts_jobkey', $jobKey)
+            ->where('status_id', $this->statusService->emailSent)
+            ->whereIn('email_to', $emails)
+            ->pluck('email_to')
+            ->flip()
+            ->all();
+    }
+
+    private function expirePendingProofScheduleEmails(int $templateId, string $jobKey, array $emails): void
+    {
+        $emails = array_values(array_filter($emails));
+        if ($emails === []) {
+            return;
+        }
+
+        Email::where('template_id', $templateId)
+            ->where('ts_jobkey', $jobKey)
+            ->where('status_id', $this->statusService->pending)
+            ->whereIn('email_to', $emails)
+            ->update([
+                'status_id' => $this->statusService->expired,
+                'deleted_at' => now(),
+            ]);
+    }
+
+    private function loadPendingScheduledEmailsByRecipients(
+        int $templateId,
+        string $jobKey,
+        array $emails,
+        $sentDateCarbon,
+        string $emailFrom
+    ) {
+        $emails = array_values(array_filter($emails));
+        if ($emails === []) {
+            return collect();
+        }
+
+        return Email::where('template_id', $templateId)
+            ->where('ts_jobkey', $jobKey)
+            ->where('status_id', $this->statusService->pending)
+            ->whereDate('sentdate', $sentDateCarbon)
+            ->where('email_from', $emailFrom)
+            ->whereIn('email_to', $emails)
+            ->get()
+            ->keyBy('email_to');
+    }
+
+    private function loadPendingEmailsByRecipientsForAuthUser(
+        int $templateId,
+        string $jobKey,
+        array $emails,
+        $authUser,
+        $selectedJob
+    ) {
+        $emails = array_values(array_filter($emails));
+        if ($emails === []) {
+            return collect();
+        }
+
+        return Email::where('generated_from_user_id', $authUser->id)
+            ->where('alphacode', $selectedJob->franchises->alphacode ?? null)
+            ->where('ts_jobkey', $jobKey)
+            ->where('ts_schoolkey', $selectedJob->ts_schoolkey)
+            ->where('email_from', $authUser->email)
+            ->where('template_id', $templateId)
+            ->where('status_id', $this->statusService->pending)
+            ->whereIn('email_to', $emails)
+            ->get()
+            ->keyBy('email_to');
     }
     
     public function updateEmailSend($field, $decryptedJobKey)
@@ -498,7 +667,8 @@ class EmailService
          * Fetch users
          * --------------------------------------------
          */
-        $users = User::whereHas('roles', fn ($q) => $q->whereIn('id', $roleIds))
+        $users = $this->usersWithOrganizationRelationsQuery()
+            ->whereHas('roles', fn ($q) => $q->whereIn('id', $roleIds))
             ->whereHas('jobs', fn ($q) => $q->where('jobs.ts_job_id', $selectedJob->ts_job_id))
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
@@ -533,53 +703,47 @@ class EmailService
         $templateContent = File::get($templatePath);
         $statusModel = Status::find($selectedJob->job_status_id);
 
+        $folderIdsByUserId = $this->loadFolderAssignmentsByUserIds(
+            $users->pluck('id'),
+            $selectedJob->folders
+        );
+
+        $userEmails = $users->pluck('email')->filter()->values()->all();
+        $pendingByEmail = $excludeCompleted
+            ? $this->loadPendingProofScheduleEmailsByRecipients($template->id, $decryptedJobKey, $userEmails)
+            : $this->loadPendingScheduledEmailsByRecipients($template->id, $decryptedJobKey, $userEmails, $sentDateCarbon, $authUser->email);
+        $receivedByEmail = $excludeCompleted
+            ? $this->loadReceivedProofScheduleEmailRecipients($template->id, $decryptedJobKey, $userEmails)
+            : [];
+        $emailsToExpire = [];
+
         foreach ($users as $user) {
             $userFolders = $this->getAssignedFolderNamesForUser(
                 $selectedJob->folders,
                 $user->id,
-                $excludeCompleted
+                $excludeCompleted,
+                $folderIdsByUserId
             );
 
-            // No non-Completed visible folders assigned → expire pending proof schedule emails
             if ($excludeCompleted && empty($userFolders)) {
-                $this->pendingProofScheduleEmailQuery($template->id, $decryptedJobKey, $user->email)
-                    ->update([
-                        'status_id' => $this->statusService->expired,
-                        'deleted_at' => now(),
-                    ]);
+                $emailsToExpire[] = $user->email;
                 continue;
             }
 
-            // Already delivered — do not create/refresh another pending send
-            if ($excludeCompleted && $this->hasReceivedProofScheduleEmail($template->id, $decryptedJobKey, $user->email)) {
-                $this->pendingProofScheduleEmailQuery($template->id, $decryptedJobKey, $user->email)
-                    ->update([
-                        'status_id' => $this->statusService->expired,
-                        'deleted_at' => now(),
-                    ]);
+            if ($excludeCompleted && isset($receivedByEmail[$user->email])) {
+                $emailsToExpire[] = $user->email;
                 continue;
             }
 
-            if ($excludeCompleted) {
-                // Match any pending row for this user/template/job so folder list refreshes
-                $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $decryptedJobKey, $user->email)
-                    ->first();
-            } else {
-                $emailRecord = Email::where('template_id', $template->id)
-                    ->where('ts_jobkey', $decryptedJobKey)
-                    ->where('status_id', $this->statusService->pending)
-                    ->whereDate('sentdate', $sentDateCarbon)
-                    ->where('email_to', $user->email)
-                    ->where('email_from', $authUser->email)
-                    ->first();
-            }
+            $emailRecord = $pendingByEmail->get($user->email);
 
-            // Non-proof schedule: keep existing pending email as-is.
             if ($emailRecord && !$excludeCompleted) {
                 continue;
             }
 
-            $data = [
+            $franchiseDetail = $this->resolveSchoolOrFranchiseDetail($user);
+
+            $data = array_merge([
                 'INVITEE_FIRST_NAME' => $user->firstname ?? '',
                 'FOLDERS' => $userFolders,
                 'ALLFOLDERS' => $allJobFolders,
@@ -587,17 +751,10 @@ class EmailService
                 'REVIEW_DUE' => $selectedJob->proof_due
                     ? Carbon::parse($selectedJob->proof_due)->format('l j F, Y')
                     : '',
-                'FRANCHISE_NAME' => $user->getSchoolOrFranchiseDetail()->name ?? '',
-                'FRANCHISE_PHONE' => $user->getSchoolOrFranchiseDetail()->phone ?? '',
-                'FRANCHISE_EMAIL' => $user->getSchoolOrFranchiseDetail()->email ?? '',
                 'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
-                'FRANCHISE_ADDRESS1' => $user->getSchoolOrFranchiseDetail()->address ?? '',
-                'FRANCHISE_SUBURB' => $user->getSchoolOrFranchiseDetail()->suburb ?? '',
-                'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
-                'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
                 'APP_URL' => Config::get('app.url'),
                 'JOB_STATUS_NAME' => $statusModel->status_external_name ?? '',
-            ];
+            ], $this->franchiseTemplatePlaceholders($franchiseDetail));
 
             $processedContent = $this->replaceTemplateVariables($templateContent, $data);
 
@@ -618,6 +775,8 @@ class EmailService
                 $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $decryptedJobKey);
             }
         }
+
+        $this->expirePendingProofScheduleEmails($template->id, $decryptedJobKey, $emailsToExpire);
     }
     
 
@@ -672,7 +831,10 @@ class EmailService
                 ->whereHas('jobs', fn($q) => $q->where('jobs.ts_job_id', $selectedJob->ts_job_id))
                 ->pluck('id');
     
-            $users = User::whereIn('id', $userIds)->select('id','name','email','firstname','lastname')->get();
+            $users = $this->usersWithOrganizationRelationsQuery()
+                ->whereIn('id', $userIds)
+                ->select('id','name','email','firstname','lastname')
+                ->get();
             // \Log::info('saveEmailContent users found', ['count' => $users->count(), 'job' => $tsJobKey]);
     
             $excludeCompleted = $this->isProofScheduleTemplate($field);
@@ -688,28 +850,33 @@ class EmailService
                     'deleted_at' => now(),
                 ]);
 
+            $folderIdsByUserId = $this->loadFolderAssignmentsByUserIds(
+                $users->pluck('id'),
+                $selectedJob->folders
+            );
+
+            $userEmails = $users->pluck('email')->filter()->values()->all();
+            $pendingProofByEmail = $this->loadPendingProofScheduleEmailsByRecipients($template->id, $tsJobKey, $userEmails);
+            $pendingAuthByEmail = $this->loadPendingEmailsByRecipientsForAuthUser($template->id, $tsJobKey, $userEmails, $authUser, $selectedJob);
+            $receivedByEmail = $this->loadReceivedProofScheduleEmailRecipients($template->id, $tsJobKey, $userEmails);
+            $emailsToExpire = [];
+
             foreach ($users as $user) {
                 $userFolders = $this->getAssignedFolderNamesForUser(
                     $selectedJob->folders,
                     $user->id,
-                    $excludeCompleted
+                    $excludeCompleted,
+                    $folderIdsByUserId
                 );
 
-                // No non-Completed folders assigned → do not send proof schedule emails
                 if ($excludeCompleted && empty($userFolders)) {
-                    $this->pendingProofScheduleEmailQuery($template->id, $tsJobKey, $user->email)
-                        ->update([
-                            'status_id' => $this->statusService->expired,
-                            'deleted_at' => now(),
-                        ]);
+                    $emailsToExpire[] = $user->email;
                     continue;
                 }
 
-                // Only skip EMAIL SENT when explicitly requested (e.g. notifications re-enabled).
-                // Date changes always create/update pending for all matrix role users.
                 if ($skipAlreadySent
                     && $excludeCompleted
-                    && $this->hasReceivedProofScheduleEmail($template->id, $tsJobKey, $user->email)
+                    && isset($receivedByEmail[$user->email])
                 ) {
                     continue;
                 }
@@ -719,27 +886,21 @@ class EmailService
                         throw new \Exception("Template file not found at {$templatePath}");
                 }
                 $templateContent = File::get($templatePath);
+
+                $franchiseDetail = $this->resolveSchoolOrFranchiseDetail($user);
     
-                $data = [
+                $data = array_merge([
                     'INVITEE_FIRST_NAME' => $user->firstname ?? '',
                     'FOLDERS' => $userFolders,
                     'ALLFOLDERS' => $allJobFolders,
                     'JOB_NAME' => $selectedJob->ts_jobname ?? '',
                     'REVIEW_DUE' => isset($selectedJob->proof_due) ? Carbon::parse($selectedJob->proof_due)->format('l j F, Y') : '',
-                    'FRANCHISE_NAME' => $user->getSchoolOrFranchiseDetail()->name ?? '',
-                    'FRANCHISE_PHONE' => $user->getSchoolOrFranchiseDetail()->phone ?? '',
-                    'FRANCHISE_EMAIL' => $user->getSchoolOrFranchiseDetail()->email ?? '',
                     'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
-                    'FRANCHISE_ADDRESS1' => $user->getSchoolOrFranchiseDetail()->address ?? '',
-                    'FRANCHISE_SUBURB' => $user->getSchoolOrFranchiseDetail()->suburb ?? '',
-                    'FRANCHISE_STATE' => $user->getSchoolOrFranchiseDetail()->state ?? '',
-                    'FRANCHISE_POSTCODE' => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
                     'APP_URL' => Config::get('app.url'),
                     'JOB_STATUS_NAME' => $statusModel->status_external_name ?? '',
-                ];
+                ], $this->franchiseTemplatePlaceholders($franchiseDetail));
     
                 $processedContent = $this->replaceTemplateVariables($templateContent, $data);
-                //update the subject with the job name
                 $templateSubject = $template->template_subject;
                 if (strpos($template->template_subject, 'JOB_NAME') !== false) {
                     $templateSubject = str_replace('JOB_NAME', $selectedJob->ts_jobname, $template->template_subject);
@@ -748,34 +909,21 @@ class EmailService
     
                 $emlContent = MessageConverter::toEmail($emailMessage)->toString();
     
-                // Proof schedule: one pending per recipient for the job+template (ignore who generated it)
-                if ($excludeCompleted) {
-                    $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $tsJobKey, $user->email)
-                        ->first();
-                } else {
-                    $emailRecord = Email::where([
-                        'generated_from_user_id' => $authUser->id,
-                        'alphacode' => $selectedJob->franchises->alphacode ?? null,
-                        'ts_jobkey' => $tsJobKey,
-                        'ts_schoolkey' => $selectedJob->ts_schoolkey,
-                        'email_from' => $authUser->email,
-                        'email_to' => $user->email,
-                        'template_id' => $template->id,
-                        'status_id' => $this->statusService->pending
-                    ])->first();
-                }
+                $emailRecord = $excludeCompleted
+                    ? $pendingProofByEmail->get($user->email)
+                    : $pendingAuthByEmail->get($user->email);
     
                 if ($emailRecord) {
-                    // Update existing
                     $emailRecord->update([
                         'sentdate' => $date,
                         'email_content' => $emlContent
                     ]);
                 } else {
-                    // Insert new
                     $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $date, $emlContent, $tsJobKey);
                 }
             }
+
+            $this->expirePendingProofScheduleEmails($template->id, $tsJobKey, $emailsToExpire);
         } 
     }    
     
@@ -821,7 +969,8 @@ class EmailService
         }
 
         // Only users with the configured role who are assigned to the changed folder(s).
-        $users = User::whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
+        $users = $this->usersWithOrganizationRelationsQuery()
+            ->whereHas('roles', fn($q) => $q->whereIn('id', $roleIds))
             ->whereHas('jobs', fn($q) => $q->where('jobs.ts_job_id', $selectedFolder->job->ts_job_id))
             ->whereExists(function ($query) use ($changedFolderIds) {
                 $query->selectRaw('1')
@@ -860,18 +1009,14 @@ class EmailService
             }
 
             $folderNames = implode(', ', $folderNamesArray);
-            $schoolOrFranchise = $user->getSchoolOrFranchiseDetail();
-            $userData = [
-                'INVITEE_FIRST_NAME' => $user->firstname ?? '',
-                'FRANCHISE_NAME' => $schoolOrFranchise->name ?? '',
-                'FRANCHISE_PHONE' => $schoolOrFranchise->phone ?? '',
-                'FRANCHISE_EMAIL' => $schoolOrFranchise->email ?? '',
-                'FRANCHISE_ADDRESS1' => $schoolOrFranchise->address ?? '',
-                'FRANCHISE_SUBURB' => $schoolOrFranchise->suburb ?? '',
-                'FRANCHISE_STATE' => $schoolOrFranchise->state ?? '',
-                'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
-                'FRANCHISE_POSTCODE' => $schoolOrFranchise->postcode ?? '',
-            ];
+            $franchiseDetail = $this->resolveSchoolOrFranchiseDetail($user);
+            $userData = array_merge(
+                [
+                    'INVITEE_FIRST_NAME' => $user->firstname ?? '',
+                    'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
+                ],
+                $this->franchiseTemplatePlaceholders($franchiseDetail)
+            );
 
             $constantData = [
                 'JOB_NAME'           => $selectedFolder->job->ts_jobname ?? '',
@@ -944,9 +1089,15 @@ class EmailService
             'proof_catchup' => $selectedJob->proof_catchup,
         ];
 
-        $users = User::whereIn('id', $userIds)
+        $users = $this->usersWithOrganizationRelationsQuery()
+            ->whereIn('id', $userIds)
             ->select('id', 'name', 'email', 'firstname', 'lastname')
             ->get();
+
+        $folderIdsByUserId = $this->loadFolderAssignmentsByUserIds(
+            $users->pluck('id'),
+            $selectedJob->folders
+        );
 
         $notificationsMatrix = json_decode($selectedJob->notifications_matrix, true) ?? [];
 
@@ -976,43 +1127,38 @@ class EmailService
             $allJobFolders = $this->getVisibleProofingFolderNames($selectedJob->folders);
             $statusModel   = Status::find($selectedJob->job_status_id);
 
+            $userEmails = $users->pluck('email')->filter()->values()->all();
+            $pendingByEmail = $this->loadPendingProofScheduleEmailsByRecipients($template->id, $jobKey, $userEmails);
+            $receivedByEmail = $this->loadReceivedProofScheduleEmailRecipients($template->id, $jobKey, $userEmails);
+            $emailsToExpire = [];
+
             foreach ($users as $user) {
                 if (!$this->userHasAnyRoleNames($user, $enabledRoleNames)) {
                     continue;
                 }
 
-                // Resolve visible, non-Completed folders assigned to this user.
                 $userFolders = $this->getAssignedFolderNamesForUser(
                     $selectedJob->folders,
                     $user->id,
-                    true
+                    true,
+                    $folderIdsByUserId
                 );
 
-                // No non-Completed folders assigned → do not send proof schedule emails
                 if (empty($userFolders)) {
-                    $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
-                        ->update([
-                            'status_id' => $this->statusService->expired,
-                            'deleted_at' => now(),
-                        ]);
+                    $emailsToExpire[] = $user->email;
                     continue;
                 }
 
-                // Already delivered — do not queue again
-                if ($this->hasReceivedProofScheduleEmail($template->id, $jobKey, $user->email)) {
-                    $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
-                        ->update([
-                            'status_id' => $this->statusService->expired,
-                            'deleted_at' => now(),
-                        ]);
+                if (isset($receivedByEmail[$user->email])) {
+                    $emailsToExpire[] = $user->email;
                     continue;
                 }
 
-                // Skip if a pending record already exists for this user + template + job
-                $emailRecord = $this->pendingProofScheduleEmailQuery($template->id, $jobKey, $user->email)
-                    ->first();
+                $emailRecord = $pendingByEmail->get($user->email);
 
-                $data = [
+                $franchiseDetail = $this->resolveSchoolOrFranchiseDetail($user);
+
+                $data = array_merge([
                     'INVITEE_FIRST_NAME'    => $user->firstname ?? '',
                     'FOLDERS'               => $userFolders,
                     'ALLFOLDERS'            => $allJobFolders,
@@ -1020,17 +1166,10 @@ class EmailService
                     'REVIEW_DUE'            => $selectedJob->proof_due
                                                 ? Carbon::parse($selectedJob->proof_due)->format('l j F, Y')
                                                 : '',
-                    'FRANCHISE_NAME'        => $user->getSchoolOrFranchiseDetail()->name     ?? '',
-                    'FRANCHISE_PHONE'       => $user->getSchoolOrFranchiseDetail()->phone    ?? '',
-                    'FRANCHISE_EMAIL'       => $user->getSchoolOrFranchiseDetail()->email    ?? '',
                     'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
-                    'FRANCHISE_ADDRESS1'    => $user->getSchoolOrFranchiseDetail()->address  ?? '',
-                    'FRANCHISE_SUBURB'      => $user->getSchoolOrFranchiseDetail()->suburb   ?? '',
-                    'FRANCHISE_STATE'       => $user->getSchoolOrFranchiseDetail()->state    ?? '',
-                    'FRANCHISE_POSTCODE'    => $user->getSchoolOrFranchiseDetail()->postcode ?? '',
                     'APP_URL'               => Config::get('app.url'),
                     'JOB_STATUS_NAME'       => $statusModel->status_external_name ?? '',
-                ];
+                ], $this->franchiseTemplatePlaceholders($franchiseDetail));
 
                 $processedContent = $this->replaceTemplateVariables($templateContent, $data);
 
@@ -1051,6 +1190,8 @@ class EmailService
                     $this->storeEmailRecord($authUser, $selectedJob, $user, $template, $sentDate, $emlContent, $jobKey);
                 }
             }
+
+            $this->expirePendingProofScheduleEmails($template->id, $jobKey, $emailsToExpire);
         }
     }
 
@@ -1059,19 +1200,34 @@ class EmailService
      */
     public function getInvitationFolderNamesForUser(int $userId, string $jobKey): array
     {
-        return FolderUser::where('user_id', $userId)
-            ->whereHas('folder', function ($query) use ($jobKey) {
-                $query->where('is_visible_for_proofing', 1)
-                    ->whereHas('job', function ($jobQuery) use ($jobKey) {
-                        $jobQuery->where('ts_jobkey', $jobKey);
-                    });
-            })
-            ->with('folder')
+        return $this->loadInvitationFolderNamesByUserIds([$userId], [$jobKey])
+            ->get("{$userId}|{$jobKey}", []);
+    }
+
+    /**
+     * Batch-load invitation folder names for many users/jobs in one query.
+     *
+     * @return \Illuminate\Support\Collection<string, array<int, string>>  "userId|jobKey" => folder names
+     */
+    private function loadInvitationFolderNamesByUserIds($userIds, $jobKeys)
+    {
+        $userIds = collect($userIds)->filter()->unique()->values();
+        $jobKeys = collect($jobKeys)->filter()->unique()->values();
+
+        if ($userIds->isEmpty() || $jobKeys->isEmpty()) {
+            return collect();
+        }
+
+        return FolderUser::query()
+            ->whereIn('folder_users.user_id', $userIds)
+            ->join('folders', 'folders.ts_folder_id', '=', 'folder_users.ts_folder_id')
+            ->join('jobs', 'jobs.ts_job_id', '=', 'folders.ts_job_id')
+            ->where('folders.is_visible_for_proofing', 1)
+            ->whereIn('jobs.ts_jobkey', $jobKeys)
+            ->select('folder_users.user_id', 'jobs.ts_jobkey', 'folders.ts_foldername')
             ->get()
-            ->pluck('folder.ts_foldername')
-            ->filter()
-            ->values()
-            ->toArray();
+            ->groupBy(fn ($row) => $row->user_id . '|' . $row->ts_jobkey)
+            ->map(fn ($rows) => $rows->pluck('ts_foldername')->filter()->unique()->values()->toArray());
     }
 
     /**
@@ -1128,6 +1284,11 @@ class EmailService
 
         $jobsByKey = Job::whereIn('ts_jobkey', $jobKeys)->get()->keyBy('ts_jobkey');
 
+        $invitationFoldersByUserJob = $this->loadInvitationFolderNamesByUserIds(
+            $userIdsWithAccess,
+            $jobKeys
+        );
+
         foreach ($pendingEmails as $pendingEmail) {
             $user = $usersByEmail->get($pendingEmail->email_to);
             $job = $jobsByKey->get($pendingEmail->ts_jobkey);
@@ -1139,7 +1300,7 @@ class EmailService
                 continue;
             }
 
-            $folderNames = $this->getInvitationFolderNamesForUser((int) $user->id, $job->ts_jobkey);
+            $folderNames = $invitationFoldersByUserJob->get("{$user->id}|{$job->ts_jobkey}", []);
             $updatedContent = $this->rebuildInvitationEmailContent(
                 $pendingEmail,
                 $user,
@@ -1155,7 +1316,10 @@ class EmailService
 
     public function saveInvitationContent($role, $user, $date, $jobkey)
     {
-        $authUser = Auth::user();
+        $authUser = $this->usersWithOrganizationRelationsQuery()->find(Auth::id());
+        if (!$authUser) {
+            return;
+        }
         if($role == 'photocoordinator') {
             $field = 'photocordinator_invitation';
         } elseif($role == 'teacher') {
@@ -1174,10 +1338,11 @@ class EmailService
         }
 
         $selectedFolders = $this->getInvitationFolderNamesForUser((int) $user, $jobkey);
+        $authFranchiseDetail = $this->resolveSchoolOrFranchiseDetail($authUser);
 
         // Prefer the job already resolved by key. Do not chain folderUsers->first()->folder->job:
         // first() / folder can be null (franchise scope, deleted folder, or no assignments yet).
-        $data = [
+        $data = array_merge([
                 'INVITEE_FIRST_NAME' => $inviteUser->firstname ?? '',
                 'INVITEE_LAST_NAME' => $inviteUser->lastname ?? '',
                 'SENDER_FIRST_NAME' => $authUser->firstname ?? '',
@@ -1186,15 +1351,8 @@ class EmailService
                 'FOLDERS' => $selectedFolders,
                 'REVIEW_DUE' => isset($job->proof_due) ? Carbon::parse($job->proof_due)->format('l j F, Y') : '',
                 'APP_URL' => Config::get('app.url'),
-                'FRANCHISE_NAME' => $authUser->getSchoolOrFranchiseDetail()->name ?? '',
-                'FRANCHISE_PHONE' => $authUser->getSchoolOrFranchiseDetail()->phone ?? '',
-                'FRANCHISE_EMAIL' => $authUser->getSchoolOrFranchiseDetail()->email ?? '',
                 'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
-                'FRANCHISE_ADDRESS1' => $authUser->getSchoolOrFranchiseDetail()->address ?? '',
-                'FRANCHISE_SUBURB' => $authUser->getSchoolOrFranchiseDetail()->suburb ?? '',
-                'FRANCHISE_STATE' => $authUser->getSchoolOrFranchiseDetail()->state ?? '',
-                'FRANCHISE_POSTCODE' => $authUser->getSchoolOrFranchiseDetail()->postcode ?? '',
-        ];
+        ], $this->franchiseTemplatePlaceholders($authFranchiseDetail));
 
         $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
         if (!File::exists($templatePath) || empty($template->template_location) || empty($template->template_format)) {
@@ -1258,7 +1416,10 @@ class EmailService
      */
     public function rebuildInvitationEmailContent($pendingEmail, $inviteUser, array $remainingFolders, $jobObj): ?string
     {
-        $authUser = Auth::user();
+        $authUser = $this->usersWithOrganizationRelationsQuery()->find(Auth::id());
+        if (!$authUser) {
+            return null;
+        }
 
         // Resolve the template used by the original email record
         $template = Template::find($pendingEmail->template_id);
@@ -1272,8 +1433,9 @@ class EmailService
         }
 
         $templateContent = File::get($templatePath);
+        $authFranchiseDetail = $this->resolveSchoolOrFranchiseDetail($authUser);
 
-        $data = [
+        $data = array_merge([
             'INVITEE_FIRST_NAME'   => $inviteUser->firstname ?? '',
             'INVITEE_LAST_NAME'    => $inviteUser->lastname  ?? '',
             'SENDER_FIRST_NAME'    => $authUser->firstname   ?? '',
@@ -1284,15 +1446,8 @@ class EmailService
                                         ? Carbon::parse($jobObj->proof_due)->format('l j F, Y')
                                         : '',
             'APP_URL'              => Config::get('app.url'),
-            'FRANCHISE_NAME'       => $authUser->getSchoolOrFranchiseDetail()->name     ?? '',
-            'FRANCHISE_PHONE'      => $authUser->getSchoolOrFranchiseDetail()->phone    ?? '',
-            'FRANCHISE_EMAIL'      => $authUser->getSchoolOrFranchiseDetail()->email    ?? '',
             'FRANCHISE_WEB_ADDRESS'=> Config::get('app.franchise_web_address', 'www.msp.com.au'),
-            'FRANCHISE_ADDRESS1'   => $authUser->getSchoolOrFranchiseDetail()->address  ?? '',
-            'FRANCHISE_SUBURB'     => $authUser->getSchoolOrFranchiseDetail()->suburb   ?? '',
-            'FRANCHISE_STATE'      => $authUser->getSchoolOrFranchiseDetail()->state    ?? '',
-            'FRANCHISE_POSTCODE'   => $authUser->getSchoolOrFranchiseDetail()->postcode ?? '',
-        ];
+        ], $this->franchiseTemplatePlaceholders($authFranchiseDetail));
 
         $beforeProcessedContent = $this->replaceTemplateVariables($templateContent, $data);
         $downloadInstructions = '';

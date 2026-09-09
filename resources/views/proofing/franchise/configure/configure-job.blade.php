@@ -47,6 +47,21 @@
             background-color: #88c671;
         }
 
+        .group-image-dropzone {
+            border-radius: 4px;
+            transition: background-color 0.15s ease, outline-color 0.15s ease;
+        }
+
+        .group-image-dropzone.is-dragover {
+            background-color: rgba(0, 123, 255, 0.08);
+            outline: 2px dashed #007bff;
+            outline-offset: 2px;
+        }
+
+        .group-image-dropzone.is-dragover .modal-thumb {
+            opacity: 0.7;
+        }
+
         /* Style the input field if you want to display it when users select a file */
         input[type="file"]:focus + .custom-file-label {
             outline: none;
@@ -336,8 +351,6 @@
     <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>
         <script>
             $(document).ready(function () {
-                jQuery.noConflict();
-
                 // const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 // console.log(userTimezone);
                 // console.log(window.createPopper)
@@ -456,6 +469,26 @@
                                 if (dateStr) {
                                     var selectedDate = $field.val();
                                     var fieldId = $field.attr('id'); // Use saved reference to get the ID
+                                    var actionMap = {
+                                        'review_due_start_picker': 'proof_start',
+                                        'review_due_warning_picker': 'proof_warning',
+                                        'review_due_picker': 'proof_due',
+                                        'review_due_catchup_picker': 'proof_catchup',
+                                    };
+                                    var dataType = actionMap[fieldId];
+
+                                    if (dataType === 'proof_start') {
+                                        // Change handler may have already rejected + reverted; don't clear the error or re-save.
+                                        if (typeof proofStartValidationBlocked !== 'undefined' && proofStartValidationBlocked) {
+                                            return;
+                                        }
+                                        var startError = validateProofStartAgainstWarningAndDue(convertTo24HourFormat(dateStr || selectedDate));
+                                        if (startError) {
+                                            showProofingTimelineError(startError, dataType);
+                                            return;
+                                        }
+                                        clearProofingStartDateError();
+                                    }
 
                                     // Auto-set Due Date to 1 week after Catchup Date
                                     if (fieldId === 'review_due_catchup_picker') {
@@ -480,20 +513,13 @@
                                         }
                                     }
 
-                                    // Map field ID to specific actions
-                                    var actionMap = {
-                                        'review_due_start_picker': 'proof_start',
-                                        'review_due_warning_picker': 'proof_warning',
-                                        'review_due_picker': 'proof_due',
-                                        'review_due_catchup_picker': 'proof_catchup',
-                                    };
                                     var jobHash = document.querySelector('input[name="jobHash"]').value;
                                     var targetUrl = base_url + "/franchise/config-job/proofing-timeline/email-send";
                                 
                                     // Prepare formData here (adjust as needed)
                                     var formData = new FormData();
                                     formData.append('date', convertTo24HourFormat(selectedDate)); // Replace with actual data
-                                    formData.append('dataType', actionMap[fieldId]); // Replace with actual data
+                                    formData.append('dataType', dataType); // Replace with actual data
                                     formData.append('jobHash', jobHash); // Replace with actual data
 
                                     // Delay the catchup email send slightly if we also triggered a due date update
@@ -557,6 +583,9 @@
         <script>
             window.groupImageUploadUrl = @json(route('groupImage.uploadFile'));
             window.groupImageDeleteUrl = @json(route('groupImage.deleteFile'));
+            window.groupImageWarmUrl = @json(route('groupImage.warmThumbs'));
+            window.groupImageFolderKeys = @json($groupImageFolderKeys ?? []);
+            window.groupImagePlaceholder = @json(asset('proofing-assets/img/traditionalGroupPlaceholderImage.png'));
         </script>
         
         <script src="{{ URL::asset('proofing-assets/js/proofing/configure.js') }}?v={{ filemtime(public_path('proofing-assets/js/proofing/configure.js')) }}"></script>

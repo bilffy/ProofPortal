@@ -108,6 +108,7 @@ class SubjectChangesController extends Controller
             'pictureissueID' => $pictureissueID, 
             'subjectChanges' => $subjectData['subjectChanges'], 
             'attachedFolderNames' => $subjectData['subjectsFolderList'], 
+            'classFolderKeysById' => $subjectData['classFolderKeysById'] ?? collect(),
             'selectedJob' => $selectedJob, 
             'allFolders' => $allFolders, 
             'folderChanges' => $folderChanges,

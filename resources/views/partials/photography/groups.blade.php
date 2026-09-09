@@ -42,7 +42,7 @@
             <x-form.select context="groups_class" :options="[]" class="mb-4" multiple>Class/Group</x-form.select>
         </div>
         @if ($season)
-            <livewire:photography.photo-grid :$category :$season :$schoolId :key="$key"/>
+            <livewire:photography.photo-grid :$category :$season :$schoolId :key="$key" lazy />
         @else
             @php
                 $isFranchiseLevel = Auth::user()->isFranchiseLevel();

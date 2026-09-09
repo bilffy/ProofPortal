@@ -240,7 +240,7 @@ class SchoolFolderService
     {
         $query = SchoolFolder::roots()
             ->where('school_id', $schoolId)
-            ->with(['descendants.user', 'user', 'school']);
+            ->with(['children.user', 'children.children.user', 'children.children.children.user', 'user', 'school']);
 
         if ($season) {
             $query->bySeason($season);

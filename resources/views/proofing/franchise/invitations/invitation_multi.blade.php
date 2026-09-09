@@ -248,7 +248,6 @@
                 refreshPeoplePayloadAndValidation();
             };
 
-            jQuery.noConflict();
             $('#invite-spreadsheet').jexcel({
                 data: spreadsheetData,
                 colHeaders: ['First Name', 'Last Name', 'Email', 'Class / Group'],

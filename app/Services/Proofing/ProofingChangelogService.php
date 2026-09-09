@@ -45,7 +45,7 @@ class ProofingChangelogService
 
     public function getAllProofingChangelogBySubjectkey($subjectkey)
     {
-        return ProofingChangelog::with('statuses')->where('keyvalue', $subjectkey);
+        return ProofingChangelog::with(['statuses', 'user:id,firstname,lastname'])->where('keyvalue', $subjectkey);
     }
 
     /**
@@ -87,6 +87,21 @@ class ProofingChangelogService
             ['change_from', 'Folder From: '.$id]
         ])
         ->count();
+    }
+
+    public function getSubjectChangedFolderCountsByFolderIds($folderIds)
+    {
+        $folderIds = collect($folderIds)->filter()->unique()->values();
+        if ($folderIds->isEmpty()) {
+            return collect();
+        }
+
+        $changeFromValues = $folderIds->map(fn ($id) => 'Folder From: ' . $id);
+
+        return ProofingChangelog::whereIn('change_from', $changeFromValues)
+            ->selectRaw('change_from, COUNT(*) as cnt')
+            ->groupBy('change_from')
+            ->pluck('cnt', 'change_from');
     }
 
     public function approveProofingChangelogById($id)
@@ -137,7 +152,7 @@ class ProofingChangelogService
     public function getAllApprovedSubjectChangeByJobKey($jobKey)
     {
         $subjectChanges = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
-            ->with('images')
+            ->with(['user:id,firstname,lastname', 'images'])
             ->join('subjects', 'subjects.ts_subjectkey', '=', 'changelogs.keyvalue')
             ->join('folders', 'folders.ts_folder_id', '=', 'subjects.ts_folder_id')
             ->where([
@@ -148,6 +163,7 @@ class ProofingChangelogService
             ->whereNotNull('subjects.ts_subjectkey')
             ->whereNotNull('folders.ts_folderkey')
             ->select(
+                'changelogs.id',
                 'subjects.firstname',
                 'subjects.lastname',
                 'subjects.ts_subjectkey',
@@ -174,6 +190,7 @@ class ProofingChangelogService
 
     public function getAllAwaitApprovedSubjectChangeByJobKey($jobKey){
         $subjectChanges = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+        ->with(['user:id,firstname,lastname', 'images'])
         ->join('subjects', 'subjects.ts_subjectkey', '=', 'changelogs.keyvalue')
         ->join('folders', 'folders.ts_folder_id', '=', 'subjects.ts_folder_id')
         ->where([
@@ -206,7 +223,8 @@ class ProofingChangelogService
 
         return [
             'subjectsFolderList' => $subjectsFolderList, 
-            'subjectChanges' => $subjectChanges
+            'subjectChanges' => $subjectChanges,
+            'classFolderKeysById' => $this->buildClassFolderKeysById($subjectChanges),
         ];
     }
 
@@ -243,6 +261,7 @@ class ProofingChangelogService
     
     public function getFolderGeneralChangeByJobKey($jobKey){
         return ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+        ->with(['user:id,firstname,lastname'])
         ->join('folders', 'folders.ts_folderkey', '=', 'changelogs.keyvalue')
         ->whereIn('issues.issue_name', ['FOLDER_NAME_CHANGE', 'GENERAL_ISSUES', 'TEACHER', 'PRINCIPAL', 'DEPUTY', 'GROUP_COMMENTS'])
         ->where('ts_jobkey', $jobKey)
@@ -993,7 +1012,8 @@ class ProofingChangelogService
         // ONLY INSERT CHANGELOG IF IT IS A VALID ALLOWED CHANGE! (PREVENT CHARACTER LIMIT EXCEED FROM WRITING FLUSHED CORRUPT LOGS!)
         if ($message !== "Character limit exceeded.") {
             try{
-                $result = ProofingChangelog::insert([
+                // Use create() (not insert) so model created events run (e.g. active → modified).
+                $result = ProofingChangelog::create([
                         'ts_jobkey' => $subjectData->job->ts_jobkey,
                         'keyvalue' => $subjectData->ts_subjectkey,
                         'keyorigin' => 'Subject',
@@ -1287,5 +1307,28 @@ class ProofingChangelogService
                 );
             }
         }
+    }
+
+    private function buildClassFolderKeysById($subjectChanges)
+    {
+        $folderIds = collect($subjectChanges)
+            ->filter(fn ($change) => ($change->external_issue_name ?? null) === 'Class')
+            ->map(function ($change) {
+                $from = (string) ($change->change_from ?? '');
+                if (!str_starts_with($from, 'Folder From: ')) {
+                    return null;
+                }
+
+                return (int) trim(substr($from, strlen('Folder From: ')));
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($folderIds->isEmpty()) {
+            return collect();
+        }
+
+        return Folder::whereIn('id', $folderIds)->pluck('ts_folderkey', 'id');
     }
 }

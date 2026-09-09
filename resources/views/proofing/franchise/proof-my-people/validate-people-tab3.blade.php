@@ -23,6 +23,7 @@
                                         data-native-width="{{ $width }}"
                                         data-native-height="{{ $height }}"
                                         data-artifact-name="{{ $artifactNameCrypt }}"
+                                        data-image-version="{{ !empty($artifact->updated_at) ? strtotime($artifact->updated_at) : time() }}"
                                         oncontextmenu="return false;">
                                 @endif
                                 <div class="click-box d-none"></div>

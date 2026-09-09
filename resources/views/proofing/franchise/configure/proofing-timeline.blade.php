@@ -7,16 +7,17 @@
 
 <div class="row">
     <div class="col-md-12 m-auto">
-        <div class="form-group row text mb-0">
+        <div class="form-group row text mb-3">
             <label for="review_due_start_picker" class="col-md-3 form-control-label">{{ __('Start Date') }}</label>
             <div class="col-md-9 text">
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <div class="input-group date" id="datetime-picker-wrapper">
-                        <input type="text" id="review_due_start_picker" class="form-control flatpickr-field" name="review_due_start" value="{{$review_due_start}}"/>
+                        <input type="text" id="review_due_start_picker" class="form-control flatpickr-field" name="review_due_start" value="{{$review_due_start}}" data-last-saved="{{ !empty($selectedJob->proof_start) ? $review_due_start : '' }}" data-is-saved="{{ !empty($selectedJob->proof_start) ? '1' : '0' }}"/>
                         <span class="input-group-addon">
                             <span class="fa fa-calendar"></span>
                         </span>
                     </div>
+                    <div id="review_due_start_error" class="text-danger small" style="display: none; color: #dc3545; margin-top: 8px; margin-bottom: 4px;" role="alert"></div>
                 </div>
             </div>
             @error('review_due_start')
@@ -30,12 +31,12 @@
 
 <div class="row">
     <div class="col-md-12 m-auto">
-        <div class="form-group row text mb-0">
+        <div class="form-group row text mb-3">
             <label for="review_due_warning_picker" class="col-md-3 form-control-label">{{ __('Warning Date') }}</label>
             <div class="col-md-9 text">
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <div class="input-group date" id="review_due_warning_container">
-                        <input type="text" id="review_due_warning_picker" class="form-control flatpickr-field" name="review_due_warning" value="{{$review_due_warning}}"/>
+                        <input type="text" id="review_due_warning_picker" class="form-control flatpickr-field" name="review_due_warning" value="{{$review_due_warning}}" data-last-saved="{{ !empty($selectedJob->proof_warning) ? $review_due_warning : '' }}" data-is-saved="{{ !empty($selectedJob->proof_warning) ? '1' : '0' }}"/>
                         <span class="input-group-addon">
                             <span class="fa fa-calendar"></span>
                         </span>
@@ -53,12 +54,12 @@
 
 <div class="row">
     <div class="col-md-12 m-auto">
-        <div class="form-group row text mb-0">
+        <div class="form-group row text mb-3">
             <label for="review_due_picker" class="col-md-3 form-control-label">{{ __('Due Date') }}</label>
             <div class="col-md-9 text">
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <div class="input-group date" id="review_due_container">
-                        <input type="text" id="review_due_picker" class="form-control flatpickr-field" name="review_due" value="{{$review_due}}"/>
+                        <input type="text" id="review_due_picker" class="form-control flatpickr-field" name="review_due" value="{{$review_due}}" data-last-saved="{{ !empty($selectedJob->proof_due) ? $review_due : '' }}" data-is-saved="{{ !empty($selectedJob->proof_due) ? '1' : '0' }}"/>
                         <span class="input-group-addon">
                             <span class="fa fa-calendar"></span>
                         </span>
@@ -76,17 +77,17 @@
 
 <div class="row">
     <div class="col-md-12 m-auto">
-        <div class="form-group row text mb-0">
+        <div class="form-group row text mb-3">
             <label for="review_due_catchup_picker" class="col-md-3 form-control-label">{{ __('Catchup Date') }}</label>
             <div class="col-md-9 text">
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <div class="input-group date" id="review_due_catchup_container">
                         <input type="text" id="review_due_catchup_picker" class="form-control flatpickr-field" name="review_due_catchup" value="{{$review_due_catchup}}"/>
                         <span class="input-group-addon">
                             <span class="fa fa-calendar"></span>
                         </span>
                     </div>
-                    <span class="text-warning">
+                    <span class="text-warning d-block mt-2">
                         Catchup notification emails will be sent on this date. Please ensure this date is set after the school's actual photo catchup day.
                         <br>Selecting a catchup date will automatically set the Due Date to one week later.
                         <br>Portraits will be temporarily hidden for this TNJ from the Photography section between the catchup date and the due date and will be available once the due date passes.

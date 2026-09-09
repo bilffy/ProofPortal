@@ -216,10 +216,10 @@ class UsersList extends Component
             $usersQuery->where('schools.id', $school->id);
         } elseif ($user->isFranchiseLevel()) {
             $franchise = $user->getFranchise();
-            $schools = $franchise->schools->pluck('id');
-            $usersQuery->where(function ($query) use ($schools, $franchise) {
+            $schoolIds = $franchise->schools()->pluck('schools.id');
+            $usersQuery->where(function ($query) use ($schoolIds, $franchise) {
                 $query
-                    ->whereIn('schools.id', $schools)
+                    ->whereIn('schools.id', $schoolIds)
                     ->orWhere('franchises.id', $franchise->id);
             });
         }
@@ -233,6 +233,8 @@ class UsersList extends Component
             ->search(['users.email', 'users.firstname', 'users.lastname', 'schools.name', 'franchises.name'], trim($this->search))
             ->sort($this->getSortColumns($this->sortBy), $this->sortDirection)
             ->paginate();
+
+        $users->load(['roles', 'schools', 'franchises']);
         
         $configMessages = [
             'invite_user' => config('app.dialog_config.invite.user'),

@@ -60,23 +60,13 @@ class Lightbox extends Component
                 );
         }
         
-        $imageCount = $images->count();
-        $noImageCount = 0;
-        foreach ($images as $image) {
-            if (property_exists($image, 'ts_subjectkey') && !$imageService->getIsImageFound($image->ts_subjectkey, $this->category)) {
-                $noImageCount++;
-            } else if (property_exists($image, 'ts_folderkey') && !$imageService->getIsImageFound($image->ts_folderkey, $this->category)) {
-                $noImageCount++;
-            }
-        }
+        $list = $imageService->getImagesAsBase64($images, $this->category);
 
         $this->dispatch(PhotographyHelper::EV_TOGGLE_NO_IMAGES, [
             'category' => 'LIGHTBOX',
-            'hasImages' => $imageCount > 0 && $imageCount != $noImageCount,
+            'hasImages' => $list->where('hasPhoto', true)->isNotEmpty(),
         ]);
-        
-        $list = $imageService->getImagesAsBase64($images, $this->category); 
-        
+
         return $list;
     }
 

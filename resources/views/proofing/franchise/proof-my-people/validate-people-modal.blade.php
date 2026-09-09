@@ -1,7 +1,6 @@
 @php
     use App\Helpers\Helper;
     use Illuminate\Support\Facades\Crypt;
-    use App\Models\ProofingChangelog;
     use Illuminate\Support\Str;            
 @endphp
 
@@ -52,12 +51,7 @@
                     );
                 }
 
-                $changeLogData = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
-                    ->where('keyvalue', $subject->ts_subjectkey)
-                    ->where('keyorigin', 'Subject')
-                    ->whereIn('issues.issue_name', ['SUBJECT_ISSUE_PICTURE', 'SUBJECT_ISSUE_CLASS'])
-                    ->select('changelogs.change_to', 'issues.issue_name')
-                    ->get();
+                $changeLogData = $changelogsBySubject->get($subject->ts_subjectkey, collect());
 
                 // Initialize variables
                 $subjectPicture = null;

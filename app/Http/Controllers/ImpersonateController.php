@@ -24,14 +24,18 @@ class ImpersonateController extends Controller
         }
         $rootUserId = (int) session(self::ROOT_USER_SESSION_KEY);
 
-        // Never nest: return to the root user before starting a new impersonation.
-        $this->returnToRootUser($rootUserId);
+        // Never nest: unwind an active impersonation before starting a new one.
+        if (Auth::check() && Auth::user()->isImpersonated()) {
+            $this->returnToRootUser($rootUserId);
+        }
 
         if (!PermissionHelper::canImpersonate($id)) {
             abort(403, 'You are not authorized to impersonate this user.');
         }
 
         Auth::user()->impersonate($user);
+
+        $this->syncWebPasswordHashInSession();
 
         ActivityLogHelper::log(LogConstants::IMPERSONATE_USER, ['impersonated_user' => $user->id], $rootUserId);
 
@@ -53,6 +57,8 @@ class ImpersonateController extends Controller
 
         $this->returnToRootUser($rootUserId ? (int) $rootUserId : null);
 
+        $this->syncWebPasswordHashInSession();
+
         ActivityLogHelper::log(LogConstants::EXIT_IMPERSONATE_USER, ['impersonated_user' => $impersonatedId]);
 
         return redirect()->route('dashboard');
@@ -71,8 +77,40 @@ class ImpersonateController extends Controller
         }
 
         if ($rootUserId && Auth::id() != $rootUserId) {
-            Auth::loginUsingId($rootUserId);
+            $rootUser = User::find($rootUserId);
+            if ($rootUser) {
+                $guard = Auth::guard('web');
+                if ($guard instanceof \App\Auth\ImpersonateSessionGuard) {
+                    $guard->quietLogin($rootUser);
+                } else {
+                    Auth::loginUsingId($rootUserId);
+                }
+            }
         }
+    }
+
+    /**
+     * Keep Sanctum's session fingerprint aligned with the active web user.
+     * Without this, stateful API requests can flush the session after impersonation.
+     */
+    private function syncWebPasswordHashInSession(): void
+    {
+        if (!request()->hasSession()) {
+            return;
+        }
+
+        $guard = Auth::guard('web');
+        $user = $guard->user();
+
+        if (!$user) {
+            return;
+        }
+
+        request()->session()->put([
+            'password_hash_web' => method_exists($guard, 'hashPasswordForCookie')
+                ? $guard->hashPasswordForCookie($user->getAuthPassword())
+                : $user->getAuthPassword(),
+        ]);
     }
 
     private function clearProofingSessionContext(): void

@@ -37,6 +37,8 @@
     $hasPortraits = $imageService->getAvailableYearsForSchool($schoolId, \App\Helpers\PhotographyHelper::TAB_PORTRAITS, $tsAccountId)->isNotEmpty();
     $hasGroups = $imageService->getAvailableYearsForSchool($schoolId, \App\Helpers\PhotographyHelper::TAB_GROUPS, $tsAccountId)->isNotEmpty();
     $hasOthers = $imageService->getAvailableYearsForSchool($schoolId, \App\Helpers\PhotographyHelper::TAB_OTHERS, $tsAccountId)->isNotEmpty();
+
+    $isConfigurePage = in_array($currentTab, ['configure', 'configure-new'], true);
 @endphp
 
 @section('content')
@@ -101,33 +103,39 @@
                 </x-tabs.tabContent>
             @endrole
             <x-tabs.tabContent id="portraits">
-                @if ($canDownloadPortraits)
-                    @include('partials.photography.portraits')
-                @else
-                    <div class="w-full text-center pt-4 mt-4 bg-white">
-                        You do not have permission to view or download Portraits.
-                    </div>
+                @if (!$isConfigurePage)
+                    @if ($canDownloadPortraits)
+                        @include('partials.photography.portraits')
+                    @else
+                        <div class="w-full text-center pt-4 mt-4 bg-white">
+                            You do not have permission to view or download Portraits.
+                        </div>
+                    @endif
                 @endif
             </x-tabs.tabContent>
             @if ($groupsTabValue)
                 <x-tabs.tabContent id="groups">
-                    @if ($canDownloadGroups)
-                        @include('partials.photography.groups')
-                    @else
-                        <div class="w-full text-center pt-4 mt-4 bg-white">
-                            You do not have permission to view or download Groups.
-                        </div>
+                    @if (!$isConfigurePage)
+                        @if ($canDownloadGroups)
+                            @include('partials.photography.groups')
+                        @else
+                            <div class="w-full text-center pt-4 mt-4 bg-white">
+                                You do not have permission to view or download Groups.
+                            </div>
+                        @endif
                     @endif
                 </x-tabs.tabContent>
             @endif
             @if ($otherTabValue)
                 <x-tabs.tabContent id="others">
-                    @if ($canDownloadOthers)
-                        @include('partials.photography.others')
-                    @else
-                        <div class="w-full text-center pt-4 mt-4 bg-white">
-                            You do not have permission to view or download Others.
-                        </div>
+                    @if (!$isConfigurePage)
+                        @if ($canDownloadOthers)
+                            @include('partials.photography.others')
+                        @else
+                            <div class="w-full text-center pt-4 mt-4 bg-white">
+                                You do not have permission to view or download Others.
+                            </div>
+                        @endif
                     @endif
                 </x-tabs.tabContent>
             @endif
@@ -495,10 +503,30 @@
         showConfigReloadModalIfNeeded(activeTabId);
 
         tabs.forEach(tab => {
+            // Capture phase so we navigate before Flowbite swaps tab panels (avoids flash + double load).
             tab.addEventListener('click', (e) => {
-                e.preventDefault();
                 const url = e.currentTarget.getAttribute('href');
                 const tabId = e.currentTarget.id;
+                const activeTabId = getActiveTabId();
+                const leavingConfigure = isConfigureTab(activeTabId) && !isConfigureTab(tabId);
+                const enteringConfigure = !isConfigureTab(activeTabId) && isConfigureTab(tabId);
+
+                // Cross-route photography tabs always use a full page load.
+                if (leavingConfigure || enteringConfigure) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+
+                    if (leavingConfigure && window.localStorage.getItem('reloadPhotography')) {
+                        // Stay on Configure until Continue confirms navigation.
+                        showConfigReloadModalIfNeeded(tabId, url);
+                        return;
+                    }
+
+                    window.location.assign(url);
+                    return;
+                }
+
+                e.preventDefault();
                 history.pushState({ path: url }, '', url);
                 if (showConfigReloadModalIfNeeded(tabId)) {
                     return;
@@ -536,7 +564,7 @@
                 }
                 // reset images selected
                 resetImages();
-            });
+            }, true);
         });
 
         // Handle image upload from input
@@ -724,9 +752,24 @@
         window.localStorage.setItem('reloadPhotography', 'true');
     }
 
+    let pendingConfigReloadUrl = null;
+
     function reloadPage() {
+        const targetUrl = pendingConfigReloadUrl;
+        pendingConfigReloadUrl = null;
         window.localStorage.removeItem('reloadPhotography');
+        if (targetUrl) {
+            window.location.assign(targetUrl);
+            return;
+        }
         window.location.reload();
+    }
+
+    function cancelConfigReloadModal() {
+        pendingConfigReloadUrl = null;
+        if (typeof confirmReloadPageModal !== 'undefined' && confirmReloadPageModal) {
+            confirmReloadPageModal.hide();
+        }
     }
 
     function isConfigureTab(tabId) {
@@ -739,27 +782,65 @@
         if (reloadModalCloseBtn && !reloadModalCloseBtn.dataset.reloadBound) {
             reloadModalCloseBtn.dataset.reloadBound = '1';
             reloadModalCloseBtn.addEventListener('click', () => {
-                reloadPage();
+                // X closes without navigating/refreshing — only Continue confirms.
+                cancelConfigReloadModal();
             });
         }
         if (reloadModal && !reloadModal.dataset.reloadBound) {
             reloadModal.dataset.reloadBound = '1';
             document.addEventListener('click', (e) => {
                 if (e.target === reloadModal) {
-                    reloadPage();
+                    cancelConfigReloadModal();
                 }
             }, false);
         }
     }
 
-    function showConfigReloadModalIfNeeded(tabId = null) {
+    function keepConfigureTabActive() {
+        const configureTab = document.getElementById('configure-new-tab')
+            || document.getElementById('configure-tab');
+        if (!configureTab) {
+            return;
+        }
+
+        document.querySelectorAll('.tab-button').forEach((tab) => {
+            const isConfigure = tab === configureTab;
+            tab.setAttribute('aria-selected', isConfigure ? 'true' : 'false');
+            tab.classList.toggle('text-primary', isConfigure);
+            tab.classList.toggle('border-b-2', isConfigure);
+            tab.classList.toggle('text-gray', !isConfigure);
+            tab.classList.toggle('border-b-0', !isConfigure);
+        });
+
+        document.querySelectorAll('#photography-pages > [role="tabpanel"]').forEach((panel) => {
+            const show = panel.id === 'configure-new' || panel.id === 'configure';
+            panel.classList.toggle('hidden', !show);
+        });
+    }
+
+    function showConfigReloadModalIfNeeded(tabId = null, navigateUrl = null) {
         if (!window.localStorage.getItem('reloadPhotography')) {
             return false;
         }
+
+        // Leaving Configure with pending changes: stay put and ask to confirm first.
+        if (navigateUrl) {
+            pendingConfigReloadUrl = navigateUrl;
+            keepConfigureTabActive();
+            // Flowbite may still flip the tab panel synchronously — restore after it runs.
+            requestAnimationFrame(() => keepConfigureTabActive());
+            confirmReloadPageModal.show();
+            bindConfigReloadModalCloseHandlers();
+            return true;
+        }
+
         const activeTabId = tabId || getActiveTabId();
         if (isConfigureTab(activeTabId)) {
             return false;
         }
+
+        // Already on Portraits/Groups/Others with stale flag — prompt before reload.
+        pendingConfigReloadUrl = window.location.href;
         confirmReloadPageModal.show();
         bindConfigReloadModalCloseHandlers();
         return true;
@@ -900,6 +981,7 @@
     window.submitDownloadRequest = submitDownloadRequest;
     window.confirmDownloadRequest = confirmDownloadRequest;
     window.reloadPage = reloadPage;
+    window.cancelConfigReloadModal = cancelConfigReloadModal;
     window.updateSchoolConfig = updateSchoolConfig;
     window.replaceUploadedPhoto = replaceUploadedPhoto;
     window.removeUploadedPhoto = removeUploadedPhoto;

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToFranchise;
+use App\Services\Proofing\JobService;
+use App\Services\Proofing\StatusService;
 
 class ProofingChangelog extends Model
 {
@@ -13,6 +15,26 @@ class ProofingChangelog extends Model
     protected $table = "changelogs";
     
     protected $fillable = ['ts_jobkey', 'keyvalue', 'keyorigin', 'change_from', 'change_to', 'notes', 'resolved_status_id', 'issue_id', 'change_datetime', 'decision_datetime', 'approvalStatus', 'user_id'];
+
+    protected static function booted()
+    {
+        static::created(function (ProofingChangelog $changelog) {
+            if (empty($changelog->ts_jobkey)) {
+                return;
+            }
+
+            $statusService = app(StatusService::class);
+            $job = Job::query()
+                ->where('ts_jobkey', $changelog->ts_jobkey)
+                ->first(['ts_job_id', 'ts_jobkey', 'job_status_id']);
+
+            if (!$job || (int) $job->job_status_id !== (int) $statusService->active) {
+                return;
+            }
+
+            app(JobService::class)->updateJobStatus($job->ts_job_id, $statusService->modified);
+        });
+    }
 
     public function issue(){
         return $this->belongsTo('App\Models\ProofingIssue', 'issue_id', 'id');

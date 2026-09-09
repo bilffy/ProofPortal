@@ -26,15 +26,115 @@ function sendAjaxRequest(targetUrl, formData) {
         },
         timeout: 60000,
         success: function (response) {
-            // console.log('saved');
+            if (response && response.success === false && response.message) {
+                showProofingTimelineError(response.message, formData.get('dataType'));
+            } else if (formData.get('dataType') && formData.get('date')) {
+                markProofingTimelineDateSaved(formData.get('dataType'), formData.get('date'));
+            }
         },
-        error: function (e) {
-            // console.log('An error occurred:', e);
+        error: function (xhr) {
+            var message = xhr?.responseJSON?.message;
+            if (message) {
+                showProofingTimelineError(message, formData.get('dataType'));
+            }
         }
     });
 }
 
+function markProofingTimelineDateSaved(dataType, dateValue) {
+    var fieldMap = {
+        'proof_start': '#review_due_start_picker',
+        'proof_warning': '#review_due_warning_picker',
+        'proof_due': '#review_due_picker',
+        'proof_catchup': '#review_due_catchup_picker',
+    };
+    var selector = fieldMap[dataType];
+    if (!selector) {
+        return;
+    }
+    var el = document.querySelector(selector);
+    if (el && dateValue) {
+        el.setAttribute('data-last-saved', el.value || dateValue);
+        el.setAttribute('data-is-saved', '1');
+    }
+    if (dataType === 'proof_start') {
+        clearProofingStartDateError();
+    }
+}
+
+function parseProofingTimelineDate(value) {
+    if (!value) {
+        return null;
+    }
+    // Supports "d/m/Y h:i K" (picker) and "Y-m-d H:i:s" (API)
+    if (value.indexOf('/') !== -1) {
+        var parts = value.trim().split(/\s+/);
+        if (parts.length < 1) return null;
+        var dmy = parts[0].split('/');
+        if (dmy.length !== 3) return null;
+        var hours = 0;
+        var minutes = 0;
+        if (parts[1]) {
+            var hm = parts[1].split(':');
+            hours = parseInt(hm[0], 10) || 0;
+            minutes = parseInt(hm[1], 10) || 0;
+            var ampm = (parts[2] || '').toUpperCase();
+            if (ampm === 'PM' && hours !== 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
+        }
+        return new Date(parseInt(dmy[2], 10), parseInt(dmy[1], 10) - 1, parseInt(dmy[0], 10), hours, minutes, 0);
+    }
+    var parsed = new Date(value.replace(' ', 'T'));
+    return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getSavedProofingTimelineDate(selector) {
+    var el = document.querySelector(selector);
+    if (!el || el.getAttribute('data-is-saved') !== '1') {
+        return null;
+    }
+    return parseProofingTimelineDate(el.getAttribute('data-last-saved') || el.value);
+}
+
+function validateProofStartAgainstWarningAndDue(startDateStr) {
+    var startDate = parseProofingTimelineDate(startDateStr);
+    if (!startDate) {
+        return null;
+    }
+    var warningDate = getSavedProofingTimelineDate('#review_due_warning_picker');
+    var dueDate = getSavedProofingTimelineDate('#review_due_picker');
+    var warningBefore = warningDate && warningDate <= startDate;
+    var dueBefore = dueDate && dueDate <= startDate;
+    if (warningBefore || dueBefore) {
+        return 'Please reset the Warning Date and the Due Date as it should be after the Start Date';
+    }
+    return null;
+}
+
+function refreshProofStartValidationMessage() {
+    var startVal = $('#review_due_start_picker').val();
+    if (!startVal) {
+        clearProofingStartDateError();
+        return;
+    }
+    var startError = validateProofStartAgainstWarningAndDue(startVal);
+    if (startError) {
+        showProofingTimelineError(startError, 'proof_start');
+    } else {
+        clearProofingStartDateError();
+    }
+}
+
 function adjustReviewDates(dateObject, reviewDataType) {
+    if (reviewDataType === 'proof_start') {
+        var startError = validateProofStartAgainstWarningAndDue(dateObject);
+        if (startError) {
+            showProofingTimelineError(startError, reviewDataType);
+            return;
+        }
+        clearProofingStartDateError();
+    }
+
     var targetUrl = base_url + "/franchise/config-job/proofing-timeline/submit";
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var jobHash = document.querySelector('input[name="jobHash"]').value;
@@ -44,14 +144,6 @@ function adjustReviewDates(dateObject, reviewDataType) {
     formData.append("dataType", reviewDataType);
     formData.append("jobHash", jobHash);
     formData.append("date", dateObject);
-
-    // if (dateObject) {
-    //     formData.append("date", dateObject.format('YYYY-MM-DD HH:mm:ss'));
-    //     formData.append("dateArray", dateObject.format('YYYY,MM,DD,HH,mm,ss'));
-    // } else {
-    //     formData.append("date", null);
-    //     formData.append("dateArray", null);
-    // }
 
     $.ajax({
         type: "POST",
@@ -66,12 +158,113 @@ function adjustReviewDates(dateObject, reviewDataType) {
         },
         timeout: 60000,
         success: function (response) {
-            // console.log('saved');
+            if (response && response.success === false && response.message) {
+                showProofingTimelineError(response.message, reviewDataType);
+                return;
+            }
+            markProofingTimelineDateSaved(reviewDataType, dateObject);
+            if (reviewDataType === 'proof_start') {
+                clearProofingStartDateError();
+            }
+            // After Warning/Due are reset, clear Start Date error if timeline is valid again.
+            if (reviewDataType === 'proof_warning' || reviewDataType === 'proof_due') {
+                refreshProofStartValidationMessage();
+            }
         },
-        error: function (e) {
-            // console.log('An error occurred:', e);
+        error: function (xhr) {
+            var message = xhr?.responseJSON?.message
+                || 'Unable to save the proofing timeline date. Please try again.';
+            showProofingTimelineError(message, reviewDataType);
         }
     })
+}
+
+// When Start Date validation fails, onClose can run after a revert and wrongly clear the error.
+var proofStartValidationBlocked = false;
+
+function clearProofingStartDateError() {
+    proofStartValidationBlocked = false;
+    var $error = $('#review_due_start_error');
+    if ($error.length) {
+        $error.hide().text('');
+    }
+    $('#review_due_start_picker').removeClass('is-invalid border-danger');
+}
+
+function revertProofingStartDatePicker() {
+    var startInput = document.querySelector('#review_due_start_picker');
+    if (!startInput) {
+        return;
+    }
+    var startPicker = startInput._flatpickr;
+    var previous = startInput.getAttribute('data-last-saved');
+    var wasSaved = startInput.getAttribute('data-is-saved') === '1';
+
+    if (startPicker) {
+        // Close calendar so it does not cover the inline error message.
+        startPicker.close();
+    }
+
+    var applyRevert = function () {
+        if (!startInput) {
+            return;
+        }
+        startPicker = startInput._flatpickr;
+        if (wasSaved && previous) {
+            var prevDate = parseProofingTimelineDate(previous);
+            if (startPicker && prevDate && !isNaN(prevDate.getTime())) {
+                // Use a Date object — string setDate often fails (Carbon g:i A vs flatpickr h:i K).
+                startPicker.setDate(prevDate, false);
+            } else if (startPicker) {
+                startPicker.setDate(previous, false);
+            }
+            // Force visible value to last saved if flatpickr left the rejected selection.
+            if (startPicker && startPicker.selectedDates[0]) {
+                startInput.value = startPicker.formatDate(
+                    startPicker.selectedDates[0],
+                    startPicker.config.dateFormat
+                );
+            } else {
+                startInput.value = previous;
+            }
+        } else if (startPicker) {
+            startPicker.clear(false);
+            startInput.value = '';
+        } else {
+            startInput.value = '';
+        }
+        if (startPicker) {
+            startPicker.close();
+        }
+    };
+
+    // Flatpickr re-applies the newly selected date after onChange/onClose; revert on next tick.
+    applyRevert();
+    setTimeout(applyRevert, 0);
+}
+
+function showProofingTimelineError(message, reviewDataType) {
+    // Start Date validation: inline red message under the field (no alert/toast).
+    // Revert the picker to the last saved value so users don't think the new date was saved.
+    if (reviewDataType === 'proof_start') {
+        proofStartValidationBlocked = true;
+        var $error = $('#review_due_start_error');
+        if ($error.length) {
+            $error.text(message).css({
+                display: 'block',
+                color: '#dc3545',
+                marginTop: '8px',
+                marginBottom: '4px'
+            });
+        }
+        $('#review_due_start_picker').addClass('is-invalid border-danger');
+        revertProofingStartDatePicker();
+        return;
+    }
+
+    window.dispatchEvent(new CustomEvent('show-toast-message', {
+        detail: { status: 'error', message: message }
+    }));
 }
 
 /*
@@ -188,6 +381,134 @@ $(document).ready(function () {
 
 //Group Image Upload
 $(document).ready(function () {
+
+    (function initLazyGroupImages() {
+        var maxConcurrent = 5;
+        var inFlight = 0;
+        var queue = [];
+        var placeholder = window.groupImagePlaceholder || '';
+
+        function loadNext() {
+            while (inFlight < maxConcurrent && queue.length > 0) {
+                var img = queue.shift();
+                var url = img.getAttribute('data-src');
+                if (!url) {
+                    continue;
+                }
+
+                inFlight++;
+                var loader = new Image();
+                loader.onload = loader.onerror = function () {
+                    if (loader.src) {
+                        img.src = loader.src;
+                    }
+                    img.dataset.lazyLoaded = '1';
+                    inFlight--;
+                    loadNext();
+                };
+                loader.src = url;
+            }
+        }
+
+        function enqueue(img) {
+            if (!img || img.dataset.lazyLoaded === '1' || !img.getAttribute('data-src')) {
+                return;
+            }
+            if (img.dataset.lazyLoaded === 'queued') {
+                return;
+            }
+            img.dataset.lazyLoaded = 'queued';
+            queue.push(img);
+            loadNext();
+        }
+
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        enqueue(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '250px 0px' });
+
+            document.querySelectorAll('img.lazy-group-image[data-src]').forEach(function (img) {
+                observer.observe(img);
+            });
+        } else {
+            document.querySelectorAll('img.lazy-group-image[data-src]').forEach(enqueue);
+        }
+
+        window.queueLazyGroupImage = function (img) {
+            if (!img) {
+                return;
+            }
+            if (placeholder) {
+                img.src = placeholder;
+            }
+            delete img.dataset.lazyLoaded;
+            enqueue(img);
+        };
+    })();
+
+    (function warmGroupThumbsInBackground() {
+        var pending = (window.groupImageFolderKeys || []).slice();
+        var warmUrl = window.groupImageWarmUrl;
+        if (!pending.length || !warmUrl) {
+            return;
+        }
+
+        var batchSize = 4;
+        var csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        function refreshVisibleThumbs(folderKeys) {
+            (folderKeys || []).forEach(function (folderKey) {
+                var img = document.getElementById(folderKey + '-image');
+                if (img && img.getAttribute('data-src') && typeof window.queueLazyGroupImage === 'function') {
+                    window.queueLazyGroupImage(img);
+                }
+            });
+        }
+
+        function processBatch() {
+            if (!pending.length) {
+                return;
+            }
+
+            var batch = pending.splice(0, batchSize);
+            $.ajax({
+                url: warmUrl,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ folder_keys: batch }),
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function (data) {
+                    var warmed = (data && data.warmed) ? data.warmed : [];
+                    var skipped = (data && data.skipped) ? data.skipped : [];
+                    refreshVisibleThumbs(warmed.concat(skipped));
+                },
+                complete: function () {
+                    if (pending.length) {
+                        setTimeout(processBatch, 150);
+                    }
+                }
+            });
+        }
+
+        var start = function () {
+            setTimeout(processBatch, 1500);
+        };
+
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(start, { timeout: 5000 });
+        } else {
+            start();
+        }
+    })();
 
     var Upload = function (file, folder_key, folder_name) {
         this.file = file;
@@ -364,9 +685,20 @@ $(document).ready(function () {
             $("#" + this.folder_key + "-error").removeClass('d-none').text(errMsg);
         }
 
-        if (data.full_url) {
+        if (data.full_url || data.thumb_url) {
             $("#" + this.folder_key + "-bar").addClass('d-none');
-            $("#" + this.folder_key + "-image").attr('src', data.full_url);
+            var $image = $("#" + this.folder_key + "-image");
+            if (data.thumb_url) {
+                $image.attr('data-src', data.thumb_url);
+            }
+            if (data.full_url) {
+                $image.attr('data-modal-src', data.full_url);
+            }
+            if (typeof window.queueLazyGroupImage === 'function') {
+                window.queueLazyGroupImage($image.get(0));
+            } else if (data.thumb_url || data.full_url) {
+                $image.attr('src', data.thumb_url || data.full_url);
+            }
             $("#" + this.folder_key + "-delete").removeClass("d-none").addClass('d-block');
             $("#" + this.folder_key + "-error").addClass('d-none').text('');
         }
@@ -448,17 +780,62 @@ $(document).ready(function () {
         var file = $(this)[0].files["0"];
         var folder_key = $(this).attr('id');
         var folder_name = $(this).attr('name');
+        if (!file) {
+            return;
+        }
+        startGroupImageUpload(file, folder_key, folder_name);
+    });
+
+    function startGroupImageUpload(file, folder_key, folder_name) {
+        if (!file) {
+            return;
+        }
+
+        var allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (file.type && allowedTypes.indexOf(file.type) === -1) {
+            $("#" + folder_key + "-error").removeClass('d-none').text('Please drop a JPG or PNG image.');
+            return;
+        }
+
         var upload = new Upload(file, folder_key, folder_name);
 
         $("#" + folder_key + "-bar").removeClass('d-none');
-        $(this.progress_bar_id + " div.progress-bar").css({ width: 0 + '%' }).attr('aria-valuenow', 0);
-        $(this.progress_bar_id + " div.progress-bar").text("0%");
+        $(upload.progress_bar_id + " div.progress-bar").css({ width: 0 + '%' }).attr('aria-valuenow', 0);
+        $(upload.progress_bar_id + " div.progress-bar").text("0%");
         $("#" + folder_key + "-error").addClass('d-none');
 
-        // maybe check size or type here with upload.getSize() and upload.getType()
-
-        // execute upload
         upload.doUpload();
+    }
+
+    $(document).on('dragenter dragover', '.group-image-dropzone', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if ($(this).closest('.traditional-photo-upload').css('pointer-events') === 'none') {
+            return;
+        }
+        $(this).addClass('is-dragover');
+    });
+
+    $(document).on('dragleave drop', '.group-image-dropzone', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('is-dragover');
+    });
+
+    $(document).on('drop', '.group-image-dropzone', function (e) {
+        if ($(this).closest('.traditional-photo-upload').css('pointer-events') === 'none') {
+            return;
+        }
+
+        var dt = e.originalEvent && e.originalEvent.dataTransfer;
+        var files = dt && dt.files ? dt.files : null;
+        if (!files || !files.length) {
+            return;
+        }
+
+        var folder_key = $(this).data('folder-key');
+        var folder_name = $(this).data('folder-name');
+        startGroupImageUpload(files[0], folder_key, folder_name);
     });
 
 });

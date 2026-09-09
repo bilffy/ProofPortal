@@ -2,6 +2,7 @@
 
 namespace App\Services\Proofing;
 use App\Models\Folder;
+use App\Models\Job;
 use App\Services\Proofing\StatusService;
 use App\Services\Proofing\SubjectService;
 use App\Services\Proofing\ProofingDescriptionService;
@@ -66,6 +67,19 @@ class FolderService
 
     public function getAllFolderAssociationByKey($folderkey){
         return Folder::with(['subjects.images', 'attachedsubjects', 'proofingChangelogs'])->where('ts_folderkey', $folderkey);
+    }
+
+    public function getAllFolderAssociationsByKeys(array $folderKeys)
+    {
+        $folderKeys = array_values(array_filter($folderKeys));
+        if ($folderKeys === []) {
+            return collect();
+        }
+
+        return Folder::with(['subjects.images', 'attachedsubjects', 'proofingChangelogs'])
+            ->whereIn('ts_folderkey', $folderKeys)
+            ->get()
+            ->groupBy('ts_folderkey');
     }
 
     public function getFolderById($id,...$selectedValues){
@@ -450,8 +464,10 @@ class FolderService
             ->unique()
             ->values();
 
+        $jobsByKey = Job::whereIn('ts_jobkey', $jobKeys)->get()->keyBy('ts_jobkey');
+
         foreach ($jobKeys as $jobKey) {
-            $job = $this->getJobService()->getJobByJobKey($jobKey)->first();
+            $job = $jobsByKey->get($jobKey);
             if (
                 $job
                 && !empty($job->ts_jobkey)

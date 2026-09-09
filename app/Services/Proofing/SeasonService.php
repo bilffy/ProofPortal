@@ -25,6 +25,18 @@ class SeasonService
             ->where('show_in_proofing', 1);
     }
 
+    /**
+     * Unique seasons shown in portal and/or proofing (OR of both flags).
+     */
+    public function getAllSeasonDataForPortalAndProofing(...$selectedValues)
+    {
+        return Season::select($selectedValues)
+            ->where(function ($query) {
+                $query->where('show_in_portal', 1)
+                    ->orWhere('show_in_proofing', 1);
+            });
+    }
+
     public function getSeasonByTimestoneSeasonId($seasonId){
         return Season::where('ts_season_id', $seasonId);
     }

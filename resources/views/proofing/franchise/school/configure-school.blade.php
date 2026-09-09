@@ -411,10 +411,6 @@
 
 @section('js')
 
-    <script>
-        jQuery.noConflict();
-    </script>
-
     <script src="{{ URL::asset('proofing-assets/vendors/moment/moment.js') }}"></script>
     <script src="{{ URL::asset('proofing-assets/vendors/js/flatpickr.js') }}"></script>
     <script src="{{ URL::asset('proofing-assets/vendors/bootstrap-multiselect-0.9.15/dist/js/bootstrap-multiselect.js') }}"></script>

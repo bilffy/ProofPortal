@@ -35,4 +35,14 @@ class Email extends Model
         'status_id', 
         'deleted_at'
     ];
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class, 'status_id');
+    }
+
+    public function template()
+    {
+        return $this->belongsTo(Template::class, 'template_id');
+    }
 }

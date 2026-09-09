@@ -192,22 +192,27 @@ class PhotographyController extends Controller
         } else {
             $folders = Folder::whereIn('ts_folderkey', $class)->where('is_deleted', 0)->get();
             if ($tsAccountId !== null) {
-                $folders = $folders->filter(function ($folder) use ($tsAccountId, $schoolId) {
-                    $job = Job::where('ts_job_id', $folder->ts_job_id)->first();
+                $jobsById = Job::whereIn('ts_job_id', $folders->pluck('ts_job_id')->unique()->filter())
+                    ->get()
+                    ->keyBy('ts_job_id');
+                $folders = $folders->filter(function ($folder) use ($tsAccountId, $schoolId, $jobsById) {
+                    $job = $jobsById->get($folder->ts_job_id);
                     return $job
                         && $job->ts_account_id == $tsAccountId
                         && ($schoolId === null || (int) $job->school_id === (int) $schoolId);
                 })->values();
             }
         }
+
+        $jobsById = Job::whereIn('ts_job_id', collect($folders)->pluck('ts_job_id')->unique()->filter())
+            ->get()
+            ->keyBy('ts_job_id');
         
         foreach ($folders as $folder) {
             $selectedFilters['class']['folderkey'][] = $folder->ts_folderkey;
-            // query the jobs table to get the jobkey based on the ts_job_id
-            $job = Job::where('ts_job_id', $folder->ts_job_id)->first();
+            $job = $jobsById->get($folder->ts_job_id);
             
             if ($job) {
-                // add the jobkey to the selectedFilters array if does not exist
                 if (!in_array($job->ts_jobkey, $selectedFilters['jobkey'])) {
                     $selectedFilters['jobkey'][] = $job->ts_jobkey;
                 }
@@ -321,6 +326,22 @@ class PhotographyController extends Controller
             'filename_format' => $request->input('filenameFormat'),
         ]);
 
+        $imagesByKey = collect();
+        $jobsById = collect();
+        if (!empty($keys)) {
+            $imagesByKey = Image::query()
+                ->whereIn('keyvalue', $keys)
+                ->orderBy('is_primary', 'desc')
+                ->orderBy('id', 'asc')
+                ->get()
+                ->groupBy('keyvalue')
+                ->map(fn ($group) => $group->first());
+
+            $jobsById = Job::whereIn('ts_job_id', $imagesByKey->pluck('ts_job_id')->unique()->filter())
+                ->get()
+                ->keyBy('ts_job_id');
+        }
+
         foreach ($images as $image) {
 
             // remove the img_ prefix, then decode the base64 encoded image
@@ -328,21 +349,11 @@ class PhotographyController extends Controller
             
             // Add to logged image keys
             $logImgKeys[] = $key;
-            // Query the Image model to get the image data
 
-            //CODE BY CHROMEDIA
-            // $image = Image::where('keyvalue', $key)->first();
-            //CODE BY CHROMEDIA
-
-            //CODE BY IT
-            $image = Image::where('keyvalue', $key)
-                ->orderBy('is_primary', 'desc') // Put primary (1) before non-primary (0) 📈
-                ->orderBy('id', 'asc')          // Fallback: get the oldest image if no primary is set 🕰️
-                ->first();
-            //CODE BY IT
+            $image = $imagesByKey->get($key);
             
             if ($image) {
-                $job = Job::where('ts_job_id', $image->ts_job_id)->first();
+                $job = $jobsById->get($image->ts_job_id);
                 if ($job) {
                     DownloadDetail::create([
                         'download_id' => $downloadRequest->id,

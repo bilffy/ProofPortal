@@ -25,6 +25,11 @@ use App\Models\Folder;
 
 class ImageController extends Controller
 {
+    private const GROUP_IMAGE_MIN_BYTES = 256;
+    private const GROUP_IMAGE_MIN_DIMENSION = 20;
+    private const GROUP_IMAGE_MIN_JPEG_BYTES = 512;
+    private const GROUP_IMAGE_THUMB_MAX_WIDTH = 200;
+
     protected $jobService;
     protected $imageService;
     protected $seasonService;
@@ -49,36 +54,35 @@ class ImageController extends Controller
 
             $folderKey = pathinfo($artifactImage, PATHINFO_FILENAME);
 
-            // Fetch and resolve image location + version metadata (Cached 10 mins)
-            $metaData = Cache::remember("zoom_meta_v2_{$folderKey}", 600, function () use ($folderKey) {
-                $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
-                if ($folder && $folder->job) {
-                    $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
-                    if (!$image) return null;
-                    
-                    return [
+            // Always resolve from DB (do not cache meta): re-uploads keep the same filename/path,
+            // so a stale meta/version would keep serving the previous image binary.
+            $metaData = null;
+            $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+            if ($folder && $folder->job) {
+                $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
+                if ($image) {
+                    $metaData = [
                         'path' => "{$folder->job->seasons->code}/{$folder->job->ts_schoolkey}/{$folder->job->ts_jobkey}/folders/{$image->image_path}{$this->normalizeImageFilename($image->name)}",
-                        'version' => $image->updated_at ? strtotime($image->updated_at) : 'v1'
+                        'version' => $image->updated_at ? strtotime($image->updated_at) : 'v1',
                     ];
                 }
-                return null;
-            });
+            }
 
             if (!$metaData) {
                 return response()->json(['error' => 'Image metadata not found'], 404);
             }
 
             // Layer 1: Serve final processed image variant
-            $processedKey = "zoom_out_{$folderKey}_{$metaData['version']}_{$w}_{$h}_{$xPercent}_{$yPercent}_{$a}";
+            $processedKey = "zoom_out_v3_{$folderKey}_{$metaData['version']}_{$w}_{$h}_{$xPercent}_{$yPercent}_{$a}";
             if ($cached = Cache::store('file')->get($processedKey)) {
                 return new Response($cached, 200, [
                     'Content-Type'  => 'image/jpeg',
-                    'Cache-Control' => 'public, max-age=3600',
+                    'Cache-Control' => 'private, max-age=60',
                 ]);
             }
 
             // Layer 2: Fetch raw binary (tied explicitly to structural cache token version)
-            $binaryKey = "zoom_bin_{$folderKey}_{$metaData['version']}";
+            $binaryKey = "zoom_bin_v3_{$folderKey}_{$metaData['version']}";
             $imageContent = Cache::store('file')->remember($binaryKey, 600, function () use ($metaData) {
                 $path = $this->normalizeCacheImageUrl($metaData['path']);
                 $response = Http::timeout(15)->withoutVerifying()->get(rtrim(config('services.exportImageLocation'), '/') . '/' . ltrim($path, '/'));
@@ -121,7 +125,7 @@ class ImageController extends Controller
 
             return new Response($encoded, 200, [
                 'Content-Type'  => 'image/jpeg',
-                'Cache-Control' => 'public, max-age=3600',
+                'Cache-Control' => 'private, max-age=60',
             ]);
 
         } catch (\Exception $e) {
@@ -145,22 +149,35 @@ class ImageController extends Controller
                 return $this->serveFallback();
             }
 
-            // High-Performance Optimization: Unified query execution paths with relational eager loads
-            $folderContext = Folder::with(['job.seasons'])
-                ->whereHas('job', function($query) use ($deCryptjobKey) {
-                    $query->where('ts_jobkey', $deCryptjobKey);
-                })->first();
-
-            if (!$folderContext || !$folderContext->job || !$folderContext->job->seasons) {
-                return $this->serveFallback();
-            }
-
             $image = $this->imageService->getImagesBySubjectKey($deCryptfilename)->first();
             if (!$image) {
+                Log::warning('serveImage: subject image not found', [
+                    'subjectKey' => $deCryptfilename,
+                    'jobKey' => $deCryptjobKey,
+                ]);
                 return $this->serveFallback();
             }
 
-            $job = $folderContext->job;
+            $job = $image->jobs()->with('seasons')->first();
+            if (!$job || (string) $job->ts_jobkey !== (string) $deCryptjobKey || !$job->seasons) {
+                // Fallback: resolve season/school from any folder on the requested job
+                $folderContext = Folder::with(['job.seasons'])
+                    ->whereHas('job', function ($query) use ($deCryptjobKey) {
+                        $query->where('ts_jobkey', $deCryptjobKey);
+                    })->first();
+
+                if (!$folderContext || !$folderContext->job || !$folderContext->job->seasons) {
+                    Log::warning('serveImage: job/season context not found', [
+                        'subjectKey' => $deCryptfilename,
+                        'jobKey' => $deCryptjobKey,
+                        'imageJobId' => $image->ts_job_id,
+                    ]);
+                    return $this->serveFallback();
+                }
+
+                $job = $folderContext->job;
+            }
+
             $fileName = $this->normalizeImageFilename($image->name);
             if ($fileName === '') {
                 return $this->serveFallback();
@@ -174,6 +191,12 @@ class ImageController extends Controller
                     ->header('Content-Type', $response->header('Content-Type', 'image/jpeg'))
                     ->header('Cache-Control', 'public, max-age=86400');
             }
+
+            Log::warning('serveImage: remote image fetch failed', [
+                'subjectKey' => $deCryptfilename,
+                'status' => $response->status(),
+                'url' => $imageUrl,
+            ]);
 
             return $this->serveFallback();
 
@@ -229,91 +252,326 @@ class ImageController extends Controller
         ]);
     }
 
-    public function showgroupImage($filename)
+    public function showgroupImage(Request $request, $filename)
     {
-        $img = null;
-        $watermark = null;
+        $variant = $request->query('variant') === 'thumb' ? 'thumb' : 'full';
+
         try {
             $deCryptfilename = Crypt::decryptString($filename);
             $folderKey = pathinfo($deCryptfilename, PATHINFO_FILENAME);
+            $imageRecord = $this->imageService->getImagesByFolderKey($folderKey)->first();
 
-            // Layer 1: serve fully watermarked image from cache (24h)
-            $outputKey = "group_img_out_{$folderKey}";
-            if ($cached = Cache::store('file')->get($outputKey)) {
-                return response($cached, Response::HTTP_OK)
-                    ->header('Content-Type', 'image/jpeg')
-                    ->header('Cache-Control', 'public, max-age=86400');
-            }
-
-            $imageContent = null;
-            $contentType = 'image/jpeg';
-
-            // Layer 2: resolve and cache the remote URL metadata (5 min)
-            $metaKey = "group_img_meta_{$folderKey}";
-            $imageUrl = Cache::remember($metaKey, 300, function () use ($folderKey) {
-                $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
-                if ($folder && $folder->job) {
-                    $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
-                    if ($image) {
-                        $job = $folder->job;
-                        $fileName = $this->normalizeImageFilename($image->name);
-                        return rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$image->image_path}{$fileName}";
-                    }
-                }
-                return null;
-            });
-
-            // Cache may still hold an older URL with .JPG — always lowercase the extension.
-            if ($imageUrl) {
-                $imageUrl = $this->normalizeCacheImageUrl($imageUrl);
-            }
-
-            if ($imageUrl) {
-                $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
-                if ($response->successful()) {
-                    $imageContent = $response->body();
-                    $contentType = $response->header('Content-Type', 'image/jpeg');
-                } else {
-                    Log::warning("Cache server returned {$response->status()} for group image: {$imageUrl}");
+            if ($variant === 'thumb') {
+                $diskThumb = $this->readGroupImageThumb($folderKey);
+                if ($diskThumb !== null && $this->isValidCachedGroupJpeg($diskThumb)) {
+                    return $this->groupImageResponse($diskThumb);
                 }
             }
 
-            if (!$imageContent) {
-                $path = 'groupImages/' . $deCryptfilename;
-                if (Storage::disk('public')->exists($path)) {
-                    $imageContent = Storage::disk('public')->get($path);
-                    $contentType = Storage::disk('public')->mimeType($path);
+            $outputKey = $this->groupImageOutputCacheKey($folderKey, $imageRecord, $variant);
+
+            $legacyKey = $variant === 'full' ? "group_img_out_{$folderKey}" : null;
+            $cached = Cache::store('file')->get($outputKey);
+            if ($cached === null && $legacyKey !== null) {
+                $cached = Cache::store('file')->get($legacyKey);
+            }
+
+            if ($this->isValidCachedGroupJpeg($cached)) {
+                if ($variant === 'thumb') {
+                    $this->storeGroupImageThumb($folderKey, $cached);
+                }
+
+                return $this->groupImageResponse($cached);
+            }
+
+            if ($cached !== null) {
+                Cache::store('file')->forget($outputKey);
+                if ($legacyKey !== null) {
+                    Cache::store('file')->forget($legacyKey);
                 }
             }
 
-            if ($imageContent) {
-                $img = Image::make($imageContent);
-                $watermarkUrl = public_path('proofing-assets/img/msp_w_ios.png');
+            // Thumbs only need one output file; skip caching multi-MB source bytes.
+            $cacheSource = $variant === 'full';
+            $imageContent = $this->resolveGroupImageSourceBytes($folderKey, $imageRecord, $cacheSource);
+            if ($imageContent === null) {
+                return $this->serveFallback();
+            }
 
-                if (file_exists($watermarkUrl)) {
-                    $watermark = Image::make($watermarkUrl);
-                    $watermark->resize($img->width(), $img->height());
-                    $img->insert($watermark, 'top-left', 0, 0);
-                }
+            $encoded = $this->buildWatermarkedGroupJpeg($imageContent, $variant);
+            $sourceByteLength = $variant === 'full' ? strlen($imageContent) : 0;
+            if (!$this->isValidCachedGroupJpeg($encoded, $sourceByteLength)) {
+                Log::warning('Rejected invalid group image output; not caching', [
+                    'folderKey' => $folderKey,
+                    'variant' => $variant,
+                    'sourceBytes' => strlen($imageContent),
+                    'outputBytes' => strlen($encoded),
+                ]);
 
-                $encoded = (string) $img->encode('jpg', 85);
+                return $this->serveFallback();
+            }
+
+            if ($variant === 'thumb') {
+                $this->storeGroupImageThumb($folderKey, $encoded);
+            } else {
                 Cache::store('file')->put($outputKey, $encoded, 86400);
-
-                return response($encoded, Response::HTTP_OK)
-                    ->header('Content-Type', $contentType)
-                    ->header('Cache-Control', 'public, max-age=86400');
             }
 
+            return $this->groupImageResponse($encoded);
         } catch (\Exception $e) {
             Log::error('Error showing group image: ' . $e->getMessage(), [
-                'folderKey' => $folderKey ?? null,
+                'variant' => $variant ?? 'full',
             ]);
-        } finally {
-            if ($img instanceof \Intervention\Image\Image) $img->destroy();
-            if ($watermark instanceof \Intervention\Image\Image) $watermark->destroy();
         }
 
         return $this->serveFallback();
+    }
+
+    /**
+     * Pre-generate table thumbnails in the background (config-job page).
+     */
+    public function warmGroupImageThumbs(Request $request)
+    {
+        $folderKeys = $request->input('folder_keys', []);
+        if (!is_array($folderKeys)) {
+            return response()->json(['message' => 'Invalid folder list.'], 422);
+        }
+
+        $folderKeys = array_values(array_unique(array_filter(array_map(
+            fn ($key) => is_string($key) ? trim($key) : '',
+            $folderKeys
+        ))));
+        $folderKeys = array_slice($folderKeys, 0, 6);
+
+        $warmed = [];
+        $skipped = [];
+        $failed = [];
+
+        foreach ($folderKeys as $folderKey) {
+            $existing = $this->readGroupImageThumb($folderKey);
+            if ($existing !== null && $this->isValidCachedGroupJpeg($existing)) {
+                $skipped[] = $folderKey;
+                continue;
+            }
+
+            try {
+                $imageRecord = $this->imageService->getImagesByFolderKey($folderKey)->first();
+                if (!$imageRecord) {
+                    $failed[] = $folderKey;
+                    continue;
+                }
+
+                $imageContent = $this->resolveGroupImageSourceBytes($folderKey, $imageRecord, false);
+                if ($imageContent === null) {
+                    $failed[] = $folderKey;
+                    continue;
+                }
+
+                $encoded = $this->buildWatermarkedGroupJpeg($imageContent, 'thumb');
+                if (!$this->isValidCachedGroupJpeg($encoded)) {
+                    $failed[] = $folderKey;
+                    continue;
+                }
+
+                $this->storeGroupImageThumb($folderKey, $encoded);
+                $warmed[] = $folderKey;
+            } catch (\Throwable $e) {
+                Log::warning('Group image thumb warm failed', [
+                    'folderKey' => $folderKey,
+                    'error' => $e->getMessage(),
+                ]);
+                $failed[] = $folderKey;
+            }
+        }
+
+        return response()->json([
+            'warmed' => $warmed,
+            'skipped' => $skipped,
+            'failed' => $failed,
+        ]);
+    }
+
+    private function groupImageResponse(string $jpeg)
+    {
+        return response($jpeg, Response::HTTP_OK)
+            ->header('Content-Type', 'image/jpeg')
+            ->header('Cache-Control', 'public, max-age=3600');
+    }
+
+    private function resolveGroupImageSourceBytes(string $folderKey, $imageRecord, bool $persistSourceCache = true): ?string
+    {
+        $sourceKey = $this->groupImageSourceCacheKey($folderKey, $imageRecord);
+        if ($persistSourceCache) {
+            $cachedSource = Cache::store('file')->get($sourceKey);
+            if ($this->isValidGroupImageSource($cachedSource)) {
+                return $cachedSource;
+            }
+
+            if ($cachedSource !== null) {
+                Cache::store('file')->forget($sourceKey);
+            }
+        }
+
+        $deCryptfilename = $imageRecord?->name;
+        $imageContent = null;
+
+        $metaKey = "group_img_meta_{$folderKey}";
+        $imageUrl = Cache::remember($metaKey, 300, function () use ($folderKey) {
+            $folder = Folder::with(['job.seasons'])->where('ts_folderkey', $folderKey)->first();
+            if ($folder && $folder->job) {
+                $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
+                if ($image) {
+                    $job = $folder->job;
+                    $fileName = $this->normalizeImageFilename($image->name);
+
+                    return rtrim(config('services.exportImageLocation'), '/') . "/{$job->seasons->code}/{$job->ts_schoolkey}/{$job->ts_jobkey}/folders/{$image->image_path}{$fileName}";
+                }
+            }
+
+            return null;
+        });
+
+        if ($imageUrl) {
+            $imageUrl = $this->normalizeCacheImageUrl($imageUrl);
+            $response = Http::timeout(15)->withoutVerifying()->get($imageUrl);
+            if ($response->successful()) {
+                $imageContent = $response->body();
+            } else {
+                Log::warning("Cache server returned {$response->status()} for group image: {$imageUrl}");
+            }
+        }
+
+        if (!$imageContent && $deCryptfilename) {
+            $path = 'groupImages/' . $deCryptfilename;
+            if (Storage::disk('public')->exists($path)) {
+                $imageContent = Storage::disk('public')->get($path);
+            }
+        }
+
+        if (!$imageContent || !$this->isValidGroupImageSource($imageContent)) {
+            if ($imageContent) {
+                Log::warning('Rejected invalid group image source', ['folderKey' => $folderKey]);
+            }
+
+            return null;
+        }
+
+        if ($persistSourceCache) {
+            Cache::store('file')->put($sourceKey, $imageContent, 86400);
+        }
+
+        return $imageContent;
+    }
+
+    private function cleanupBulkUploadSession(string $sessionPath): void
+    {
+        $disk = Storage::disk('public');
+        if (!$disk->exists($sessionPath)) {
+            return;
+        }
+
+        foreach ($disk->files($sessionPath) as $file) {
+            try {
+                if ($disk->exists($file)) {
+                    $disk->delete($file);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Bulk upload temp file cleanup skipped', [
+                    'path' => $file,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $absolute = $disk->path($sessionPath);
+        if (!is_dir($absolute)) {
+            return;
+        }
+
+        $entries = @scandir($absolute);
+        if ($entries === false) {
+            return;
+        }
+
+        $remaining = array_diff($entries, ['.', '..']);
+        if ($remaining !== []) {
+            return;
+        }
+
+        if (!@rmdir($absolute)) {
+            Log::warning('Bulk upload session directory could not be removed', [
+                'path' => $sessionPath,
+            ]);
+        }
+    }
+
+    private function groupImageThumbRelativePath(string $folderKey): string
+    {
+        $safeKey = preg_replace('/[^a-zA-Z0-9._-]/', '_', $folderKey) ?: 'unknown';
+
+        return "groupImageThumbs/{$safeKey}.jpg";
+    }
+
+    private function readGroupImageThumb(string $folderKey): ?string
+    {
+        $path = $this->groupImageThumbRelativePath($folderKey);
+        if (!Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        $bytes = Storage::disk('public')->get($path);
+
+        return is_string($bytes) && $bytes !== '' ? $bytes : null;
+    }
+
+    private function storeGroupImageThumb(string $folderKey, string $jpeg): void
+    {
+        if (!$this->isValidCachedGroupJpeg($jpeg)) {
+            return;
+        }
+
+        Storage::disk('public')->put($this->groupImageThumbRelativePath($folderKey), $jpeg);
+    }
+
+    private function deleteGroupImageThumb(string $folderKey): void
+    {
+        $path = $this->groupImageThumbRelativePath($folderKey);
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function buildWatermarkedGroupJpeg(string $imageContent, string $variant): string
+    {
+        $img = null;
+        $watermark = null;
+
+        try {
+            $img = Image::make($imageContent);
+
+            if ($variant === 'thumb') {
+                $img->resize(self::GROUP_IMAGE_THUMB_MAX_WIDTH, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+            }
+
+            $watermarkUrl = public_path('proofing-assets/img/msp_w_ios.png');
+            if (file_exists($watermarkUrl)) {
+                $watermark = Image::make($watermarkUrl);
+                $watermark->resize($img->width(), $img->height());
+                $img->insert($watermark, 'top-left', 0, 0);
+            }
+
+            return (string) $img->encode('jpg', $variant === 'thumb' ? 80 : 85);
+        } finally {
+            if ($img instanceof \Intervention\Image\Image) {
+                $img->destroy();
+            }
+            if ($watermark instanceof \Intervention\Image\Image) {
+                $watermark->destroy();
+            }
+        }
     }
 
     public function groupImageUpload(Request $request)
@@ -359,9 +617,7 @@ class ImageController extends Controller
         Session::pull('upload_session'); 
         $uploadSession = $request->input('upload_session');
     
-        if (Storage::disk('public')->exists($uploadSession)) {
-            Storage::disk('public')->deleteDirectory($uploadSession);
-        }
+        $this->cleanupBulkUploadSession($uploadSession);
     
         return response()->json(['status' => true]); 
     }
@@ -418,6 +674,25 @@ class ImageController extends Controller
                     $fileName = "{$folderKey}.{$extension}";
 
                     if (Storage::disk('public')->exists($artifact)) {
+                        $localPath = Storage::disk('public')->path($artifact);
+                        $localBytes = @file_get_contents($localPath);
+                        if ($localBytes === false) {
+                            Log::error("Unable to read group image for validation: {$artifact}");
+                            continue;
+                        }
+
+                        try {
+                            $this->validateGroupImageBytes($localBytes);
+                        } catch (\InvalidArgumentException $e) {
+                            Log::warning('Rejected bulk group image upload', [
+                                'artifact' => $artifact,
+                                'folderKey' => $folderKey,
+                                'error' => $e->getMessage(),
+                            ]);
+                            Storage::disk('public')->delete($artifact);
+                            continue;
+                        }
+
                         // Stream each file — do not load all image bodies into memory at once
                         $stream = Storage::disk('public')->readStream($artifact);
                         if ($stream === false) {
@@ -427,11 +702,15 @@ class ImageController extends Controller
 
                         try {
                             $uploader->upload($stream, $remotePath, $fileName);
+
+                            if (!$this->verifyRemoteGroupImage($remotePath)) {
+                                Log::error("Remote verification failed for bulk group image: {$remotePath}");
+                                continue;
+                            }
+
+                            $this->clearGroupImageCaches($folderKey);
                             $this->imageService->createGroupImage($folderKey, $path, $fileName);
-                            
-                            Cache::forget("zoom_meta_v2_{$folderKey}");
-                            Cache::forget("group_img_meta_{$folderKey}");
-                            Cache::store('file')->forget("group_img_out_{$folderKey}");
+                            $this->clearGroupImageCaches($folderKey);
                         } finally {
                             if (is_resource($stream)) {
                                 fclose($stream);
@@ -451,9 +730,7 @@ class ImageController extends Controller
             }
         }
         
-        if (Storage::disk('public')->exists($folderPath)) {
-            Storage::disk('public')->deleteDirectory($folderPath);
-        }
+        $this->cleanupBulkUploadSession($folderPath);
     
         if ($request->has('jobHash')) {
             return redirect()->to(URL::signedRoute('proofing.dashboard', ['hash' => $request->input('jobHash')]));
@@ -512,6 +789,17 @@ class ImageController extends Controller
             $fileName = "{$folderKey}.{$extension}";
             $remotePath = "{$seasonCode}/{$schoolKey}/{$jobKey}/folders/{$p3}/{$p1}/{$p2}/{$fileName}";
 
+            $uploadBytes = @file_get_contents($file->getRealPath());
+            if ($uploadBytes === false) {
+                return response()->json(['message' => 'Unable to read the uploaded file.'], 500);
+            }
+
+            try {
+                $this->validateGroupImageBytes($uploadBytes);
+            } catch (\InvalidArgumentException $e) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+
             $uploader = new ImageUploader();
 
             $stream = fopen($file->getRealPath(), 'r');
@@ -527,17 +815,23 @@ class ImageController extends Controller
                 }
             }
 
-            $this->imageService->createGroupImage($folderKey, $path, $fileName);
+            if (!$this->verifyRemoteGroupImage($remotePath)) {
+                return response()->json([
+                    'message' => 'Upload could not be verified. Please try again.',
+                ], 502);
+            }
 
-            Cache::forget("zoom_meta_v2_{$folderKey}");
-            Cache::forget("group_img_meta_{$folderKey}");
-            Cache::store('file')->forget("group_img_out_{$folderKey}");
+            $this->clearGroupImageCaches($folderKey);
+            $this->imageService->createGroupImage($folderKey, $path, $fileName);
+            $this->clearGroupImageCaches($folderKey);
+            $this->storeGroupImageThumb($folderKey, $this->buildWatermarkedGroupJpeg($uploadBytes, 'thumb'));
 
             $encryptedFilename = Crypt::encryptString($fileName);
 
             return response()->json([
                 'message' => 'Image uploaded successfully',
                 'full_url' => route('image.show', ['filename' => $encryptedFilename]),
+                'thumb_url' => route('image.show', ['filename' => $encryptedFilename, 'variant' => 'thumb']),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
@@ -641,9 +935,7 @@ class ImageController extends Controller
 
         $fileName = $this->imageService->deleteGroupImage($folderKey);
 
-        Cache::forget("zoom_meta_v2_{$folderKey}");
-        Cache::forget("group_img_meta_{$folderKey}");
-        Cache::store('file')->forget("group_img_out_{$folderKey}");
+        $this->clearGroupImageCaches($folderKey);
 
         if ($fileName) {
             if (Storage::disk('public')->exists('groupImages/' . $fileName)) {
@@ -690,5 +982,174 @@ class ImageController extends Controller
         }
 
         return preg_replace('/' . preg_quote($basename, '/') . '$/', $normalized, $urlOrPath) ?? $urlOrPath;
+    }
+
+    private function groupImageOutputCacheKey(string $folderKey, $image = null, string $variant = 'full'): string
+    {
+        $version = '0';
+        if ($image && $image->updated_at) {
+            $version = (string) strtotime($image->updated_at);
+        }
+
+        return "group_img_out_{$variant}_{$folderKey}_{$version}";
+    }
+
+    private function groupImageSourceCacheKey(string $folderKey, $image = null): string
+    {
+        $version = '0';
+        if ($image && $image->updated_at) {
+            $version = (string) strtotime($image->updated_at);
+        }
+
+        return "group_img_src_{$folderKey}_{$version}";
+    }
+
+    private function clearGroupImageCaches(string $folderKey, $image = null): void
+    {
+        $this->deleteGroupImageThumb($folderKey);
+        Cache::store('file')->forget("group_img_out_{$folderKey}");
+        Cache::forget("zoom_meta_v2_{$folderKey}");
+        Cache::forget("group_img_meta_{$folderKey}");
+
+        if (!$image) {
+            $image = $this->imageService->getImagesByFolderKey($folderKey)->first();
+        }
+
+        if ($image) {
+            $version = $image->updated_at ? (string) strtotime($image->updated_at) : 'v1';
+            Cache::store('file')->forget($this->groupImageOutputCacheKey($folderKey, $image, 'full'));
+            Cache::store('file')->forget($this->groupImageOutputCacheKey($folderKey, $image, 'thumb'));
+            Cache::store('file')->forget($this->groupImageSourceCacheKey($folderKey, $image));
+            Cache::store('file')->forget("zoom_bin_v3_{$folderKey}_{$version}");
+            Cache::store('file')->forget("zoom_bin_{$folderKey}_{$version}");
+            Cache::store('file')->forget("zoom_bin_{$folderKey}_v1");
+            Cache::store('file')->forget("zoom_bin_{$folderKey}_0");
+            Cache::store('file')->forget("zoom_bin_v3_{$folderKey}_v1");
+            Cache::store('file')->forget("zoom_bin_v3_{$folderKey}_0");
+        }
+    }
+
+    /**
+     * @throws \InvalidArgumentException
+     */
+    private function validateGroupImageBytes(string $bytes): void
+    {
+        if (strlen($bytes) < self::GROUP_IMAGE_MIN_BYTES) {
+            throw new \InvalidArgumentException('Image file is too small or corrupt.');
+        }
+
+        $info = @getimagesizefromstring($bytes);
+        if ($info === false || empty($info[0]) || empty($info[1])) {
+            throw new \InvalidArgumentException('Unable to read image. Please try a different file.');
+        }
+
+        if ($info[0] < self::GROUP_IMAGE_MIN_DIMENSION || $info[1] < self::GROUP_IMAGE_MIN_DIMENSION) {
+            throw new \InvalidArgumentException('Image dimensions are too small.');
+        }
+
+        if ($this->isMostlyBlackImage($bytes)) {
+            throw new \InvalidArgumentException('Image appears blank or corrupt. Please try uploading again.');
+        }
+    }
+
+    private function isValidGroupImageSource(?string $bytes): bool
+    {
+        if ($bytes === null || $bytes === '') {
+            return false;
+        }
+
+        try {
+            $this->validateGroupImageBytes($bytes);
+            return true;
+        } catch (\InvalidArgumentException $e) {
+            return false;
+        }
+    }
+
+    private function isValidCachedGroupJpeg(?string $jpeg, int $sourceBytes = 0): bool
+    {
+        if ($jpeg === null || $jpeg === '') {
+            return false;
+        }
+
+        if (strlen($jpeg) < self::GROUP_IMAGE_MIN_JPEG_BYTES) {
+            return false;
+        }
+
+        if (strncmp($jpeg, "\xFF\xD8\xFF", 3) !== 0) {
+            return false;
+        }
+
+        if ($sourceBytes > 0 && strlen($jpeg) < min(1024, (int) ($sourceBytes * 0.01))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function isMostlyBlackImage(string $bytes): bool
+    {
+        if (!function_exists('imagecreatefromstring')) {
+            return false;
+        }
+
+        $img = @imagecreatefromstring($bytes);
+        if ($img === false) {
+            return true;
+        }
+
+        $width = imagesx($img);
+        $height = imagesy($img);
+        if ($width < 1 || $height < 1) {
+            imagedestroy($img);
+            return true;
+        }
+
+        $points = [
+            [intval($width / 2), intval($height / 2)],
+            [0, 0],
+            [$width - 1, 0],
+            [0, $height - 1],
+            [$width - 1, $height - 1],
+        ];
+
+        $darkSamples = 0;
+        foreach ($points as [$x, $y]) {
+            $rgb = imagecolorat($img, $x, $y);
+            $red = ($rgb >> 16) & 0xFF;
+            $green = ($rgb >> 8) & 0xFF;
+            $blue = $rgb & 0xFF;
+
+            if ($red <= 12 && $green <= 12 && $blue <= 12) {
+                $darkSamples++;
+            }
+        }
+
+        imagedestroy($img);
+
+        return $darkSamples === count($points);
+    }
+
+    private function verifyRemoteGroupImage(string $remotePath): bool
+    {
+        $url = rtrim(config('services.exportImageLocation'), '/') . '/' . ltrim($remotePath, '/');
+        $response = Http::timeout(15)->withoutVerifying()->get($url);
+
+        if (!$response->successful()) {
+            Log::warning("Remote group image verification failed: {$url}", [
+                'status' => $response->status(),
+            ]);
+            return false;
+        }
+
+        try {
+            $this->validateGroupImageBytes($response->body());
+            return true;
+        } catch (\InvalidArgumentException $e) {
+            Log::warning("Remote group image failed validation: {$url}", [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 }

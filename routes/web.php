@@ -14,6 +14,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Livewire\Order\Order;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
+use App\Http\Livewire\Proofing\FranchiseDashboard;
+use App\Http\Controllers\Proofing\FranchiseSchoolEntryController;
 use App\Http\Livewire\Settings\FeatureControl;
 use App\Http\Livewire\Settings\RolePermission;
 use App\Http\Middleware\CheckUserRestriction;
@@ -34,12 +36,16 @@ use App\Http\Controllers\Proofing\ReviewStatusController;
 use App\Http\Controllers\Proofing\InvitationController;
 use App\Http\Controllers\Proofing\ImageController;
 use App\Http\Controllers\Proofing\ReportController;
+use App\Http\Controllers\Proofing\EmailController;
 use App\Http\Controllers\Proofing\SubjectChangesController;
+use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Proofing\ConstantsController;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified', NoCacheHeaders::class])->name('dashboard');
 
 Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
+    Route::get('/api/ping', [SessionController::class, 'ping'])->name('session.ping');
+
     Route::post('/tokens/create', function (Request $request) {
         $user = Auth::user();
         $token = $user->createToken('api_token');
@@ -91,6 +97,14 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     // Schools routes
     Route::get('/school', SchoolList::class)->name('school.list');
+    Route::get('/franchise-dashboard', FranchiseDashboard::class)->name('franchise.dashboard');
+    Route::get('/franchise-dashboard/school/{hashedId}', FranchiseSchoolEntryController::class)
+        ->middleware(['role:Franchise'])
+        ->name('franchise.school-dashboard');
+    // Legacy school dashboard URL → photography configure
+    Route::get('/school-dashboard', function () {
+        return redirect()->route('photography.configure-new', request()->query());
+    })->middleware(['role:Franchise'])->name('school.dashboard');
     Route::get('/school/{hashedId}', SchoolView::class)->name('school.view');
 
     // Order routes
@@ -117,6 +131,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     //Configure School - fetch jobs by season
         Route::get('/config-school/fetch-jobs', [SchoolConfigureController::class, 'configSchoolFetchJobs'])->name('config-school-fetch-jobs');
+        Route::get('/config-school/fetch-job-details', [SchoolConfigureController::class, 'configSchoolFetchJobDetails'])->name('config-school-fetch-job-details');
         Route::post('/config-school/assign-job-school', [SchoolConfigureController::class, 'assignSchoolToJob'])->name('config-school-assign-job-school');
     //Configure School - get-job-details of job
         Route::post('/config-school/folder-config', [SchoolConfigureController::class, 'configSchoolFolderConfig'])->name('config-school-folder-config');
@@ -134,6 +149,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/config-school/school-logo/{encryptedPath}', [SchoolConfigureController::class, 'showSchoolLogo'])->name('school.logo');
     //Configure School - School Logo Delete
         Route::post('/config-school/delete-school-logo', [SchoolConfigureController::class, 'deleteSchoolLogo'])->name('delete.school.logo');
+        Route::post('/config-school/archive-photography-jobs', [SchoolConfigureController::class, 'archivePhotographyJobs'])->name('config-school-archive-photography-jobs');
 
     /* ----------------------------------------- Proofing ----------------------------------------- */
     $permissionCanProof = PermissionHelper::ACT_ACCESS . " " . PermissionHelper::SUB_PROOFING;
@@ -164,10 +180,23 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         });
     });
 
+    // Emails (Franchise only) — list synced jobs, then emails for a job
+    Route::middleware(['school_context','role:Franchise',CheckUserRestriction::class])->group(function () {
+        Route::get('/emails', [EmailController::class, 'index'])->name('emails.index');
+        Route::get('/emails/{tsJobId}', [EmailController::class, 'show'])->name('emails.show');
+        Route::post('/emails/filter',[EmailController::class, 'filter'])->name('emails.filter');
+        Route::post('/emails/view',[EmailController::class, 'view'])->name('emails.view');
+        Route::post('/emails/resend',[EmailController::class, 'resend'])->name('emails.resend');
+    });
+
     Route::middleware(['proofing_menu', 'school_context'])->group(function () use ($permissionCanProof, $permissionCanConfigProof, $permissionCanManageInvite, $permissionCanProofChange, $permissionCanBulkUpload, $permissionCanReport) {
         Route::group(['middleware' => ["permission:{$permissionCanProof}", CheckUserRestriction::class]], function () {
             //Dashboard
             Route::get('/proofing', [ProofingDashboardController::class, 'index'])->name('proofing');
+            // Legacy school dashboard URL → photography configure
+            Route::get('/proofing/school-dashboard', function () {
+                return redirect()->route('photography.configure-new', request()->query());
+            });
             //Dashboard  - Open Job
             Route::get('/proofing/openJob', [ProofingJobController::class, 'openJob'])->name('dashboard.openJob');
             //Dashboard Header - Close Job
@@ -224,6 +253,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
             Route::post('/franchise/config-job/upload-file', [ImageController::class, 'groupImageUploadFile'])->name('groupImage.uploadFile');
             //Configure Job - Folder-Image Delete
             Route::post('/franchise/config-job/delete-file', [ImageController::class, 'groupImageDeleteFile'])->name('groupImage.deleteFile');
+            Route::post('/franchise/config-job/warm-group-thumbs', [ImageController::class, 'warmGroupImageThumbs'])->name('groupImage.warmThumbs');
         });
 
         Route::group(['middleware' => ["permission:{$permissionCanManageInvite}", CheckUserRestriction::class]], function () {

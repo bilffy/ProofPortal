@@ -10,7 +10,6 @@
     @php
         use Illuminate\Support\Facades\Crypt;
         use Illuminate\Support\Str;
-        use App\Services\FolderService;
     @endphp
 
     @if(Session::has('selectedJob') && Session::has('selectedSeason'))
@@ -79,7 +78,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="changes-table-body">
-                                    @inject('folderService', 'App\Services\Proofing\FolderService')
                                     @foreach($subjectChanges as $subjectChange)
                                     @php
                                         // $folderKey = implode("-", $attachedFolderNames[$subjectChange->ts_subjectkey]['keys']);
@@ -91,9 +89,10 @@
                                         }else{
                                             $image_url = asset('proofing-assets/img/subject-image.png');
                                         }
-                                        if($subjectChange->external_issue_name === 'Class'){
-                                            $id = str_replace("Folder From: ", "", $subjectChange->change_from);
-                                            $folderFrom = $folderService->findFolderId($id);
+                                        $folderFromKey = null;
+                                        if ($subjectChange->external_issue_name === 'Class') {
+                                            $folderId = (int) str_replace('Folder From: ', '', (string) $subjectChange->change_from);
+                                            $folderFromKey = $classFolderKeysById[$folderId] ?? null;
                                         }
                                     @endphp
                                     
@@ -111,7 +110,7 @@
                                         <td>{{ $subjectChange->user->firstname }} {{ $subjectChange->user->lastname }}</td>
                                         <td>
                                             @if($subjectChange->external_issue_name == 'Picture' || $subjectChange->external_issue_name == 'Class')
-                                                <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class') data-change-from = "{{ Crypt::encryptString($folderFrom->ts_folderkey) }}" @endif data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
+                                                <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class' && $folderFromKey) data-change-from = "{{ Crypt::encryptString($folderFromKey) }}" @endif data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> |
                                             @endif
                                                 <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="approve">Approve</a> | 
                                                 <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="reject">Reject</a>
@@ -189,7 +188,6 @@
 
     <script>
         $(document).ready(function () {        
-            jQuery.noConflict();
             var linkHide = $(".people-photos-hide");
             var linkShow = $(".people-photos-show");
             var picWrapper = $(".person-pic-wrapper");

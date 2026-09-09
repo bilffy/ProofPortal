@@ -170,11 +170,19 @@ class User extends Authenticatable
 
     public function getRole()
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->first()?->name;
+        }
+
         return $this->getRoleNames()->first();
     }
 
     public function getRoleId()
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->first()?->id;
+        }
+
         $roleName = $this->getRole();
         $role = Role::findByName($roleName);
         return $role->id;
@@ -182,6 +190,10 @@ class User extends Authenticatable
     
     public function getFranchise()
     {
+        if ($this->relationLoaded('franchises') && $this->franchises->isNotEmpty()) {
+            return $this->franchises->first();
+        }
+
         // Redundancy: Added get Franchise from School process to avoid null from School level users
         if ($this->isSchoolLevel()) {
             /** @var School|null $school */
@@ -193,7 +205,22 @@ class User extends Authenticatable
 
     public function getSchool()
     {
+        if ($this->relationLoaded('schools') && $this->schools->isNotEmpty()) {
+            return $this->schools->first();
+        }
+
         return $this->schools()->first();
+    }
+
+    protected ?int $memoizedJobsCount = null;
+
+    public function getJobsCount(): int
+    {
+        if ($this->memoizedJobsCount === null) {
+            $this->memoizedJobsCount = (int) $this->jobs()->count();
+        }
+
+        return $this->memoizedJobsCount;
     }
 
     public function getAllSchools()

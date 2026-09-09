@@ -99,12 +99,19 @@ class JobConfigureController extends Controller
             ->orderBy('ts_foldername', 'asc')
             ->get();
 
+        $groupImageFolderKeys = $selectedFolders
+            ->filter(fn ($folder) => optional($folder->images)->name)
+            ->pluck('ts_folderkey')
+            ->values()
+            ->all();
+
         $user = Auth::user();
 
         return view('proofing.franchise.configure.configure-job',[
             'selectedJob' => $selectedJob,
             'hash' =>$hash,
             'selectedFolders' => $selectedFolders,
+            'groupImageFolderKeys' => $groupImageFolderKeys,
             'compiledFolderDuplicates' => $compiledFolderDuplicates,
             'compiledSubjectDuplicates' => $compiledSubjectDuplicates,
             'user' => new UserResource($user)
@@ -144,13 +151,19 @@ class JobConfigureController extends Controller
     }
 
     public function proofingTimelineInsert(Request $request){
-        $proofingTimeline = $this->configureService->insertProofingTimeline($request->all());
-        return response()->json(['success' => true]);
+        $result = $this->configureService->insertProofingTimeline($request->all());
+        if (is_array($result) && ($result['success'] ?? true) === false) {
+            return response()->json($result, 422);
+        }
+        return response()->json(is_array($result) ? $result : ['success' => true]);
     }
 
     public function proofingTimelineEmailSend(Request $request){
-        $this->configureService->sendEmailDates($request->all());
-        return response()->json(['success' => true]);
+        $result = $this->configureService->sendEmailDates($request->all());
+        if (is_array($result) && ($result['success'] ?? true) === false) {
+            return response()->json($result, 422);
+        }
+        return response()->json(is_array($result) ? $result : ['success' => true]);
     }
 
     public function notificationEnable(Request $request)

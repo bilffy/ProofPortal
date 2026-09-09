@@ -41,14 +41,19 @@ class PhotoGrid extends Component
 
     public function setPerPage($newPerPage)
     {
-        $newPerPage = max(30, (int) $newPerPage);
-        if ($this->perPage !== $newPerPage) {
-            $this->perPage = $newPerPage;
-            Session::put('photo_grid_per_page', $newPerPage);
+        // Portraits/Groups grid is fixed at 30 images per page.
+        if ($this->perPage !== 30) {
+            $this->perPage = 30;
+            Session::put('photo_grid_per_page', 30);
             $this->resetPage();
         }
     }
     //CODE BY IT
+    public function placeholder()
+    {
+        return view('livewire.photography.photo-grid-placeholder');
+    }
+
     public function mount($category = 'portraits', $season = 1, $schoolId = null)
     {
         $this->category = $category;
@@ -78,7 +83,8 @@ class PhotoGrid extends Component
         }
 
         $this->tsAccountId = $user->getFranchise()?->ts_account_id;
-        $this->perPage = Session::get('photo_grid_per_page', 30);
+        $this->perPage = 30;
+        Session::put('photo_grid_per_page', 30);
         $this->setupFilters($season);
     }
 

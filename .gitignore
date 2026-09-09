@@ -34,7 +34,3 @@ docker-compose.override.yml
 /image_repository
 cursorignore
 cursorrules
-
-#emails
-resources/views/proofing/franchise/emails/
-app/Http/Controllers/Proofing/EmailController.php

@@ -61,7 +61,10 @@ class ArchiveJobsSeason extends Component
             return;
         }
 
-        $updated = $jobsQuery->update(['job_status_id' => $archivedStatusId]);
+        $updated = $jobsQuery->update([
+            'job_status_id' => $archivedStatusId,
+            'show_portal' => 1,
+        ]);
 
         $this->statusType = 'success';
         $this->statusMessage = "{$updated} jobs for season {$season->code} have been archived.";

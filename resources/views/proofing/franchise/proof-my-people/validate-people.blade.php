@@ -228,7 +228,11 @@
             </div>
         </div>
 
-        @include('proofing.franchise.proof-my-people.validate-people-modal', ['allSubjects' => $allSubjects, 'currentFolder' => $currentFolder])
+        @include('proofing.franchise.proof-my-people.validate-people-modal', [
+            'allSubjects' => $allSubjects,
+            'currentFolder' => $currentFolder,
+            'changelogsBySubject' => $changelogsBySubject,
+        ])
     
     @else
                 
@@ -293,7 +297,6 @@
 
         //Update Class name on change
         $(document).ready(function () {
-            jQuery.noConflict();
             var location = @json($location);
 
             $('#folder_name').on('keyup change', function (event) {

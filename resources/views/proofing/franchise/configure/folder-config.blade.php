@@ -621,25 +621,28 @@
                                                     <div class="row traditional-photo-upload traditional-photo-upload--{{ $folderKey }}">
                                                         <div class="col-12 text-center">
                                                                  <div class="d-flex flex-column align-items-center justify-content-center" style="gap: 5px;">
-                                                                     <div class="text-center">
+                                                                     <div class="text-center group-image-dropzone" data-folder-key="{{ $folderKey }}" data-folder-name="{{ $folderName }}" title="Drop an image here to upload">
                                                                          @php
                                                                              $imageData = $folder->images;
-                                                                             
-                                                                             if (!empty($imageData) && !empty($imageData->name)) {
-                                                                                 $imageUrl = route('image.show', Crypt::encryptString($imageData->name));
-                                                                                 $deleteLinkVisible = true;
-                                                                             } else {
-                                                                                 $imageUrl = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');
-                                                                                 $deleteLinkVisible = false;
-                                                                             }
+                                                                             $placeholderUrl = asset('proofing-assets/img/traditionalGroupPlaceholderImage.png');
+                                                                             $thumbImageUrl = '';
+                                                                             $fullImageUrl = $placeholderUrl;
+                                                                             $deleteLinkVisible = false;
 
+                                                                             if (!empty($imageData) && !empty($imageData->name)) {
+                                                                                 $encryptedName = Crypt::encryptString($imageData->name);
+                                                                                 $fullImageUrl = route('image.show', ['filename' => $encryptedName]);
+                                                                                 $thumbImageUrl = route('image.show', ['filename' => $encryptedName, 'variant' => 'thumb']);
+                                                                                 $deleteLinkVisible = true;
+                                                                             }
                                                                          @endphp
-                                                                         <img loading="lazy" src="{{ $imageUrl }}" 
-                                                                             class="mx-auto d-block modal-thumb" 
-                                                                             style="width: 100px; height: auto; object-fit: contain; border: 1px solid #ddd; padding: 2px;" 
+                                                                         <img src="{{ $placeholderUrl }}"
+                                                                             @if ($thumbImageUrl) data-src="{{ $thumbImageUrl }}" @endif
+                                                                             class="mx-auto d-block modal-thumb lazy-group-image"
+                                                                             style="width: 100px; height: auto; object-fit: contain; border: 1px solid #ddd; padding: 2px;"
                                                                              id="{{ $folderKey }}-image"
-                                                                             data-modal-title="{{ $folder->ts_foldername }}" 
-                                                                             data-modal-src="{{ $imageUrl }}">
+                                                                             data-modal-title="{{ $folder->ts_foldername }}"
+                                                                             data-modal-src="{{ $fullImageUrl }}">
                                                                      
                                                                          @php
                                                                              $deleteClass = $deleteLinkVisible ? 'delete-artifact mx-auto d-block mt-1' : 'delete-artifact mx-auto d-none mt-1';
