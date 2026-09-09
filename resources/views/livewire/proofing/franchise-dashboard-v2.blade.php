@@ -3072,16 +3072,19 @@
 </div>
 
 @push('scripts')
-<link rel="stylesheet" href="{{ URL::asset('proofing-assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{{-- Use non-.min CSS — dataTables.bootstrap4.min.css is not present in public assets. --}}
+<link rel="stylesheet" href="{{ URL::asset('proofing-assets/plugins/datatables-bs4/css/dataTables.bootstrap4.css') }}">
+{{-- Load DataTables before Chart.js so a blocked/slow CDN cannot prevent pagination init. --}}
 <script src="{{ URL::asset('proofing-assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
 <script src="{{ URL::asset('proofing-assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 <script>
     (function () {
         var chartInstances = {
             photography: null,
             proofingStatus: null,
         };
+        var tablesBooted = false;
 
         function readChartData() {
             var el = document.getElementById('franchise-dashboard-chart-data');
@@ -3199,8 +3202,8 @@
 
         function initJobsTableById(tableId) {
             var table = document.getElementById(tableId);
-            if (!table || typeof window.jQuery === 'undefined' || !window.jQuery.fn.DataTable) {
-                return;
+            if (!table || typeof window.jQuery === 'undefined' || !window.jQuery.fn || !window.jQuery.fn.DataTable) {
+                return false;
             }
 
             var $table = window.jQuery(table);
@@ -3212,45 +3215,52 @@
                 }
             }
 
-            $table.DataTable({
-                pageLength: 5,
-                lengthChange: true,
-                lengthMenu: [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
-                paging: true,
-                searching: true,
-                info: true,
-                autoWidth: false,
-                scrollX: false,
-                order: [[1, 'asc']],
-                columnDefs: [
-                    { orderable: false, targets: 0 },
-                ],
-                dom: "<'fd-jobs-toolbar'<'fd-jobs-length'l><'fd-jobs-search'f>>" +
-                    "<'fd-jobs-scroll't>" +
-                    "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>",
-                language: {
-                    lengthMenu: 'Display _MENU_',
-                    info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-                    infoEmpty: 'Showing 0 to 0 of 0 entries',
-                    search: 'Search:',
-                    paginate: {
-                        previous: 'Previous',
-                        next: 'Next',
+            try {
+                $table.DataTable({
+                    pageLength: 5,
+                    lengthChange: true,
+                    lengthMenu: [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
+                    paging: true,
+                    searching: true,
+                    info: true,
+                    autoWidth: false,
+                    scrollX: false,
+                    order: [[1, 'asc']],
+                    columnDefs: [
+                        { orderable: false, targets: 0 },
+                    ],
+                    dom: "<'fd-jobs-toolbar'<'fd-jobs-length'l><'fd-jobs-search'f>>" +
+                        "<'fd-jobs-scroll't>" +
+                        "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>",
+                    language: {
+                        lengthMenu: 'Display _MENU_',
+                        info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                        infoEmpty: 'Showing 0 to 0 of 0 entries',
+                        search: 'Search:',
+                        paginate: {
+                            previous: 'Previous',
+                            next: 'Next',
+                        },
                     },
-                },
-                drawCallback: function () {
-                    var api = this.api();
-                    var start = api.page.info().start;
-                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                        cell.innerHTML = String(start + i + 1);
-                    });
-                },
-            });
+                    drawCallback: function () {
+                        var api = this.api();
+                        var start = api.page.info().start;
+                        api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                            cell.innerHTML = String(start + i + 1);
+                        });
+                    },
+                });
+                return true;
+            } catch (e) {
+                console.warn('Franchise dashboard DataTable init failed for #' + tableId, e);
+                return false;
+            }
         }
 
         function initJobsTable() {
-            initJobsTableById('fd-proofing-jobs-table');
-            initJobsTableById('fd-unsynced-proofing-jobs-table');
+            var ok1 = initJobsTableById('fd-proofing-jobs-table');
+            var ok2 = initJobsTableById('fd-unsynced-proofing-jobs-table');
+            return ok1 || ok2;
         }
 
         function bindSchoolsFilter() {
@@ -3292,6 +3302,30 @@
 
         function boot() {
             renderCharts();
+            tablesBooted = initJobsTable() || tablesBooted;
+            bindSchoolsFilter();
+            if (typeof window.initFlowbite === 'function') {
+                window.initFlowbite();
+            }
+        }
+
+        // Stacked scripts can run after DOMContentLoaded on UAT — still boot immediately.
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+        window.addEventListener('load', function () {
+            renderCharts();
+            if (!tablesBooted) {
+                boot();
+            }
+        });
+        document.addEventListener('livewire:navigated', boot);
+        document.addEventListener('livewire:load', boot);
+
+        function onMorphUpdated() {
+            renderCharts();
             initJobsTable();
             bindSchoolsFilter();
             if (typeof window.initFlowbite === 'function') {
@@ -3299,15 +3333,12 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', boot);
-        document.addEventListener('livewire:navigated', boot);
-        if (window.Livewire) {
-            Livewire.hook('morph.updated', function () {
-                renderCharts();
-                initJobsTable();
-                bindSchoolsFilter();
-                if (typeof window.initFlowbite === 'function') {
-                    window.initFlowbite();
+        if (window.Livewire && typeof window.Livewire.hook === 'function') {
+            window.Livewire.hook('morph.updated', onMorphUpdated);
+        } else {
+            document.addEventListener('livewire:initialized', function () {
+                if (window.Livewire && typeof window.Livewire.hook === 'function') {
+                    window.Livewire.hook('morph.updated', onMorphUpdated);
                 }
             });
         }
