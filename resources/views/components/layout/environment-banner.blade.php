@@ -17,7 +17,7 @@
 
 @if ($banner)
     <div
-        class="w-full mb-4 rounded-md border px-4 py-3 text-center text-sm font-semibold"
+        class="environment-banner w-full border-b px-4 py-2.5 text-center text-sm font-semibold shrink-0"
         style="{{ $banner['style'] }}"
         role="status"
     >

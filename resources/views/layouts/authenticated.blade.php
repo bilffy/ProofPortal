@@ -111,13 +111,15 @@
                     </div>
                 </div>
             </header>
-            <main class="w-full p-4 bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden pl-4">
+            <main class="w-full bg-white h-full rounded-s-lg overflow-hidden flex flex-col">
                 <x-layout.environment-banner />
-                @if (isset($slot))
-                    {{ $slot }}
-                @else
-                    @yield('content')
-                @endif
+                <div class="flex-1 overflow-y-scroll p-4 pl-4">
+                    @if (isset($slot))
+                        {{ $slot }}
+                    @else
+                        @yield('content')
+                    @endif
+                </div>
             </main>
             <x-layout.footer />
         </div>

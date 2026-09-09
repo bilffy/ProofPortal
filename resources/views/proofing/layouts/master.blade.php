@@ -316,16 +316,12 @@
                         </div>
                     </main> --}}
 
-                    <main class="{{ \Illuminate\Support\Arr::toCssClasses([
-                        'w-full bg-white h-full overflow-y-scroll rounded-s-lg overflow-hidden',
-                        'p-4' => !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false,
-                    ]) }}">
-                        @php
-                            $proofingMainPadded = !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false;
-                        @endphp
-                        <div @class(['px-4 pt-4' => ! $proofingMainPadded])>
-                            <x-layout.environment-banner />
-                        </div>
+                    <main class="w-full bg-white h-full rounded-s-lg overflow-hidden flex flex-col">
+                        <x-layout.environment-banner />
+                        <div class="{{ \Illuminate\Support\Arr::toCssClasses([
+                            'flex-1 overflow-y-scroll',
+                            'p-4' => !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false,
+                        ]) }}">
                         
                         {{-- Job Open Notification --}}
                         {{-- @if(session()->get('openJob') === true && session()->has('selectedJob') && session()->has('selectedSeason')) --}}
@@ -424,6 +420,7 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </main>
                     
