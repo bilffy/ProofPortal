@@ -114,6 +114,7 @@ $(document).ready(function () {
         }
     });
 
+    jQuery.noConflict();
     var searchDataTable;
     if ($('#searchData').length) {
         searchDataTable = $('#searchData').DataTable({
