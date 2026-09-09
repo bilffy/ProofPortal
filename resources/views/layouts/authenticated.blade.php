@@ -111,9 +111,9 @@
                     </div>
                 </div>
             </header>
-            <main class="w-full bg-white h-full rounded-s-lg overflow-hidden flex flex-col">
+            <main class="w-full bg-white h-full rounded-s-lg overflow-hidden flex flex-col min-w-0">
                 <x-layout.environment-banner />
-                <div class="flex-1 overflow-y-scroll p-4 pl-4">
+                <div class="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 pl-4">
                     @if (isset($slot))
                         {{ $slot }}
                     @else

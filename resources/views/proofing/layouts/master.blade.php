@@ -316,10 +316,10 @@
                         </div>
                     </main> --}}
 
-                    <main class="w-full bg-white h-full rounded-s-lg overflow-hidden flex flex-col">
+                    <main class="w-full bg-white h-full rounded-s-lg overflow-hidden flex flex-col min-w-0">
                         <x-layout.environment-banner />
                         <div class="{{ \Illuminate\Support\Arr::toCssClasses([
-                            'flex-1 overflow-y-scroll',
+                            'flex-1 overflow-y-auto overflow-x-hidden min-w-0',
                             'p-4' => !session()->has('selectedJob') && !session()->has('selectedSeason') && session('openJob') === false,
                         ]) }}">
                         
