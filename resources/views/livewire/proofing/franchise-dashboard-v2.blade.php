@@ -49,16 +49,33 @@
     $syncedJobsLabel = ($synced === 1) ? 'Synced Job' : 'Synced Jobs';
     $deletedJobsLabel = ($statusDeleted === 1) ? 'Deleted Job' : 'Deleted Jobs';
 
+    // Rainbow palette from MSP chart colour reference (left → right).
+    $chartPalette = [
+        '#E63B34', // red
+        '#F36C3D', // orange-red
+        '#FBAC3D', // orange
+        '#FED33D', // golden yellow
+        '#FDF63E', // bright yellow
+        '#A1D049', // lime
+        '#82C341', // light green
+        '#4EB85B', // medium green
+        '#48BCB3', // teal
+        '#00B9D5', // cyan
+        '#0287D0', // medium blue
+        '#0065A1', // deep blue
+        '#004485', // navy
+    ];
+
     $statusLegend = [
-        ['label' => 'Opened', 'value' => $statusOpened, 'color' => '#2196F3'],
-        ['label' => 'Not Opened', 'value' => $statusNotOpened, 'color' => '#26C6DA'],
-        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => '#8BC34A'],
-        ['label' => 'Archived', 'value' => $statusArchived, 'color' => '#7B61FF'],
-        ['label' => 'Deleted', 'value' => $statusDeleted, 'color' => '#E91E8C'],
+        ['label' => 'Opened', 'value' => $statusOpened, 'color' => $chartPalette[10]],
+        ['label' => 'Not Opened', 'value' => $statusNotOpened, 'color' => $chartPalette[9]],
+        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => $chartPalette[7]],
+        ['label' => 'Archived', 'value' => $statusArchived, 'color' => $chartPalette[12]],
+        ['label' => 'Deleted', 'value' => $statusDeleted, 'color' => $chartPalette[0]],
     ];
     $photographyLegend = [
-        ['label' => 'Configured', 'value' => $photographyConfigured, 'color' => '#E91E8C'],
-        ['label' => 'Not Configured', 'value' => $photographyNotConfigured, 'color' => '#2196F3'],
+        ['label' => 'Configured', 'value' => $photographyConfigured, 'color' => $chartPalette[0]],
+        ['label' => 'Not Configured', 'value' => $photographyNotConfigured, 'color' => $chartPalette[10]],
     ];
     $folderLegend = [
         ['label' => 'Total Folders', 'value' => $foldersTotal, 'color' => $palette['mediumBlue']],
