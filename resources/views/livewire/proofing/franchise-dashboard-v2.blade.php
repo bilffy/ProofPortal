@@ -287,11 +287,11 @@
         pointer-events: none;
     }
 
-    .sd-kpi-card.is-blue::after { background: #90CAF9; }
-    .sd-kpi-card.is-green::after { background: #A5D6A7; }
-    .sd-kpi-card.is-teal::after { background: #80CBC4; }
-    .sd-kpi-card.is-purple::after { background: #CE93D8; }
-    .sd-kpi-card.is-orange::after { background: #FFCC80; }
+    .sd-kpi-card.is-blue::after { background: #00B9D5; }
+    .sd-kpi-card.is-green::after { background: #82C341; }
+    .sd-kpi-card.is-teal::after { background: #48BCB3; }
+    .sd-kpi-card.is-purple::after { background: #4EB85B; }
+    .sd-kpi-card.is-orange::after { background: #FBAC3D; }
 
     .sd-kpi-icon {
         /* Match /proofing/{job} task tile icons: solid square, white glyph */
@@ -310,11 +310,12 @@
         color: #fff;
     }
 
-    .sd-kpi-card.is-blue .sd-kpi-icon { background: #77a9dbff; color: #fff; }
-    .sd-kpi-card.is-green .sd-kpi-icon { background: #43A047; color: #fff; }
-    .sd-kpi-card.is-teal .sd-kpi-icon { background: #5EA49D; color: #fff; }
-    .sd-kpi-card.is-purple .sd-kpi-icon { background: #d4a2c3ff; color: #fff; }
-    .sd-kpi-card.is-orange .sd-kpi-icon { background: #FB8C00; color: #fff; }
+    /* KPI icon colours from MSP rainbow bar palette */
+    .sd-kpi-card.is-blue .sd-kpi-icon { background: #0287D0; color: #fff; }      /* Photography Jobs */
+    .sd-kpi-card.is-green .sd-kpi-icon { background: #4EB85B; color: #fff; }
+    .sd-kpi-card.is-teal .sd-kpi-icon { background: #48BCB3; color: #fff; }      /* Total Schools */
+    .sd-kpi-card.is-purple .sd-kpi-icon { background: #4EB85B; color: #fff; }    /* Active Proofing Jobs */
+    .sd-kpi-card.is-orange .sd-kpi-icon { background: #FBAC3D; color: #fff; }
 
     .sd-kpi-body { min-width: 0; }
     .sd-kpi-label {
