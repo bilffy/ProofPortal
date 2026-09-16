@@ -17,7 +17,23 @@
             </div>
             @can($PermissionHelper->toPermission($PermissionHelper::ACT_CREATE, $PermissionHelper::SUB_USER))
                 <div class="ml-4 mr-4 border-r-2 border-[#D9DDE2] my-3"></div>
-                <x-button.primary onclick="window.location='{{ route('users.create') }}'">Add New User</x-button.primary>
+                <div class="flex items-center gap-3">
+                    <!-- Primary Action: Add User -->
+                    <x-button.primary onclick="window.location='{{ route('users.create') }}'" class="inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Add New User</span>
+                    </x-button.primary>
+
+                    <!-- Secondary Action: Import Users -->
+                    <x-button.secondary onclick="window.location='{{ route('users.bulk-invite') }}'" class="inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        <span>Import Users</span>
+                    </x-button.secondary>
+                </div>
             @endcan
         </div>
     </div>

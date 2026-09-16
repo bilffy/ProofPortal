@@ -155,6 +155,7 @@ class ProofController extends Controller
             foreach ($foldersToPromote as $folder) {
                 ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
                     'folderkey' => $folder->ts_folderkey,
+                    'ts_jobkey' => $selectedJob->ts_jobkey,
                     'status' => $modifiedStatus
                 ], $rootUserId);
             }
@@ -550,6 +551,7 @@ class ProofController extends Controller
             $folder->is_locked = !$isSaveForLater;
             ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
                 'folderkey' => $folder->ts_folderkey,
+                'ts_jobkey' => $folder->job->ts_jobkey,
                 'status' => $isSaveForLater ? $this->statusService->modified : $this->statusService->completed
             ], $rootUserId);
             $folder->status_id = $isSaveForLater ? $this->statusService->modified : $this->statusService->completed;

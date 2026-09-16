@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Add this specifically for UAT/Live environments
         $middleware->trustProxies(at: '*'); 
+        $middleware->web(prepend: [
+            \App\Http\Middleware\ForceRequestRootUrl::class,
+        ]);
         $middleware->web(append: [
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);

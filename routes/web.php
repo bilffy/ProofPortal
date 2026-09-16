@@ -40,12 +40,18 @@ use App\Http\Controllers\Proofing\EmailController;
 use App\Http\Controllers\Proofing\SubjectChangesController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Proofing\ConstantsController;
+use App\Http\Middleware\DoNotExtendSessionLifetime;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified', NoCacheHeaders::class])->name('dashboard');
 
-Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
-    Route::get('/api/ping', [SessionController::class, 'ping'])->name('session.ping');
+// Session keepalive check — must NOT use auth middleware.
+// Auth redirects unauthenticated requests to APP_URL/login (often production),
+// which breaks local/dev AJAX with CORS. The controller returns { is_alive: false }.
+Route::get('/api/ping', [SessionController::class, 'ping'])
+    ->middleware([NoCacheHeaders::class, DoNotExtendSessionLifetime::class])
+    ->name('session.ping');
 
+Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     Route::post('/tokens/create', function (Request $request) {
         $user = Auth::user();
         $token = $user->createToken('api_token');
@@ -66,6 +72,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         // Users routes
         Route::get('/users', [UserController::class, 'index'])->name('users');
         Route::get('/users/new', [UserController::class, 'create'])->name('users.create');
+        Route::get('/users/bulk-invite', [UserController::class, 'bulkInvite'])->name('users.bulk-invite');
         Route::get('/schools/search', [UserController::class, 'searchSchools'])->name('schools.search');
         // Route for inviting a single user
         Route::get('/invite/{id}', [InviteController::class, 'inviteSingleUser'])->name('invite.single');

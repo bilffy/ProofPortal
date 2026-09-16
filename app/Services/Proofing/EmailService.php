@@ -1340,17 +1340,94 @@ class EmailService
         $selectedFolders = $this->getInvitationFolderNamesForUser((int) $user, $jobkey);
         $authFranchiseDetail = $this->resolveSchoolOrFranchiseDetail($authUser);
 
+        $isSetupPending = false;
+        $setupUrl = route('login');
+
+        if (!empty($inviteUser->send_invitation_with_proofing) || (!$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED)) {
+            $isSetupPending = true;
+            $token = \Illuminate\Support\Facades\Password::broker('invites')->createToken($inviteUser);
+            $setupUrl = route('account.setup.create', [
+                'token' => $token,
+                'email' => $inviteUser->getHashedIdAttribute(),
+            ], true);
+
+            $inviteUser->status = User::STATUS_INVITED;
+            $invitedStatus = Status::where('status_external_name', 'invited')->first();
+            if ($invitedStatus) {
+                $inviteUser->active_status_id = $invitedStatus->id;
+            }
+            $inviteUser->send_invitation_with_proofing = false;
+            $inviteUser->save();
+        }
+
+        $userSchoolName = $inviteUser->isSchoolLevel() ? ($inviteUser->getSchool()?->name ?? '') : '';
+        $userOrgName = $inviteUser->getSchoolOrFranchise(true);
+        $senderOrgName = $authUser->getSchoolOrFranchise(true);
+        $senderName = trim(($authUser->firstname ?? '') . ' ' . ($authUser->lastname ?? ''));
+        if (empty($senderName)) {
+            $senderName = $authUser->name ?? 'MSP Portal';
+        }
+        $userRoleName = $inviteUser->getRole() ?? ucfirst($role);
+        $jobName = $job->ts_jobname ?? '';
+        $appUrl = Config::get('app.url');
+
+        if ($isSetupPending) {
+            $schoolPart = $userSchoolName !== '' ? " for <strong>{$userSchoolName}</strong>" : '';
+            $introText = "<strong>{$authUser->firstname} {$authUser->lastname}</strong> from the <strong>{$senderOrgName}</strong> has invited you to access the MSP Portal as a <strong>{$userRoleName}</strong>{$schoolPart}. You have been assigned to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.";
+
+            $actionSection = '
+                                    <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
+                                        To get started, click the button to set up your account:
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
+                                    <a href="' . $setupUrl . '"><img
+                                            src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_button_setup.png"
+                                            width="225"></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="padding: 20px 40px 0px 40px">
+                                    <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
+                                        During the setup process, you\'ll confirm your name, create a password and then be directed to the login page.
+                                        <br/><br/>
+                                        This invitation expires after 14 days.
+                                    </p>
+                                </td>
+                            </tr>';
+        } else {
+            $introText = "<strong>{$authUser->firstname} {$authUser->lastname}</strong> from <strong>{$senderOrgName}</strong> has assigned you to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.";
+
+            $actionSection = '
+                                    <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
+                                        To review these proofs, please visit
+                                        <strong style="font-weight: 700;"><a href="' . $appUrl . '" style="color: #00b3e0; text-decoration: underline;">' . $appUrl . '</a></strong>.
+                                    </p>
+                                </td>
+                            </tr>';
+        }
+
         // Prefer the job already resolved by key. Do not chain folderUsers->first()->folder->job:
         // first() / folder can be null (franchise scope, deleted folder, or no assignments yet).
         $data = array_merge([
+                'INTRO_TEXT' => $introText,
+                'ACTION_SECTION' => $actionSection,
                 'INVITEE_FIRST_NAME' => $inviteUser->firstname ?? '',
                 'INVITEE_LAST_NAME' => $inviteUser->lastname ?? '',
                 'SENDER_FIRST_NAME' => $authUser->firstname ?? '',
                 'SENDER_LAST_NAME' => $authUser->lastname ?? '',
-                'JOB_NAME' => $job->ts_jobname ?? '',
+                'SENDER_NAME' => $senderName,
+                'SENDER_ORG_NAME' => $senderOrgName,
+                'USER_ROLE' => $userRoleName,
+                'USER_SCHOOL_NAME' => $userSchoolName,
+                'USER_ORG_NAME' => $userOrgName,
+                'JOB_NAME' => $jobName,
                 'FOLDERS' => $selectedFolders,
-                'REVIEW_DUE' => isset($job->proof_due) ? Carbon::parse($job->proof_due)->format('l j F, Y') : '',
-                'APP_URL' => Config::get('app.url'),
+                'REVIEW_DUE' => isset($job->proof_due) ? Carbon::parse($job->proof_due)->format('l, j F, Y') : '',
+                'APP_URL' => $appUrl,
+                'SETUP_URL' => $setupUrl,
                 'FRANCHISE_WEB_ADDRESS' => Config::get('app.franchise_web_address', 'www.msp.com.au'),
         ], $this->franchiseTemplatePlaceholders($authFranchiseDetail));
 
@@ -1435,17 +1512,85 @@ class EmailService
         $templateContent = File::get($templatePath);
         $authFranchiseDetail = $this->resolveSchoolOrFranchiseDetail($authUser);
 
+        $isSetupPending = false;
+        $setupUrl = route('login');
+        if (!empty($inviteUser->send_invitation_with_proofing) || (!$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED)) {
+            $isSetupPending = true;
+            $token = \Illuminate\Support\Facades\Password::broker('invites')->createToken($inviteUser);
+            $setupUrl = route('account.setup.create', [
+                'token' => $token,
+                'email' => $inviteUser->getHashedIdAttribute(),
+            ], true);
+        }
+
+        $userSchoolName = $inviteUser->isSchoolLevel() ? ($inviteUser->getSchool()?->name ?? '') : '';
+        $userOrgName = $inviteUser->getSchoolOrFranchise(true);
+        $senderOrgName = $authUser->getSchoolOrFranchise(true);
+        $senderName = trim(($authUser->firstname ?? '') . ' ' . ($authUser->lastname ?? ''));
+        if (empty($senderName)) {
+            $senderName = $authUser->name ?? 'MSP Portal';
+        }
+        $userRoleName = $inviteUser->getRole() ?? '';
+        $jobName = $jobObj->ts_jobname ?? '';
+        $appUrl = Config::get('app.url');
+
+        if ($isSetupPending) {
+            $schoolPart = $userSchoolName !== '' ? " for <strong>{$userSchoolName}</strong>" : '';
+            $introText = "<strong>{$authUser->firstname} {$authUser->lastname}</strong> from the <strong>{$senderOrgName}</strong> has invited you to access the MSP Portal as a <strong>{$userRoleName}</strong>{$schoolPart}. You have been assigned to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.";
+
+            $actionSection = '
+                                    <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
+                                        To get started, click the button to set up your account:
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
+                                    <a href="' . $setupUrl . '"><img
+                                            src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_button_setup.png"
+                                            width="225"></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="padding: 20px 40px 0px 40px">
+                                    <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
+                                        During the setup process, you\'ll confirm your name, create a password and then be directed to the login page.
+                                        <br/><br/>
+                                        This invitation expires after 14 days.
+                                    </p>
+                                </td>
+                            </tr>';
+        } else {
+            $introText = "<strong>{$authUser->firstname} {$authUser->lastname}</strong> from <strong>{$senderOrgName}</strong> has assigned you to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.";
+
+            $actionSection = '
+                                    <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
+                                        To review these proofs, please visit
+                                        <strong style="font-weight: 700;"><a href="' . $appUrl . '" style="color: #00b3e0; text-decoration: underline;">' . $appUrl . '</a></strong>.
+                                    </p>
+                                </td>
+                            </tr>';
+        }
+
         $data = array_merge([
+            'INTRO_TEXT'           => $introText,
+            'ACTION_SECTION'       => $actionSection,
             'INVITEE_FIRST_NAME'   => $inviteUser->firstname ?? '',
             'INVITEE_LAST_NAME'    => $inviteUser->lastname  ?? '',
             'SENDER_FIRST_NAME'    => $authUser->firstname   ?? '',
             'SENDER_LAST_NAME'     => $authUser->lastname    ?? '',
-            'JOB_NAME'             => $jobObj->ts_jobname    ?? '',
+            'SENDER_NAME'          => $senderName,
+            'SENDER_ORG_NAME'      => $senderOrgName,
+            'USER_ROLE'            => $userRoleName,
+            'USER_SCHOOL_NAME'     => $userSchoolName,
+            'USER_ORG_NAME'        => $userOrgName,
+            'JOB_NAME'             => $jobName,
             'FOLDERS'              => $remainingFolders,
             'REVIEW_DUE'           => isset($jobObj->proof_due)
-                                        ? Carbon::parse($jobObj->proof_due)->format('l j F, Y')
+                                        ? Carbon::parse($jobObj->proof_due)->format('l, j F, Y')
                                         : '',
-            'APP_URL'              => Config::get('app.url'),
+            'APP_URL'              => $appUrl,
+            'SETUP_URL'            => $setupUrl,
             'FRANCHISE_WEB_ADDRESS'=> Config::get('app.franchise_web_address', 'www.msp.com.au'),
         ], $this->franchiseTemplatePlaceholders($authFranchiseDetail));
 

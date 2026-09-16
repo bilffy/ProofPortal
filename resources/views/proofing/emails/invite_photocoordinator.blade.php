@@ -53,40 +53,20 @@
                                     </p>
                                     <br/>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">INVITEE_FIRST_NAME</span>,
+                                        Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">{INVITEE_FIRST_NAME}</span>,
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        <strong>SENDER_FIRST_NAME SENDER_LAST_NAME</strong> from FRANCHISE_NAME
-                                        has assigned you to use the MSP Portal Proofing system to manage the
-                                        distribution and collection of proofs for <strong style="font-weight: 700;">JOB_NAME</strong>.
+                                        {INTRO_TEXT}
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         You have been allocated to proof the following Folders:
                                         <br/><br/>
-                                        @foreach($FOLDERS as $FOLDER)
-                                            <strong style="font-weight: 700;">- FOLDER_NAME</strong><br/>
-                                        @endforeach
+                                        {#FOLDERS}
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        Please note that these proofs must be completed by <strong style="font-weight: 700;">REVIEW_DUE</strong>.
+                                        Please note that these proofs must be completed by <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        MSP Portal Proofing allows you to assign Photo Co-ordinators and
-                                        Teachers to review their proofs and monitor each school's progress to ensure
-                                        they meet the due date.
-                                    </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
-                                        To get started, click the button to setup your account:
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
-                                    <a href=""><img
-                                            src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_button_setup.png"
-                                            width="225"></a>
-                                </td>
-                            </tr>
+                                    {ACTION_SECTION}
 
                             <!-- @if ($FRANCHISE_NAME === 'MSP Sydney West')
                                 <tr>

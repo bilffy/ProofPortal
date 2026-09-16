@@ -137,47 +137,20 @@
                                     </p>
                                     <br/>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">INVITEE_FIRST_NAME</span>,
-                                        <br/>
-                                        <br/>
+                                        Hi <span style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;">{INVITEE_FIRST_NAME}</span>,
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        <strong>SENDER_FIRST_NAME SENDER_LAST_NAME</strong> from JOB_NAME has
-                                        assigned you
-                                        to use the MSP Portal Proofing system to manage the distribution and
-                                        collection of proofs for <strong style="font-weight: 700;">JOB_NAME</strong>.
-                                        <br/>
-                                        <br/>
+                                        {INTRO_TEXT}
+                                    </p>
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         You have been allocated to proof the following Folders:
                                         <br/><br/>
-                                        @foreach($FOLDERS as $FOLDER)
-                                            <strong style="font-weight: 700;">- FOLDER_NAME</strong><br/>
-                                        @endforeach
-                                        <br/>
+                                        {#FOLDERS}
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        Please note that these proofs must be completed by <strong style="font-weight: 700;">REVIEW_DUE</strong>.
-                                        <br/>
-                                        <br/>
+                                        Please note that these proofs must be completed by <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        MSP Online Proofing allows you to check your class proofs and monitor
-                                        your progress to ensure that you meet the due date.
-                                        <br/>
-                                        <br/>
-                                    </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
-                                        To get started, click the button to setup your account:
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="text-align: center; padding: 30px 0px 0px 0px;">
-                                    <a href=""><img
-                                                src="https://www.msp.com.au/wp-content/uploads/2019/10/msp_op_button_setup.png"
-                                                width="225"></a>
-                                </td>
-                            </tr>
+                                    {ACTION_SECTION}
                             <tr>
                                 <th width="30%" style="padding: 20px 40px 20px 40px;" class="stack">
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; font-weight: 700; color: #666666; line-height: 1.4; text-align: left;">

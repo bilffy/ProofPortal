@@ -556,7 +556,7 @@
             aria-live="polite"
         >
             <div class="jobs-archive-banner-inner">
-                <div class="jobs-archive-left">
+                <!-- <div class="jobs-archive-left">
                     <div class="jobs-archive-bell-wrap" aria-hidden="true">
                         <div class="jobs-archive-bell-circle">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -569,9 +569,9 @@
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2 mb-1">
                             <span class="jobs-archive-heading">Action Required</span>
-                            <!-- <span id="jobs-needing-archive-count-label" class="jobs-archive-count-pill">
+                            <span id="jobs-needing-archive-count-label" class="jobs-archive-count-pill">
                                 <span id="jobs-needing-archive-count">{{ $jobsNeedingArchiving->count() }}</span>{{ $jobsNeedingArchiving->count() === 1 ? ' job' : ' jobs' }}
-                            </span> -->
+                            </span>
                         </div>
                         <p class="jobs-archive-title">Proofing Jobs Ready for Archive</p>
                         <p class="jobs-archive-description">
@@ -579,9 +579,22 @@
                             Archive them to configure and view digital images in Photography.
                         </p>
                     </div>
-                </div>
+                </div> -->
+                    <div class="jobs-archive-left">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <span class="jobs-archive-heading font-bold text-red-600 text-lg">Warning!</span>
+                            </div>
+                            <p class="text-sm text-amber-700 mt-1">
+                                Jobs with completed proofing (status completed or past proofing date) are not archived yet and will not sync. Please archive them to enable syncing and pull new changes.
+                            </p>
+                            <p class="jobs-archive-description text-sm text-red-600">
+                                Jobs having digital download date will automatically sync after 7pm.
+                            </p>
+                        </div>
+                    </div>
 
-                <button
+                <!-- <button
                     type="button"
                     id="open-jobs-needing-archive-modal"
                     class="jobs-archive-banner-btn"
@@ -594,7 +607,14 @@
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                </button>
+                </button> -->
+                 <!-- <button
+                    type="button"
+                    id="open-jobs-needing-archive-modal"
+                    class="jobs-archive-banner-btn"
+                >
+                    <span>View Completed Jobs</span>
+                </button> -->
             </div>
         </div>
         @endif
@@ -765,7 +785,7 @@
     aria-labelledby="jobs-archive-modal-title"
     aria-modal="true"
 >
-    <div class="relative p-4 w-50 max-w-[calc(100vw-2rem)] max-h-full mx-auto">
+    <!-- <div class="relative p-4 w-50 max-w-[calc(100vw-2rem)] max-h-full mx-auto">
         <div class="jobs-archive-modal-panel">
             <div class="jobs-archive-modal-header">
                 <div class="jobs-archive-modal-header-main">
@@ -776,7 +796,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h2 id="jobs-archive-modal-title" class="jobs-archive-modal-title">Proofing Jobs Ready for Archive</h2>
+                        <h2 id="jobs-archive-modal-title" class="jobs-archive-modal-title">Proofing Jobs to Archive</h2>
                         <p class="jobs-archive-modal-subtitle">
                             These proofing jobs must be archived before they can be configured or viewed in Photography.
                         </p>
@@ -873,6 +893,60 @@
                                     </svg>
                                     Archive
                                 </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="jobs-archive-modal-footer">
+                <button type="button" class="jobs-archive-modal-close-btn jobs-archive-modal-close">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div> -->
+
+    <div class="relative p-4 w-50 max-w-[calc(100vw-2rem)] max-h-full mx-auto">
+        <div class="jobs-archive-modal-panel">
+            <div class="jobs-archive-modal-header flex items-center justify-between pb-3 border-b border-gray-200">
+                <div class="jobs-archive-modal-header-main">
+                    <h2 id="jobs-archive-modal-title" class="jobs-archive-modal-title text-xl font-bold text-gray-800">
+                        Proofing Jobs to Archive
+                    </h2>
+                </div>
+            </div>
+
+            <div class="jobs-archive-modal-body py-4">
+                <div id="jobs-needing-archive-list" class="jobs-archive-modal-grid grid gap-3">
+                    @foreach($jobsNeedingArchiving as $job)
+                        @php
+                            $encryptedJobId = Crypt::encryptString((string) $job->ts_job_id);
+                            $proofDueLabel = $job->proof_due
+                                ? Carbon::parse($job->proof_due)->format('d/m/Y g:i A')
+                                : '—';
+                            $jobStatusName = $job->job_status_name
+                                ?? $job->job_status_internal_name
+                                ?? '—';
+                        @endphp
+                        <div
+                            class="archive-job-row jobs-archive-job-card p-4 border rounded-lg bg-white shadow-sm"
+                            data-job-id="{{ $encryptedJobId }}"
+                            data-ts-job-id="{{ $job->ts_job_id }}"
+                        >
+                            <div class="jobs-archive-job-card-top flex items-center justify-between mb-2">
+                                <span class="jobs-archive-job-season text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    Season {{ $job->season_code }}
+                                </span>
+                            </div>
+                            <div class="jobs-archive-job-content space-y-1">
+                                <p class="jobs-archive-job-name text-base font-semibold text-gray-900">{{ $job->ts_jobname }}</p>
+                                <p class="jobs-archive-job-due text-sm text-gray-600">
+                                    Proof due {{ $proofDueLabel }}
+                                </p>
+                                <p class="jobs-archive-job-status text-sm text-gray-500">
+                                    Job status: <span class="font-medium text-gray-700">{{ $jobStatusName }}</span>
+                                </p>
                             </div>
                         </div>
                     @endforeach

@@ -830,6 +830,9 @@ class FranchiseDashboardService
             'status_completed' => 0,
             'status_archived' => 0,
             'status_deleted' => 0,
+            'status_incomplete' => 0,
+            'status_modified' => 0,
+            'status_unlocked' => 0,
             'stage_not_started' => 0,
             'stage_active' => 0,
             'stage_completed' => 0,
@@ -879,8 +882,9 @@ class FranchiseDashboardService
         $deletedId = (int) $this->statusService->deleted;
         $syncId = (int) $this->statusService->sync;
 
+        // Active proofing = jobs whose folders are still being worked on (used for the
+        // "Active Proofing Jobs" KPI/breakdown, separate from the Job Proofing Status chart below).
         $activeProofingStatusIds = array_values(array_filter([$modifiedId, $unlockedId, $incompleteId]));
-        $openedStatusIds = array_values(array_filter(array_merge($activeProofingStatusIds, [$activeId])));
 
         $resolveIds = function (?int $schoolId, ?string $schoolKey) use ($keyToIds): array {
             if ($schoolId !== null && $schoolId > 0) {
@@ -915,6 +919,9 @@ class FranchiseDashboardService
                 'status_completed' => 0,
                 'status_archived' => 0,
                 'status_deleted' => 0,
+                'status_incomplete' => 0,
+                'status_modified' => 0,
+                'status_unlocked' => 0,
                 'stage_not_started' => 0,
                 'stage_active' => 0,
                 'stage_completed' => 0,
@@ -935,6 +942,9 @@ class FranchiseDashboardService
                     'completed' => [],
                     'archived' => [],
                     'deleted' => [],
+                    'incomplete' => [],
+                    'modified' => [],
+                    'unlocked' => [],
                 ],
                 'status_job_details' => [],
                 'stage_jobs' => [
@@ -1061,13 +1071,32 @@ class FranchiseDashboardService
                             'completed' => 0,
                             'archived' => 0,
                             'deleted' => 0,
+                            'incomplete' => 0,
+                            'modified' => 0,
+                            'unlocked' => 0,
                         ];
                     }
                     $rows[$sid]['status_job_details'][$jobId]['synced'] = 1;
-                    if (in_array($statusId, $openedStatusIds, true)) {
+                    // Job Proofing Status breakdown: one bucket per actual job status
+                    // (Active / Archived / Deleted / Incomplete / Modified / Unlocked / None / Completed).
+                    // Previously Active, Incomplete, Modified and Unlocked were all merged into a single
+                    // "opened" bucket and shown as one "Active" segment - each now gets its own count.
+                    if ($statusId === $activeId) {
                         $rows[$sid]['status_opened']++;
                         $rows[$sid]['status_jobs']['opened'][$jobId] = $jobLabel;
                         $rows[$sid]['status_job_details'][$jobId]['opened'] = 1;
+                    } elseif ($statusId === $incompleteId) {
+                        $rows[$sid]['status_incomplete']++;
+                        $rows[$sid]['status_jobs']['incomplete'][$jobId] = $jobLabel;
+                        $rows[$sid]['status_job_details'][$jobId]['incomplete'] = 1;
+                    } elseif ($statusId === $modifiedId) {
+                        $rows[$sid]['status_modified']++;
+                        $rows[$sid]['status_jobs']['modified'][$jobId] = $jobLabel;
+                        $rows[$sid]['status_job_details'][$jobId]['modified'] = 1;
+                    } elseif ($statusId === $unlockedId) {
+                        $rows[$sid]['status_unlocked']++;
+                        $rows[$sid]['status_jobs']['unlocked'][$jobId] = $jobLabel;
+                        $rows[$sid]['status_job_details'][$jobId]['unlocked'] = 1;
                     } elseif ($statusId === $noneId) {
                         $rows[$sid]['status_not_opened']++;
                         $rows[$sid]['status_jobs']['not_opened'][$jobId] = $jobLabel;
@@ -1146,6 +1175,9 @@ class FranchiseDashboardService
                         'completed' => 0,
                         'archived' => 0,
                         'deleted' => 0,
+                        'incomplete' => 0,
+                        'modified' => 0,
+                        'unlocked' => 0,
                     ];
                 }
                 $rows[$sid]['status_job_details'][$jobId]['deleted'] = 1;
@@ -1220,6 +1252,9 @@ class FranchiseDashboardService
             $metrics['status_completed'] += $row['status_completed'];
             $metrics['status_archived'] += $row['status_archived'];
             $metrics['status_deleted'] += $row['status_deleted'];
+            $metrics['status_incomplete'] += $row['status_incomplete'];
+            $metrics['status_modified'] += $row['status_modified'];
+            $metrics['status_unlocked'] += $row['status_unlocked'];
             $metrics['stage_not_started'] += $row['stage_not_started'];
             $metrics['stage_active'] += $row['stage_active'];
             $metrics['stage_completed'] += $row['stage_completed'];
@@ -1340,12 +1375,18 @@ class FranchiseDashboardService
                     'completed' => $r['status_completed'],
                     'archived' => $r['status_archived'],
                     'deleted' => $r['status_deleted'],
+                    'incomplete' => $r['status_incomplete'],
+                    'modified' => $r['status_modified'],
+                    'unlocked' => $r['status_unlocked'],
                     'jobs' => [
                         'opened' => collect($jobValues($r['status_jobs']['opened']))->sort()->values()->all(),
                         'not_opened' => collect($jobValues($r['status_jobs']['not_opened']))->sort()->values()->all(),
                         'completed' => collect($jobValues($r['status_jobs']['completed']))->sort()->values()->all(),
                         'archived' => collect($jobValues($r['status_jobs']['archived']))->sort()->values()->all(),
                         'deleted' => collect($jobValues($r['status_jobs']['deleted']))->sort()->values()->all(),
+                        'incomplete' => collect($jobValues($r['status_jobs']['incomplete']))->sort()->values()->all(),
+                        'modified' => collect($jobValues($r['status_jobs']['modified']))->sort()->values()->all(),
+                        'unlocked' => collect($jobValues($r['status_jobs']['unlocked']))->sort()->values()->all(),
                     ],
                 ])
                 ->values()
@@ -1719,87 +1760,87 @@ class FranchiseDashboardService
      * @param  int|string|null  $seasonId
      * @return array<int, array<string, mixed>>
      */
-    public function getUnsyncedProofingJobsTable(User $user, $seasonId = null): array
-    {
-        $schools = $this->getFranchiseSchools($user);
-        $schoolIds = $schools->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $keyToName = [];
-        foreach ($schools as $school) {
-            $key = trim((string) ($school->schoolkey ?? ''));
-            if ($key !== '') {
-                $keyToName[$key] = (string) $school->name;
-            }
-        }
-        $schoolKeys = array_keys($keyToName);
+    // public function getUnsyncedProofingJobsTable(User $user, $seasonId = null): array
+    // {
+    //     $schools = $this->getFranchiseSchools($user);
+    //     $schoolIds = $schools->pluck('id')->map(fn ($id) => (int) $id)->all();
+    //     $keyToName = [];
+    //     foreach ($schools as $school) {
+    //         $key = trim((string) ($school->schoolkey ?? ''));
+    //         if ($key !== '') {
+    //             $keyToName[$key] = (string) $school->name;
+    //         }
+    //     }
+    //     $schoolKeys = array_keys($keyToName);
 
-        if (empty($schoolIds)) {
-            return [];
-        }
+    //     if (empty($schoolIds)) {
+    //         return [];
+    //     }
 
-        $seasonIds = $this->resolveSeasonIds($seasonId);
-        $noneId = (int) $this->statusService->none;
-        $deletedId = (int) $this->statusService->deleted;
+    //     $seasonIds = $this->resolveSeasonIds($seasonId);
+    //     $noneId = (int) $this->statusService->none;
+    //     $deletedId = (int) $this->statusService->deleted;
 
-        $query = Job::query()
-            ->leftJoin('schools', 'schools.id', '=', 'jobs.school_id')
-            ->leftJoin('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
-            ->where(function (Builder $q) {
-                $q->where('jobs.show_proofing', 0)
-                    ->orWhereNull('jobs.show_proofing');
-            })
-            ->where(function (Builder $q) use ($noneId) {
-                $q->where('jobs.job_status_id', $noneId)
-                    ->orWhereNull('jobs.job_status_id');
-            })
-            ->when($deletedId > 0, fn (Builder $q) => $q->where(function (Builder $statusQ) use ($deletedId) {
-                $statusQ->whereNull('jobs.job_status_id')
-                    ->orWhere('jobs.job_status_id', '!=', $deletedId);
-            }));
+    //     $query = Job::query()
+    //         ->leftJoin('schools', 'schools.id', '=', 'jobs.school_id')
+    //         ->leftJoin('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
+    //         ->where(function (Builder $q) {
+    //             $q->where('jobs.show_proofing', 0)
+    //                 ->orWhereNull('jobs.show_proofing');
+    //         })
+    //         ->where(function (Builder $q) use ($noneId) {
+    //             $q->where('jobs.job_status_id', $noneId)
+    //                 ->orWhereNull('jobs.job_status_id');
+    //         })
+    //         ->when($deletedId > 0, fn (Builder $q) => $q->where(function (Builder $statusQ) use ($deletedId) {
+    //             $statusQ->whereNull('jobs.job_status_id')
+    //                 ->orWhere('jobs.job_status_id', '!=', $deletedId);
+    //         }));
 
-        $this->constrainJobsToSchools($query, $schoolIds, $schoolKeys);
-        $query->when(!empty($seasonIds), fn (Builder $q) => $q->whereIn('jobs.ts_season_id', $seasonIds));
+    //     $this->constrainJobsToSchools($query, $schoolIds, $schoolKeys);
+    //     $query->when(!empty($seasonIds), fn (Builder $q) => $q->whereIn('jobs.ts_season_id', $seasonIds));
 
-        $jobs = $query
-            ->select([
-                'jobs.id',
-                'jobs.ts_job_id',
-                'jobs.ts_jobkey',
-                'jobs.ts_jobname',
-                'jobs.school_id',
-                'jobs.ts_schoolkey',
-                'schools.name as school_name',
-                'seasons.code as season_code',
-            ])
-            ->orderBy('schools.name')
-            ->orderBy('jobs.ts_jobname')
-            ->get();
+    //     $jobs = $query
+    //         ->select([
+    //             'jobs.id',
+    //             'jobs.ts_job_id',
+    //             'jobs.ts_jobkey',
+    //             'jobs.ts_jobname',
+    //             'jobs.school_id',
+    //             'jobs.ts_schoolkey',
+    //             'schools.name as school_name',
+    //             'seasons.code as season_code',
+    //         ])
+    //         ->orderBy('schools.name')
+    //         ->orderBy('jobs.ts_jobname')
+    //         ->get();
 
-        $configuredJobIds = $this->getPhotographyConfiguredJobIds(
-            $jobs->pluck('ts_job_id')->map(fn ($id) => (int) $id)->all()
-        );
+    //     $configuredJobIds = $this->getPhotographyConfiguredJobIds(
+    //         $jobs->pluck('ts_job_id')->map(fn ($id) => (int) $id)->all()
+    //     );
 
-        $rows = [];
-        foreach ($jobs as $job) {
-            $schoolName = trim((string) ($job->school_name ?? ''));
-            if ($schoolName === '') {
-                $key = trim((string) ($job->ts_schoolkey ?? ''));
-                $schoolName = $key !== '' ? ($keyToName[$key] ?? $key) : '—';
-            }
+    //     $rows = [];
+    //     foreach ($jobs as $job) {
+    //         $schoolName = trim((string) ($job->school_name ?? ''));
+    //         if ($schoolName === '') {
+    //             $key = trim((string) ($job->ts_schoolkey ?? ''));
+    //             $schoolName = $key !== '' ? ($keyToName[$key] ?? $key) : '—';
+    //         }
 
-            $jobId = (int) $job->ts_job_id;
-            $rows[] = [
-                'id' => (int) $job->id,
-                'ts_job_id' => $jobId,
-                'ts_jobkey' => (string) $job->ts_jobkey,
-                'ts_jobname' => (string) $job->ts_jobname,
-                'school_name' => $schoolName,
-                'season_code' => (string) ($job->season_code ?? ''),
-                'photography_configured' => isset($configuredJobIds[$jobId]),
-            ];
-        }
+    //         $jobId = (int) $job->ts_job_id;
+    //         $rows[] = [
+    //             'id' => (int) $job->id,
+    //             'ts_job_id' => $jobId,
+    //             'ts_jobkey' => (string) $job->ts_jobkey,
+    //             'ts_jobname' => (string) $job->ts_jobname,
+    //             'school_name' => $schoolName,
+    //             'season_code' => (string) ($job->season_code ?? ''),
+    //             'photography_configured' => isset($configuredJobIds[$jobId]),
+    //         ];
+    //     }
 
-        return $rows;
-    }
+    //     return $rows;
+    // }
 
     /**
      * Job IDs that are photography-configured:

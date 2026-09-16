@@ -92,6 +92,7 @@ class User extends Authenticatable
         'password_expiry',
         'password_expiry_date',
         'is_setup_complete',
+        'send_invitation_with_proofing',
         'status',
         'disabled',
     ];
@@ -119,6 +120,7 @@ class User extends Authenticatable
             'activation_date' => 'datetime',
             'expiry_date' => 'datetime',
             'password_expiry_date' => 'datetime',
+            'send_invitation_with_proofing' => 'boolean',
         ];
     }
 

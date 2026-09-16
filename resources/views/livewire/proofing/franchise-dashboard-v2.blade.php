@@ -1,4 +1,4 @@
-﻿@php
+@php
     $pct = function (int $value, int $total): int {
         return $total > 0 ? (int) round(($value / $total) * 100) : 0;
     };
@@ -36,6 +36,9 @@
     $statusCompleted = max(0, (int) ($metrics['status_completed'] ?? 0));
     $statusArchived = max(0, (int) ($metrics['status_archived'] ?? 0));
     $statusDeleted = max(0, (int) ($metrics['status_deleted'] ?? 0));
+    $statusIncomplete = max(0, (int) ($metrics['status_incomplete'] ?? 0));
+    $statusModified = max(0, (int) ($metrics['status_modified'] ?? 0));
+    $statusUnlocked = max(0, (int) ($metrics['status_unlocked'] ?? 0));
     $stageNotStarted = max(0, (int) ($metrics['stage_not_started'] ?? 0));
     $stageActive = max(0, (int) ($metrics['stage_active'] ?? 0));
     $stageCompleted = max(0, (int) ($metrics['stage_completed'] ?? 0));
@@ -45,34 +48,49 @@
     $foldersUnlockedModified = max(0, (int) ($metrics['folders_unlocked_modified'] ?? 0));
 
     $stageTotal = $stageNotStarted + $stageActive + $stageCompleted + $stageCatchup;
-    $statusMixTotal = $statusOpened + $statusNotOpened + $statusCompleted + $statusArchived + $statusDeleted;
+    $statusMixTotal = $statusOpened + $statusNotOpened + $statusCompleted + $statusArchived + $statusDeleted + $statusIncomplete + $statusModified + $statusUnlocked;
     $syncedJobsLabel = ($synced === 1) ? 'Synced Job' : 'Synced Jobs';
     $deletedJobsLabel = ($statusDeleted === 1) ? 'Deleted Job' : 'Deleted Jobs';
+    $IncompletedJobsLabel = ($statusIncomplete === 1) ? 'Incomplete Job' : 'Incomplete Jobs';
+    $ModifiedJobsLabel = ($statusModified === 1) ? 'Modified Job' : 'Modified Jobs';
 
     // Rainbow palette from MSP chart colour reference (left → right).
     $chartPalette = [
-        '#E63B34', // red
-        '#F36C3D', // orange-red
-        '#FBAC3D', // orange
+        '#ee3124', // red
+        '#f99b1c', // orange-red
+        '#fdb913', // orange
         '#FED33D', // golden yellow
-        '#FDF63E', // bright yellow
-        '#A1D049', // lime
-        '#82C341', // light green
-        '#4EB85B', // medium green
+        '#fff200', // bright yellow
+        '#b5d334', // lime
+        '#4cc0ad', // light green
+        '#07a88f', // medium green
         '#48BCB3', // teal
         '#00B9D5', // cyan
-        '#0287D0', // medium blue
-        '#0065A1', // deep blue
-        '#004485', // navy
+        '#00b4df', // medium blue
+        '#005b8e', // deep blue
+        '#053775', // navy
     ];
 
     $statusLegend = [
-        ['label' => 'Opened', 'value' => $statusOpened, 'color' => $chartPalette[10]],
-        ['label' => 'Not Opened', 'value' => $statusNotOpened, 'color' => $chartPalette[9]],
-        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => $chartPalette[7]],
-        ['label' => 'Archived', 'value' => $statusArchived, 'color' => $chartPalette[12]],
+        ['label' => 'Active', 'value' => $statusOpened, 'color' => $chartPalette[7]],
+        ['label' => 'Archived', 'value' => $statusArchived, 'color' => $chartPalette[2]],
         ['label' => 'Deleted', 'value' => $statusDeleted, 'color' => $chartPalette[0]],
+        ['label' => 'Incomplete', 'value' => $statusIncomplete, 'color' => $chartPalette[11]],
+        ['label' => 'Modified', 'value' => $statusModified, 'color' => $chartPalette[1]],
+        ['label' => 'Unlocked', 'value' => $statusUnlocked, 'color' => $chartPalette[5]],
+        ['label' => 'None', 'value' => $statusNotOpened, 'color' => $chartPalette[9]],
+        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => $chartPalette[12]],
     ];
+    $statusColorMap = [];
+    foreach ($statusLegend as $legendItem) {
+        $statusColorMap[strtolower($legendItem['label'])] = $legendItem['color'];
+    }
+    // The table's job_status column uses the plain "Completed" wording, while the
+    // chart legend spells it out as "Completed (Pending Archived)" - map both.
+    if (isset($statusColorMap['completed (pending archived)'])) {
+        $statusColorMap['completed'] = $statusColorMap['completed (pending archived)'];
+    }
+
     $photographyLegend = [
         ['label' => 'Configured', 'value' => $photographyConfigured, 'color' => $chartPalette[0]],
         ['label' => 'Not Configured', 'value' => $photographyNotConfigured, 'color' => $chartPalette[10]],
@@ -182,7 +200,7 @@
     }
 
     .sd-season label {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #5B6575;
         margin: 0;
@@ -260,19 +278,34 @@
 
     .sd-kpi-card {
         position: relative;
-        overflow: hidden;
+        overflow: visible;
         display: flex;
-        align-items: flex-start;
-        gap: 0.9rem;
+        flex-direction: column;
         background: #fff;
         border: 1px solid #E8EDF3;
         border-radius: 16px;
         padding: 1.1rem 1.15rem;
         box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-        min-height: 6.5rem;
+        min-height: 5.5rem;
         height: 100%;
         box-sizing: border-box;
         transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    /* Icon + label grouped together on the left (vertically centred, close together),
+       count badge on the right - all in one row. */
+    .sd-kpi-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .sd-kpi-icon-label {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
     }
 
     .sd-kpi-card::after {
@@ -287,11 +320,11 @@
         pointer-events: none;
     }
 
-    .sd-kpi-card.is-blue::after { background: #00B9D5; }
-    .sd-kpi-card.is-green::after { background: #82C341; }
+    /* .sd-kpi-card.is-blue::after { background: #00B9D5; }
+    .sd-kpi-card.is-green::after { background: #4cc0ad; }
     .sd-kpi-card.is-teal::after { background: #48BCB3; }
-    .sd-kpi-card.is-purple::after { background: #4EB85B; }
-    .sd-kpi-card.is-orange::after { background: #FBAC3D; }
+    .sd-kpi-card.is-purple::after { background: #07a88f; }
+    .sd-kpi-card.is-orange::after { background: #FBAC3D; } */
 
     .sd-kpi-icon {
         /* Match /proofing/{job} task tile icons: solid square, white glyph */
@@ -308,14 +341,48 @@
         line-height: 1;
         padding: 0.75rem;
         color: #fff;
+        box-sizing: border-box;
     }
 
     /* KPI icon colours from MSP rainbow bar palette */
-    .sd-kpi-card.is-blue .sd-kpi-icon { background: #0287D0; color: #fff; }      /* Photography Jobs */
-    .sd-kpi-card.is-green .sd-kpi-icon { background: #4EB85B; color: #fff; }
-    .sd-kpi-card.is-teal .sd-kpi-icon { background: #48BCB3; color: #fff; }      /* Total Schools */
-    .sd-kpi-card.is-purple .sd-kpi-icon { background: #4EB85B; color: #fff; }    /* Active Proofing Jobs */
+    .sd-kpi-card.is-blue .sd-kpi-icon { background: #00b4df; color: #fff; }      
+    .sd-kpi-card.is-green .sd-kpi-icon { background: #07a88f; color: #fff; }
+    .sd-kpi-card.is-teal .sd-kpi-icon { background: #48BCB3; color: #fff; }     
+    .sd-kpi-card.is-purple .sd-kpi-icon { background: #07a88f; color: #fff; }    
     .sd-kpi-card.is-orange .sd-kpi-icon { background: #FBAC3D; color: #fff; }
+
+    /* Count badge - sits beside the icon on the top row, same colour as the icon
+       (mirrors the badge-pill on the /proofing/{job} task tiles). */
+    .sd-kpi-count-badge {
+        flex-shrink: 0;
+        min-width: 2rem;
+        height: 2rem;
+        padding: 0 0.65rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(16, 24, 40, 0.18);
+        box-sizing: border-box;
+    }
+
+    .sd-kpi-card.is-blue .sd-kpi-count-badge { background: #00b4df; }
+    .sd-kpi-card.is-green .sd-kpi-count-badge { background: #07a88f; }
+    .sd-kpi-card.is-teal .sd-kpi-count-badge { background: #48BCB3; }
+    .sd-kpi-card.is-purple .sd-kpi-count-badge { background: #07a88f; }
+    .sd-kpi-card.is-orange .sd-kpi-count-badge { background: #FBAC3D; }
+
+    /* Label sits below the icon/badge row, like the h5.mb-0.mt-3 on the task tiles. */
+    .sd-kpi-tile-label {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
 
     .sd-kpi-body { min-width: 0; }
     .sd-kpi-label {
@@ -377,7 +444,7 @@
     .sd-charts-bottom .sd-panel {
         height: auto;
         max-height: none;
-        min-height: 22rem;
+        min-height: 20rem;
         overflow: hidden;
     }
 
@@ -397,34 +464,116 @@
     }
 
     .sd-pie-layout .sd-chart-box {
-        height: 14rem;
+        height: 13rem;
         width: 100%;
-        max-width: 16rem;
+        max-width: 14rem;
         margin: 0 auto;
     }
 
+    @media (min-width: 640px) {
+        .sd-pie-layout .sd-chart-box {
+            height: 15rem;
+            max-width: 15rem;
+        }
+    }
+
     .sd-pie-layout .sd-progress-list {
-        gap: 0.65rem;
+        row-gap: 0.5rem;
+    }
+
+    .sd-donut-card.is-teal .sd-progress-list {
+        grid-template-rows: repeat(1, auto);
     }
 
     .fd-jobs-panel {
         margin-top: 0.25rem;
         margin-bottom: 1.25rem;
+        background: #fff;
+        border: 1px solid #c2cfd6;
+        border-radius: 0.25rem;
+        padding: 0;
+        box-shadow: none;
+        overflow: hidden;
     }
 
     .fd-jobs-panel .sd-panel-head {
         margin-bottom: 1rem;
     }
 
+    /* Header box above the Proofing Jobs table - mirrors the "Your Synced (Active)
+       Jobs" panel header on /proofing (proofing-home.blade.php): light background,
+       bold title + a plain-language summary line, and a job-name search box. */
+    .fd-jobs-info-box {
+        background: #f0f3f5;
+        border: 0;
+        border-bottom: 1px solid #c2cfd6;
+        border-radius: 0;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 0;
+    }
+
+    .fd-jobs-info-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .fd-jobs-info-line .sd-badge {
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .fd-jobs-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1A2B4A;
+    }
+
+    .fd-jobs-count-text {
+        font-size: 0.85rem;
+        color: #5B6575;
+    }
+
+    .fd-jobs-count-text strong {
+        color: #1A2B4A;
+    }
+
+    .fd-jobs-search-row {
+        width: 100%;
+    }
+
+    .fd-jobs-search-input {
+        width: 100%;
+        max-width: 28rem;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #c2cfd6;
+        border-radius: 0;
+        background: #fff;
+        color: #3e515b;
+        font-size: 0.875rem;
+        box-sizing: border-box;
+    }
+
+    .fd-jobs-search-input:focus {
+        outline: none;
+        border-color: #60e0ff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 179, 223, 0.25);
+    }
+
     .fd-jobs-hint {
-        margin: 0 0 0.75rem;
-        font-size: 0.8rem;
+        margin: 0.85rem 1.25rem 0.75rem;
+        font-size: 0.85rem;
         color: #7A8699;
     }
 
     .fd-jobs-table-wrap {
         width: 100%;
         min-width: 0;
+        padding: 0 1.25rem 1.25rem;
+        box-sizing: border-box;
     }
 
     .fd-jobs-table-wrap .dataTables_wrapper {
@@ -461,7 +610,7 @@
         align-items: center;
         gap: 0.45rem;
         margin: 0;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #5B6575;
         white-space: nowrap;
@@ -470,11 +619,18 @@
     .fd-jobs-toolbar .dataTables_length select {
         min-width: 4.5rem;
         height: 2rem;
-        padding: 0.2rem 0.45rem;
-        border: 1px solid #D0D7E2;
-        border-radius: 0.4rem;
-        background: #fff;
-        color: #1A2B4A;
+        padding: 0.2rem 1.6rem 0.2rem 0.45rem;
+        border: 1px solid #c2cfd6;
+        border-radius: 0;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%233e515b' d='M4.2 6h7.6a.6.6 0 0 1 .46.98l-3.8 4.56a.6.6 0 0 1-.92 0l-3.8-4.56A.6.6 0 0 1 4.2 6z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        background-size: 0.7rem;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        color: #3e515b;
     }
 
     .fd-jobs-toolbar .dataTables_filter input {
@@ -483,10 +639,10 @@
         max-width: 100%;
         margin-left: 0 !important;
         padding: 0.25rem 0.65rem;
-        border: 1px solid #D0D7E2;
-        border-radius: 0.4rem;
+        border: 1px solid #c2cfd6;
+        border-radius: 0;
         background: #fff;
-        color: #1A2B4A;
+        color: #3e515b;
     }
 
     .fd-jobs-scroll {
@@ -500,47 +656,136 @@
 
     .fd-jobs-footer {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
         justify-content: center;
-        gap: 0.75rem 1rem;
-        margin-top: 0.85rem;
         position: relative;
+        margin-top: 1rem;
+        padding: 0.5rem 0;
+        width: 100%;
     }
 
     .fd-jobs-footer .dataTables_info,
     .fd-jobs-footer .fd-jobs-info {
-        float: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        text-align: left !important;
         position: absolute;
         left: 0;
         top: 50%;
         transform: translateY(-50%);
+        font-size: 0.85rem;
+        color: #5B6575;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .fd-jobs-footer .dataTables_paginate,
     .fd-jobs-footer .fd-jobs-paginate {
-        float: none !important;
+        display: inline-flex !important;
         margin: 0 auto !important;
         padding: 0 !important;
-        width: auto !important;
-        text-align: center !important;
+        float: none !important;
+        border: 1px solid #d0d7de !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item,
+    .fd-jobs-footer .dataTables_paginate .paginate_button {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: stretch !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item:not(:last-child) .page-link,
+    .fd-jobs-footer .dataTables_paginate .paginate_button:not(:last-child) a,
+    .fd-jobs-footer .dataTables_paginate > a:not(:last-child),
+    .fd-jobs-footer .dataTables_paginate > span > a:not(:last-child),
+    .fd-jobs-footer .dataTables_paginate > span > .paginate_button:not(:last-child) {
+        border-right: 1px solid #d0d7de !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-link,
+    .fd-jobs-footer .dataTables_paginate .paginate_button a,
+    .fd-jobs-footer .dataTables_paginate a {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.5rem 1rem !important;
+        min-width: 2.5rem !important;
+        height: 100% !important;
+        font-size: 0.85rem !important;
+        font-weight: 400 !important;
+        color: #0f4c67 !important;
+        background: #ffffff !important;
+        border-top: 0 !important;
+        border-bottom: 0 !important;
+        border-left: 0 !important;
+        border-radius: 0 !important;
+        text-decoration: none !important;
+        transition: background-color 0.15s ease, color 0.15s ease !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item:not(.active):not(.disabled) .page-link:hover,
+    .fd-jobs-footer .dataTables_paginate .paginate_button:not(.current):not(.disabled) a:hover {
+        background-color: #f0f4f8 !important;
+        color: #005b94 !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.active .page-link,
+    .fd-jobs-footer .dataTables_paginate .paginate_button.current,
+    .fd-jobs-footer .dataTables_paginate .paginate_button.current a {
+        background-color: #005b94 !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        border-radius: 0 !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.disabled .page-link,
+    .fd-jobs-footer .dataTables_paginate .paginate_button.disabled,
+    .fd-jobs-footer .dataTables_paginate .paginate_button.disabled a {
+        color: #9aa8b3 !important;
+        background-color: #ffffff !important;
+        cursor: default !important;
+        opacity: 0.8 !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.previous .page-link,
+    .fd-jobs-footer .dataTables_paginate .paginate_button.previous a {
+        color: #0f4c67 !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.next .page-link,
+    .fd-jobs-footer .dataTables_paginate .paginate_button.next a {
+        color: #0f4c67 !important;
     }
 
     @media (max-width: 768px) {
         .fd-jobs-footer {
             flex-direction: column;
-            justify-content: center;
+            gap: 0.75rem;
         }
-
         .fd-jobs-footer .dataTables_info,
         .fd-jobs-footer .fd-jobs-info {
             position: static;
             transform: none;
-            text-align: center !important;
+            text-align: center;
         }
     }
 
@@ -549,71 +794,71 @@
         width: 100% !important;
         border-collapse: collapse !important;
         border-spacing: 0 !important;
-        font-size: 0.8rem;
-        color: #1A2B4A;
+        font-size: 0.85rem;
+        color: #3e515b;
         margin: 0 !important;
-        border: 1px solid #E8EDF3 !important;
+        border: 1px solid #c2cfd6 !important;
         background: #fff;
     }
 
     .fd-jobs-table.dataTable.no-footer {
-        border-bottom: 1px solid #E8EDF3 !important;
+        border-bottom: 1px solid #c2cfd6 !important;
     }
 
     .fd-jobs-table thead th,
     .fd-jobs-table.dataTable thead th {
-        background: #F5F8FC !important;
-        border: 1px solid #E8EDF3 !important;
-        border-top: 0 !important;
-        padding: 0.65rem 0.7rem;
+        background: #fff !important;
+        border: 1px solid #c2cfd6 !important;
+        border-bottom: 2px solid #c2cfd6 !important;
+        padding: 0.3rem 0.5rem !important;
         text-align: left;
         white-space: nowrap;
         font-weight: 700;
-        color: #5B6575;
+        color: #808080;
         vertical-align: middle;
     }
 
-    .fd-jobs-table thead th:first-child,
-    .fd-jobs-table.dataTable thead th:first-child {
-        border-left: 0 !important;
+    /* DataTables (bootstrap4 integration) auto-adds its own up/down sort arrows via
+       :before/:after on .sorting/.sorting_asc/.sorting_desc, reserving 30px/20px of
+       right padding for them. We already show a fa-sort icon to the left of each
+       heading, so hide the library's right-side arrows and reclaim that padding. */
+    .fd-jobs-table.dataTable thead > tr > th.sorting,
+    .fd-jobs-table.dataTable thead > tr > th.sorting_asc,
+    .fd-jobs-table.dataTable thead > tr > th.sorting_desc,
+    .fd-jobs-table.dataTable.table-sm > thead > tr > th {
+        padding-right: 0.5rem !important;
     }
 
-    .fd-jobs-table thead th:last-child,
-    .fd-jobs-table.dataTable thead th:last-child {
-        border-right: 0 !important;
+    .fd-jobs-table.dataTable thead .sorting:before,
+    .fd-jobs-table.dataTable thead .sorting:after,
+    .fd-jobs-table.dataTable thead .sorting_asc:before,
+    .fd-jobs-table.dataTable thead .sorting_asc:after,
+    .fd-jobs-table.dataTable thead .sorting_desc:before,
+    .fd-jobs-table.dataTable thead .sorting_desc:after,
+    .fd-jobs-table.dataTable thead .sorting_asc_disabled:before,
+    .fd-jobs-table.dataTable thead .sorting_asc_disabled:after,
+    .fd-jobs-table.dataTable thead .sorting_desc_disabled:before,
+    .fd-jobs-table.dataTable thead .sorting_desc_disabled:after {
+        content: none !important;
+        display: none !important;
     }
 
     .fd-jobs-table tbody td,
     .fd-jobs-table.dataTable tbody td {
-        border: 1px solid #E8EDF3 !important;
-        padding: 0.55rem 0.7rem;
+        border: 1px solid #c2cfd6 !important;
+        padding: 0.3rem 0.5rem;
         vertical-align: top;
         background: #fff;
     }
 
-    .fd-jobs-table tbody td:first-child,
-    .fd-jobs-table.dataTable tbody td:first-child {
-        border-left: 0 !important;
-    }
-
-    .fd-jobs-table tbody td:last-child,
-    .fd-jobs-table.dataTable tbody td:last-child {
-        border-right: 0 !important;
-    }
-
-    .fd-jobs-table tbody tr:last-child td,
-    .fd-jobs-table.dataTable tbody tr:last-child td {
-        border-bottom: 0 !important;
-    }
-
     .fd-jobs-table tbody tr.is-completed td {
-        background: #F1F8E9;
+        background: #d0eeea;
     }
 
-    .fd-jobs-table .is-incomplete {
+    /* .fd-jobs-table .is-incomplete {
         color: #B71C1C;
         font-weight: 700;
-    }
+    } */
 
     .fd-jobs-table .is-photo-configured {
         color: #2E7D32;
@@ -626,17 +871,17 @@
     }
 
     .fd-jobs-table .is-date-start.is-due {
-        color: #2E7D32;
+        color: #07A88F;
         font-weight: 700;
     }
 
     .fd-jobs-table .is-date-warning.is-due {
-        color: #EF6C00;
+        color: #fda900;
         font-weight: 700;
     }
 
     .fd-jobs-table .is-date-due.is-due {
-        color: #C62828;
+        color: #ED2124;
         font-weight: 700;
     }
 
@@ -649,31 +894,10 @@
     .fd-jobs-table-wrap .dataTables_wrapper .dataTables_filter,
     .fd-jobs-table-wrap .dataTables_wrapper .dataTables_info,
     .fd-jobs-table-wrap .dataTables_wrapper .dataTables_paginate {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: #5B6575;
     }
 
-    .fd-jobs-footer .dataTables_paginate .paginate_button {
-        padding: 0.25rem 0.55rem !important;
-        margin: 0 0.1rem !important;
-        border-radius: 0.35rem !important;
-        border: 1px solid #D0D7E2 !important;
-        background: #fff !important;
-        color: #5B6575 !important;
-    }
-
-    .fd-jobs-footer .dataTables_paginate .paginate_button.current,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.current:hover {
-        background: #1E88E5 !important;
-        border-color: #1E88E5 !important;
-        color: #fff !important;
-    }
-
-    .fd-jobs-footer .dataTables_paginate .paginate_button.disabled,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.disabled:hover {
-        opacity: 0.45;
-        cursor: default !important;
-    }
 
     .fd-jobs-table thead .fa-play { color: #43A047; }
     .fd-jobs-table thead .fa-circle { color: #FB8C00; }
@@ -710,7 +934,7 @@
     }
 
     .sd-detail-panel .sd-panel-head {
-        margin-bottom: 0.9rem;
+        margin-bottom: 0.85rem;
         align-items: flex-start;
     }
 
@@ -745,7 +969,7 @@
         top: 50%;
         transform: translateY(-50%);
         color: #9AA3B2;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         pointer-events: none;
     }
 
@@ -850,7 +1074,7 @@
         background: #F8FAFC;
         color: #1A2B4A;
         border-radius: 9999px;
-        padding: 0.38rem 0.9rem;
+        padding: 0.38rem 0.85rem;
         font-size: 0.76rem;
         font-weight: 600;
         cursor: pointer;
@@ -914,7 +1138,7 @@
     #fd-proofing-status-card.sd-detail-panel .fd-status-school-title,
     #fd-proofing-stage-card.sd-detail-panel .fd-stage-school-title {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 700;
         color: #1A2B4A;
         line-height: 1.3;
@@ -955,7 +1179,7 @@
 
     #fd-proofing-status-card.sd-detail-panel .fd-category-jobs,
     #fd-proofing-stage-card.sd-detail-panel .fd-category-jobs {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         padding-left: 1rem;
         margin: 0;
     }
@@ -965,9 +1189,8 @@
     }
 
     .sd-badge.is-status {
-        background: #E3F2FD;
-        border-color: #BBDEFB;
-        color: #1565C0;
+        background: #ffffffff;
+        color: #5B6575;
     }
 
     .sd-clickable:hover {
@@ -1087,15 +1310,18 @@
     }
 
     .sd-progress-summary span {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: #7A8699;
         font-weight: 600;
     }
 
     .sd-progress-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.9rem;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(4, auto);
+        grid-auto-flow: column;
+        column-gap: 1.1rem;
+        row-gap: 0.6rem;
         flex: 1;
         min-height: 0;
     }
@@ -1105,7 +1331,7 @@
         align-items: center;
         gap: 0.5rem;
         margin-bottom: 0.35rem;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         min-width: 0;
     }
 
@@ -1199,7 +1425,7 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
     .sd-activity-copy {
@@ -1377,7 +1603,7 @@
 
     .fd-activity-section h6 {
         margin: 0 0 0.65rem;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 700;
         color: #1A2B4A;
     }
@@ -1429,7 +1655,7 @@
     .fd-job-school-title span {
         color: #7A8699;
         font-weight: 500;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .fd-job-categories {
@@ -1475,7 +1701,7 @@
     .fd-job-empty {
         margin: 0;
         color: #9AA3B2;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-style: italic;
     }
 
@@ -1612,7 +1838,7 @@
 
     .fd-folder-job-name {
         margin: 0 0 0.55rem;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1A2B4A;
         white-space: normal;
@@ -1707,7 +1933,7 @@
 
     #fdFoldersModal .fd-folder-job-name {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1A2B4A;
     }
@@ -1749,7 +1975,7 @@
     }
 
     #fdFoldersModal .fd-folder-job-counts li.is-completed {
-        background: #E8F5E9;
+        background: #d0eeea;
         border-color: #C8E6C9;
         color: #558B2F;
     }
@@ -1994,7 +2220,7 @@
     }
 
     #fdSchoolsModal .fd-schools-filter-meta {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: #6B7280;
         white-space: nowrap;
     }
@@ -2072,7 +2298,7 @@
     #fdSchoolsModal .fd-school-card-title span {
         color: #5B6575;
         font-weight: 500;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     #fdSchoolsModal .fd-school-meta {
@@ -2083,7 +2309,7 @@
         flex-direction: column;
         gap: 0.2rem;
         color: #4B5563;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     #fdSchoolsModal .fd-school-meta strong {
@@ -2128,7 +2354,7 @@
 
     #fd-proofing-stage-card .fd-stage-job-name {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1A2B4A;
         white-space: normal;
@@ -2175,7 +2401,7 @@
     }
 
     #fd-proofing-stage-card .fd-stage-job-counts li.is-completed {
-        background: #E8F5E9;
+        background: #d0eeea;
         border-color: #C8E6C9;
         color: #558B2F;
     }
@@ -2359,7 +2585,7 @@
     #fdActiveProofingModal .fd-active-job-name,
     #fd-proofing-status-card .fd-status-job-name {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1A2B4A;
         white-space: normal;
@@ -2491,7 +2717,7 @@
     }
 
     #fd-proofing-status-card .fd-status-job-counts li.is-completed {
-        background: #E8F5E9;
+        background: #d0eeea;
         border-color: #C8E6C9;
         color: #558B2F;
     }
@@ -2582,6 +2808,16 @@
         .sd-kpi-value {
             font-size: 1.5rem;
         }
+
+        .sd-kpi-count-badge {
+            min-width: 2.25rem;
+            height: 2.25rem;
+            font-size: 1.15rem;
+        }
+
+        .sd-kpi-tile-label {
+            font-size: 1.1rem;
+        }
     }
 </style>
 
@@ -2622,7 +2858,7 @@
         </div>
     </div>
 
-    <div class="sd-season-pills">
+    {{-- <div class="sd-season-pills">
         <a
             href="{{ route('franchise.dashboard') }}"
             class="sd-season-pill {{ $selectedSeasonId === '' ? 'is-active' : '' }}"
@@ -2637,23 +2873,24 @@
                 {{ $season->code }}
             </a>
         @endforeach
-    </div>
+    </div> --}}
 
     <div wire:key="fd-metrics-{{ $selectedSeasonId === '' ? 'all' : $selectedSeasonId }}">
     <script type="application/json" id="franchise-dashboard-chart-data">@json($chartPayload)</script>
 
     <div class="sd-kpi-grid">
         <div
-            class="sd-kpi-card is-teal sd-clickable cursor-pointer"
+            class="sd-kpi-card is-orange sd-clickable cursor-pointer"
             title="Click for school list"
             data-modal-target="fdSchoolsModal"
             data-modal-toggle="fdSchoolsModal"
         >
-            <span class="sd-kpi-icon"><x-icon icon="university" /></span>
-            <div class="sd-kpi-body">
-                <p class="sd-kpi-label">Total Schools</p>
-                <p class="sd-kpi-value">{{ number_format($schoolsCount) }}</p>
-                <p class="sd-kpi-meta">In this franchise</p>
+            <div class="sd-kpi-top-row">
+                <div class="sd-kpi-icon-label">
+                    <span class="sd-kpi-icon"><x-icon icon="university" /></span>
+                    <span class="sd-kpi-tile-label" style="color:#fbac3d">Total Schools</span>
+                </div>
+                <span class="sd-kpi-count-badge">{{ number_format($schoolsCount) }}</span>
             </div>
         </div>
 
@@ -2677,11 +2914,12 @@
             data-modal-target="fdPhotographyModal"
             data-modal-toggle="fdPhotographyModal"
         >
-            <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-            <div class="sd-kpi-body">
-                <p class="sd-kpi-label">Photography Jobs</p>
-                <p class="sd-kpi-value">{{ number_format($photographyTotal) }}</p>
-                <p class="sd-kpi-meta">{{ number_format($photographyConfigured) }} Configured Jobs • {{ number_format($photographyNotConfigured) }} Not Configured Jobs</p>
+            <div class="sd-kpi-top-row">
+                <div class="sd-kpi-icon-label">
+                    <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
+                    <span class="sd-kpi-tile-label" style="color:#00b4df">Photography Jobs</span>
+                </div>
+                <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
             </div>
         </div>
 
@@ -2691,11 +2929,12 @@
             data-modal-target="fdActiveProofingModal"
             data-modal-toggle="fdActiveProofingModal"
         >
-            <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
-            <div class="sd-kpi-body">
-                <p class="sd-kpi-label">Active Proofing Jobs</p>
-                <p class="sd-kpi-value">{{ number_format($activeProofing) }}</p>
-                <p class="sd-kpi-meta">{{ $selectedSeasonLabel }}</p>
+            <div class="sd-kpi-top-row">
+                <div class="sd-kpi-icon-label">
+                    <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
+                    <span class="sd-kpi-tile-label" style="color:#07a88f">Active Proofing Jobs</span>
+                </div>
+                <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
             </div>
         </div>
     </div>
@@ -2710,10 +2949,10 @@
             >
                 <div class="sd-panel-head">
                     <h6 class="sd-card-title">
-                        <span class="sd-card-title-icon is-teal"><x-icon icon="camera" /></span>
+                        <!-- <span class="sd-card-title-icon is-teal"><x-icon icon="camera" /></span> -->
                         School Photography Status
                     </h6>
-                    <span class="sd-badge">{{ $selectedSeasonLabel }}</span>
+                    <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
                 </div>
                 @if ($photographyTotal === 0)
                     <p class="sd-empty">No photography jobs found.</p>
@@ -2748,10 +2987,10 @@
             <div class="sd-panel sd-donut-card is-blue">
                 <div class="sd-panel-head">
                     <h6 class="sd-card-title">
-                        <span class="sd-card-title-icon is-blue"><x-icon icon="shield" /></span>
+                        <!-- <span class="sd-card-title-icon is-blue"><x-icon icon="shield" /></span> -->
                         Job Proofing Status
                     </h6>
-                    <span class="sd-badge is-status">{{ $selectedSeasonLabel }}</span>
+                    <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
                 </div>
                 @if ($statusMixTotal === 0)
                     <p class="sd-empty">No proofing status data found.</p>
@@ -2773,7 +3012,7 @@
                                 <div class="sd-progress-row">
                                     <div class="sd-progress-meta">
                                         <span class="dot" style="background: {{ $item['color'] }};"></span>
-                                        <span class="lbl">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
+                                        <span class="lbl" style="color: {{ $item['color'] }};">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
                                         <span class="pct">{{ $itemPct }}%</span>
                                     </div>
                                     <div class="sd-progress-track">
@@ -2794,12 +3033,24 @@
     @endphp
 
     <section class="sd-panel fd-jobs-panel">
-        <div class="sd-panel-head">
-            <h6 class="sd-card-title">
-                <span class="sd-card-title-icon is-blue"><x-icon icon="table" /></span>
-                Synced / Deleted Proofing Jobs
-            </h6>
-            <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
+        <div class="fd-jobs-info-box">
+            <div class="fd-jobs-info-line">
+                <h5 class="fd-jobs-title">Proofing Jobs</h5>
+                <span class="fd-jobs-count-text">
+                    - There are <strong>{{ number_format($synced) }}</strong> synced out of
+                    <strong>{{ number_format(count($proofingJobsTable)) }}</strong> jobs shown for {{ $selectedSeasonLabel }}.
+                </span>
+                <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
+            </div>
+            <div class="fd-jobs-search-row">
+                <input
+                    type="search"
+                    id="fd-proofing-jobs-search"
+                    class="fd-jobs-search-input"
+                    placeholder="Start typing a Job name to filter by..."
+                    autocomplete="off"
+                >
+            </div>
         </div>
         <p class="fd-jobs-hint">Click headings to sort by that column.</p>
 
@@ -2844,6 +3095,7 @@
                                 $statusName = (string) ($jobRow['job_status'] ?? '');
                                 $isIncomplete = strcasecmp($statusName, 'Incomplete') === 0
                                     || strcasecmp((string) ($jobRow['job_status_internal'] ?? ''), 'INCOMPLETE') === 0;
+                                $statusColor = $statusColorMap[strtolower($statusName)] ?? null;
                             @endphp
                             <tr class="{{ !empty($jobRow['is_completed']) ? 'is-completed' : '' }}">
                                 <td>{{ $index + 1 }}</td>
@@ -2854,7 +3106,7 @@
                                 {{-- <td class="{{ !empty($jobRow['photography_configured']) ? 'is-photo-configured' : 'is-photo-not-configured' }}">
                                     {{ !empty($jobRow['photography_configured']) ? 'Yes' : 'No' }}
                                 </td> --}}
-                                <td class="{{ $isIncomplete ? 'is-incomplete' : '' }}">{{ $statusName }}</td>
+                                <td class="{{ $isIncomplete ? 'is-incomplete' : '' }}" style="{{ $statusColor ? 'color: ' . $statusColor . ';' : '' }} font-weight: 700;">{{ $statusName }}</td>
                                 <td>
                                     @foreach (($jobRow['folder_statuses'] ?? []) as $folderLine)
                                         <span class="fd-folder-status-line">{{ $folderLine }}</span>
@@ -2877,6 +3129,20 @@
         @endif
     </section>
 
+@if (false) {{-- Unsynced Proofing Jobs section disabled --}}
+    {{--
+        Unsynced Proofing Jobs
+        -----------------------
+        Lists jobs for this franchise's schools that have NOT been synced into the
+        proofing workflow yet, i.e. Job::show_proofing is 0/null and the job status
+        is still "none" (not deleted/archived). See
+        FranchiseDashboardService::getUnsyncedProofingJobsTable(). These are jobs
+        pulled in from TS but proofing hasn't been turned on/configured for them,
+        so they don't yet appear in the "Synced / Deleted Proofing Jobs" table
+        above (which requires show_proofing = 1 and jobsync_status = sync, or a
+        deleted/archived status). This table is read-only and just flags jobs
+        that still need to be synced for the selected season.
+    --}}
     @php
         $unsyncedProofingJobsTable = $unsyncedProofingJobsTable ?? [];
     @endphp
@@ -2891,6 +3157,7 @@
         </div>
         <p class="fd-jobs-hint">Click headings to sort by that column.</p>
 
+        {{-- Nothing to sync for this season --}}
         @if (count($unsyncedProofingJobsTable) === 0)
             <p class="sd-empty">No unsynced proofing jobs found for this season.</p>
         @else
@@ -2907,6 +3174,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {{-- One row per unsynced job; no proofing dates/status yet since proofing hasn't started --}}
                         @foreach ($unsyncedProofingJobsTable as $index => $jobRow)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
@@ -2924,6 +3192,7 @@
             </div>
         @endif
     </section>
+@endif
     </div> {{-- wire:key metrics --}}
 </div> {{-- sd-page --}}
 
@@ -3218,7 +3487,8 @@
             }
         }
 
-        function initJobsTableById(tableId) {
+        function initJobsTableById(tableId, opts) {
+            opts = opts || {};
             var table = document.getElementById(tableId);
             if (!table || typeof window.jQuery === 'undefined' || !window.jQuery.fn || !window.jQuery.fn.DataTable) {
                 return false;
@@ -3233,9 +3503,20 @@
                 }
             }
 
+            // When an external search input is supplied (e.g. the "Start typing a Job
+            // name to filter by..." box in the panel header), drop DataTables' own
+            // built-in search box from the toolbar so there isn't a duplicate.
+            var domStr = opts.externalSearchId
+                ? "<'fd-jobs-toolbar'<'fd-jobs-length'l>>" +
+                  "<'fd-jobs-scroll't>" +
+                  "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>"
+                : "<'fd-jobs-toolbar'<'fd-jobs-length'l><'fd-jobs-search'f>>" +
+                  "<'fd-jobs-scroll't>" +
+                  "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>";
+
             try {
-                $table.DataTable({
-                    pageLength: 5,
+                var dt = $table.DataTable({
+                    pageLength: 10,
                     lengthChange: true,
                     lengthMenu: [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
                     paging: true,
@@ -3247,9 +3528,7 @@
                     columnDefs: [
                         { orderable: false, targets: 0 },
                     ],
-                    dom: "<'fd-jobs-toolbar'<'fd-jobs-length'l><'fd-jobs-search'f>>" +
-                        "<'fd-jobs-scroll't>" +
-                        "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>",
+                    dom: domStr,
                     language: {
                         lengthMenu: 'Display _MENU_',
                         info: 'Showing _START_ to _END_ of _TOTAL_ entries',
@@ -3268,6 +3547,20 @@
                         });
                     },
                 });
+
+                if (opts.externalSearchId) {
+                    var searchInput = document.getElementById(opts.externalSearchId);
+                    if (searchInput && searchInput.dataset.bound !== '1') {
+                        searchInput.dataset.bound = '1';
+                        searchInput.addEventListener('keyup', function () {
+                            dt.search(searchInput.value || '').draw();
+                        });
+                        searchInput.addEventListener('search', function () {
+                            dt.search(searchInput.value || '').draw();
+                        });
+                    }
+                }
+
                 return true;
             } catch (e) {
                 console.warn('Franchise dashboard DataTable init failed for #' + tableId, e);
@@ -3276,7 +3569,7 @@
         }
 
         function initJobsTable() {
-            var ok1 = initJobsTableById('fd-proofing-jobs-table');
+            var ok1 = initJobsTableById('fd-proofing-jobs-table', { externalSearchId: 'fd-proofing-jobs-search' });
             var ok2 = initJobsTableById('fd-unsynced-proofing-jobs-table');
             return ok1 || ok2;
         }

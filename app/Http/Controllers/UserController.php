@@ -143,6 +143,13 @@ class UserController extends Controller
         ]);
     }
 
+    public function bulkInvite()
+    {
+        return view('bulkInviteUsers', [
+            'user' => new UserResource(Auth::user()),
+        ]);
+    }
+
     public function create()
     {
         $user = Auth::user();

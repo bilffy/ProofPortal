@@ -1,43 +1,51 @@
-export const checkSession = async () => {
-    const { base_url, jQuery }: any = window;
+const pingUrl = () => {
+    // Always same-origin relative path — never use APP_URL/base_url (can point at production).
+    return `${window.location.origin}/api/ping`;
+};
 
-    jQuery.ajax({
-        url: `${base_url}/api/ping`,
-        method: 'GET',
-        xhrFields: { withCredentials: true },
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        dataType: 'json',
-        success: function (response: any) {
-            if (response?.is_alive === false && document.querySelector('meta[name="is-impersonating"]')?.getAttribute('content') !== '1') {
+const logoutUrl = () => `${window.location.origin}/logout`;
+
+export const checkSession = async () => {
+    try {
+        const response = await fetch(pingUrl(), {
+            method: 'GET',
+            credentials: 'same-origin',
+            redirect: 'manual', // never follow redirects to APP_URL/login (CORS)
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        // Same-origin redirect (e.g. to /login) or opaque redirect — treat as logged out.
+        if (response.type === 'opaqueredirect' || response.status === 0 || (response.status >= 300 && response.status < 400)) {
+            if (document.querySelector('meta[name="is-impersonating"]')?.getAttribute('content') !== '1') {
                 closeSession();
             }
-        },
-        error: function (error: any) {
-            console.error('Error checking session:', error);
-            // Only force logout when the API explicitly reports the session is dead.
-            // A bare 401 (e.g. Sanctum auth mismatch) must not log the user out.
-            if (error.status === 401 && error.responseJSON?.is_alive === false) {
-                closeSession();
-            }
+            return;
         }
-    });
-}
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+        if (data?.is_alive === false && document.querySelector('meta[name="is-impersonating"]')?.getAttribute('content') !== '1') {
+            closeSession();
+        }
+    } catch {
+        // Network blips / extensions — do not force logout.
+    }
+};
 
 export const closeSession = async () => {
-    const { base_url }: any = window;
-
     localStorage.removeItem('api_token');
     localStorage.removeItem('api_token_id');
-
-    // Logout, Redirect to login page
-    window.location.href = `${base_url}/logout`;
-}
+    window.location.href = logoutUrl();
+};
 
 export const createApiToken = () => {
-    const { base_url, jQuery }: any = window;
+    const { jQuery }: any = window;
 
     return new Promise((resolve, reject) => {
         const formData = new FormData();
@@ -45,7 +53,7 @@ export const createApiToken = () => {
         formData.append('_token', jQuery('meta[name="csrf-token"]').attr('content'));
 
         jQuery.ajax({
-            url: `${base_url}/tokens/create`,
+            url: `${window.location.origin}/tokens/create`,
             method: 'POST',
             data: formData,
             processData: false,
@@ -62,7 +70,7 @@ export const createApiToken = () => {
             }
         });
     });
-}
+};
 
 export const ensureApiTokenForUser = async (expectedUserId: number, forceRefresh = false) => {
     const token = localStorage.getItem('api_token') || '';
@@ -75,7 +83,7 @@ export const ensureApiTokenForUser = async (expectedUserId: number, forceRefresh
     localStorage.removeItem('api_token');
     localStorage.removeItem('api_token_id');
     await createApiToken();
-}
+};
 
 /** Ensures local API token matches the active logged-in user (e.g. after impersonation). */
 export const ensureUserIsAuthenticated = ensureApiTokenForUser;
@@ -83,4 +91,4 @@ export const ensureUserIsAuthenticated = ensureApiTokenForUser;
 // 360 seconds = 360000 milliseconds
 export const startSessionPolling = (interval: number = 360000) => {
     setInterval(checkSession, interval);
-}
+};

@@ -266,8 +266,18 @@ class FolderService
     public function updateFolderStatus($folderIds, $status)
     {
         $rootUserId = Auth::id();
+        $tsJobKeys = Folder::query()
+            ->whereIn('folders.ts_folder_id', $folderIds)
+            ->join('jobs', 'folders.ts_job_id', '=', 'jobs.ts_job_id')
+            ->distinct()
+            ->pluck('jobs.ts_jobkey')
+            ->filter()
+            ->values()
+            ->all();
+
         ActivityLogHelper::log(LogConstants::FOLDER_STATUS_CHANGED, [
             'folder_ids' => $folderIds,
+            'ts_jobkey' => count($tsJobKeys) === 1 ? $tsJobKeys[0] : $tsJobKeys,
             'status' => $status
         ], $rootUserId);
         // Update folder statuses in bulk

@@ -53,7 +53,7 @@ class FranchiseDashboard extends Component
         $seasonFilter = $this->selectedSeasonId !== '' ? $this->selectedSeasonId : null;
         $dashboard = $dashboardService->getUnifiedDashboard($user, $seasonFilter);
         $proofingJobsTable = $dashboardService->getProofingJobsTable($user, $seasonFilter);
-        $unsyncedProofingJobsTable = $dashboardService->getUnsyncedProofingJobsTable($user, $seasonFilter);
+        // $unsyncedProofingJobsTable = $dashboardService->getUnsyncedProofingJobsTable($user, $seasonFilter);
 
         return view('livewire.proofing.franchise-dashboard-v2', [
             'franchise' => $franchise,
@@ -64,7 +64,7 @@ class FranchiseDashboard extends Component
             'breakdowns' => $dashboard['breakdowns'],
             'recentActivity' => $dashboard['recentActivity'],
             'proofingJobsTable' => $proofingJobsTable,
-            'unsyncedProofingJobsTable' => $unsyncedProofingJobsTable,
+            // 'unsyncedProofingJobsTable' => $unsyncedProofingJobsTable,
         ])->layout('layouts.authenticated', [
             'user' => new UserResource($user),
         ]);

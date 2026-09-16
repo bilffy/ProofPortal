@@ -2,13 +2,16 @@
     $platform = strtolower((string) (config('app.platform') ?: 'production'));
 
     $banner = match ($platform) {
+        'local' => [
+            'text'  => 'LOCAL SYSTEM ENVIRONMENT',
+            'style' => 'background-color: #d1fae5; color: #065f46; border-color: #a7f3d0;',
+        ],
         'uat' => [
-            'text' => 'SYSTEM IS IN UAT ENVIRONMENT',
-            // Inline styles so colours always render (Tailwind may purge unused utility classes).
+            'text' => 'UAT SYSTEM ENVIRONMENT',
             'style' => 'background-color: #fee2e2; color: #991b1b; border-color: #fecaca;',
         ],
         'staging' => [
-            'text' => 'SYSTEM IS IN STAGING ENVIRONMENT',
+            'text' => 'STAGING SYSTEM ENVIRONMENT',
             'style' => 'background-color: #fef3c7; color: #92400e; border-color: #fde68a;',
         ],
         default => null,

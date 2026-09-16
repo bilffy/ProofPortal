@@ -45,7 +45,7 @@
             }
         });
 
-        var base_url = "{{URL::to('/')}}";
+        var base_url = "{{ rtrim(request()->getSchemeAndHttpHost() . request()->getBaseUrl(), '/') }}";
 
         function debounce(func, delay) {
             let timer;
