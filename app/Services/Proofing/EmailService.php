@@ -1392,7 +1392,7 @@ class EmailService
 
         if ($isSetupPending) {
             $schoolPart = $userSchoolName !== '' ? " for <strong>{$userSchoolName}</strong>" : '';
-            $introText = "<strong style=\"font-weight: 700;\">>{$authUser->firstname} {$authUser->lastname}</strong> from the <strong style=\"font-weight: 700;\">>{$senderOrgName}</strong> has invited you to access the <strong style=\"font-weight: 700;\">>MSP Portal</strong> as a <strong style=\"font-weight: 700;\">>{$userRoleName}</strong>{$schoolPart}. You have been assigned to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.<br>";
+            $introText = "<strong style=\"font-weight: 700;\">{$authUser->firstname} {$authUser->lastname}</strong> from the <strong style=\"font-weight: 700;\">{$senderOrgName}</strong> has invited you to access the <strong style=\"font-weight: 700;\">MSP Portal</strong> as a <strong style=\"font-weight: 700;\">{$userRoleName}</strong>{$schoolPart}. You have been assigned to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.<br>";
 
             $actionSection = '
                                     <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 14px; color: #00b3e0; line-height: 1.4;">
@@ -1417,7 +1417,7 @@ class EmailService
                                 </td>
                             </tr>';
         } else {
-            $introText = "<strong style=\"font-weight: 700;\">>{$authUser->firstname} {$authUser->lastname}</strong> from <strong style=\"font-weight: 700;\">>{$senderOrgName}</strong> has assigned you to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.<br>";
+            $introText = "<strong style=\"font-weight: 700;\">{$authUser->firstname} {$authUser->lastname}</strong> from <strong style=\"font-weight: 700;\">{$senderOrgName}</strong> has assigned you to use the MSP Portal Proofing system to manage the distribution and collection of proofs for <strong style=\"font-weight: 700;\">{$jobName}</strong>.<br>";
 
             $actionSection = '
                                     <p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">

@@ -114,6 +114,7 @@
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         {INTRO_TEXT}
                                     </p>
+                                    <br>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         You have been allocated to proof the following Folders:
                                         <br/><br/>
@@ -123,6 +124,7 @@
                                         Please note that these proofs must be completed by <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
                                     </p><br>
                                     {ACTION_SECTION}
+                                    <br>
 
                             <!-- {DOWNLOAD_INSTRUCTIONS} -->
 
