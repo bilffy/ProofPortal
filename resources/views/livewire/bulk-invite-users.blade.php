@@ -80,7 +80,7 @@
 
                 <div style="grid-column:1 / -1;margin-top:4px;padding-top:12px;border-top:1px solid #DDE3EA;">
                     <p style="margin:0;font-size:13px;color:#273444;">
-                        <strong style="font-weight:600;">Designated Roles &ndash; </strong>
+                        <strong style="font-weight:600;">Designated User Roles &ndash; </strong>
                         <span style="font-weight:500;">{{ implode(', ', $roleOptions) }}</span>
                     </p>
                 </div>

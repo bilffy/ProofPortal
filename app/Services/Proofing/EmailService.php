@@ -1343,21 +1343,40 @@ class EmailService
         $isSetupPending = false;
         $setupUrl = route('login');
 
-        if (!empty($inviteUser->send_invitation_with_proofing) || (!$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED)) {
+        // if ($inviteUser->send_invitation_with_proofing === 1 && !$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED) {
+        //     $isSetupPending = true;
+        //     $token = \Illuminate\Support\Facades\Password::broker('invites')->createToken($inviteUser);
+        //     $setupUrl = route('account.setup.create', [
+        //         'token' => $token,
+        //         'email' => $inviteUser->getHashedIdAttribute(),
+        //     ], true);
+
+        //     $inviteUser->status = User::STATUS_INVITED;
+        //     $invitedStatus = Status::where('status_external_name', 'invited')->first();
+        //     if ($invitedStatus) {
+        //         $inviteUser->active_status_id = $invitedStatus->id;
+        //     }
+        //     $inviteUser->send_invitation_with_proofing = false;
+        //     $inviteUser->save();
+        // }
+
+        if ($inviteUser->send_invitation_with_proofing === 1 && !$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED) {
             $isSetupPending = true;
+
+            // Generate token and setup URL
             $token = \Illuminate\Support\Facades\Password::broker('invites')->createToken($inviteUser);
             $setupUrl = route('account.setup.create', [
                 'token' => $token,
                 'email' => $inviteUser->getHashedIdAttribute(),
             ], true);
 
-            $inviteUser->status = User::STATUS_INVITED;
+            // Update properties and save in a single operation
             $invitedStatus = Status::where('status_external_name', 'invited')->first();
-            if ($invitedStatus) {
-                $inviteUser->active_status_id = $invitedStatus->id;
-            }
-            $inviteUser->send_invitation_with_proofing = false;
-            $inviteUser->save();
+
+            $inviteUser->update([
+                'active_status_id' => $invitedStatus?->id ?? $inviteUser->active_status_id,
+                'send_invitation_with_proofing' => false,
+            ]);
         }
 
         $userSchoolName = $inviteUser->isSchoolLevel() ? ($inviteUser->getSchool()?->name ?? '') : '';
