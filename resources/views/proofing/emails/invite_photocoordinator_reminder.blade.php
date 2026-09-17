@@ -118,10 +118,10 @@
                                         You have been allocated to proof the following Folders:
                                         <br/><br/>
                                         {#FOLDERS}
-                                    </p>
+                                    </p><br>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         Please note that these proofs must be completed by <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
-                                    </p>
+                                    </p><br>
                                     {ACTION_SECTION}
 
                             <!-- {DOWNLOAD_INSTRUCTIONS} -->
