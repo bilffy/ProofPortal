@@ -112,31 +112,19 @@
                                         <br/>
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        <strong>{SENDER_FIRST_NAME} {SENDER_LAST_NAME}</strong> from {FRANCHISE_NAME}
-                                        has assigned you to use the MSP Portal Proofing system to manage the
-                                        distribution and collection of proofs for <strong style="font-weight: 700;">{JOB_NAME}</strong>.
-                                        <br/>
-                                        <br/>
+                                        {INTRO_TEXT}
+                                    </p>
+                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         You have been allocated to proof the following Folders:
                                         <br/><br/>
                                         {#FOLDERS}
-                                        <br/>
                                     </p>
                                     <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
                                         Please note that these proofs must be completed by <strong style="font-weight: 700;">{REVIEW_DUE}</strong>.
-                                        <br/>
-                                        <br/>
                                     </p>
-                                    <p style="font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 14px; color: #666666; line-height: 1.4;">
-                                        To review these proofs, please visit
-                                        <strong style="font-weight: 700;"><a href="{APP_URL}">{APP_URL}</a></strong>.
-                                        <br/>
-                                        <br/>
-                                    </p>
-                                </td>
-                            </tr>
+                                    {ACTION_SECTION}
 
-                            {DOWNLOAD_INSTRUCTIONS}
+                            <!-- {DOWNLOAD_INSTRUCTIONS} -->
 
                             <tr>
                                 <th width="30%" style="padding: 20px 40px 20px 40px;" class="stack">
