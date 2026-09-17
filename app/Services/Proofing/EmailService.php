@@ -1360,7 +1360,7 @@ class EmailService
         //     $inviteUser->save();
         // }
 
-        if ($inviteUser->send_invitation_with_proofing === 1 && !$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED) {
+        if ($inviteUser->send_invitation_with_proofing === true && !$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED) {
             $isSetupPending = true;
 
             // Generate token and setup URL
@@ -1533,7 +1533,7 @@ class EmailService
 
         $isSetupPending = false;
         $setupUrl = route('login');
-        if (!empty($inviteUser->send_invitation_with_proofing) || (!$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED)) {
+         if ($inviteUser->send_invitation_with_proofing === true && !$inviteUser->is_setup_complete && $inviteUser->status === User::STATUS_INVITED) {
             $isSetupPending = true;
             $token = \Illuminate\Support\Facades\Password::broker('invites')->createToken($inviteUser);
             $setupUrl = route('account.setup.create', [
