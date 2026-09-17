@@ -81,7 +81,7 @@
                 <div style="grid-column:1 / -1;margin-top:4px;padding-top:12px;border-top:1px solid #DDE3EA;">
                     <p style="margin:0;font-size:13px;color:#273444;">
                         <strong style="font-weight:600;">Designated Roles &ndash; </strong>
-                        <span style="font-weight:500;">{{ implode(', ', $validRoleLabels) }}</span>
+                        <span style="font-weight:500;">{{ implode(', ', $roleOptions) }}</span>
                     </p>
                 </div>
             </div>
@@ -89,7 +89,19 @@
             <div
                 x-data="{
                     dragging: false,
+                    dragDepth: 0,
+                    onDragEnter() {
+                        this.dragDepth++;
+                        this.dragging = true;
+                    },
+                    onDragLeave() {
+                        this.dragDepth = Math.max(0, this.dragDepth - 1);
+                        if (this.dragDepth === 0) {
+                            this.dragging = false;
+                        }
+                    },
                     onDrop(event) {
+                        this.dragDepth = 0;
                         this.dragging = false;
                         const dropped = event.dataTransfer.files[0];
                         if (dropped) {
@@ -97,8 +109,9 @@
                         }
                     }
                 }"
+                x-on:dragenter.prevent="onDragEnter()"
                 x-on:dragover.prevent="dragging = true"
-                x-on:dragleave.prevent="dragging = false"
+                x-on:dragleave.prevent="onDragLeave()"
                 x-on:drop.prevent="onDrop($event)"
                 class="relative overflow-hidden rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200"
                 :style="dragging
@@ -670,14 +683,38 @@
         // re-init after every Livewire re-render (edit/remove/upload all replace
         // the table's rows), matching the DataTables + Livewire pattern already
         // used on the franchise dashboard.
-        function initImportedUsersTable() {
+        var importedUsersRowSignature = null;
+
+        function computeImportedUsersRowSignature(table) {
+            var tbody = table.querySelector('tbody');
+            if (!tbody) {
+                return '';
+            }
+            return Array.prototype.map.call(tbody.querySelectorAll('tr'), function (tr) {
+                return tr.getAttribute('wire:key') || tr.textContent.trim();
+            }).join('|');
+        }
+
+        function initImportedUsersTable(force) {
             var table = document.getElementById('biu-imported-users-table');
             if (!table || typeof window.jQuery === 'undefined' || !window.jQuery.fn || !window.jQuery.fn.DataTable) {
                 return false;
             }
 
+            var alreadyInitialized = window.jQuery.fn.DataTable.isDataTable(table);
+            var signature = computeImportedUsersRowSignature(table);
+
+            if (alreadyInitialized && !force && signature === importedUsersRowSignature) {
+                // Row data hasn't actually changed - skip the destroy/rebuild so an
+                // unrelated Livewire update elsewhere on the page (assigning a
+                // school, dragging a file, etc.) doesn't flicker the table.
+                return true;
+            }
+
+            importedUsersRowSignature = signature;
+
             var $table = window.jQuery(table);
-            if (window.jQuery.fn.DataTable.isDataTable(table)) {
+            if (alreadyInitialized) {
                 try {
                     $table.DataTable().destroy();
                 } catch (e) {

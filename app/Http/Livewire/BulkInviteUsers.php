@@ -88,12 +88,23 @@ class BulkInviteUsers extends Component
     {
         $filename = 'import-users-sample.csv';
 
-        return response()->streamDownload(function () {
+        // Only show example rows for roles the logged-in user is actually
+        // allowed to assign (same restriction as the role dropdown/validation).
+        $allowedLabels = $this->roleOptions;
+        $sampleRows = [
+            RoleHelper::ROLE_SCHOOL_ADMIN => ['Jane', 'Smith', 'jane.smith@gmail.com', RoleHelper::ROLE_SCHOOL_ADMIN],
+            RoleHelper::ROLE_PHOTO_COORDINATOR => ['John', 'Doe', 'john.doe@gmail.com', RoleHelper::ROLE_PHOTO_COORDINATOR],
+            RoleHelper::ROLE_TEACHER => ['Amy', 'Lee', 'amy.lee@gmail.com', RoleHelper::ROLE_TEACHER],
+        ];
+
+        return response()->streamDownload(function () use ($allowedLabels, $sampleRows) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['firstname', 'lastname', 'email address', 'user role']);
-            fputcsv($handle, ['Jane', 'Smith', 'jane.smith@school.edu', 'School Administrator']);
-            fputcsv($handle, ['John', 'Doe', 'john.doe@school.edu', 'Photo Coordinator']);
-            fputcsv($handle, ['Amy', 'Lee', 'amy.lee@school.edu', 'Teacher']);
+            foreach ($sampleRows as $role => $exampleRow) {
+                if (array_key_exists($role, $allowedLabels)) {
+                    fputcsv($handle, $exampleRow);
+                }
+            }
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
