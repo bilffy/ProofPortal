@@ -145,6 +145,14 @@ class BulkInviteUsers extends Component
             $this->topErrors = [$e->getMessage()];
             $this->rows = [];
         } finally {
+            // We've already read everything we need from the upload - remove
+            // it from image_repository/livewire-tmp right away instead of
+            // leaving it for Livewire's own (much later) temp-file cleanup.
+            try {
+                $this->file?->delete();
+            } catch (\Throwable $e) {
+                Log::warning('Failed to delete temporary upload', ['exception' => $e->getMessage()]);
+            }
             $this->reset('file');
         }
     }

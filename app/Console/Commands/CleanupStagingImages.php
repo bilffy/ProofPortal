@@ -13,7 +13,7 @@ class CleanupStagingImages extends Command
 {
     protected $signature = 'images:cleanup-staging {--days=3 : Delete files and directories older than X days}';
 
-    protected $description = 'Clean up old proofing staging dirs, group image thumbs, and framework file cache data';
+    protected $description = 'Clean up old proofing staging dirs, group image thumbs, framework file cache data, and abandoned Livewire temporary uploads';
 
     public function handle(): int
     {
@@ -29,18 +29,21 @@ class CleanupStagingImages extends Command
         $deletedStaging = $this->cleanupProofingStaging($cutoff, $days);
         $deletedThumbs = $this->cleanupGroupImageThumbs($cutoff);
         $deletedCacheFiles = $this->cleanupFrameworkCacheData($cutoff);
+        $deletedTempUploads = $this->cleanupLivewireTempUploads();
 
         $this->newLine();
         $this->info('Cleanup finished.');
         $this->line("  Proofing staging directories removed: {$deletedStaging}");
         $this->line("  Group image thumbs removed: {$deletedThumbs}");
         $this->line("  Framework cache files removed: {$deletedCacheFiles}");
+        $this->line("  Livewire temporary uploads removed: {$deletedTempUploads}");
 
         Log::info('Image staging cleanup command completed', [
             'older_than_days' => $days,
             'deleted_staging_directories' => $deletedStaging,
             'deleted_group_image_thumbs' => $deletedThumbs,
             'deleted_framework_cache_files' => $deletedCacheFiles,
+            'deleted_livewire_temp_uploads' => $deletedTempUploads,
         ]);
 
         return Command::SUCCESS;
@@ -119,6 +122,60 @@ class CleanupStagingImages extends Command
                     ]);
                 }
             }
+        }
+
+        return $deletedCount;
+    }
+
+    private function cleanupLivewireTempUploads(): int
+    {
+        // Mirror Livewire\Features\SupportFileUploads\FileUploadConfiguration's
+        // own disk()/directory() resolution so this always targets wherever
+        // Livewire is actually storing temp uploads (image_repository/livewire-tmp
+        // here, since filesystems.default is 'local' and that disk's root has
+        // been repointed to image_repository).
+        $diskName = config('livewire.temporary_file_upload.disk') ?: config('filesystems.default');
+        $directory = config('livewire.temporary_file_upload.directory') ?: 'livewire-tmp';
+        $disk = Storage::disk($diskName);
+
+        // Uploads are normally deleted right after they're parsed (see
+        // BulkInviteUsers::updatedFile()). Anything still here is an abandoned
+        // upload (refreshed mid-import, closed the tab, etc.) - a few hours is
+        // plenty of safety margin above the seconds a real import takes, so we
+        // don't tie this to the --days option meant for long-lived staging data.
+        $cutoff = now()->subHours(6);
+
+        $this->info("Scanning Livewire temporary uploads on disk [{$diskName}] ({$directory})...");
+
+        if (!$disk->exists($directory)) {
+            $this->warn("No {$directory} directory found on disk [{$diskName}].");
+
+            return 0;
+        }
+
+        $deletedCount = 0;
+
+        foreach ($disk->files($directory) as $file) {
+            $lastModified = Carbon::createFromTimestamp($disk->lastModified($file));
+
+            if ($lastModified->lte($cutoff)) {
+                try {
+                    $disk->delete($file);
+                    $this->line("Deleted temp upload: {$file} (last modified: {$lastModified->toDateTimeString()})");
+                    $deletedCount++;
+                } catch (\Throwable $e) {
+                    $this->error("Failed to delete temp upload [{$file}]: " . $e->getMessage());
+                    Log::error('Failed to delete Livewire temp upload during cleanup', [
+                        'file' => $file,
+                        'disk' => $diskName,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        if ($deletedCount > 0) {
+            $this->line("Deleted {$deletedCount} Livewire temp upload(s) older than cutoff.");
         }
 
         return $deletedCount;
