@@ -402,33 +402,10 @@ class BulkInviteUsers extends Component
         return $options;
     }
 
-    public function getSchoolsProperty()
-    {
-        $user = Auth::user();
-
-        if ($user->isFranchiseLevel()) {
-            $franchise = $user->getFranchise();
-            if (!$franchise) {
-                return collect();
-            }
-
-            return $franchise->schools()->orderBy('name')->get();
-        }
-
-        if ($user->isAdmin()) {
-            return School::orderBy('name')->get();
-        }
-
-        $school = $user->getSchool();
-
-        return $school ? collect([$school]) : collect();
-    }
-
     public function render()
     {
         return view('livewire.bulk-invite-users', [
             'roleOptions' => $this->roleOptions,
-            'schools' => $this->schools,
             'validRoleLabels' => array_keys(self::ROLE_LABEL_MAP),
         ]);
     }

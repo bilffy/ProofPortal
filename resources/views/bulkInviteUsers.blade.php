@@ -18,6 +18,30 @@
             placeholder: 'Select School',
             allowClear: true,
             width: '100%',
+            // Search schools via AJAX (same schools.search endpoint used on the
+            // new/edit user pages) instead of loading all 10,000+ schools into
+            // the page and filtering client-side, which made typing slow.
+            ajax: {
+                url: '{{ route("schools.search") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        page: params.page || 1,
+                    };
+                },
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: data.pagination.more,
+                        },
+                    };
+                },
+                cache: true,
+            },
         });
 
         $school.next('.select2-container').find('.select2-selection').addClass('border-neutral');

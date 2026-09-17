@@ -114,6 +114,7 @@
             color: #ffffff !important;
         }
     </style>
+    @stack('styles')
 </head>
 
 <body class="font-sans antialiased" oncontextmenu="return false;">

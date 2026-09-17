@@ -114,6 +114,7 @@
                 x-on:dragleave.prevent="onDragLeave()"
                 x-on:drop.prevent="onDrop($event)"
                 class="relative overflow-hidden rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200"
+                style="border-color:transparent;background:#f0f3f5;"
                 :style="dragging
                     ? 'border-color:#005890;background:#B9E4FF;'
                     : 'border-color:transparent;background:#f0f3f5;'"
@@ -284,13 +285,11 @@
                         Select School <span class="text-alert">*</span>
                     </label>
                     <div wire:ignore class="w-full">
+                        {{-- Options are loaded via AJAX search (schools.search) instead of
+                             rendering every school up front - with 10,000+ schools, that made
+                             the page huge and select2's client-side filtering slow to type into. --}}
                         <select id="bulk-invite-school" class="bg-white border border-neutral-400 rounded-lg block w-full p-2.5">
                             <option value="">Select School</option>
-                            @foreach ($schools as $school)
-                                <option value="{{ $school->id }}" @selected((int) $schoolId === (int) $school->id)>
-                                    {{ $school->suburb ? $school->name . ' (' . $school->suburb . ')' : $school->name }}
-                                </option>
-                            @endforeach
                         </select>
                     </div>
                     <p class="mt-1.5 text-xs text-neutral mb-0">Select one school associated to your franchise</p>
@@ -332,6 +331,7 @@
         </div>
     </div>
 
+    @push('styles')
     <style>
         /* Upload spreadsheet = 1/3 of row, Imported users = 2/3 of row
            (Upload spreadsheet is first in markup, Imported users is second). */
@@ -671,6 +671,7 @@
             }
         }
     </style>
+    @endpush
 </div>
 
 @push('scripts')
