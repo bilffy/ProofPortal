@@ -90,7 +90,7 @@ class BulkInviteUsers extends Component
 
         return response()->streamDownload(function () {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['firstname', 'lastname', 'email', 'role']);
+            fputcsv($handle, ['firstname', 'lastname', 'email address', 'user role']);
             fputcsv($handle, ['Jane', 'Smith', 'jane.smith@school.edu', 'School Administrator']);
             fputcsv($handle, ['John', 'Doe', 'john.doe@school.edu', 'Photo Coordinator']);
             fputcsv($handle, ['Amy', 'Lee', 'amy.lee@school.edu', 'Teacher']);

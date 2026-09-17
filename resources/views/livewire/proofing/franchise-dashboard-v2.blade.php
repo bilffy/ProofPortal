@@ -414,9 +414,14 @@
     }
 
     @media (min-width: 976px) {
-        .sd-charts-3,
-        .sd-charts-bottom {
+        .sd-charts-3 {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        /* Job Proofing Status (is-blue, 1st in markup) gets 2/3 of the row,
+           School Photography Status (is-teal, 2nd) gets the remaining 1/3. */
+        .sd-charts-bottom {
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
         }
     }
 
@@ -482,7 +487,9 @@
     }
 
     .sd-donut-card.is-teal .sd-progress-list {
-        grid-template-rows: repeat(1, auto);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: repeat(2, auto);
+        grid-auto-flow: row;
     }
 
     .fd-jobs-panel {
@@ -2941,6 +2948,49 @@
 
     <section>
         <div class="sd-charts-bottom">
+
+            <div class="sd-panel sd-donut-card is-blue">
+                <div class="sd-panel-head">
+                    <h6 class="sd-card-title">
+                        <!-- <span class="sd-card-title-icon is-blue"><x-icon icon="shield" /></span> -->
+                        Job Proofing Status
+                    </h6>
+                    <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
+                </div>
+                @if ($statusMixTotal === 0)
+                    <p class="sd-empty">No proofing status data found.</p>
+                @else
+                    <div class="sd-progress-summary">
+                        <strong>{{ number_format($synced) }}</strong>
+                        <span>{{ $syncedJobsLabel }}</span>
+                        <span aria-hidden="true">•</span>
+                        <strong>{{ number_format($statusDeleted) }}</strong>
+                        <span>{{ $deletedJobsLabel }}</span>
+                    </div>
+                    <div class="sd-pie-layout">
+                        <div class="sd-chart-box" wire:ignore>
+                            <canvas id="franchise-dashboard-proofing-status-chart"></canvas>
+                        </div>
+                        <div class="sd-progress-list">
+                            @foreach ($statusLegend as $item)
+                                @php $itemPct = $pct($item['value'], max($statusMixTotal, 1)); @endphp
+                                <div class="sd-progress-row">
+                                    <div class="sd-progress-meta">
+                                        <span class="dot" style="background: {{ $item['color'] }};"></span>
+                                        <span class="lbl" style="color: {{ $item['color'] }};">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
+                                        <span class="pct">{{ $itemPct }}%</span>
+                                    </div>
+                                    <div class="sd-progress-track">
+                                        <div class="sd-progress-fill" style="width: {{ $itemPct }}%; background: {{ $item['color'] }};"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            
             <div
                 class="sd-panel sd-donut-card is-teal sd-clickable cursor-pointer"
                 title="Click for school breakdown"
@@ -2972,47 +3022,6 @@
                                     <div class="sd-progress-meta">
                                         <span class="dot" style="background: {{ $item['color'] }};"></span>
                                         <span class="lbl">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
-                                        <span class="pct">{{ $itemPct }}%</span>
-                                    </div>
-                                    <div class="sd-progress-track">
-                                        <div class="sd-progress-fill" style="width: {{ $itemPct }}%; background: {{ $item['color'] }};"></div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            <div class="sd-panel sd-donut-card is-blue">
-                <div class="sd-panel-head">
-                    <h6 class="sd-card-title">
-                        <!-- <span class="sd-card-title-icon is-blue"><x-icon icon="shield" /></span> -->
-                        Job Proofing Status
-                    </h6>
-                    <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
-                </div>
-                @if ($statusMixTotal === 0)
-                    <p class="sd-empty">No proofing status data found.</p>
-                @else
-                    <div class="sd-progress-summary">
-                        <strong>{{ number_format($synced) }}</strong>
-                        <span>{{ $syncedJobsLabel }}</span>
-                        <span aria-hidden="true">•</span>
-                        <strong>{{ number_format($statusDeleted) }}</strong>
-                        <span>{{ $deletedJobsLabel }}</span>
-                    </div>
-                    <div class="sd-pie-layout">
-                        <div class="sd-chart-box" wire:ignore>
-                            <canvas id="franchise-dashboard-proofing-status-chart"></canvas>
-                        </div>
-                        <div class="sd-progress-list">
-                            @foreach ($statusLegend as $item)
-                                @php $itemPct = $pct($item['value'], max($statusMixTotal, 1)); @endphp
-                                <div class="sd-progress-row">
-                                    <div class="sd-progress-meta">
-                                        <span class="dot" style="background: {{ $item['color'] }};"></span>
-                                        <span class="lbl" style="color: {{ $item['color'] }};">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
                                         <span class="pct">{{ $itemPct }}%</span>
                                     </div>
                                     <div class="sd-progress-track">

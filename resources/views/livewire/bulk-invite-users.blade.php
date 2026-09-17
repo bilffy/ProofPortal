@@ -1,8 +1,20 @@
 <div class="bulk-invite-page pb-8">
     <div class="py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h3 class="text-2xl font-semibold text-gray-900">Import Users</h3>
+            <h3 class="text-2xl font-semibold text-gray-900">Bulk Invite</h3>
             <p class="text-sm text-neutral mt-1">Import from CSV or Excel, assign a school, then send invitations.</p>
+            
+                    @if (!$showSchoolSelector && $lockedSchoolName !== '')
+                        <div style="display:inline-flex;align-items:center;gap:8px;font-size:14px;line-height:2.5;color:#273444;">
+                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#005890" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                            </svg> -->
+                            <span>
+                                <span style="color:#6F6F6E;margin-right:4px;">School Assigned:</span>
+                                <strong>{{ $lockedSchoolName }}</strong>
+                            </span>
+                        </div>
+                    @endif
         </div>
         <!-- <button
             type="button"
@@ -34,7 +46,7 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch">
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch biu-upload-import-grid">
         {{-- Upload spreadsheet --}}
         <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm">
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Upload spreadsheet</h4>
@@ -43,7 +55,7 @@
             <div
                 class="mb-5"
                 data-bulk-invite-info
-                style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 16px;box-sizing:border-box;width:100%;padding:14px 16px;overflow:visible;background:#EAF6FC;border:1px solid #B9E4FF;border-radius:12px;"
+                style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 16px;box-sizing:border-box;width:100%;padding:14px 16px;overflow:visible;background:#f0f3f5;border:none;border-radius:12px;"
             >
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;min-width:0;">
                     
@@ -52,65 +64,25 @@
                         style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;max-width:100%;{{ !$showSchoolSelector && $lockedSchoolName !== '' ? 'flex-basis:100%;' : '' }}font-size:14px;line-height:1.4;color:#273444;"
                     >
                         <span style="color:#6F6F6E;flex-shrink:0;">Column Format:</span>
-                        <span class="bulk-invite-format-code" style="display:inline-block;box-sizing:border-box;max-width:100%;padding:4px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.45;color:#111827;background:#ffffff;border:1px solid #B9E4FF;border-radius:6px;overflow-wrap:anywhere;word-break:break-word;">firstname, lastname, email, role</span>
+                        <span class="bulk-invite-format-code" style="display:inline-block;box-sizing:border-box;max-width:100%;padding:4px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.45;color:#111827;background:#ffffff;border-radius:6px;overflow-wrap:anywhere;word-break:break-word;">firstname, lastname, email, role</span>
                     </div>
-                    @if (!$showSchoolSelector && $lockedSchoolName !== '')
-                        <div style="display:inline-flex;align-items:center;gap:8px;font-size:14px;line-height:2.5;color:#273444;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#005890" stroke-width="1.8" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                            </svg>
-                            <span>
-                                <span style="color:#6F6F6E;margin-right:4px;">Target School:</span>
-                                <strong>{{ $lockedSchoolName }}</strong>
-                            </span>
-                        </div>
-                    @endif
                 </div>
                 <a
                     href="#"
                     wire:click.prevent="downloadSampleCsv"
-                    style="display:inline-flex;align-items:center;justify-content:center;gap:8px;width:max-content;max-width:100%;padding:8px 12px;font-size:12px;font-weight:600;line-height:1.2;color:#005890;text-decoration:none;background:#ffffff;border:1px solid #B9E4FF;border-radius:8px;box-shadow:0 1px 2px rgba(15,23,42,0.06);white-space:nowrap;"
+                    style="display:inline-flex;align-items:center;justify-content:center;gap:8px;width:max-content;max-width:100%;padding:8px 12px;font-size:12px;font-weight:600;line-height:1.2;text-decoration:none;background:#005890;color:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(15, 23, 42, 0.12);white-space:nowrap;"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                     </svg>
                     Download Sample CSV
                 </a>
-            </div>
 
-            <div class="mb-5">
-                <p class="mb-2.5 text-sm font-semibold text-gray-800">Designated Roles</p>
-                <div class="flex flex-wrap gap-2.5">
-                    @foreach ($validRoleLabels as $label)
-                        @php
-                            $style = match ($label) {
-                                'School Administrator' => 'color:#005890;border-color:#005890;',
-                                'Photo Coordinator' => 'color:#6B4EFF;border-color:#6B4EFF;',
-                                'Teacher' => 'color:#287D3C;border-color:#287D3C;',
-                                default => 'color:#6F6F6E;border-color:#D9DDE2;',
-                            };
-                        @endphp
-                        <span
-                            class="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-sm font-semibold"
-                            style="border:1.5px solid;{{ $style }}"
-                        >
-                            {{-- @if ($label === 'Photo Coordinator')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-                                </svg>
-                            @elseif ($label === 'Teacher')
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                                </svg>
-                            @else
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                                </svg>
-                            @endif --}}
-                            {{ $label }}
-                        </span>
-                    @endforeach
+                <div style="grid-column:1 / -1;margin-top:4px;padding-top:12px;border-top:1px solid #DDE3EA;">
+                    <p style="margin:0;font-size:13px;color:#273444;">
+                        <strong style="font-weight:600;">Designated Roles &ndash; </strong>
+                        <span style="font-weight:500;">{{ implode(', ', $validRoleLabels) }}</span>
+                    </p>
                 </div>
             </div>
 
@@ -131,7 +103,7 @@
                 class="relative overflow-hidden rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200"
                 :style="dragging
                     ? 'border-color:#005890;background:#B9E4FF;'
-                    : 'border-color:#81BADE;background:#F3F9FC;'"
+                    : 'border-color:transparent;background:#f0f3f5;'"
                 wire:loading.class="opacity-70 pointer-events-none"
                 wire:target="file"
             >
@@ -158,8 +130,7 @@
                     <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
                         @foreach (['.xlsx', '.xls', '.csv'] as $ext)
                             <span
-                                class="rounded-full bg-white px-3 py-1 text-xs font-semibold"
-                                style="color:#005890;border:1px solid #B9E4FF;"
+                                class="px-3 py-1 text-xs font-semibold"
                             >{{ $ext }}</span>
                         @endforeach
                     </div>
@@ -175,12 +146,8 @@
             <div class="mb-4 flex items-center justify-between gap-3 flex-shrink-0">
                 <h4 class="text-lg font-semibold text-gray-900">Imported users</h4>
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                    style="background:#EEE9FF;color:#7B61FF;"
+                    class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold"
                 >
-                    <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg> -->
                     {{ count($rows) }} {{ count($rows) === 1 ? 'user' : 'users' }} imported
                 </span>
             </div>
@@ -188,7 +155,7 @@
             <div class="flex-1 flex flex-col">
             @if (empty($rows))
                 <div
-                    style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-height:160px;padding:28px 16px;text-align:center;background:#F8FAFC;border:1px dashed #D9DDE2;border-radius:12px;"
+                    style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-height:160px;padding:28px 16px;text-align:center;background:#f0f3f5;border:1px dashed #D9DDE2;border-radius:12px;"
                 >
                     <!-- <div
                         style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;margin-bottom:12px;color:#4A90BC;background:#B9E4FF;border-radius:14px;"
@@ -295,6 +262,7 @@
         </div>
 
         @if ($showSchoolSelector)
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 biu-upload-import-grid">
             <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm">
                 <h4 class="text-lg font-semibold text-gray-900 mb-1">Assign school</h4>
                 <p class="text-sm text-neutral mb-4">All invited users are assigned to the school selected here.</p>
@@ -315,6 +283,7 @@
                     <p class="mt-1.5 text-xs text-neutral mb-0">Select one school associated to your franchise</p>
                 </div>
             </section>
+        </div>
         @endif
 
         @php
@@ -351,6 +320,13 @@
     </div>
 
     <style>
+        /* Upload spreadsheet = 1/3 of row, Imported users = 2/3 of row
+           (Upload spreadsheet is first in markup, Imported users is second). */
+        @media (min-width: 1024px) {
+            .biu-upload-import-grid {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important;
+            }
+        }
         @media (max-width: 640px) {
             .bulk-invite-page [data-bulk-invite-info] {
                 grid-template-columns: 1fr !important;
@@ -477,7 +453,7 @@
         }
 
         #biu-imported-users-table thead th {
-            background-color: #F8FAFC !important;
+            background-color: #f0f3f5 !important;
             color: #475569 !important;
             font-size: 0.875rem !important;
             font-weight: 600 !important;
@@ -485,6 +461,58 @@
             border-bottom: 1px solid #E2E8F0 !important;
             border-right: 1px solid #E2E8F0 !important;
             white-space: nowrap !important;
+            position: relative !important;
+        }
+
+        /* Custom sort arrow: replace DataTables' default right-side unicode
+           arrows with a small triangle placed BEFORE the header text (left side). */
+        #biu-imported-users-table.dataTable thead > tr > th.sorting,
+        #biu-imported-users-table.dataTable thead > tr > th.sorting_asc,
+        #biu-imported-users-table.dataTable thead > tr > th.sorting_desc {
+            padding-left: 1.35rem !important;
+            padding-right: 1rem !important;
+            cursor: pointer;
+        }
+
+        #biu-imported-users-table.dataTable thead .sorting:before,
+        #biu-imported-users-table.dataTable thead .sorting:after,
+        #biu-imported-users-table.dataTable thead .sorting_asc:after,
+        #biu-imported-users-table.dataTable thead .sorting_desc:before,
+        #biu-imported-users-table.dataTable thead .sorting_asc_disabled:before,
+        #biu-imported-users-table.dataTable thead .sorting_asc_disabled:after,
+        #biu-imported-users-table.dataTable thead .sorting_desc_disabled:before,
+        #biu-imported-users-table.dataTable thead .sorting_desc_disabled:after {
+            content: none !important;
+            display: none !important;
+        }
+
+        #biu-imported-users-table.dataTable thead > tr > th.sorting:before,
+        #biu-imported-users-table.dataTable thead > tr > th.sorting_asc:before,
+        #biu-imported-users-table.dataTable thead > tr > th.sorting_desc:before {
+            content: "" !important;
+            display: block !important;
+            position: absolute;
+            left: 0.5rem;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+        }
+
+        #biu-imported-users-table.dataTable thead > tr > th.sorting:before {
+            margin-top: -5px;
+            border-top: 5px solid #94A3B8;
+        }
+
+        #biu-imported-users-table.dataTable thead > tr > th.sorting_asc:before {
+            margin-top: -3px;
+            border-bottom: 5px solid #005890;
+        }
+
+        #biu-imported-users-table.dataTable thead > tr > th.sorting_desc:before {
+            margin-top: -5px;
+            border-top: 5px solid #005890;
         }
 
         #biu-imported-users-table thead th:last-child {
