@@ -72,14 +72,14 @@
     ];
 
     $statusLegend = [
-        ['label' => 'Active', 'value' => $statusOpened, 'color' => $chartPalette[7]],
+        ['label' => 'Active', 'value' => $statusOpened, 'color' => $chartPalette[5]],
         ['label' => 'Archived', 'value' => $statusArchived, 'color' => $chartPalette[2]],
         ['label' => 'Deleted', 'value' => $statusDeleted, 'color' => $chartPalette[0]],
         ['label' => 'Incomplete', 'value' => $statusIncomplete, 'color' => $chartPalette[11]],
         ['label' => 'Modified', 'value' => $statusModified, 'color' => $chartPalette[1]],
-        ['label' => 'Unlocked', 'value' => $statusUnlocked, 'color' => $chartPalette[5]],
+        ['label' => 'Unlocked', 'value' => $statusUnlocked, 'color' => $chartPalette[8]],
         ['label' => 'None', 'value' => $statusNotOpened, 'color' => $chartPalette[9]],
-        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => $chartPalette[12]],
+        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => $chartPalette[7]],
     ];
     $statusColorMap = [];
     foreach ($statusLegend as $legendItem) {
@@ -92,7 +92,7 @@
     }
 
     $photographyLegend = [
-        ['label' => 'Configured', 'value' => $photographyConfigured, 'color' => $chartPalette[0]],
+        ['label' => 'Configured', 'value' => $photographyConfigured, 'color' => $chartPalette[5]],
         ['label' => 'Not Configured', 'value' => $photographyNotConfigured, 'color' => $chartPalette[10]],
     ];
     $folderLegend = [
@@ -174,15 +174,6 @@
         font-size: 1.15rem;
         overflow: hidden;
         border: 1px solid #D7E3F0;
-    }
-
-    .sd-school-title {
-        margin: 0;
-        font-size: 1.5rem;
-        line-height: 1.25;
-        font-weight: 700;
-        color: #1A2B4A;
-        word-break: break-word;
     }
 
     .sd-school-sub {
@@ -1259,8 +1250,8 @@
 
     .sd-donut-card.is-green { border-top-color: #7CB342; }
     .sd-donut-card.is-red { border-top-color: #E53935; }
-    .sd-donut-card.is-blue { border-top-color: #42a5f5; }
-    .sd-donut-card.is-teal { border-top-color: #26A69A; }
+    .sd-donut-card.is-blue { border-top-color: #00b4df; }
+    .sd-donut-card.is-teal { border-top-color: #07a88f; }
     .sd-donut-card.is-stage { border-top-color: #7B61FF; }
     .sd-donut-card.is-role { border-top-color: #1E88E5; }
     .sd-donut-card.is-recent-activity { border-top-color: #4CC0AD; }
@@ -2799,10 +2790,6 @@
             padding: 1rem 0.85rem 1.5rem;
         }
 
-        .sd-school-title {
-            font-size: 1.25rem;
-        }
-
         .sd-season {
             width: 100%;
         }
@@ -2831,11 +2818,8 @@
 <div class="sd-page">
     <div class="sd-header">
         <div class="sd-header-left">
-            <span class="sd-school-icon">
-                <x-icon icon="university" />
-            </span>
             <div>
-                <h5 class="sd-school-title">Resource Centre</h5>
+                <h3 class="text-2xl">Resource Centre</h3>
                 <p class="sd-school-sub">Review the status of your schools' photography and proofing jobs.</p>
             </div>
         </div>
@@ -2886,16 +2870,20 @@
     <script type="application/json" id="franchise-dashboard-chart-data">@json($chartPayload)</script>
 
     <div class="sd-kpi-grid">
-        <div
+        <!-- <div
             class="sd-kpi-card is-orange sd-clickable cursor-pointer"
             title="Click for school list"
             data-modal-target="fdSchoolsModal"
             data-modal-toggle="fdSchoolsModal"
+        > -->
+        <div
+            class="sd-kpi-card is-orange"
+            title="Click for school list"
         >
             <div class="sd-kpi-top-row">
                 <div class="sd-kpi-icon-label">
                     <span class="sd-kpi-icon"><x-icon icon="university" /></span>
-                    <span class="sd-kpi-tile-label" style="color:#fbac3d">Total Schools</span>
+                    <span class="sd-kpi-tile-label" style="color:#fbac3d">Your Schools</span>
                 </div>
                 <span class="sd-kpi-count-badge">{{ number_format($schoolsCount) }}</span>
             </div>
@@ -2915,33 +2903,41 @@
             </div>
         </div> -->
 
-        <div
-            class="sd-kpi-card is-blue sd-clickable cursor-pointer"
-            title="Click for school breakdown"
-            data-modal-target="fdPhotographyModal"
-            data-modal-toggle="fdPhotographyModal"
-        >
-            <div class="sd-kpi-top-row">
-                <div class="sd-kpi-icon-label">
-                    <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-                    <span class="sd-kpi-tile-label" style="color:#00b4df">Photography Jobs</span>
-                </div>
-                <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
-            </div>
-        </div>
-
-        <div
+        <!-- <div
             class="sd-kpi-card is-purple sd-clickable cursor-pointer"
             title="Click for school breakdown"
             data-modal-target="fdActiveProofingModal"
             data-modal-toggle="fdActiveProofingModal"
+        > -->
+        <div
+            class="sd-kpi-card is-blue"
+            title="Click for school breakdown"
         >
             <div class="sd-kpi-top-row">
                 <div class="sd-kpi-icon-label">
                     <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
-                    <span class="sd-kpi-tile-label" style="color:#07a88f">Active Proofing Jobs</span>
+                    <span class="sd-kpi-tile-label" style="color:#00b4df">Your Proofing Jobs</span>
                 </div>
                 <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
+            </div>
+        </div>
+
+        <!-- <div
+            class="sd-kpi-card is-blue sd-clickable cursor-pointer"
+            title="Click for school breakdown"
+            data-modal-target="fdPhotographyModal"
+            data-modal-toggle="fdPhotographyModal"
+        > -->
+        <div
+            class="sd-kpi-card is-teal"
+            title="Click for school breakdown"
+        >
+            <div class="sd-kpi-top-row">
+                <div class="sd-kpi-icon-label">
+                    <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
+                    <span class="sd-kpi-tile-label" style="color:#07a88f">Your Photography Jobs</span>
+                </div>
+                <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
             </div>
         </div>
     </div>
@@ -2991,11 +2987,15 @@
             </div>
 
             
-            <div
+            <!-- <div
                 class="sd-panel sd-donut-card is-teal sd-clickable cursor-pointer"
                 title="Click for school breakdown"
                 data-modal-target="fdPhotographyModal"
                 data-modal-toggle="fdPhotographyModal"
+            > -->
+            <div
+                class="sd-panel sd-donut-card is-teal"
+                title="Click for school breakdown"
             >
                 <div class="sd-panel-head">
                     <h6 class="sd-card-title">

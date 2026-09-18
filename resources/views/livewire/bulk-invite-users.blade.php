@@ -1,18 +1,13 @@
 <div class="bulk-invite-page pb-8">
     <div class="py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h3 class="text-2xl font-semibold text-gray-900">Bulk Invite</h3>
+            <h3 class="text-2xl">Bulk Invite</h3>
             <p class="text-sm text-neutral mt-1">Import from CSV or Excel, assign a school, then send invitations.</p>
             
                     @if (!$showSchoolSelector && $lockedSchoolName !== '')
-                        <div style="display:inline-flex;align-items:center;gap:8px;font-size:14px;line-height:2.5;color:#273444;">
-                            <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#005890" stroke-width="1.8" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                            </svg> -->
-                            <span>
-                                <span style="color:#6F6F6E;margin-right:4px;">School Assigned:</span>
-                                <strong>{{ $lockedSchoolName }}</strong>
-                            </span>
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:100%;max-width:100%;padding:10px 14px;overflow:visible;background:#f0f3f5;border:none;border-left:4px solid #005890;border-radius:8px;color:#00000;">
+                                <span style="flex-shrink:0font-weight:600;">School Assigned:</span>
+                                <strong style="font-size:1.1rem;min-width:0;word-break:break-word;overflow-wrap:anywhere;">{{ $lockedSchoolName }}</strong>
                         </div>
                     @endif
         </div>
@@ -48,7 +43,7 @@
 
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch biu-upload-import-grid">
         {{-- Upload spreadsheet --}}
-        <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm">
+        <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm flex flex-col">
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Upload spreadsheet</h4>
 
             {{-- Light-blue info strip (inline styles beat Bootstrap/Tailwind conflicts) --}}
@@ -113,7 +108,7 @@
                 x-on:dragover.prevent="dragging = true"
                 x-on:dragleave.prevent="onDragLeave()"
                 x-on:drop.prevent="onDrop($event)"
-                class="relative overflow-hidden rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200"
+                class="relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200"
                 style="border-color:transparent;background:#f0f3f5;"
                 :style="dragging
                     ? 'border-color:#005890;background:#B9E4FF;'
@@ -153,6 +148,27 @@
                     @enderror
                 </div>
             </div>
+
+                @if ($showSchoolSelector)
+                    <div class="mt-6 pt-6 border-t border-neutral-300">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-1">Assign school</h4>
+                        <p class="text-sm text-neutral mb-4">All invited users are assigned to the school selected here.</p>
+                        <div class="max-w-xl">
+                            <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-gray-800">
+                                Select School <span class="text-alert">*</span>
+                            </label>
+                            <div wire:ignore class="w-full">
+                                {{-- Options are loaded via AJAX search (schools.search) instead of
+                                     rendering every school up front - with 10,000+ schools, that made
+                                     the page huge and select2's client-side filtering slow to type into. --}}
+                                <select id="bulk-invite-school" class="bg-white border border-neutral-400 rounded-lg block w-full p-2.5">
+                                    <option value="">Select School</option>
+                                </select>
+                            </div>
+                            <p class="mt-1.5 text-xs text-neutral mb-0">Select one school associated to your franchise</p>
+                        </div>
+                    </div>
+                @endif
         </section>
 
         {{-- Imported users --}}
@@ -274,29 +290,6 @@
             </div>
         </section>
         </div>
-
-        @if ($showSchoolSelector)
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 biu-upload-import-grid">
-            <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm">
-                <h4 class="text-lg font-semibold text-gray-900 mb-1">Assign school</h4>
-                <p class="text-sm text-neutral mb-4">All invited users are assigned to the school selected here.</p>
-                <div class="max-w-xl">
-                    <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-gray-800">
-                        Select School <span class="text-alert">*</span>
-                    </label>
-                    <div wire:ignore class="w-full">
-                        {{-- Options are loaded via AJAX search (schools.search) instead of
-                             rendering every school up front - with 10,000+ schools, that made
-                             the page huge and select2's client-side filtering slow to type into. --}}
-                        <select id="bulk-invite-school" class="bg-white border border-neutral-400 rounded-lg block w-full p-2.5">
-                            <option value="">Select School</option>
-                        </select>
-                    </div>
-                    <p class="mt-1.5 text-xs text-neutral mb-0">Select one school associated to your franchise</p>
-                </div>
-            </section>
-        </div>
-        @endif
 
         @php
             $canSubmit = !empty($rows) && empty($topErrors) && !empty($schoolId);
@@ -726,9 +719,9 @@
             try {
                 $table.DataTable({
                     dom: "<'biu-table-toolbar'lf><'biu-table-wrap't><'biu-table-footer'ip>",
-                    pageLength: 4,
+                    pageLength: 10,
                     lengthChange: true,
-                    lengthMenu: [[4, 10, 25, 50, 100], [4, 10, 25, 50, 100]],
+                    lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                     paging: true,
                     searching: true,
                     info: true,

@@ -27,15 +27,15 @@
     </div>
     
     {{--Hide for now as per ticket MSP-161, this only apply for school user--}}
-    @if (!$user->isSchoolLevel())
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
-    @endif
 
     @role($RoleHelper::ROLE_FRANCHISE)
         @if (!$SchoolContextHelper->isSchoolContext())
             <x-layout.navItem visibility="{{ $visibility }}" id="tabFranchiseDashboard" navIcon="tachometer" href="{{ route('franchise.dashboard') }}" :activeNav="request()->routeIs('franchise.dashboard')">Dashboard</x-layout.navItem>
         @endif
     @endrole
+    @if (!$user->isSchoolLevel())
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabHome" navIcon="home" href="{{ route('dashboard') }}">Home</x-layout.navItem>
+    @endif
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PHOTOGRAPHY))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
