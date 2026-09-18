@@ -161,6 +161,7 @@ class EmailController extends Controller
             'school' => $school,
             'emails' => $emails,
             'schoolIdEncrypted' => $schoolId,
+            'user' => new UserResource(Auth::user()),
         ]);
     }
 
