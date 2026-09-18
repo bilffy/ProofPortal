@@ -1244,7 +1244,7 @@
         height: 14rem;
     }
 
-    .sd-donut-card {
+    /* .sd-donut-card {
         border-top: 3px solid #CFD8DC;
     }
 
@@ -1254,7 +1254,7 @@
     .sd-donut-card.is-teal { border-top-color: #07a88f; }
     .sd-donut-card.is-stage { border-top-color: #7B61FF; }
     .sd-donut-card.is-role { border-top-color: #1E88E5; }
-    .sd-donut-card.is-recent-activity { border-top-color: #4CC0AD; }
+    .sd-donut-card.is-recent-activity { border-top-color: #4CC0AD; } */
 
     .sd-card-title,
     .sd-roles-title,
