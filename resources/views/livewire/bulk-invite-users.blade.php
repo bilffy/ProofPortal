@@ -59,7 +59,7 @@
                         style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;max-width:100%;{{ !$showSchoolSelector && $lockedSchoolName !== '' ? 'flex-basis:100%;' : '' }}font-size:14px;line-height:1.4;color:#273444;"
                     >
                         <span style="color:#6F6F6E;flex-shrink:0;">Column Format:</span>
-                        <span class="bulk-invite-format-code" style="display:inline-block;box-sizing:border-box;max-width:100%;padding:4px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.45;color:#111827;background:#ffffff;border-radius:6px;overflow-wrap:anywhere;word-break:break-word;">firstname, lastname, email, role</span>
+                        <span class="bulk-invite-format-code" style="display:inline-block;box-sizing:border-box;max-width:100%;padding:4px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.45;color:#111827;background:#ffffff;border-radius:6px;overflow-wrap:anywhere;word-break:break-word;">firstname, lastname, email address, user role</span>
                     </div>
                 </div>
                 <a
@@ -151,21 +151,24 @@
 
                 @if ($showSchoolSelector)
                     <div class="mt-6 pt-6 border-t border-neutral-300">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-1">Assign school</h4>
-                        <p class="text-sm text-neutral mb-4">All invited users are assigned to the school selected here.</p>
-                        <div class="max-w-xl">
-                            <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-gray-800">
-                                Select School <span class="text-alert">*</span>
-                            </label>
-                            <div wire:ignore class="w-full">
-                                {{-- Options are loaded via AJAX search (schools.search) instead of
-                                     rendering every school up front - with 10,000+ schools, that made
-                                     the page huge and select2's client-side filtering slow to type into. --}}
-                                <select id="bulk-invite-school" class="bg-white border border-neutral-400 rounded-lg block w-full p-2.5">
-                                    <option value="">Select School</option>
-                                </select>
+                        <div class="rounded-xl border border-neutral-300 bg-[#f8fafb] p-4">
+                            <div class="mb-4">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-0.5">Assign school</h4>
+                                <p class="mt-5 text-xs mb-0">Select the school associated with your franchise to assign all invited users.</p>
                             </div>
-                            <p class="mt-1.5 text-xs text-neutral mb-0">Select one school associated to your franchise</p>
+                            <div class="max-w-xl">
+                                <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-gray-800">
+                                    Select School <span class="text-alert">*</span>
+                                </label>
+                                <div wire:ignore class="w-full">
+                                    {{-- Options are loaded via AJAX search (schools.search) instead of
+                                         rendering every school up front - with 10,000+ schools, that made
+                                         the page huge and select2's client-side filtering slow to type into. --}}
+                                    <select id="bulk-invite-school" class="bg-white border border-neutral-400 rounded-lg block w-full p-2.5">
+                                        <option value="">Select School</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 @endif

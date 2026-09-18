@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers\Proofing;
 
+use App\Helpers\SchoolContextHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\Email;
+use App\Models\Franchise;
 use App\Models\Job;
+use App\Models\School;
 use App\Models\Season;
+use App\Models\Template;
 use App\Repositories\ReportRepository;
 use App\Services\Proofing\StatusService;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -23,18 +29,37 @@ class EmailController extends Controller
     }
 
     /**
-     * List synced jobs (same set as Reports school picker).
+     * Emails landing page (Franchise only): synced jobs for the "Proofing" tab,
+     * plus the schools that have received a user-invitation email for the
+     * "User Invitation" tab. No school needs to be selected to reach this page.
      */
     public function index()
     {
+        // Franchise-only landing page - block it while a school context is active,
+        // same as /franchise-dashboard (see FranchiseDashboard::mount()).
+        if (SchoolContextHelper::isSchoolContext()) {
+            return redirect()->route('photography.configure-new');
+        }
+
         $user = Auth::user();
         $jobs = $this->reportRepository->getSchoolsIds();
         $seasonList = Season::orderBy('code', 'asc')->pluck('code', 'ts_season_id')->toArray();
+
+        $schoolNamesByKey = School::whereIn('schoolkey', $jobs->pluck('ts_schoolkey')->filter()->unique()->values())
+            ->pluck('name', 'schoolkey');
+
+        $jobs->each(function ($job) use ($schoolNamesByKey) {
+            $job->school_name = $schoolNamesByKey[$job->ts_schoolkey] ?? null;
+        });
+
+        $franchise = $user->getFranchise();
+        $invitationSchools = $this->invitationSchoolsQuery($franchise)->get();
 
         return view('proofing.franchise.emails.index', [
             'jobs' => $jobs,
             'seasonList' => $seasonList,
             'user' => new UserResource($user),
+            'invitationSchools' => $invitationSchools,
         ]);
     }
 
@@ -95,37 +120,72 @@ class EmailController extends Controller
             return response('<div class="alert alert-danger">Job not found.</div>', 404);
         }
 
-        $filter = trim((string) $request->input('email_filter_value', ''));
-        $limit = (int) $request->input('email_filter_limit', 25);
-        $orderBy = $request->input('email_filter_order_by', 'created_at');
-        $orderDirection = $request->input('email_filter_order_direction', 'descending');
-
-        $allowedOrderBy = [
-            'created_at' => 'created_at',
-            'started' => 'created_at',
-            'completed' => 'sentdate',
-            'sentdate' => 'sentdate',
-            'email_to' => 'email_to',
-            'email_from' => 'email_from',
-            'template_id' => 'template_id',
-            'status_id' => 'status_id',
-            'subject' => 'email_content',
-        ];
-        $orderColumn = $allowedOrderBy[$orderBy] ?? 'created_at';
-        $direction = $orderDirection === 'ascending' ? 'asc' : 'desc';
-        $limit = in_array($limit, [25, 50, 100], true) ? $limit : 25;
+        [$orderColumn, $direction, $limit, $filter] = $this->parseFilterInput($request);
 
         $query = Email::query()
             ->with(['status', 'template'])
             ->where('ts_jobkey', $job->ts_jobkey);
 
-        if ($filter !== '') {
-            $query->where(function ($q) use ($filter) {
-                $q->where('email_to', 'like', '%' . $filter . '%')
-                    ->orWhere('email_from', 'like', '%' . $filter . '%')
-                    ->orWhere('email_content', 'like', '%' . $filter . '%');
-            });
+        $this->applyKeywordFilter($query, $filter);
+
+        $messages = $query->orderBy($orderColumn, $direction)->limit($limit)->get();
+
+        return view('proofing.franchise.emails._results', [
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Show user-invitation emails for a selected school.
+     */
+    public function showInvitations(string $schoolId)
+    {
+        try {
+            $decryptedSchoolId = (int) Crypt::decryptString($schoolId);
+        } catch (DecryptException $e) {
+            session()->flash('error', __('Invalid school selection. Please try again.'));
+            return redirect()->route('emails.index');
         }
+
+        $school = $this->resolveAccessibleInvitationSchool($decryptedSchoolId);
+        if (!$school) {
+            session()->flash('error', __('School not found or you do not have access.'));
+            return redirect()->route('emails.index');
+        }
+
+        $emails = $this->schoolInvitationEmailsQuery($school)
+            ->orderByDesc('created_at')
+            ->paginate(25);
+
+        return view('proofing.franchise.emails.invitations-show', [
+            'school' => $school,
+            'emails' => $emails,
+            'schoolIdEncrypted' => $schoolId,
+        ]);
+    }
+
+    /**
+     * Filter user-invitation emails for a selected school (AJAX).
+     */
+    public function filterInvitations(Request $request)
+    {
+        $schoolIdEncrypted = $request->input('school_id');
+        try {
+            $decryptedSchoolId = (int) Crypt::decryptString($schoolIdEncrypted);
+        } catch (DecryptException $e) {
+            return response('<div class="alert alert-danger">Invalid school.</div>', 400);
+        }
+
+        $school = $this->resolveAccessibleInvitationSchool($decryptedSchoolId);
+        if (!$school) {
+            return response('<div class="alert alert-danger">School not found.</div>', 404);
+        }
+
+        [$orderColumn, $direction, $limit, $filter] = $this->parseFilterInput($request);
+
+        $query = $this->schoolInvitationEmailsQuery($school);
+
+        $this->applyKeywordFilter($query, $filter);
 
         $messages = $query->orderBy($orderColumn, $direction)->limit($limit)->get();
 
@@ -277,21 +337,141 @@ class EmailController extends Controller
             ->first(['id', 'ts_job_id', 'ts_jobkey', 'ts_jobname', 'ts_season_id']);
     }
 
+    /**
+     * A school is a valid "User Invitation" destination when it belongs to the
+     * current (Franchise) user's franchise - it does not need to already have
+     * emails (a direct link to an empty school just shows "No emails found").
+     */
+    protected function resolveAccessibleInvitationSchool(int $schoolId): ?School
+    {
+        $franchise = Auth::user()?->getFranchise();
+        if (!$franchise) {
+            return null;
+        }
+
+        return $franchise->schools()->where('schools.id', $schoolId)->first();
+    }
+
     protected function findAccessibleEmail(int $messageId): ?Email
     {
         $email = Email::with(['status', 'template'])->find($messageId);
-        if (!$email || !$email->ts_jobkey) {
+        if (!$email) {
             return null;
         }
 
-        $job = Job::withoutGlobalScopes()
-            ->where('ts_jobkey', $email->ts_jobkey)
-            ->first(['ts_job_id', 'ts_jobkey']);
+        if ($email->ts_jobkey) {
+            $job = Job::withoutGlobalScopes()
+                ->where('ts_jobkey', $email->ts_jobkey)
+                ->first(['ts_job_id', 'ts_jobkey']);
 
-        if (!$job || !$this->resolveAccessibleJob((int) $job->ts_job_id)) {
-            return null;
+            return ($job && $this->resolveAccessibleJob((int) $job->ts_job_id)) ? $email : null;
         }
 
-        return $email;
+        // Not job-scoped (e.g. a user-invitation email) - check franchise ownership instead.
+        return $this->belongsToUsersFranchise($email) ? $email : null;
+    }
+
+    protected function userAddedTemplateId(): ?int
+    {
+        return Template::where('template_name', 'user_added')->value('id');
+    }
+
+    /**
+     * Schools belonging to this franchise that have at least one user-invitation
+     * email sent, for the "User Invitation" tab's school list.
+     */
+    protected function invitationSchoolsQuery(?Franchise $franchise): Builder|BelongsToMany
+    {
+        if (!$franchise) {
+            return School::query()->whereRaw('1 = 0');
+        }
+
+        $templateId = $this->userAddedTemplateId();
+        $schoolIdsWithInvites = Email::where('template_id', $templateId)
+            ->whereNotNull('school_id')
+            ->distinct()
+            ->pluck('school_id');
+
+        return $franchise->schools()
+            ->whereIn('schools.id', $schoolIdsWithInvites)
+            ->orderBy('schools.name');
+    }
+
+    /**
+     * User-invitation emails (template_id belongs to `user_added`) for one school.
+     */
+    protected function schoolInvitationEmailsQuery(School $school): Builder
+    {
+        return Email::query()
+            ->with(['status', 'template'])
+            ->where('template_id', $this->userAddedTemplateId())
+            ->where('school_id', $school->id);
+    }
+
+    /**
+     * True when the given email belongs to the current (Franchise) user's franchise -
+     * either sent to a franchise-level invitee (alphacode) or a school-level invitee
+     * whose school belongs to this franchise (school_id).
+     */
+    protected function belongsToUsersFranchise(Email $email): bool
+    {
+        $franchise = Auth::user()?->getFranchise();
+        if (!$franchise) {
+            return false;
+        }
+
+        if ($email->alphacode && $email->alphacode === $franchise->alphacode) {
+            return true;
+        }
+
+        if ($email->school_id) {
+            return $franchise->schools()->where('schools.id', $email->school_id)->exists();
+        }
+
+        return false;
+    }
+
+    /**
+     * Shared allow-listed order-by/direction/limit/keyword parsing for the
+     * per-job and per-school (invitation) AJAX filters.
+     *
+     * @return array{0: string, 1: string, 2: int, 3: string}
+     */
+    protected function parseFilterInput(Request $request): array
+    {
+        $filter = trim((string) $request->input('email_filter_value', ''));
+        $limit = (int) $request->input('email_filter_limit', 25);
+        $orderBy = $request->input('email_filter_order_by', 'created_at');
+        $orderDirection = $request->input('email_filter_order_direction', 'descending');
+
+        $allowedOrderBy = [
+            'created_at' => 'created_at',
+            'started' => 'created_at',
+            'completed' => 'sentdate',
+            'sentdate' => 'sentdate',
+            'email_to' => 'email_to',
+            'email_from' => 'email_from',
+            'template_id' => 'template_id',
+            'status_id' => 'status_id',
+            'subject' => 'email_content',
+        ];
+        $orderColumn = $allowedOrderBy[$orderBy] ?? 'created_at';
+        $direction = $orderDirection === 'ascending' ? 'asc' : 'desc';
+        $limit = in_array($limit, [25, 50, 100], true) ? $limit : 25;
+
+        return [$orderColumn, $direction, $limit, $filter];
+    }
+
+    protected function applyKeywordFilter(Builder $query, string $filter): void
+    {
+        if ($filter === '') {
+            return;
+        }
+
+        $query->where(function ($q) use ($filter) {
+            $q->where('email_to', 'like', '%' . $filter . '%')
+                ->orWhere('email_from', 'like', '%' . $filter . '%')
+                ->orWhere('email_content', 'like', '%' . $filter . '%');
+        });
     }
 }

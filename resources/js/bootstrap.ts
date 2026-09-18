@@ -3,7 +3,7 @@ import axios from 'axios';
 import jquery from 'jquery';
 import moment from 'moment';
 import flatpickr from 'flatpickr';
-import 'flowbite';
+import { Modal } from 'flowbite';
 import 'bootstrap';
 import Tribute from "tributejs";
 
@@ -19,4 +19,8 @@ window.axios = axios;
 window.moment = moment;
 window.flatpickr = flatpickr;
 window.Tribute = Tribute;
+// Several inline page scripts (proofing master layout, photography, the
+// authenticated layout) call `new Modal(...)` expecting a global - they
+// don't import it themselves, so it has to be exposed here.
+window.Modal = Modal;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

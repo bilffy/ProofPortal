@@ -280,6 +280,7 @@
 <script type="module">
     // TODO: Implement cloudflare-friendly encryption for photography download request
     {{-- import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}" --}}
+    import { Modal } from "{{ Vite::asset('resources/js/helpers/modal.helper.ts') }}"
     function isSelectModeEnabled() {
         return window.localStorage.getItem('selectMode')?.toLowerCase() !== 'false';
     }

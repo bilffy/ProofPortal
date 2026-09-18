@@ -3056,7 +3056,7 @@
                     type="search"
                     id="fd-proofing-jobs-search"
                     class="fd-jobs-search-input"
-                    placeholder="Start typing a Job name to filter by..."
+                    placeholder="Start typing to filter by..."
                     autocomplete="off"
                 >
             </div>
@@ -3205,7 +3205,7 @@
     </div> {{-- wire:key metrics --}}
 </div> {{-- sd-page --}}
 
-{{-- Photography Jobs Modal --}}
+{{-- 
 <x-modal.base id="fdPhotographyModal" title="Photography Jobs by Schools" size="max-w-[min(96rem,calc(100vw-2rem))]" body="components.modal.body" footer="components.modal.footer">
     <x-slot name="body">
         <x-modal.body class="overflow-y-auto overflow-x-hidden max-h-[70vh]">
@@ -3258,8 +3258,8 @@
         </x-modal.footer>
     </x-slot>
 </x-modal.base>
-
-{{-- Active Proofing Modal --}}
+--}}
+{{-- 
 <x-modal.base id="fdActiveProofingModal" title="Active Proofing Jobs by Schools" size="max-w-[min(96rem,calc(100vw-2rem))]" body="components.modal.body" footer="components.modal.footer">
     <x-slot name="body">
         <x-modal.body class="overflow-y-auto overflow-x-hidden max-h-[70vh]">
@@ -3296,8 +3296,8 @@
         </x-modal.footer>
     </x-slot>
 </x-modal.base>
-
-{{-- Schools Modal --}}
+--}}
+{{--
 <x-modal.base id="fdSchoolsModal" title="Schools" size="max-w-[min(96rem,calc(100vw-2rem))]" body="components.modal.body" footer="components.modal.footer">
     <x-slot name="body">
         <x-modal.body class="overflow-y-auto overflow-x-hidden max-h-[70vh]">
@@ -3364,7 +3364,7 @@
         </x-modal.footer>
     </x-slot>
 </x-modal.base>
-
+--}}
 </div>
 
 @push('scripts')

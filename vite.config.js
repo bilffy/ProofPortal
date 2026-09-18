@@ -33,6 +33,7 @@ export default defineConfig({
                     'resources/js/helpers/encryption.helper.ts',
                     'resources/js/helpers/session.helper.ts',
                     'resources/js/helpers/js-aes-php.ts',
+                    'resources/js/helpers/modal.helper.ts',
                 ], 
             refresh: true,
         }),

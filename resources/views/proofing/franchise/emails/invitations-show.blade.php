@@ -15,7 +15,7 @@
 
 @section('content')
     <div class="py-4 flex items-center justify-between">
-        <h3 class="text-2xl">Emails — {{ $jobTitle }}</h3>
+        <h3 class="text-2xl">User Invitation Emails — {{ $school->name }}</h3>
     </div>
 
     <div class="row">
@@ -23,7 +23,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="mb-4">
-                        <h5 class="text-black d-inline mr-2">Emails for this Job</h5>
+                        <h5 class="text-black d-inline mr-2">Invitation Emails for this School</h5>
                         <span class="text-muted">
                             - There are
                             <strong id="emails-total-count">{{ $emails->total() }}</strong>
@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="{{ route('emails.index') }}#tab-proofing" class="btn btn-secondary">Back to Jobs</a>
+                    <a href="{{ route('emails.index') }}#tab-invitation" class="btn btn-secondary">Back to Schools</a>
                 </div>
             </div>
         </div>
@@ -94,7 +94,7 @@
 <script>
 $(document).ready(function () {
     const spinningHtml = '<div class="text-center py-4"><i class="fa fa-spinner fa-3x fa-spin"></i></div>';
-    const tsJobId = @json($tsJobIdEncrypted);
+    const schoolId = @json($schoolIdEncrypted);
     let filterTimeout = null;
 
     $.ajaxSetup({
@@ -109,9 +109,9 @@ $(document).ready(function () {
 
             $.ajax({
                 type: 'POST',
-                url: '{{ route('emails.filter') }}',
+                url: '{{ route('emails.invitations.filter') }}',
                 data: {
-                    ts_job_id: tsJobId,
+                    school_id: schoolId,
                     email_filter_value: $('#email-filter').val(),
                     email_filter_limit: $('#email-filter-limit').val(),
                     email_filter_order_by: $('#email-filter-order-by').val(),

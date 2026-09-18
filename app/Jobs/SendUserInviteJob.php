@@ -3,16 +3,22 @@
 namespace App\Jobs;
 
 use App\Mail\UserInviteMail;
+use App\Models\Email;
+use App\Models\Template;
 use App\Models\User;
 use App\Models\Status;
 use App\Models\UserInviteToken;
+use App\Services\Proofing\StatusService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Mail\SentMessage;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Symfony\Component\Mime\MessageConverter;
 
 class SendUserInviteJob implements ShouldQueue
 {
@@ -37,7 +43,7 @@ class SendUserInviteJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(StatusService $statusService)
     {
         $token = Password::broker('invites')->createToken($this->user);
 
@@ -53,8 +59,101 @@ class SendUserInviteJob implements ShouldQueue
         $this->user->active_status_id = $status->id;
         
         $this->user->save();
-        
+
+        $sender = User::find($this->senderId);
+
         // Send the invite email
-        Mail::to($this->user->email)->send(new UserInviteMail($this->user, $this->senderId, $setupUrl));
+        $sentMessage = Mail::to($this->user->email)->send(new UserInviteMail($this->user, $this->senderId, $setupUrl));
+
+        Log::info('[invite-debug] Mail::send() returned', [
+            'user_id' => $this->user->id,
+            'sentMessage_type' => is_object($sentMessage) ? get_class($sentMessage) : gettype($sentMessage),
+            'is_SentMessage' => $sentMessage instanceof SentMessage,
+        ]);
+
+        if ($sentMessage instanceof SentMessage) {
+            $this->recordSentInviteEmail($sentMessage, $sender, $statusService);
+        } else {
+            Log::warning('[invite-debug] Skipped recordSentInviteEmail because sentMessage was not a SentMessage instance', [
+                'user_id' => $this->user->id,
+            ]);
+        }
+    }
+
+    /**
+     * Record an `emails` audit row for the invite email that was just sent,
+     * mirroring the records kept for proof_start / proof_warning / proof_due emails.
+     */
+    protected function recordSentInviteEmail(SentMessage $sentMessage, ?User $sender, StatusService $statusService): void
+    {
+        Log::info('[invite-debug] recordSentInviteEmail starting', [
+            'user_id' => $this->user->id,
+            'sender_id' => $this->senderId,
+        ]);
+
+        try {
+            $emlContent = MessageConverter::toEmail($sentMessage->getSymfonySentMessage()->getOriginalMessage())->toString();
+
+            $template = Template::where('template_name', 'user_added')->first();
+
+            if (!$template) {
+                Log::warning('[invite-debug] No template row found with template_name = user_added; template_id will be stored as null', [
+                    'user_id' => $this->user->id,
+                ]);
+            }
+
+            $schoolId = null;
+            $alphacode = null;
+            $schoolKey = null;
+
+            if ($this->user->isSchoolLevel()) {
+                // School admin, photo coordinator or teacher - assign the school they were invited to.
+                // `User` has no getSchoolKey() - the key lives on the School model as `schoolkey`
+                // (mapped to the emails table's `ts_schoolkey` column).
+                $school = $this->user->getSchool();
+                $alphacode = $this->user->getFranchise()?->alphacode;
+                $schoolId = $school?->id ?: null;
+                $schoolKey = $school?->schoolkey ?: null;
+            } elseif ($this->user->isFranchiseLevel()) {
+                $alphacode = $this->user->getFranchise()?->alphacode;
+            }
+
+            $payload = [
+                'generated_from_user_id' => $this->senderId,
+                'alphacode' => $alphacode,
+                'school_id' => $schoolId,
+                'ts_schoolkey' => $schoolKey,
+                'sentdate' => now(),
+                'email_from' => $sender?->email,
+                'email_to' => $this->user->email,
+                'email_content' => $emlContent,
+                'smtp_code' => 250,
+                'smtp_message' => 'Sent Successfully',
+                'template_id' => $template?->id,
+                'status_id' => $statusService->emailSent,
+            ];
+
+            Log::info('[invite-debug] About to insert emails row', [
+                'user_id' => $this->user->id,
+                'payload' => collect($payload)->except('email_content')->all(),
+            ]);
+
+            $email = Email::create($payload);
+
+            Log::info('[invite-debug] Inserted emails row successfully', [
+                'user_id' => $this->user->id,
+                'email_row_id' => $email->id,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to record sent invite email', [
+                'user_id' => $this->user->id,
+                'sender_id' => $this->senderId,
+                'exception_class' => get_class($e),
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

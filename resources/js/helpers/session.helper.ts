@@ -44,7 +44,35 @@ export const closeSession = async () => {
     window.location.href = logoutUrl();
 };
 
-export const createApiToken = () => {
+/**
+ * The CSRF token embedded in the page's <meta name="csrf-token"> can be stale
+ * relative to the session by the time this fires (most noticeable right after
+ * impersonating, where the token is refreshed more aggressively) - a plain
+ * page fetch always reflects the current session's token, so re-reading it
+ * from a fresh copy of the current page is a reliable way to resync without a
+ * full reload.
+ */
+const refreshCsrfToken = async (): Promise<string | null> => {
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { Accept: 'text/html' },
+        });
+        const html = await response.text();
+        const match = html.match(/<meta\s+name="csrf-token"\s+content="([^"]+)"/i);
+        if (!match) {
+            return null;
+        }
+        const token = match[1];
+        document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', token);
+        return token;
+    } catch {
+        return null;
+    }
+};
+
+export const createApiToken = (retryOn419 = true): Promise<any> => {
     const { jQuery }: any = window;
 
     return new Promise((resolve, reject) => {
@@ -64,7 +92,23 @@ export const createApiToken = () => {
                 localStorage.setItem('api_token_id', String(response.id));
                 resolve(response);
             },
-            error: function (error: any) {
+            error: async function (error: any) {
+                // 419 = CSRF token mismatch/expired. Resync the token from a
+                // fresh copy of the page and retry once before giving up.
+                if (retryOn419 && error?.status === 419) {
+                    const freshToken = await refreshCsrfToken();
+                    if (freshToken) {
+                        try {
+                            const retryResponse = await createApiToken(false);
+                            resolve(retryResponse);
+                            return;
+                        } catch (retryError) {
+                            console.error('Error creating API token (after CSRF retry):', retryError);
+                            reject(retryError);
+                            return;
+                        }
+                    }
+                }
                 console.error('Error creating API token:', error);
                 reject(error);
             }

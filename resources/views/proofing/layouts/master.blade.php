@@ -452,6 +452,7 @@
 
             // TODO: Implement cloudflare-friendly encryption for session polling
             import { startSessionPolling, createApiToken, ensureUserIsAuthenticated } from "{{ Vite::asset('resources/js/helpers/session.helper.ts') }}"
+            import { Modal } from "{{ Vite::asset('resources/js/helpers/modal.helper.ts') }}"
             // import { decryptData } from "{{ Vite::asset('resources/js/helpers/encryption.helper.ts') }}"
             const editProfileOptions = {
                 onShow: async () => {

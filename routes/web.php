@@ -109,9 +109,9 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         ->middleware(['role:Franchise'])
         ->name('franchise.school-dashboard');
     // Legacy school dashboard URL → photography configure
-    Route::get('/school-dashboard', function () {
-        return redirect()->route('photography.configure-new', request()->query());
-    })->middleware(['role:Franchise'])->name('school.dashboard');
+    // Route::get('/school-dashboard', function () {
+    //     return redirect()->route('photography.configure-new', request()->query());
+    // })->middleware(['role:Franchise'])->name('school.dashboard');
     Route::get('/school/{hashedId}', SchoolView::class)->name('school.view');
 
     // Order routes
@@ -187,9 +187,13 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         });
     });
 
-    // Emails (Franchise only) — list synced jobs, then emails for a job
-    Route::middleware(['school_context','role:Franchise',CheckUserRestriction::class])->group(function () {
+    // Emails (Franchise only) — franchise-wide landing page (Proofing + User Invitation
+    // tabs), no school selection required; per-job proofing emails still live under
+    // /emails/{tsJobId}.
+    Route::middleware(['role:Franchise',CheckUserRestriction::class])->group(function () {
         Route::get('/emails', [EmailController::class, 'index'])->name('emails.index');
+        Route::post('/emails/invitations/filter',[EmailController::class, 'filterInvitations'])->name('emails.invitations.filter');
+        Route::get('/emails/invitations/{schoolId}', [EmailController::class, 'showInvitations'])->name('emails.invitations.show');
         Route::get('/emails/{tsJobId}', [EmailController::class, 'show'])->name('emails.show');
         Route::post('/emails/filter',[EmailController::class, 'filter'])->name('emails.filter');
         Route::post('/emails/view',[EmailController::class, 'view'])->name('emails.view');

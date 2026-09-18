@@ -58,6 +58,13 @@
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
     @endcan
+    
+    {{-- Franchise-wide, like Dashboard - no school needs to be selected to reach it --}}
+    @role($RoleHelper::ROLE_FRANCHISE)
+        @if (!$SchoolContextHelper->isSchoolContext())
+         <x-layout.navItem visibility="{{ $visibility }}" id="tabEmails" navIcon="envelope" href="{{ route('emails.index') }}" :activeNav="request()->routeIs('emails.*')">Emails</x-layout.navItem>
+        @endif
+    @endrole
 
     @if ($user->isAdmin())
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageSettings" navIcon="cogs" href="{{ route('settings.main') }}">App Settings</x-layout.navItem>
@@ -70,9 +77,6 @@
                 {{-- Reports are not yet implemented, hide for now until the blueprint implemented into the system--}}
                 <x-layout.navItem visibility="{{ $visibility }}" id="tabReports" navIcon="list-ul" href="{{ route('reports') }}">Reports</x-layout.navItem>
             @endcan
-            @role($RoleHelper::ROLE_FRANCHISE)
-                <x-layout.navItem visibility="{{ $visibility }}" id="tabEmails" navIcon="envelope" href="{{ route('emails.index') }}" :activeNav="request()->routeIs('emails.*')">Emails</x-layout.navItem>
-            @endrole
         @endif
     @endcan
 

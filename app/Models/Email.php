@@ -20,6 +20,7 @@ class Email extends Model
     protected $fillable = [
         'generated_from_user_id',
         'alphacode',
+        'school_id',
         'ts_jobkey',
         'ts_schoolkey',
         'sentdate',
