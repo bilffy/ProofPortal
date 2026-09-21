@@ -41,8 +41,8 @@
                             <div class="form-group mb-2 mb-lg-0">
                                 <label for="email-filter-limit" class="mb-0">Limit Results</label>
                                 <select class="form-control" id="email-filter-limit">
-                                    @foreach ([25, 50, 100] as $limit)
-                                        <option value="{{ $limit }}" @selected($limit === 25)>{{ $limit }}</option>
+                                    @foreach ([10, 20, 50, 100] as $limit)
+                                        <option value="{{ $limit }}" @selected($limit === 10)>{{ $limit }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -75,21 +75,6 @@
                     <div id="email-filter-response">
                         @include('proofing.franchise.emails._results', ['messages' => $emails])
                     </div>
-
-                    <div class="paginator mt-3" id="email-paginator">
-                        {{ $emails->links('proofing.layouts.pagination-custom') }}
-
-                        @if ($emails->total())
-                            <p class="mt-2 text-muted">
-                                {{ __('Page :page of :pages, showing :current record(s) out of :count total', [
-                                    'page' => $emails->currentPage(),
-                                    'pages' => $emails->lastPage(),
-                                    'current' => $emails->count(),
-                                    'count' => $emails->total(),
-                                ]) }}
-                            </p>
-                        @endif
-                    </div>
                 </div>
                 <div class="card-footer">
                     <a href="{{ route('emails.index') }}#tab-invitation" class="btn btn-secondary">Back to Schools</a>
@@ -112,17 +97,17 @@ $(document).ready(function () {
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
-    function runEmailFilter() {
+    function runEmailFilter(page) {
         clearTimeout(filterTimeout);
         filterTimeout = setTimeout(function () {
             $('#email-filter-response').html(spinningHtml);
-            $('#email-paginator').hide();
 
             $.ajax({
                 type: 'POST',
                 url: '{{ route('emails.invitations.filter') }}',
                 data: {
                     school_id: schoolId,
+                    page: page || 1,
                     email_filter_value: $('#email-filter').val(),
                     email_filter_limit: $('#email-filter-limit').val(),
                     email_filter_order_by: $('#email-filter-order-by').val(),
@@ -138,8 +123,15 @@ $(document).ready(function () {
         }, 400);
     }
 
-    $('#email-filter').on('keyup', runEmailFilter);
-    $('#email-filter-limit, #email-filter-order-by, #email-filter-order-direction').on('change', runEmailFilter);
+    $('#email-filter').on('keyup', function () { runEmailFilter(1); });
+    $('#email-filter-limit, #email-filter-order-by, #email-filter-order-direction').on('change', function () { runEmailFilter(1); });
+
+    // Pagination Previous/Next links are rendered inside the AJAX response
+    // (see _results.blade.php) - intercept clicks there instead of navigating.
+    $('#email-filter-response').on('click', '[data-page]', function (e) {
+        e.preventDefault();
+        runEmailFilter(parseInt($(this).data('page'), 10));
+    });
 });
 </script>
 

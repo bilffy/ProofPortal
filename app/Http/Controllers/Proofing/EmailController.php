@@ -120,7 +120,7 @@ class EmailController extends Controller
             return response('<div class="alert alert-danger">Job not found.</div>', 404);
         }
 
-        [$orderColumn, $direction, $limit, $filter] = $this->parseFilterInput($request);
+        [$orderColumn, $direction, $limit, $filter, $page] = $this->parseFilterInput($request);
 
         $query = Email::query()
             ->with(['status', 'template'])
@@ -128,7 +128,7 @@ class EmailController extends Controller
 
         $this->applyKeywordFilter($query, $filter);
 
-        $messages = $query->orderBy($orderColumn, $direction)->limit($limit)->get();
+        $messages = $query->orderBy($orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
 
         return view('proofing.franchise.emails._results', [
             'messages' => $messages,
@@ -182,13 +182,13 @@ class EmailController extends Controller
             return response('<div class="alert alert-danger">School not found.</div>', 404);
         }
 
-        [$orderColumn, $direction, $limit, $filter] = $this->parseFilterInput($request);
+        [$orderColumn, $direction, $limit, $filter, $page] = $this->parseFilterInput($request);
 
         $query = $this->schoolInvitationEmailsQuery($school);
 
         $this->applyKeywordFilter($query, $filter);
 
-        $messages = $query->orderBy($orderColumn, $direction)->limit($limit)->get();
+        $messages = $query->orderBy($orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
 
         return view('proofing.franchise.emails._results', [
             'messages' => $messages,
@@ -441,9 +441,10 @@ class EmailController extends Controller
     protected function parseFilterInput(Request $request): array
     {
         $filter = trim((string) $request->input('email_filter_value', ''));
-        $limit = (int) $request->input('email_filter_limit', 25);
+        $limit = (int) $request->input('email_filter_limit', 10);
         $orderBy = $request->input('email_filter_order_by', 'created_at');
         $orderDirection = $request->input('email_filter_order_direction', 'descending');
+        $page = max(1, (int) $request->input('page', 1));
 
         $allowedOrderBy = [
             'created_at' => 'created_at',
@@ -458,9 +459,9 @@ class EmailController extends Controller
         ];
         $orderColumn = $allowedOrderBy[$orderBy] ?? 'created_at';
         $direction = $orderDirection === 'ascending' ? 'asc' : 'desc';
-        $limit = in_array($limit, [25, 50, 100], true) ? $limit : 25;
+        $limit = in_array($limit, [10, 20, 50, 100], true) ? $limit : 10;
 
-        return [$orderColumn, $direction, $limit, $filter];
+        return [$orderColumn, $direction, $limit, $filter, $page];
     }
 
     protected function applyKeywordFilter(Builder $query, string $filter): void
