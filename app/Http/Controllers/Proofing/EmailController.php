@@ -85,7 +85,7 @@ class EmailController extends Controller
             ->with(['status', 'template'])
             ->where('ts_jobkey', $job->ts_jobkey)
             ->orderByDesc('created_at')
-            ->paginate(25);
+            ->paginate(10);
 
         $user = Auth::user();
         $seasonList = Season::orderBy('code', 'asc')->pluck('code', 'ts_season_id')->toArray();
@@ -155,7 +155,7 @@ class EmailController extends Controller
 
         $emails = $this->schoolInvitationEmailsQuery($school)
             ->orderByDesc('created_at')
-            ->paginate(25);
+            ->paginate(10);
 
         return view('proofing.franchise.emails.invitations-show', [
             'school' => $school,

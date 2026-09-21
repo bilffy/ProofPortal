@@ -18,7 +18,10 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email as SymfonyEmail;
 use Symfony\Component\Mime\MessageConverter;
+use Symfony\Component\Mime\Part\TextPart;
 
 class SendUserInviteJob implements ShouldQueue
 {
@@ -92,7 +95,15 @@ class SendUserInviteJob implements ShouldQueue
         ]);
 
         try {
-            $emlContent = MessageConverter::toEmail($sentMessage->getSymfonySentMessage()->getOriginalMessage())->toString();
+            $originalMessage = $sentMessage->getSymfonySentMessage()->getOriginalMessage();
+            $emlContent = $this->buildSinglePartHtmlEml($originalMessage);
+
+            if ($emlContent === null) {
+                Log::warning('[invite-debug] Falling back to raw multipart EML - could not extract HTML body for single-part rebuild', [
+                    'user_id' => $this->user->id,
+                ]);
+                $emlContent = MessageConverter::toEmail($originalMessage)->toString();
+            }
 
             $template = Template::where('template_name', 'user_added')->first();
 
@@ -155,5 +166,45 @@ class SendUserInviteJob implements ShouldQueue
                 'trace' => $e->getTraceAsString(),
             ]);
         }
+    }
+
+    /**
+     * Rebuild the sent message as a single-part, base64-encoded HTML email
+     * for storage in the `emails` table, instead of the raw
+     * multipart/alternative + quoted-printable message Laravel's Markdown
+     * mailables produce by default.
+     *
+     * This is the exact same shape EmailService::generateEmail() already
+     * builds for the proofing invitation/reminder emails - built there for
+     * this same reason: the quoted-printable multipart form was showing raw
+     * "=20" / "=3D" escape sequences instead of rendering once an email row
+     * was resent. We feed it the HTML that was already rendered for the
+     * actual sent message rather than re-rendering the Markdown view again.
+     *
+     * Returns null (letting the caller fall back to the raw EML) if the
+     * original message isn't a Symfony Email or has no HTML body to rebuild from.
+     */
+    protected function buildSinglePartHtmlEml($originalMessage): ?string
+    {
+        if (!$originalMessage instanceof SymfonyEmail) {
+            return null;
+        }
+
+        $htmlBody = $originalMessage->getHtmlBody();
+        if (!$htmlBody) {
+            return null;
+        }
+
+        $subject = (string) $originalMessage->getSubject();
+        $htmlPart = new TextPart((string) $htmlBody, 'utf-8', 'html', 'base64');
+
+        $rebuilt = (new SymfonyEmail())
+            ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
+            ->to(new Address($this->user->email, $this->user->name))
+            ->subject($subject)
+            ->setBody($htmlPart)
+            ->date(now());
+
+        return MessageConverter::toEmail($rebuilt)->toString();
     }
 }

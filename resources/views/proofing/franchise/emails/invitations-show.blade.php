@@ -76,8 +76,19 @@
                         @include('proofing.franchise.emails._results', ['messages' => $emails])
                     </div>
 
-                    <div class="paginator mt-3 d-none" id="email-paginator">
+                    <div class="paginator mt-3" id="email-paginator">
                         {{ $emails->links('proofing.layouts.pagination-custom') }}
+
+                        @if ($emails->total())
+                            <p class="mt-2 text-muted">
+                                {{ __('Page :page of :pages, showing :current record(s) out of :count total', [
+                                    'page' => $emails->currentPage(),
+                                    'pages' => $emails->lastPage(),
+                                    'current' => $emails->count(),
+                                    'count' => $emails->total(),
+                                ]) }}
+                            </p>
+                        @endif
                     </div>
                 </div>
                 <div class="card-footer">
