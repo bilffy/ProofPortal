@@ -64,7 +64,7 @@
         '#b5d334', // lime
         '#4cc0ad', // light green
         '#07a88f', // medium green
-        '#48BCB3', // teal
+        '#84b0c7ff', // teal
         '#00B9D5', // cyan
         '#00b4df', // medium blue
         '#005b8e', // deep blue
