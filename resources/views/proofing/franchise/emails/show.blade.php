@@ -77,7 +77,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="{{ route('emails.index') }}#tab-proofing" class="btn btn-secondary">Back to Jobs</a>
+                    <a href="{{ route('emails.index') }}#tab-proofing" class="btn btn-secondary">Back</a>
                 </div>
             </div>
         </div>

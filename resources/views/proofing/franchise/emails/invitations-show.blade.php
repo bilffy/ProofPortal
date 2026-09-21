@@ -77,7 +77,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="{{ route('emails.index') }}#tab-invitation" class="btn btn-secondary">Back to Schools</a>
+                    <a href="{{ route('emails.index') }}#tab-invitation" class="btn btn-secondary">Back</a>
                 </div>
             </div>
         </div>
