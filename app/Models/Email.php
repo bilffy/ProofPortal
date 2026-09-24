@@ -26,6 +26,7 @@ class Email extends Model
         'sentdate',
         'email_from',
         'email_to',
+        'email_to_userId',
         'email_cc',
         'email_bcc',
         'email_content',

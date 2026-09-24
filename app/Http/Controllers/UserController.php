@@ -7,6 +7,7 @@ use App\Helpers\EncryptionHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
+use App\Models\Email;
 use App\Models\Franchise;
 use App\Models\FranchiseUser;
 use App\Helpers\RoleHelper;
@@ -402,6 +403,15 @@ class UserController extends Controller
             $originalFranchise = $user->isFranchiseLevel() ? $user->getFranchiseId() : 0;
             $originalSchool = $user->isSchoolLevel() ? $user->getSchoolId() : 0;
             if ($isEditUserForm) {
+                // Link any existing `emails` rows sent to this user's
+                // CURRENT address (pre-update, since $updatedData may be
+                // about to change it) back to this user's id. Historical
+                // invite/notification rows only ever stored the raw email
+                // string, with no way to trace them back to a user - this
+                // backfills that link every time the user is edited, using
+                // the address as it stood right before the update.
+                Email::where('email_to', $user->email)->update(['email_to_userId' => $user->id]);
+
                 $user->update($updatedData);
                 $changes = $user->getChanges();
                 
