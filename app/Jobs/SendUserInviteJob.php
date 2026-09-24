@@ -51,10 +51,14 @@ class SendUserInviteJob implements ShouldQueue
     {
         $sender = User::find($this->senderId);
 
-        // Check the address with SendGrid's Email Address Validation API before
-        // doing anything else - this key can't send mail, read bounces, etc.,
-        // so this is the only way we have to catch a typo'd domain (e.g.
-        // "gmial.com") up front instead of after a real send attempt.
+        // Check the address with SendGrid's Email Address Validation API
+        // before sending - this key can't send mail, read bounces, etc., so
+        // it's purely a signal, not a gate: the invite always gets sent
+        // regardless of verdict. A flagged (Invalid/Risky) verdict only
+        // changes how the send is recorded afterwards in the emails table
+        // (see below), so a typo'd domain like "gmial.com" still reaches the
+        // user (in case it's a squatted-but-real inbox) while showing up as
+        // a failure to review.
         $validation = $emailValidationService->validate($this->user->email);
 
         Log::info('[invite-debug] SendGrid validation result', [
@@ -63,16 +67,14 @@ class SendUserInviteJob implements ShouldQueue
             'validation' => $validation,
         ]);
 
-        if ($validation['deliverable'] === false) {
-            Log::warning('[invite-debug] SendGrid flagged invite email as invalid - not sending', [
+        $isFlaggedByValidation = $validation['deliverable'] === false;
+
+        if ($isFlaggedByValidation) {
+            Log::warning('[invite-debug] SendGrid flagged invite email - sending anyway, will log as failed', [
                 'user_id' => $this->user->id,
                 'email' => $this->user->email,
                 'verdict' => $validation['verdict'],
             ]);
-
-            $this->recordInvalidInviteEmail($sender, $statusService, $validation['verdict']);
-
-            return;
         }
 
         $token = Password::broker('invites')->createToken($this->user);
@@ -100,23 +102,37 @@ class SendUserInviteJob implements ShouldQueue
         ]);
 
         if ($sentMessage instanceof SentMessage) {
-            $this->recordSentInviteEmail($sentMessage, $sender, $statusService);
+            if ($isFlaggedByValidation) {
+                $this->recordFlaggedInviteEmail($sentMessage, $sender, $statusService, $validation['verdict']);
+            } else {
+                $this->recordSentInviteEmail($sentMessage, $sender, $statusService);
+            }
         } else {
-            Log::warning('[invite-debug] Skipped recordSentInviteEmail because sentMessage was not a SentMessage instance', [
+            Log::warning('[invite-debug] Skipped recording emails row because sentMessage was not a SentMessage instance', [
                 'user_id' => $this->user->id,
             ]);
         }
     }
 
     /**
-     * Record an `emails` audit row for an invite that SendGrid flagged as
-     * undeliverable, so it shows up in the emails table as a failure
-     * (smtp_code/smtp_message) instead of silently never happening. Mirrors
-     * recordSentInviteEmail()'s payload shape, minus the actual send.
+     * Record an `emails` audit row for an invite that WAS actually sent, but
+     * that SendGrid's Email Address Validation flagged beforehand as
+     * Invalid/Risky. The email_content is pulled from the real sent message
+     * (identical to recordSentInviteEmail()) since the send genuinely
+     * happened - only smtp_code/smtp_message/status_id differ, so this shows
+     * up in the emails table as a failure worth reviewing even though
+     * delivery was attempted like any other invite.
      */
-    protected function recordInvalidInviteEmail(?User $sender, StatusService $statusService, ?string $verdict): void
+    protected function recordFlaggedInviteEmail(SentMessage $sentMessage, ?User $sender, StatusService $statusService, ?string $verdict): void
     {
         try {
+            $originalMessage = $sentMessage->getSymfonySentMessage()->getOriginalMessage();
+            $emlContent = $this->buildSinglePartHtmlEml($originalMessage);
+
+            if ($emlContent === null) {
+                $emlContent = MessageConverter::toEmail($originalMessage)->toString();
+            }
+
             $template = Template::where('template_name', 'user_added')->first();
 
             $schoolId = null;
@@ -132,26 +148,6 @@ class SendUserInviteJob implements ShouldQueue
                 $alphacode = $this->user->getFranchise()?->alphacode;
             }
 
-            // Render what the invite email WOULD have looked like, purely for
-            // the audit-trail row - a placeholder link, since a real
-            // Password::broker('invites') token is pointless for an address
-            // we already know SendGrid rejected.
-            $emlContent = null;
-            try {
-                $placeholderUrl = route('account.setup.create', [
-                    'token' => 'n-a',
-                    'email' => $this->user->getHashedIdAttribute(),
-                ], true);
-                $mailable = new UserInviteMail($this->user, $this->senderId, $placeholderUrl);
-                $renderedHtml = $mailable->render();
-                $emlContent = $this->buildEmlFromHtml((string) ($mailable->subject ?? 'Welcome to the MSP Portal'), $renderedHtml);
-            } catch (\Throwable $renderException) {
-                Log::warning('[invite-debug] Could not render invite mailable for invalid-email log', [
-                    'user_id' => $this->user->id,
-                    'error' => $renderException->getMessage(),
-                ]);
-            }
-
             $payload = [
                 'generated_from_user_id' => $this->senderId,
                 'alphacode' => $alphacode,
@@ -161,11 +157,12 @@ class SendUserInviteJob implements ShouldQueue
                 'email_from' => $sender?->email,
                 'email_to' => $this->user->email,
                 'email_content' => $emlContent,
-                // 550 (mailbox unavailable) is the standard SMTP code for an
-                // invalid/non-existent recipient - matches what a real send
-                // attempt would have bounced with. smtp_message is capped at
-                // 25 chars in the emails table - build from the actual
-                // SendGrid verdict ('Invalid' or 'Risky') but never exceed it.
+                // 550 (mailbox unavailable) mirrors the standard bounce code
+                // for a bad recipient, even though the send itself went
+                // through - this is a review flag, not a delivery report.
+                // smtp_message is capped at 25 chars in the emails table -
+                // build from the actual SendGrid verdict ('Invalid' or
+                // 'Risky') but never exceed it.
                 'smtp_code' => 550,
                 'smtp_message' => substr(($verdict ?: 'Invalid') . ' email address', 0, 25),
                 'template_id' => $template?->id,
@@ -174,13 +171,13 @@ class SendUserInviteJob implements ShouldQueue
 
             $email = Email::create($payload);
 
-            Log::info('[invite-debug] Recorded invalid-email emails row', [
+            Log::info('[invite-debug] Recorded flagged-but-sent emails row', [
                 'user_id' => $this->user->id,
                 'email_row_id' => $email->id,
                 'verdict' => $verdict,
             ]);
         } catch (\Throwable $e) {
-            Log::error('Failed to record invalid invite email', [
+            Log::error('Failed to record flagged invite email', [
                 'user_id' => $this->user->id,
                 'sender_id' => $this->senderId,
                 'error' => $e->getMessage(),
@@ -304,10 +301,10 @@ class SendUserInviteJob implements ShouldQueue
     }
 
     /**
-     * Shared by both recordSentInviteEmail() (HTML pulled from the message
-     * that was actually sent) and recordInvalidInviteEmail() (HTML rendered
-     * directly from the Mailable, since nothing was ever sent) - same
-     * single-part, base64-encoded rebuild either way.
+     * Shared by recordSentInviteEmail() and recordFlaggedInviteEmail() -
+     * both pull HTML from a message that was genuinely sent (validation no
+     * longer blocks sending, it only changes how the result gets logged),
+     * so both rebuild the same single-part, base64-encoded EML from it.
      */
     protected function buildEmlFromHtml(string $subject, string $htmlBody): string
     {
