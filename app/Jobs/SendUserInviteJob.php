@@ -164,10 +164,10 @@ class SendUserInviteJob implements ShouldQueue
                 // 550 (mailbox unavailable) is the standard SMTP code for an
                 // invalid/non-existent recipient - matches what a real send
                 // attempt would have bounced with. smtp_message is capped at
-                // 25 chars in the emails table, so keep this generic; the
-                // actual SendGrid verdict is in the log line above.
+                // 25 chars in the emails table - build from the actual
+                // SendGrid verdict ('Invalid' or 'Risky') but never exceed it.
                 'smtp_code' => 550,
-                'smtp_message' => 'Invalid email address',
+                'smtp_message' => substr(($verdict ?: 'Invalid') . ' email address', 0, 25),
                 'template_id' => $template?->id,
                 'status_id' => $statusService->failed,
             ];

@@ -22,13 +22,16 @@ class EmailValidationService
     /**
      * @return array{checked: bool, deliverable: ?bool, verdict: ?string}
      *
-     * - checked=false means we couldn't get a confident answer (no API key
-     *   configured, the API call failed, or the verdict was something other
-     *   than a clear Valid/Invalid, e.g. "Risky"). Callers should treat this
-     *   as "proceed as normal" - a validation-service outage must never
-     *   block a real user invite.
-     * - checked=true, deliverable=false means SendGrid confirmed the address
-     *   is not valid.
+     * - checked=false means we couldn't get an answer at all (no API key
+     *   configured, the API call failed, or an unrecognised verdict came
+     *   back). Callers should treat this as "proceed as normal" - a
+     *   validation-service outage must never block a real user invite.
+     * - checked=true, deliverable=false covers BOTH "Invalid" and "Risky"
+     *   verdicts. A squatted typo domain (e.g. gmial.com, a common Gmail
+     *   typo) usually has valid MX records, so SendGrid can only ever call
+     *   it "Risky", never a confident "Invalid" - blocking only on
+     *   "Invalid" would let exactly the addresses this check exists for
+     *   sail straight through.
      */
     public function validate(string $email): array
     {
@@ -78,9 +81,9 @@ class EmailValidationService
 
             return match ($verdict) {
                 'Valid' => ['checked' => true, 'deliverable' => true, 'verdict' => $verdict],
-                'Invalid' => ['checked' => true, 'deliverable' => false, 'verdict' => $verdict],
-                // "Risky" or anything unrecognised - not confident enough to
-                // block a real invite on, so treat it like "not checked".
+                'Invalid', 'Risky' => ['checked' => true, 'deliverable' => false, 'verdict' => $verdict],
+                // Anything else unrecognised - not confident enough either
+                // way, so treat it like "not checked".
                 default => ['checked' => false, 'deliverable' => null, 'verdict' => $verdict],
             };
         } catch (\Throwable $e) {
