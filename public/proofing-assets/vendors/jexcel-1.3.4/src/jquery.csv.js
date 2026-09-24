@@ -120,7 +120,7 @@ RegExp.escape= function(s) {
               data.push(hookVal);
             }
           }
-          //console.log('entry:' + entry);
+          // console.log('entry:' + entry);
           
           // cleanup
           entry = [];
@@ -146,7 +146,7 @@ RegExp.escape= function(s) {
               entry.push(hook);
             }
           }
-          //console.log('value:' + value);
+          // console.log('value:' + value);
           // reset the state
           value = '';
           state = 0;
@@ -253,7 +253,7 @@ RegExp.escape= function(s) {
               // shenanigans
               throw new Error('CSVDataError: Unknown State [Row:' + options.state.rowNum + '][Col:' + options.state.colNum + ']');
           }
-          //console.log('val:' + m0 + ' state:' + state);
+          // console.log('val:' + m0 + ' state:' + state);
         });
 
         // submit the last entry
@@ -431,7 +431,7 @@ RegExp.escape= function(s) {
               // shenanigans
               throw new Error('CSVDataError: Unknown state [Row:' + options.state.rowNum + ']');
           }
-          //console.log('val:' + m0 + ' state:' + state);
+          // console.log('val:' + m0 + ' state:' + state);
         });
 
         // submit the last entry
@@ -573,7 +573,7 @@ RegExp.escape= function(s) {
               // shenanigans
               throw new Error('CSVDataError: Unknown State [Row:' + options.state.rowNum + '][Col:' + options.state.colNum + ']');
           }
-          //console.log('val:' + m0 + ' state:' + state);
+          // console.log('val:' + m0 + ' state:' + state);
         });
 
         // submit the last value

@@ -906,8 +906,59 @@ configureJQ(document).ready(function ($) {
         $('body').removeClass('overflow-hidden');
     }
 
+    const JOBS_NEEDING_ARCHIVE_PER_PAGE = 12;
+    let jobsNeedingArchivePage = 1;
+
+    function paginateJobsNeedingArchiveList() {
+        const $rows = $('#jobs-needing-archive-list .archive-job-row');
+        const total = $rows.length;
+        const totalPages = Math.max(1, Math.ceil(total / JOBS_NEEDING_ARCHIVE_PER_PAGE));
+
+        if (jobsNeedingArchivePage > totalPages) {
+            jobsNeedingArchivePage = totalPages;
+        }
+        if (jobsNeedingArchivePage < 1) {
+            jobsNeedingArchivePage = 1;
+        }
+
+        const startIndex = (jobsNeedingArchivePage - 1) * JOBS_NEEDING_ARCHIVE_PER_PAGE;
+        const endIndex = startIndex + JOBS_NEEDING_ARCHIVE_PER_PAGE;
+
+        $rows.each(function (index) {
+            $(this).toggle(index >= startIndex && index < endIndex);
+        });
+
+        const showingCount = total === 0 ? 0 : Math.min(endIndex, total) - startIndex;
+        $('#jobs-needing-archive-pagination-summary').text(
+            total === 0
+                ? 'No jobs to show.'
+                : 'Page ' + jobsNeedingArchivePage + ' of ' + totalPages + ', showing ' + showingCount + ' of ' + total + ' total'
+        );
+
+        $('#jobs-needing-archive-prev-page').prop('disabled', jobsNeedingArchivePage <= 1);
+        $('#jobs-needing-archive-next-page').prop('disabled', jobsNeedingArchivePage >= totalPages);
+    }
+
+    $(document).on('click', '#jobs-needing-archive-prev-page', function () {
+        if ($(this).prop('disabled')) {
+            return;
+        }
+        jobsNeedingArchivePage -= 1;
+        paginateJobsNeedingArchiveList();
+    });
+
+    $(document).on('click', '#jobs-needing-archive-next-page', function () {
+        if ($(this).prop('disabled')) {
+            return;
+        }
+        jobsNeedingArchivePage += 1;
+        paginateJobsNeedingArchiveList();
+    });
+
     $(document).on('click', '#open-jobs-needing-archive-modal', function () {
+        jobsNeedingArchivePage = 1;
         openJobsNeedingArchiveModal();
+        paginateJobsNeedingArchiveList();
     });
 
     $(document).on('click', '.jobs-archive-modal-close, #jobsNeedingArchiveModal [data-modal-hide="jobsNeedingArchiveModal"]', function () {

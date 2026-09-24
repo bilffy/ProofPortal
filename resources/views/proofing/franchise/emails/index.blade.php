@@ -83,6 +83,20 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+
+                                <div class="paginator mt-3">
+                                    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
+                                        <div class="flex gap-4">
+                                            <button type="button" id="choice-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                                                &lt; {{ __('Previous') }}
+                                            </button>
+                                            <button type="button" id="choice-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                                                {{ __('Next') }} &gt;
+                                            </button>
+                                        </div>
+                                    </nav>
+                                    <p class="mt-2 text-muted" id="choice-pagination-summary"></p>
+                                </div>
                             @endif
                         </div>
             </div>
@@ -141,6 +155,20 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+
+                                <div class="paginator mt-3">
+                                    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
+                                        <div class="flex gap-4">
+                                            <button type="button" id="invitation-choice-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                                                &lt; {{ __('Previous') }}
+                                            </button>
+                                            <button type="button" id="invitation-choice-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                                                {{ __('Next') }} &gt;
+                                            </button>
+                                        </div>
+                                    </nav>
+                                    <p class="mt-2 text-muted" id="invitation-choice-pagination-summary"></p>
+                                </div>
                             @endif
                         </div>
             </div>
@@ -153,43 +181,119 @@
 @section('js')
 <script>
 $(document).ready(function () {
-    $('#choice-name-filter').on('keyup', filterChoicesTable);
+    // Shared filter + client-side pagination (10 rows/page) for the Jobs and
+    // Schools choice tables - both tables are rendered in full up-front (no
+    // AJAX here), so paging and the existing text filter both just show/hide
+    // <tr> elements with the "d-none" class.
+    function setupPaginatedChoiceTable(options) {
+        const rowSelector = options.rowSelector;
+        const filterInputSelector = options.filterInputSelector;
+        const filterFeedbackSelector = options.filterFeedbackSelector;
+        const prevBtnSelector = options.prevBtnSelector;
+        const nextBtnSelector = options.nextBtnSelector;
+        const summarySelector = options.summarySelector;
+        const perPage = options.perPage || 10;
 
-    function filterChoicesTable() {
-        let filterByTextOriginal = $('#choice-name-filter').val();
-        let filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
+        let currentPage = 1;
 
-        if (filterByText.length >= 1) {
-            $(".choice").addClass("d-none");
-            let allMatches = $("[data-choice-name*='" + filterByText + "']");
-            allMatches.removeClass("d-none");
-            $("#choice-name-filter-feedback").text(
-                "Found " + allMatches.length + " records containing '" + filterByTextOriginal + "'."
-            );
-        } else {
-            $(".choice").removeClass("d-none");
-            $("#choice-name-filter-feedback").text("");
+        function matchingRows() {
+            const filterByTextOriginal = $(filterInputSelector).val() || '';
+            const filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
+
+            if (filterByText.length >= 1) {
+                return $(rowSelector).filter(function () {
+                    return ($(this).data('choice-name') || '').toString().indexOf(filterByText) !== -1;
+                });
+            }
+
+            return $(rowSelector);
         }
+
+        function render() {
+            const filterByTextOriginal = $(filterInputSelector).val() || '';
+            const matches = matchingRows();
+            const total = matches.length;
+            const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+            if (currentPage < 1) {
+                currentPage = 1;
+            }
+
+            $(rowSelector).addClass('d-none');
+
+            const start = (currentPage - 1) * perPage;
+            const pageRows = matches.slice(start, start + perPage);
+            pageRows.removeClass('d-none');
+
+            if (filterFeedbackSelector) {
+                if (filterByTextOriginal.length >= 1) {
+                    $(filterFeedbackSelector).text(
+                        "Found " + total + " records containing '" + filterByTextOriginal + "'."
+                    );
+                } else {
+                    $(filterFeedbackSelector).text('');
+                }
+            }
+
+            if (summarySelector) {
+                $(summarySelector).text(
+                    total === 0
+                        ? "{{ __('No records to show.') }}"
+                        : "{{ __('Page') }} " + currentPage + " {{ __('of') }} " + totalPages
+                            + ", {{ __('showing') }} " + pageRows.length + " {{ __('record(s) out of') }} " + total + " {{ __('total') }}"
+                );
+            }
+
+            $(prevBtnSelector)
+                .prop('disabled', currentPage <= 1)
+                .toggleClass('opacity-50 cursor-not-allowed', currentPage <= 1);
+            $(nextBtnSelector)
+                .prop('disabled', currentPage >= totalPages)
+                .toggleClass('opacity-50 cursor-not-allowed', currentPage >= totalPages);
+        }
+
+        $(filterInputSelector).on('keyup', function () {
+            currentPage = 1;
+            render();
+        });
+
+        $(prevBtnSelector).on('click', function () {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                render();
+            }
+        });
+
+        $(nextBtnSelector).on('click', function () {
+            currentPage += 1;
+            render();
+        });
+
+        render();
     }
 
-    $('#invitation-choice-name-filter').on('keyup', filterInvitationChoicesTable);
+    setupPaginatedChoiceTable({
+        rowSelector: '.choice',
+        filterInputSelector: '#choice-name-filter',
+        filterFeedbackSelector: '#choice-name-filter-feedback',
+        prevBtnSelector: '#choice-prev-page',
+        nextBtnSelector: '#choice-next-page',
+        summarySelector: '#choice-pagination-summary',
+        perPage: 10,
+    });
 
-    function filterInvitationChoicesTable() {
-        let filterByTextOriginal = $('#invitation-choice-name-filter').val();
-        let filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
-
-        if (filterByText.length >= 1) {
-            $(".invitation-choice").addClass("d-none");
-            let allMatches = $(".invitation-choice[data-choice-name*='" + filterByText + "']");
-            allMatches.removeClass("d-none");
-            $("#invitation-choice-name-filter-feedback").text(
-                "Found " + allMatches.length + " records containing '" + filterByTextOriginal + "'."
-            );
-        } else {
-            $(".invitation-choice").removeClass("d-none");
-            $("#invitation-choice-name-filter-feedback").text("");
-        }
-    }
+    setupPaginatedChoiceTable({
+        rowSelector: '.invitation-choice',
+        filterInputSelector: '#invitation-choice-name-filter',
+        filterFeedbackSelector: '#invitation-choice-name-filter-feedback',
+        prevBtnSelector: '#invitation-choice-prev-page',
+        nextBtnSelector: '#invitation-choice-next-page',
+        summarySelector: '#invitation-choice-pagination-summary',
+        perPage: 10,
+    });
 
     // Tab switching itself is handled by Flowbite's Tabs component (initialised
     // app-wide from data-tabs-toggle/data-tabs-target attributes - see

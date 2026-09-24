@@ -8,6 +8,7 @@ use App\Models\Template;
 use App\Models\User;
 use App\Models\Status;
 use App\Models\UserInviteToken;
+use App\Services\EmailValidationService;
 use App\Services\Proofing\StatusService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -46,8 +47,28 @@ class SendUserInviteJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle(StatusService $statusService)
+    public function handle(StatusService $statusService, EmailValidationService $emailValidationService)
     {
+        $sender = User::find($this->senderId);
+
+        // Check the address with SendGrid's Email Address Validation API before
+        // doing anything else - this key can't send mail, read bounces, etc.,
+        // so this is the only way we have to catch a typo'd domain (e.g.
+        // "gmial.com") up front instead of after a real send attempt.
+        $validation = $emailValidationService->validate($this->user->email);
+
+        if ($validation['deliverable'] === false) {
+            Log::warning('[invite-debug] SendGrid flagged invite email as invalid - not sending', [
+                'user_id' => $this->user->id,
+                'email' => $this->user->email,
+                'verdict' => $validation['verdict'],
+            ]);
+
+            $this->recordInvalidInviteEmail($sender, $statusService, $validation['verdict']);
+
+            return;
+        }
+
         $token = Password::broker('invites')->createToken($this->user);
 
         $setupUrl = route('account.setup.create', [
@@ -63,8 +84,6 @@ class SendUserInviteJob implements ShouldQueue
         
         $this->user->save();
 
-        $sender = User::find($this->senderId);
-
         // Send the invite email
         $sentMessage = Mail::to($this->user->email)->send(new UserInviteMail($this->user, $this->senderId, $setupUrl));
 
@@ -79,6 +98,66 @@ class SendUserInviteJob implements ShouldQueue
         } else {
             Log::warning('[invite-debug] Skipped recordSentInviteEmail because sentMessage was not a SentMessage instance', [
                 'user_id' => $this->user->id,
+            ]);
+        }
+    }
+
+    /**
+     * Record an `emails` audit row for an invite that SendGrid flagged as
+     * undeliverable, so it shows up in the emails table as a failure
+     * (smtp_code/smtp_message) instead of silently never happening. Mirrors
+     * recordSentInviteEmail()'s payload shape, minus the actual send.
+     */
+    protected function recordInvalidInviteEmail(?User $sender, StatusService $statusService, ?string $verdict): void
+    {
+        try {
+            $template = Template::where('template_name', 'user_added')->first();
+
+            $schoolId = null;
+            $alphacode = null;
+            $schoolKey = null;
+
+            if ($this->user->isSchoolLevel()) {
+                $school = $this->user->getSchool();
+                $alphacode = $this->user->getFranchise()?->alphacode;
+                $schoolId = $school?->id ?: null;
+                $schoolKey = $school?->schoolkey ?: null;
+            } elseif ($this->user->isFranchiseLevel()) {
+                $alphacode = $this->user->getFranchise()?->alphacode;
+            }
+
+            $payload = [
+                'generated_from_user_id' => $this->senderId,
+                'alphacode' => $alphacode,
+                'school_id' => $schoolId,
+                'ts_schoolkey' => $schoolKey,
+                'sentdate' => now(),
+                'email_from' => $sender?->email,
+                'email_to' => $this->user->email,
+                'email_content' => null,
+                // 550 (mailbox unavailable) is the standard SMTP code for an
+                // invalid/non-existent recipient - matches what a real send
+                // attempt would have bounced with. smtp_message is capped at
+                // 25 chars in the emails table, so keep this generic; the
+                // actual SendGrid verdict is in the log line above.
+                'smtp_code' => 550,
+                'smtp_message' => 'Invalid email address',
+                'template_id' => $template?->id,
+                'status_id' => $statusService->error,
+            ];
+
+            $email = Email::create($payload);
+
+            Log::info('[invite-debug] Recorded invalid-email emails row', [
+                'user_id' => $this->user->id,
+                'email_row_id' => $email->id,
+                'verdict' => $verdict,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to record invalid invite email', [
+                'user_id' => $this->user->id,
+                'sender_id' => $this->senderId,
+                'error' => $e->getMessage(),
             ]);
         }
     }

@@ -16,6 +16,9 @@ class ImageHelper
     // public const NOT_FOUND_IMG = '/not_found.jpg';
     public const NOT_FOUND_IMG = '/absent-image.png';
     public const ABSENT_IMG = '/absent-image.png';
+    // No dedicated asset yet - falls back to NOT_FOUND_IMG in ImageService::getFallbackProcessingImage().
+    // Drop a distinct '/processing-image.jpg' into the same disk to give it its own look.
+    public const PROCESSING_IMG = '/absent-image.png'; //'/processing-image.jpg';
 
     public static function getImagePath($path, $base = '', $patternLeniency = self::FLAG_SOFT_PATTERN): string
     {

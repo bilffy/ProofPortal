@@ -45,11 +45,19 @@ class EmailController extends Controller
         $jobs = $this->reportRepository->getSchoolsIds();
         $seasonList = Season::orderBy('code', 'asc')->pluck('code', 'ts_season_id')->toArray();
 
+        // Prefer school_id (schools.id) when the job has one; ts_schoolkey is a
+        // legacy key that isn't guaranteed unique across schools (e.g. DEMO),
+        // so it's only used as a fallback when school_id is null.
+        $schoolNamesById = School::whereIn('id', $jobs->pluck('school_id')->filter()->unique()->values())
+            ->pluck('name', 'id');
+
         $schoolNamesByKey = School::whereIn('schoolkey', $jobs->pluck('ts_schoolkey')->filter()->unique()->values())
             ->pluck('name', 'schoolkey');
 
-        $jobs->each(function ($job) use ($schoolNamesByKey) {
-            $job->school_name = $schoolNamesByKey[$job->ts_schoolkey] ?? null;
+        $jobs->each(function ($job) use ($schoolNamesById, $schoolNamesByKey) {
+            $job->school_name = $job->school_id
+                ? ($schoolNamesById[$job->school_id] ?? null)
+                : ($job->ts_schoolkey ? ($schoolNamesByKey[$job->ts_schoolkey] ?? null) : null);
         });
 
         $franchise = $user->getFranchise();

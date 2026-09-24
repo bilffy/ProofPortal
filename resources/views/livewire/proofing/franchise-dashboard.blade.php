@@ -2310,7 +2310,6 @@
     <div class="sd-kpi-grid">
         <div
             class="sd-kpi-card is-teal sd-clickable cursor-pointer"
-            title="Click for school list"
             data-modal-target="fdSchoolsModal"
             data-modal-toggle="fdSchoolsModal"
         >
@@ -2324,7 +2323,6 @@
 
         <!-- <div
             class="sd-kpi-card is-orange sd-clickable cursor-pointer"
-            title="Click for school breakdown"
             data-modal-target="fdUsersModal"
             data-modal-toggle="fdUsersModal"
         >
@@ -2338,7 +2336,6 @@
 
         <div
             class="sd-kpi-card is-blue sd-clickable cursor-pointer"
-            title="Click for school breakdown"
             data-modal-target="fdPhotographyModal"
             data-modal-toggle="fdPhotographyModal"
         >
@@ -2352,7 +2349,6 @@
 
         <div
             class="sd-kpi-card is-purple sd-clickable cursor-pointer"
-            title="Click for school breakdown"
             data-modal-target="fdActiveProofingModal"
             data-modal-toggle="fdActiveProofingModal"
         >
@@ -2369,7 +2365,6 @@
         <div class="sd-charts-3">
             <div
                 class="sd-panel sd-donut-card is-green sd-clickable cursor-pointer"
-                title="Click for school breakdown"
                 data-modal-target="fdFoldersModal"
                 data-modal-toggle="fdFoldersModal"
             >
@@ -2402,7 +2397,6 @@
 
             <div
                 class="sd-panel sd-donut-card is-recent-activity sd-clickable cursor-pointer"
-                title="Click for school breakdown"
                 data-modal-target="fdRecentActivityModal"
                 data-modal-toggle="fdRecentActivityModal"
             >

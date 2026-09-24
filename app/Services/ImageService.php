@@ -893,9 +893,14 @@ class ImageService
             }
         }
 
+        // The images-table record exists (synced from the source system) but the
+        // colour-graded file hasn't landed at PORTRAITIMAGELOCATION/GROUPIMAGELOCATION
+        // yet - this can lag the metadata sync by days. Distinguish this from a
+        // genuinely deleted image so the UI can say "still processing" instead of
+        // showing the same broken/missing graphic.
         return [
-            'content' => $this->getFallbackNotFoundImage(),
-            'source' => 'not-found',
+            'content' => $this->getFallbackProcessingImage(),
+            'source' => 'processing',
         ];
     }
 
@@ -919,6 +924,24 @@ class ImageService
         }
 
         return null;
+    }
+
+    /**
+     * Placeholder shown while the colour-graded image is known (images-table row
+     * exists) but hasn't yet arrived at the photography storage location.
+     */
+    private function getFallbackProcessingImage(): ?string
+    {
+        $processingPath = ImageHelper::PROCESSING_IMG;
+        if (Storage::disk('local')->exists($processingPath)) {
+            $binary = Storage::disk('local')->get($processingPath);
+            return base64_encode($binary);
+        }
+
+        // Fall back to the existing not-found graphic if no dedicated asset has
+        // been added yet - the X-Photography-Source header still reports
+        // 'processing' so the front-end badge/messaging works regardless.
+        return $this->getFallbackNotFoundImage();
     }
 
     /**

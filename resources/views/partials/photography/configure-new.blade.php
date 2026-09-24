@@ -586,7 +586,7 @@
                                 <span class="jobs-archive-heading font-bold text-red-600 text-lg">Warning!</span>
                             </div>
                             <p class="text-sm text-amber-700 mt-1">
-                                Jobs with completed proofing (status completed or past proofing date) are not archived yet and will not sync automatically. Please archive them to enable syncing and pull new changes.
+                                Jobs with completed proofing (status completed or past proofing date) are not archived yet and will not sync automatically. Please archive them to enable syncing and pull new changes for portraits.
                             </p>
                             <p class="jobs-archive-description text-sm text-red-600">
                                 Jobs having digital download date will automatically sync after 7pm.
@@ -594,20 +594,16 @@
                         </div>
                     </div>
 
-                <!-- <button
+                <button
                     type="button"
                     id="open-jobs-needing-archive-modal"
                     class="jobs-archive-banner-btn"
                 >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M2.5 4.5H13.5L12 13.5H4L2.5 4.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                        <path d="M6 6.5V11.5M10 6.5V11.5M5 4.5L5.5 2.5H10.5L11 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>View &amp; Archive Jobs</span>
+                    <span>View Jobs</span>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                </button> -->
+                </button>
                  <!-- <button
                     type="button"
                     id="open-jobs-needing-archive-modal"
@@ -951,6 +947,16 @@
                         </div>
                     @endforeach
                 </div>
+
+                <div class="mt-3 flex items-center justify-center gap-4">
+                    <button type="button" id="jobs-needing-archive-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                        &lt; Previous
+                    </button>
+                    <button type="button" id="jobs-needing-archive-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                        Next &gt;
+                    </button>
+                </div>
+                <p class="mt-2 text-sm text-gray-500 text-center" id="jobs-needing-archive-pagination-summary"></p>
             </div>
 
             <div class="jobs-archive-modal-footer">

@@ -50,4 +50,12 @@ return [
     // mkdir -p storage/app/proofing_cache
     // chown -R nginx:nginx storage/app/proofing_cache
     // chmod -R 775 storage/app/proofing_cache
+
+    // SendGrid Email Address Validation (paid add-on). This key is scoped
+    // ONLY for the validations/email endpoint - it has no permission to send
+    // mail, read bounces, etc. - so it's a separate credential from
+    // MAIL_PASSWORD (the SMTP-send key).
+    'sendgrid' => [
+        'validation_key' => env('MAIL_VALIDATION_PASSWORD'),
+    ],
 ];

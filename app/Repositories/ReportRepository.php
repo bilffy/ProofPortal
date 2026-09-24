@@ -46,6 +46,7 @@ class ReportRepository
                 'jobs.ts_job_id',
                 'jobs.ts_jobname',
                 'jobs.ts_season_id',
+                'jobs.school_id',
                 'jobs.ts_schoolkey',
                 'status.status_external_name as sync_status'
             )

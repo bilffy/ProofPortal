@@ -307,7 +307,7 @@
                 $('.group-name').html(newValue);
 
                 if (event.type === 'change') {
-                    console.log('Folder name change triggered', {newValue: newValue});
+                    // console.log('Folder name change triggered', {newValue: newValue});
                     sendFolderChanges(location, issue, newValue, note);
                 }
             });
@@ -318,10 +318,10 @@
                 var note = @json($subjectMissingNote);
                 
                 if (event.type === 'change') {
-                    console.log('Subject missing names change triggered', {newValue: newValue});
+                   // console.log('Subject missing names change triggered', {newValue: newValue});
                     var previousValue = $('#recorded_subjectmissing').val();
                     if (newValue !== previousValue) {
-                        console.log('Sending change to server...');
+                        // console.log('Sending change to server...');
                         sendFolderChanges(location, issue, newValue, note);
                         $('#recorded_subjectmissing').val(newValue);
                     }
@@ -335,10 +335,10 @@
                 var note = @json($groupCommentsNote);
                 
                 if (event.type === 'change') {
-                    console.log('Group comment change triggered', {issue: issue, newValue: newValue});
+                   // console.log('Group comment change triggered', {issue: issue, newValue: newValue});
                     var previousValue = $('#groupPreviousValue_' + issue_id).val();
                     if (newValue !== previousValue) {
-                        console.log('Sending change to server...');
+                       // console.log('Sending change to server...');
                         sendFolderChanges(location, issue, newValue, note);
                         $('#groupPreviousValue_' + issue_id).val(newValue);
                     }
@@ -351,10 +351,10 @@
                 var note = @json($generalIssueNote);
                 
                 if (event.type === 'change') {
-                    console.log('General issue change triggered', {newValue: newValue});
+                   // console.log('General issue change triggered', {newValue: newValue});
                     var previousValue = $('#recorded_pageissue').val();
                     if (newValue !== previousValue) {
-                        console.log('Sending change to server...');
+                       // console.log('Sending change to server...');
                         sendFolderChanges(location, issue, newValue, note);
                         $('#recorded_pageissue').val(newValue);
                     }
@@ -368,9 +368,9 @@
                 var note = previousValue ? @json($teacherExistNote) : @json($teacherNote);
 
                 if (event.type === 'change') {
-                    console.log('Teacher name change triggered', {newValue: newValue});
+                    // console.log('Teacher name change triggered', {newValue: newValue});
                     if (newValue !== previousValue) {
-                        console.log('Sending change to server...');
+                        // console.log('Sending change to server...');
                         sendFolderChanges(location, issue, newValue, note);
                         $('#recorded_teachername').val(newValue);
                     }
@@ -384,9 +384,9 @@
                 var note = previousValue ? @json($principalExistNote) : @json($principalNote);
 
                 if (event.type === 'change') {
-                    console.log('Principal name change triggered', {newValue: newValue});
+                    // console.log('Principal name change triggered', {newValue: newValue});
                     if (newValue !== previousValue) {
-                        console.log('Sending change to server...');
+                        // console.log('Sending change to server...');
                         sendFolderChanges(location, issue, newValue, note);
                         $('#recorded_principalname').val(newValue);
                     }
@@ -400,9 +400,9 @@
                 var note = previousValue ? @json($deputyExistNote) : @json($deputyNote);
 
                 if (event.type === 'change') {
-                    console.log('Deputy name change triggered', {newValue: newValue});
+                    // console.log('Deputy name change triggered', {newValue: newValue});
                     if (newValue !== previousValue) {
-                        console.log('Sending change to server...');
+                        // console.log('Sending change to server...');
                         sendFolderChanges(location, issue, newValue, note);
                         $('#recorded_deputyname').val(newValue);
                     }
@@ -415,7 +415,7 @@
                 var issueDescription = $(this).data('description');
                 var newValue = $(this).val();
 
-                console.log('Group select changed:', {id: issue_id, name: issueName, desc: issueDescription, val: newValue});
+                // console.log('Group select changed:', {id: issue_id, name: issueName, desc: issueDescription, val: newValue});
 
                 // UI Toggle Logic
                 if (newValue === '0') {
@@ -440,7 +440,7 @@
                     }
 
                     if (issue) {
-                        console.log('Sending group select change...', {issue: issue, newValue: newValue, note: note, issueId: issue_id});
+                        // console.log('Sending group select change...', {issue: issue, newValue: newValue, note: note, issueId: issue_id});
                         sendFolderChanges(location, issue, newValue, note, issue_id);
                         $('#groupPreviousValue_' + issue_id).val(newValue);
                     }
@@ -454,7 +454,7 @@
                 var issueDescription = $(this).data('description');
                 var newValue = $(this).val();
 
-                console.log('Proceed select changed:', {id: issue_id, name: issueName, desc: issueDescription, val: newValue});
+                // console.log('Proceed select changed:', {id: issue_id, name: issueName, desc: issueDescription, val: newValue});
 
                 // Value Change check
                 var previousValue = $(this).data('previousValue');
@@ -495,7 +495,7 @@
                     }
 
                     if (issue) {
-                        console.log('Sending folder select change...', {issue: issue, newValue: newValue, note: note, issueId: issue_id});
+                        // console.log('Sending folder select change...', {issue: issue, newValue: newValue, note: note, issueId: issue_id});
                         sendFolderChanges(location, issue, newValue, note, issue_id);
                         $(this).data('previousValue', newValue);
                     }

@@ -204,6 +204,7 @@ $(document).ready(function () {
 
                     let actionHtml = '';
                     if (isArchivedHidden) {
+
                         // Action for Active/None jobs
                         actionHtml = `
                             <a href="#" id="open-job-link" data-job="${job.jobKeyHash}">Open Job</a> |
@@ -236,6 +237,14 @@ $(document).ready(function () {
                         job.proof_due ? moment(job.proof_due).format('YYYY-MM-DD') : '',
                         actionHtml
                     ]).node();
+
+                    // job.review_statuses can be null/undefined for a job that has
+                    // no review status yet (see the guarded read a few lines above) -
+                    // reading straight off it here throws and aborts the whole
+                    // forEach for any response containing such a job.
+                    if (job.review_statuses && job.review_statuses.status_internal_name === 'COMPLETED') {
+                        $(newRow).addClass('bg-success-light');
+                    }
 
                     if (!isArchivedHidden) {
                         $(newRow).addClass('archived');

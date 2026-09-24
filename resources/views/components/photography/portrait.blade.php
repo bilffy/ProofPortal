@@ -89,7 +89,7 @@
             {{-- code by chromedia --}}
 
             {{-- code by IT --}}
-                <div x-data="{ src: '', fetchSpinner: true, started: false }" x-init="
+                <div x-data="{ src: '', fetchSpinner: true, started: false, imageSource: '' }" x-init="
                     const startFetch = () => {
                         if (started) return;
                         started = true;
@@ -99,15 +99,16 @@
                         })
                         .then(res => {
                             if (!res.ok) throw new Error('Fetch failed');
-                            const imageSource = res.headers.get('X-Photography-Source');
-                            return res.blob().then(blob => ({ blob, imageSource }));
+                            const resolvedSource = res.headers.get('X-Photography-Source');
+                            return res.blob().then(blob => ({ blob, resolvedSource }));
                         })
-                        .then(({ blob, imageSource }) => {
+                        .then(({ blob, resolvedSource }) => {
                             src = URL.createObjectURL(blob);
                             fetchSpinner = false;
-                            if (imageSource === 'file' && typeof window.revealPortraitCheckbox === 'function') {
+                            imageSource = resolvedSource || '';
+                            if (resolvedSource === 'file' && typeof window.revealPortraitCheckbox === 'function') {
                                 window.revealPortraitCheckbox('{{ $imgId }}');
-                            } else if (imageSource !== 'file' && typeof window.hidePortraitCheckbox === 'function') {
+                            } else if (resolvedSource !== 'file' && typeof window.hidePortraitCheckbox === 'function') {
                                 window.hidePortraitCheckbox('{{ $imgId }}');
                             }
                         })
@@ -132,7 +133,7 @@
                         <x-spinner.image />
                     </template>
                     <template x-if="!fetchSpinner">
-                        <div class="flex items-center h-full bg-[#E6E7E8] group {{ $hasImage ? 'hover:scale-[1.05] hover:transition-all' : '' }}">
+                        <div class="flex items-center h-full bg-[#E6E7E8] group" x-bind:class="imageSource === 'file' ? 'hover:scale-[1.05] hover:transition-all' : ''">
                             @if ($isLightbox && $noImage)
                                 <div class="absolute inset-0 flex items-center justify-center z-10 invisible group-hover:visible">
                                     <span class="text-white font-semibold text-xl">+ Add Photo</span>

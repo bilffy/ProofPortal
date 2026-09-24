@@ -279,6 +279,10 @@ class FranchiseDashboardService
             ->values()
             ->all();
         $schoolNames = $schools->pluck('name', 'id');
+        // ts_schoolkey fallback for jobs with no school_id - schoolkey isn't
+        // guaranteed unique across schools (e.g. DEMO), so school_id is
+        // always preferred when a job has one (see $jobLabel below).
+        $schoolNamesByKey = $schools->pluck('name', 'schoolkey');
 
         if (empty($schoolIds)) {
             return [];
@@ -305,9 +309,11 @@ class FranchiseDashboardService
             return $query;
         };
 
-        $jobLabel = static function (Job $job) use ($schoolNames): string {
+        $jobLabel = static function (Job $job) use ($schoolNames, $schoolNamesByKey): string {
             $name = (string) ($job->ts_jobname ?: $job->ts_jobkey ?: 'Untitled job');
-            $schoolName = $job->school_id ? ($schoolNames[$job->school_id] ?? null) : null;
+            $schoolName = $job->school_id
+                ? ($schoolNames[$job->school_id] ?? null)
+                : ($job->ts_schoolkey ? ($schoolNamesByKey[$job->ts_schoolkey] ?? null) : null);
             return $schoolName ? $schoolName . ' — ' . $name : $name;
         };
 
@@ -317,7 +323,7 @@ class FranchiseDashboardService
             ->where('jobs.proof_due', '<=', $now)
             ->orderByDesc('jobs.proof_due')
             ->limit(10)
-            ->get(['jobs.ts_jobname', 'jobs.ts_jobkey', 'jobs.proof_due', 'jobs.school_id']);
+            ->get(['jobs.ts_jobname', 'jobs.ts_jobkey', 'jobs.proof_due', 'jobs.school_id', 'jobs.ts_schoolkey']);
 
         foreach ($completedJobs as $job) {
             $items->push([
@@ -336,7 +342,7 @@ class FranchiseDashboardService
             ->where('jobs.proof_start', '<=', $next7Days)
             ->orderBy('jobs.proof_start')
             ->limit(10)
-            ->get(['jobs.ts_jobname', 'jobs.ts_jobkey', 'jobs.proof_start', 'jobs.school_id']);
+            ->get(['jobs.ts_jobname', 'jobs.ts_jobkey', 'jobs.proof_start', 'jobs.school_id', 'jobs.ts_schoolkey']);
 
         foreach ($upcomingJobs as $job) {
             $items->push([
@@ -353,7 +359,7 @@ class FranchiseDashboardService
             ->where('jobs.jobsync_status_id', $syncId)
             ->orderByDesc('jobs.updated_at')
             ->limit(10)
-            ->get(['jobs.ts_jobname', 'jobs.ts_jobkey', 'jobs.updated_at', 'jobs.created_at', 'jobs.school_id']);
+            ->get(['jobs.ts_jobname', 'jobs.ts_jobkey', 'jobs.updated_at', 'jobs.created_at', 'jobs.school_id', 'jobs.ts_schoolkey']);
 
         foreach ($syncedJobs as $job) {
             $items->push([
@@ -1849,7 +1855,7 @@ class FranchiseDashboardService
      *
      * @param  array<int>  $jobIds
      * @return array<int, int> keyed by ts_job_id
-     */
+    **/
     protected function getPhotographyConfiguredJobIds(array $jobIds): array
     {
         $jobIds = array_values(array_filter(array_map('intval', $jobIds)));

@@ -1,6 +1,29 @@
 
 {{-- code by IT --}}
-<div class="w-full text-center">
+{{-- Per-page image count is sized BEFORE this view first renders, by the
+     query-free photo-grid-measuring view (see PhotoGrid::render()). The
+     x-init below only handles LIVE browser resizes after that: it re-measures
+     the already-rendered grid's resolved column count (debounced) and asks
+     the server to reload with the new preferred count when it changes. --}}
+<div class="w-full text-center"
+    x-data="{}"
+    x-init="
+        let photoGridResizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(photoGridResizeTimer);
+            photoGridResizeTimer = setTimeout(() => {
+                const gridEl = $el.querySelector('[total-image-count]');
+                if (!gridEl) { return; }
+                const resolved = window.getComputedStyle(gridEl).gridTemplateColumns.trim();
+                const tracks = resolved.length ? resolved.split(' ').filter(Boolean) : [];
+                const allPx = tracks.length > 0 && tracks.every((t) => t.indexOf('px') !== -1);
+                if (allPx) {
+                    $wire.resizeColumns(tracks.length);
+                }
+            }, 400);
+        });
+    "
+>
 
     <div class="w-full text-center">
         <div class="grid grid-cols-[repeat(auto-fit,195px)] gap-auto" total-image-count="{{ $totalWithImages }}">
@@ -31,13 +54,13 @@
                         Your MSP photos are currently being processed and will appear here shortly.
                     @endif
                 @else
-                    <p class="text-sm text-neutral-600 mb-3">
+                    {{-- <p class="text-sm text-neutral-600 mb-3">
                         Showing {{ $paginatedImages->firstItem() }}&ndash;{{ $paginatedImages->lastItem() }}
                         of {{ number_format($paginatedImages->total()) }}
                         @if ($paginatedImages->hasMorePages())
                             <span class="text-neutral-500">— more available below</span>
                         @endif
-                    </p>
+                    </p> --}}
                     {{ $paginatedImages->onEachSide(1)->links('vendor.livewire.pagination') }} {{-- code by IT --}}
                     {{-- {{ $paginatedImages->links('vendor.livewire.pagination') }} --}} {{-- code by chromedia --}}
                 @endif

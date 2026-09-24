@@ -293,11 +293,11 @@ function adjustReviewDateIsEnabled(data) {
         timeout: 60000,
 
         success: function (response) {
-            //console.log(response);
+            // console.log(response);
         },
         error: function (e) {
             //alert("An error occurred: " + e.responseText.message);
-            //console.log(e);
+            // console.log(e);
         }
     })
 
@@ -331,7 +331,7 @@ function insertEmailNotification(modelTag, fieldTag, roleTag) {
         },
         contentType: false,
         success: function (response) {
-            //console.log(response);
+            // console.log(response);
         },
         error: function (e) {
             //alert("An error occurred: " + e.responseText.message);
@@ -663,11 +663,11 @@ $(document).ready(function () {
     };
 
     Upload.prototype.progressHandling = function (evt) {
-        //console.log(this.progress_bar_id + " div.progress-bar");
+        // console.log(this.progress_bar_id + " div.progress-bar");
         if (evt.lengthComputable) {
             var percentComplete = evt.loaded / evt.total;
             var percentCompleteAsWhole = Math.ceil(percentComplete * 100);
-            //console.log(percentCompleteAsWhole);
+            // console.log(percentCompleteAsWhole);
             $(this.progress_bar_id + " div.progress-bar").css({ width: percentCompleteAsWhole + '%' }).attr('aria-valuenow', percentCompleteAsWhole);
             $(this.progress_bar_id + " div.progress-bar").text(percentCompleteAsWhole + '%');
             if (percentComplete === 1) {
@@ -1114,7 +1114,6 @@ $(document).ready(function () {
 
     //Is Visible Portrait
     $("#set-is-visible-for-portrait-all").click(function () {
-        console.log('hi');
         $("input[id^='is-visible-for-portrait-']").prop('checked', true);
         processCheckboxes('is-visible-for-portrait-', 'is_visible_for_portrait');
         applyEditCapabilities();

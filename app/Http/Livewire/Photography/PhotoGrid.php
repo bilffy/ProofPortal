@@ -24,6 +24,7 @@ class PhotoGrid extends Component
     public $schoolId;
     public $tsAccountId = null;
     public $perPage = 30;
+    public $dynamicPerPageApplied = false;
     
     public $images = [];
     public $search = '';
@@ -49,6 +50,57 @@ class PhotoGrid extends Component
         }
     }
     //CODE BY IT
+
+    // Target images-per-page. 30 is always preferred; we only go above it to
+    // top up a partially-filled last row (see setDynamicPerPage()) so the
+    // grid never ends mid-row and reads as "that's all the photos" before
+    // the user notices there's a next page.
+    const PREFERRED_PER_PAGE = 30;
+
+    // 30 whenever it already divides evenly into full rows for the given
+    // column count; otherwise round up to the next full row so the last row
+    // is never left half-empty (shared by the initial-load and resize paths).
+    private function computePreferredPerPage(int $columns): int
+    {
+        if ($columns < 1) {
+            return $this->perPage;
+        }
+        return (int) (ceil(self::PREFERRED_PER_PAGE / $columns) * $columns);
+    }
+
+    // Called once from the client (photo-grid-measuring.blade.php x-init) after
+    // the lazy-mount completes, with the number of 195px columns that actually
+    // fit across the browser width.
+    public function setDynamicPerPage($columns)
+    {
+        if ($this->dynamicPerPageApplied) {
+            return;
+        }
+        $this->dynamicPerPageApplied = true;
+
+        $computedPerPage = $this->computePreferredPerPage((int) $columns);
+        if ($computedPerPage !== $this->perPage) {
+            $this->perPage = $computedPerPage;
+            Session::put('photo_grid_per_page', $computedPerPage);
+        }
+        // No resetPage() - this is always the FIRST real render, so page 1
+        // (the default) is already correct; nothing to reset.
+    }
+
+    // Called from photo-grid.blade.php's debounced window-resize listener once
+    // the grid is already showing real images. Only re-queries (and resets
+    // back to page 1) when the column count has actually changed enough to
+    // change the preferred page size - a resize that doesn't cross a column
+    // boundary is a harmless no-op here.
+    public function resizeColumns($columns)
+    {
+        $computedPerPage = $this->computePreferredPerPage((int) $columns);
+        if ($computedPerPage !== $this->perPage) {
+            $this->perPage = $computedPerPage;
+            Session::put('photo_grid_per_page', $computedPerPage);
+            $this->resetPage();
+        }
+    }
     public function placeholder()
     {
         return view('livewire.photography.photo-grid-placeholder');
@@ -83,8 +135,13 @@ class PhotoGrid extends Component
         }
 
         $this->tsAccountId = $user->getFranchise()?->ts_account_id;
+
+        // Column count (and therefore perPage) is resolved by a query-free
+        // "measuring" render pass - see render()/setDynamicPerPage() below -
+        // so the actual image query never runs with a guessed page size.
         $this->perPage = 30;
-        Session::put('photo_grid_per_page', 30);
+        $this->dynamicPerPageApplied = false;
+        Session::put('photo_grid_per_page', $this->perPage);
         $this->setupFilters($season);
     }
 
@@ -121,6 +178,9 @@ class PhotoGrid extends Component
     private function setupFilters(int $year, string $view = 'ALL', array $class = [])
     {
         $initialState = empty($this->filters);
+        if (!isset($this->filters['allClasses'])) {
+            $this->filters['allClasses'] = [];
+        }
         $this->season = $year;
         $classOptions = [];
         $imageService = new ImageService();
@@ -202,7 +262,7 @@ class PhotoGrid extends Component
         }
         
         $imageService = new ImageService();
-        $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
+        $keys = empty($this->filters['class']) ? ($this->filters['allClasses'] ?? []) : $this->filters['class'];
         $options = [
             'tsSeasonId' => $this->season,
             'schoolId' => $this->schoolId,
@@ -277,6 +337,15 @@ class PhotoGrid extends Component
 
     public function render()
     {
+        if (!$this->dynamicPerPageApplied) {
+            // First render after the lazy-mount completes. Skip the image
+            // query entirely and show a width-measuring view instead; its
+            // script calls setDynamicPerPage() with the real column count,
+            // which triggers the one and only image query, already sized
+            // correctly (see setDynamicPerPage() above).
+            return view('livewire.photography.photo-grid-measuring');
+        }
+
         $paginatedImages = $this->getImages();
         $totalWithImages = $this->getCountWithImages();
         return view('livewire.photography.photo-grid', [
@@ -288,7 +357,7 @@ class PhotoGrid extends Component
     private function getCountWithImages()
     {
         $imageService = new ImageService();
-        $keys = empty($this->filters['class']) ? $this->filters['allClasses'] : $this->filters['class'];
+        $keys = empty($this->filters['class']) ? ($this->filters['allClasses'] ?? []) : $this->filters['class'];
         
         switch ($this->category) {
             case PhotographyHelper::TAB_GROUPS:

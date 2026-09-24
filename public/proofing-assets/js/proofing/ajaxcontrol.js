@@ -1079,7 +1079,7 @@ $(document).ready(function () {
         $("#" + skHash + "-grid-spelling-revert-button").removeClass('d-none')
 
         var tableRow = $(this).parent().parent();
-        //console.log(tableRow);
+        // console.log(tableRow);
 
         var newTableRowDataFilterValue = '';
         tableRow.find('input').each(function () {
@@ -1303,7 +1303,7 @@ $(document).ready(function () {
             },
             error: function (e) {
                 //alert("An error occurred: " + e.responseText.message);
-                //console.log(e);
+                // console.log(e);
             }
         });
     }
@@ -1397,7 +1397,7 @@ $(document).ready(function () {
                     (isPortrait == 1 ? ' data-target="#GridSpellingEdits_Modal"' : ' data-target=""') + ' data-subject-name="' + fullNameNew + '"></i><span data-role="remove"></span>';
             });
         } else {
-            //console.log('No spans with the old text found');
+            // console.log('No spans with the old text found');
         }
     }
 
@@ -1770,14 +1770,14 @@ $(document).ready(function () {
             type: 'GET',
             url: targetUrl,
             success: function (htmlResult, textStatus, jqXHR) {
-                //console.log(htmlResult);
+                // console.log(htmlResult);
                 modal.find("#history-box-subject-history-table").html(htmlResult)
             },
             error: function (xhr, status) {
-                //console.log("Sorry, there was a problem!");
+                // console.log("Sorry, there was a problem!");
             },
             complete: function (xhr, status) {
-                //console.log("Completed");
+                // console.log("Completed");
             }
         });
     });
@@ -1890,7 +1890,7 @@ function sendFolderChanges(location, issue, classNameNew, note, issueId) {
         },
         error: function (e) {
             //alert("An error occurred: " + e.responseText.message);
-            //console.log(e);
+            // console.log(e);
             returnResponse = false;
         },
         complete: function (xhr) {

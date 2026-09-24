@@ -2,7 +2,11 @@
     <div class="py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h3 class="text-2xl">Bulk Invite</h3>
-            <p class="text-sm text-neutral mt-1">Import from CSV or Excel, assign a school, then send invitations.</p>
+            <p class="text-sm text-neutral mt-1">
+                Import from CSV or Excel, 
+                @if ($showSchoolSelector && $lockedSchoolName === '') assign a school, @endif
+                then send invitations.
+            </p>
             
                     @if (!$showSchoolSelector && $lockedSchoolName !== '')
                         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:100%;max-width:100%;padding:10px 14px;overflow:visible;background:#f0f3f5;border:none;border-left:4px solid #005890;border-radius:8px;color:#00000;">

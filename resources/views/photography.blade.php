@@ -413,7 +413,12 @@
         const imageItems = isLightbox ? 'selectedLightboxImages' : 'selectedImages';
         const isUploaded = img.classList.contains('uploaded');
         const externalSubjectId = img.dataset.externalSubjectId;
-        const hasSelectableImage = hasImage || !!img.querySelector('.portrait-img-checkbox');
+        // Selectability must track the LIVE checkbox state (kept in sync by
+        // revealPortraitCheckbox/hidePortraitCheckbox once the async file fetch
+        // resolves), not the static server-rendered hasImage flag - hasImage is
+        // true for a 'processing' image too (its DB row exists), which let those
+        // tiles be selected/downloaded before the actual file was ever confirmed.
+        const hasSelectableImage = !!img.querySelector('.portrait-img-checkbox');
         
         if (!isLightbox) {
             if (selectMode) {

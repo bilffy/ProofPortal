@@ -218,6 +218,21 @@ class ProofingJobController extends Controller
             }
 
             if ($selectedJob) {
+                // Stamp the job with the school currently open in this franchise
+                // session. Sync Job / Open Job is only reachable from within an
+                // active school context (ProofingSeasonController::openSeason()
+                // requires one to even load this page), so school_context-sid
+                // reliably identifies which school this synced job belongs to.
+                $currentSchool = SchoolContextHelper::getCurrentSchoolContext();
+                if ($currentSchool && (int) $selectedJob->school_id !== (int) $currentSchool->id) {
+                    $this->jobService->updateJobData($jobKey, 'school_id', $currentSchool->id);
+                    \Log::info('Job school_id set from school context', [
+                        'jobKey' => $jobKey,
+                        'school_id' => $currentSchool->id,
+                    ]);
+                    $selectedJob->refresh();
+                }
+
                 // Re-activate if deleted
                 if ($selectedJob->job_status_id == $this->statusService->deleted) {
                     $tsFolderIds = $selectedJob->folders()->pluck('ts_folder_id')->toArray(); 
