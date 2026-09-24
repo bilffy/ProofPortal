@@ -51,7 +51,7 @@ class EmailValidationService
                 ->timeout(5)
                 ->post(self::ENDPOINT, [
                     'email' => $email,
-                    'source' => 'user_invite',
+                    'source' => 'user invite',
                 ]);
 
             // Log the raw response every time (not just on failure) until we've
