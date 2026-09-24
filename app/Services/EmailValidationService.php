@@ -54,6 +54,16 @@ class EmailValidationService
                     'source' => 'user_invite',
                 ]);
 
+            // Log the raw response every time (not just on failure) until we've
+            // confirmed the exact shape SendGrid sends back for this key/plan -
+            // the previous silent version made a wrong-JSON-path bug
+            // indistinguishable from "no key configured"/"Risky verdict".
+            Log::info('SendGrid email validation raw response', [
+                'email' => $email,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
             if (!$response->successful()) {
                 Log::warning('SendGrid email validation call failed', [
                     'email' => $email,
@@ -64,7 +74,7 @@ class EmailValidationService
                 return ['checked' => false, 'deliverable' => null, 'verdict' => null];
             }
 
-            $verdict = $response->json('result.verdict');
+            $verdict = $response->json('result.verdict') ?? $response->json('verdict');
 
             return match ($verdict) {
                 'Valid' => ['checked' => true, 'deliverable' => true, 'verdict' => $verdict],
