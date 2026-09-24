@@ -35,6 +35,14 @@ class EmailValidationService
         $apiKey = config('services.sendgrid.validation_key');
 
         if (empty($apiKey)) {
+            // Most likely cause if this fires unexpectedly: config was cached
+            // (php artisan config:cache) before services.sendgrid.validation_key
+            // was added - run `php artisan config:clear` (then config:cache
+            // again if you use it) and restart the queue worker.
+            Log::warning('SendGrid validation skipped - no API key configured', [
+                'email' => $email,
+            ]);
+
             return ['checked' => false, 'deliverable' => null, 'verdict' => null];
         }
 

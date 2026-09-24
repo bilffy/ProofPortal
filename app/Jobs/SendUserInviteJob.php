@@ -57,6 +57,12 @@ class SendUserInviteJob implements ShouldQueue
         // "gmial.com") up front instead of after a real send attempt.
         $validation = $emailValidationService->validate($this->user->email);
 
+        Log::info('[invite-debug] SendGrid validation result', [
+            'user_id' => $this->user->id,
+            'email' => $this->user->email,
+            'validation' => $validation,
+        ]);
+
         if ($validation['deliverable'] === false) {
             Log::warning('[invite-debug] SendGrid flagged invite email as invalid - not sending', [
                 'user_id' => $this->user->id,
