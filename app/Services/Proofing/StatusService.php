@@ -10,7 +10,7 @@ class StatusService
     public $new, $invited, $active, $deleted, $inactive, $disabled, $sync, $unsync;
     public $review, $success, $duplicate, $error, $pending, $none, $completed;
     public $archived, $modified, $viewed, $hold, $locked, $unlocked, $rejected;
-    public $incomplete, $autoApproved, $awaitingApproval, $approved, $tnjNotFound, $expired, $emailSent;
+    public $incomplete, $autoApproved, $awaitingApproval, $approved, $tnjNotFound, $expired, $emailSent, $failed;
 
     /**
      * Create a new class instance.
@@ -50,6 +50,7 @@ class StatusService
         $this->tnjNotFound      = $statuses->get('TNJ NOT FOUND');
         $this->expired          = $statuses->get('EXPIRED');
         $this->emailSent          = $statuses->get('EMAIL SENT');
+        $this->failed             = $statuses->get('FAILED');
     }
 
     public function InsertStatus($status_name)

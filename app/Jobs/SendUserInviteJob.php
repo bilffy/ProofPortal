@@ -132,6 +132,26 @@ class SendUserInviteJob implements ShouldQueue
                 $alphacode = $this->user->getFranchise()?->alphacode;
             }
 
+            // Render what the invite email WOULD have looked like, purely for
+            // the audit-trail row - a placeholder link, since a real
+            // Password::broker('invites') token is pointless for an address
+            // we already know SendGrid rejected.
+            $emlContent = null;
+            try {
+                $placeholderUrl = route('account.setup.create', [
+                    'token' => 'n-a',
+                    'email' => $this->user->getHashedIdAttribute(),
+                ], true);
+                $mailable = new UserInviteMail($this->user, $this->senderId, $placeholderUrl);
+                $renderedHtml = $mailable->render();
+                $emlContent = $this->buildEmlFromHtml((string) ($mailable->subject ?? 'Welcome to the MSP Portal'), $renderedHtml);
+            } catch (\Throwable $renderException) {
+                Log::warning('[invite-debug] Could not render invite mailable for invalid-email log', [
+                    'user_id' => $this->user->id,
+                    'error' => $renderException->getMessage(),
+                ]);
+            }
+
             $payload = [
                 'generated_from_user_id' => $this->senderId,
                 'alphacode' => $alphacode,
@@ -140,7 +160,7 @@ class SendUserInviteJob implements ShouldQueue
                 'sentdate' => now(),
                 'email_from' => $sender?->email,
                 'email_to' => $this->user->email,
-                'email_content' => null,
+                'email_content' => $emlContent,
                 // 550 (mailbox unavailable) is the standard SMTP code for an
                 // invalid/non-existent recipient - matches what a real send
                 // attempt would have bounced with. smtp_message is capped at
@@ -149,7 +169,7 @@ class SendUserInviteJob implements ShouldQueue
                 'smtp_code' => 550,
                 'smtp_message' => 'Invalid email address',
                 'template_id' => $template?->id,
-                'status_id' => $statusService->error,
+                'status_id' => $statusService->failed,
             ];
 
             $email = Email::create($payload);
@@ -280,8 +300,18 @@ class SendUserInviteJob implements ShouldQueue
             return null;
         }
 
-        $subject = (string) $originalMessage->getSubject();
-        $htmlPart = new TextPart((string) $htmlBody, 'utf-8', 'html', 'base64');
+        return $this->buildEmlFromHtml((string) $originalMessage->getSubject(), (string) $htmlBody);
+    }
+
+    /**
+     * Shared by both recordSentInviteEmail() (HTML pulled from the message
+     * that was actually sent) and recordInvalidInviteEmail() (HTML rendered
+     * directly from the Mailable, since nothing was ever sent) - same
+     * single-part, base64-encoded rebuild either way.
+     */
+    protected function buildEmlFromHtml(string $subject, string $htmlBody): string
+    {
+        $htmlPart = new TextPart($htmlBody, 'utf-8', 'html', 'base64');
 
         $rebuilt = (new SymfonyEmail())
             ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
