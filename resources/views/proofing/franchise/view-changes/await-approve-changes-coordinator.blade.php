@@ -61,85 +61,85 @@
                                 </div>
                             </div>
 
-                        <div id="changes-table-wrapper" class="{{ count($subjectChanges) === 0 ? 'd-none' : '' }}">
-                            <table class="table table-bordered table-striped table-sm">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">
-                                            Name
-                                            <a href="#" class="small people-photos-hide d-inline">(Hide Photos)</a>
-                                            <a href="#" class="small people-photos-show d-none">(Show Photos)</a>
-                                        </th>
-                                        <th scope="col">Issue Type</th>
-                                        <th scope="col">Note</th>
-                                        <th scope="col">Change Requested</th>
-                                        <th scope="col">By User</th>
-                                        <th scope="col">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="changes-table-body">
-                                    @foreach($subjectChanges as $subjectChange)
-                                    @php
-                                        // $folderKey = implode("-", $attachedFolderNames[$subjectChange->ts_subjectkey]['keys']);
-                                        $skHash = sha1($subjectChange->ts_subjectkey);
-                                        $hash = Crypt::encryptString($subjectChange->ts_subjectkey);
-                                        $rowIdSelector = sha1(json_encode($subjectChange));
-                                        if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '' && $subjectChange->images) {
-                                            $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $hash, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
-                                        }else{
-                                            $image_url = asset('proofing-assets/img/subject-image.png');
-                                        }
-                                        $folderFromKey = null;
-                                        if ($subjectChange->external_issue_name === 'Class') {
-                                            $folderId = (int) str_replace('Folder From: ', '', (string) $subjectChange->change_from);
-                                            $folderFromKey = $classFolderKeysById[$folderId] ?? null;
-                                        }
-                                    @endphp
-                                    
-                                    <tr id="{{ $rowIdSelector }}">
-                                        <td class="text-center pt-2 pb-1">
-                                            <div class="person-pic-wrapper d-inline">
-                                                {{-- <img src="{{ $image_url }}" class="mx-auto d-block" style="max-width: 100%; max-height: 90px;" alt="Subject Image"> --}}
-                                                <img style="max-width: 100%; max-height: 90px;" class="lazyload mx-auto d-block" src="{{ $image_url }}" data-src="{{ $image_url }}" alt="Subject Image">
-                                            </div>
-                                            {{ $subjectChange->firstname }} {{ $subjectChange->lastname }}
-                                        </td>
-                                        <td>{{ $subjectChange->external_issue_name }}</td>
-                                        <td>{{ $subjectChange->notes }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($subjectChange->change_datetime)->format('Y-m-d H:i:s') }}</td>
-                                        <td>{{ $subjectChange->user->firstname }} {{ $subjectChange->user->lastname }}</td>
-                                        <td>
-                                            @php
-                                                // A Class-change with no destination folder chosen is stored as the
-                                                // literal "Folder To: " (see ProofingChangelogService::SUBJECT_ISSUE_CLASS,
-                                                // which appends $requestData['folder_issue'] - empty when none was picked).
-                                                // Approving it would apply an empty/invalid folder id downstream, so
-                                                // Approve is hidden for that case. Reject doesn't touch change_to at all
-                                                // (rejectProofingChangelogById() just flips a status flag), so it stays
-                                                // available regardless - a coordinator must still be able to dismiss an
-                                                // incomplete request without being forced through Modify.
-                                                $hasValidDestination = $subjectChange->change_to !== 'Folder To: ';
-                                            @endphp
-                                            @if($subjectChange->external_issue_name == 'Picture' || $subjectChange->external_issue_name == 'Class')
-                                                <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class' && $folderFromKey) data-change-from = "{{ Crypt::encryptString($folderFromKey) }}" @endif data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
-                                            @endif
-                                            @if($hasValidDestination)
-                                                <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="approve">Approve</a> | 
-                                            @endif
-                                            <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="reject">Reject</a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                    <tr id="no-changes-message" class="{{ count($subjectChanges) !== 0 ? 'd-none' : '' }}">
-                                        <td colspan="6" class="text-center py-3 text-muted fw-semibold">{{ __('No Changes Found...') }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div id="changes-table-wrapper" class="{{ count($subjectChanges) === 0 ? 'd-none' : '' }}">
+                                <table class="table table-bordered table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">
+                                                Name
+                                                <a href="#" class="small people-photos-hide d-inline">(Hide Photos)</a>
+                                                <a href="#" class="small people-photos-show d-none">(Show Photos)</a>
+                                            </th>
+                                            <th scope="col">Issue Type</th>
+                                            <th scope="col">Note</th>
+                                            <th scope="col">Change Requested</th>
+                                            <th scope="col">By User</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="changes-table-body">
+                                        @foreach($subjectChanges as $subjectChange)
+                                        @php
+                                            // $folderKey = implode("-", $attachedFolderNames[$subjectChange->ts_subjectkey]['keys']);
+                                            $skHash = sha1($subjectChange->ts_subjectkey);
+                                            $hash = Crypt::encryptString($subjectChange->ts_subjectkey);
+                                            $rowIdSelector = sha1(json_encode($subjectChange));
+                                            if ($subjectChange->ts_subjectkey != '' && $selectedJob->ts_jobkey != '' && $subjectChange->images) {
+                                                $image_url = route('serve.image', ['fileOrigin' => 'subjects', 'filename' => $hash, 'jobKey' => Crypt::encryptString($selectedJob->ts_jobkey)]); 
+                                            }else{
+                                                $image_url = asset('proofing-assets/img/subject-image.png');
+                                            }
+                                            $folderFromKey = null;
+                                            if ($subjectChange->external_issue_name === 'Class') {
+                                                $folderId = (int) str_replace('Folder From: ', '', (string) $subjectChange->change_from);
+                                                $folderFromKey = $classFolderKeysById[$folderId] ?? null;
+                                            }
+                                        @endphp
+                                        
+                                        <tr id="{{ $rowIdSelector }}">
+                                            <td class="text-center pt-2 pb-1">
+                                                <div class="person-pic-wrapper d-inline">
+                                                    {{-- <img src="{{ $image_url }}" class="mx-auto d-block" style="max-width: 100%; max-height: 90px;" alt="Subject Image"> --}}
+                                                    <img style="max-width: 100%; max-height: 90px;" class="lazyload mx-auto d-block" src="{{ $image_url }}" data-src="{{ $image_url }}" alt="Subject Image">
+                                                </div>
+                                                {{ $subjectChange->firstname }} {{ $subjectChange->lastname }}
+                                            </td>
+                                            <td>{{ $subjectChange->external_issue_name }}</td>
+                                            <td>{{ $subjectChange->notes }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($subjectChange->change_datetime)->format('Y-m-d H:i:s') }}</td>
+                                            <td>{{ $subjectChange->user->firstname }} {{ $subjectChange->user->lastname }}</td>
+                                            <td>
+                                                @php
+                                                    // A Class-change with no destination folder chosen is stored as the
+                                                    // literal "Folder To: " (see ProofingChangelogService::SUBJECT_ISSUE_CLASS,
+                                                    // which appends $requestData['folder_issue'] - empty when none was picked).
+                                                    // Approving it would apply an empty/invalid folder id downstream, so
+                                                    // Approve is hidden for that case. Reject doesn't touch change_to at all
+                                                    // (rejectProofingChangelogById() just flips a status flag), so it stays
+                                                    // available regardless - a coordinator must still be able to dismiss an
+                                                    // incomplete request without being forced through Modify.
+                                                    $hasValidDestination = $subjectChange->change_to !== 'Folder To: ';
+                                                @endphp
+                                                @if($subjectChange->external_issue_name == 'Picture' || $subjectChange->external_issue_name == 'Class')
+                                                    <a id="modify" href="#" @if($subjectChange->external_issue_name == 'Class' && $folderFromKey) data-change-from = "{{ Crypt::encryptString($folderFromKey) }}" @endif data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" @if($subjectChange->external_issue_name == 'Picture') data-issue-id = "{{$pictureissueID}}" @elseif($subjectChange->external_issue_name == 'Class') data-issue-id = "{{$folderissueID}}" @endif data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="modify">Modify</a> | 
+                                                @endif
+                                                @if($hasValidDestination)
+                                                    <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="approve">Approve</a> | 
+                                                @endif
+                                                <a href="#" data-signed-url="{{ URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $hash]) }}" data-issue-type = "{{ $subjectChange->external_issue_name }}" data-full-name = "{{ $subjectChange->firstname }} {{ $subjectChange->lastname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ $skHash }}" data-skencrypted="{{ $hash }}" data-correction-id="{{$subjectChange->id}}" data-action="reject">Reject</a>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                        <tr id="no-changes-message" class="{{ count($subjectChanges) !== 0 ? 'd-none' : '' }}">
+                                            <td colspan="6" class="text-center py-3 text-muted fw-semibold">{{ __('No Changes Found...') }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
             <div class="modal fade" id="ModifyApproval_Modal" tabindex="-1" role="dialog" aria-labelledby="ModifyApprovalTitle" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
@@ -187,7 +187,7 @@
                     </div>
                 </div>
             </div>
-    @endif
+        @endif
     
     @else
 

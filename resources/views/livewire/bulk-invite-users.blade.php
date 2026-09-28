@@ -206,6 +206,17 @@
                 </div>
             @else
                 <div id="biu-imported-users-panel" class="w-full">
+                    @php
+                        // Rows without a "Send Invitation with proofing" checkbox at all
+                        // (School Administrator rows show "N/A" instead) are excluded from
+                        // this computation, so the header checkbox only ever reflects the
+                        // rows that actually have a checkbox to check.
+                        $sendInvitationApplicableRows = collect($rows)->reject(
+                            fn ($row) => ($row['role'] ?? '') === 'School Administrator'
+                        );
+                        $allSendInvitationChecked = $sendInvitationApplicableRows->isNotEmpty()
+                            && $sendInvitationApplicableRows->every(fn ($row) => !empty($row['send_invitation_with_proofing']));
+                    @endphp
                     <table id="biu-imported-users-table" class="w-full text-sm text-left">
                         <thead>
                             <tr>
@@ -213,7 +224,17 @@
                                 <th scope="col">Last Name</th>
                                 <th scope="col">Email</th>
                                 <th scope="col">Role</th>
-                                <th scope="col" class="text-center">Send Invitation with proofing</th>
+                                <th scope="col" class="text-center">
+                                    <div class="inline-flex items-center justify-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            wire:click="toggleAllSendInvitationWithProofing($event.target.checked)"
+                                            @checked($allSendInvitationChecked)
+                                            class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary cursor-pointer"
+                                        />
+                                        <span>Send Invitation with proofing</span>
+                                    </div>
+                                </th>
                                 <th scope="col" class="text-center w-[140px]">Actions</th>
                             </tr>
                         </thead>
@@ -273,7 +294,7 @@
                                         @else
                                             <input
                                                 type="checkbox"
-                                                wire:model="rows.{{ $index }}.send_invitation_with_proofing"
+                                                wire:model.live="rows.{{ $index }}.send_invitation_with_proofing"
                                                 class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary cursor-pointer"
                                             />
                                         @endif
@@ -715,7 +736,19 @@
             importedUsersRowSignature = signature;
 
             var $table = window.jQuery(table);
+            // Checking/unchecking a row's "Send Invitation with proofing" box
+            // fires a Livewire round-trip like any other edit, which lands us
+            // right back here to rebuild the DataTable for the fresh row
+            // markup - capture whatever page the user is currently on first,
+            // so re-init below can put them back on it instead of defaulting
+            // to page 1.
+            var currentPage = 0;
             if (alreadyInitialized) {
+                try {
+                    currentPage = $table.DataTable().page();
+                } catch (e) {
+                    currentPage = 0;
+                }
                 try {
                     $table.DataTable().destroy();
                 } catch (e) {
@@ -724,7 +757,7 @@
             }
 
             try {
-                $table.DataTable({
+                var dataTable = $table.DataTable({
                     dom: "<'biu-table-toolbar'lf><'biu-table-wrap't><'biu-table-footer'ip>",
                     pageLength: 10,
                     lengthChange: true,
@@ -749,6 +782,15 @@
                         },
                     },
                 });
+
+                if (currentPage > 0) {
+                    var pageCount = dataTable.page.info().pages;
+                    var targetPage = Math.min(currentPage, Math.max(pageCount - 1, 0));
+                    if (targetPage > 0) {
+                        dataTable.page(targetPage).draw(false);
+                    }
+                }
+
                 return true;
             } catch (e) {
                 console.warn('Imported users DataTable init failed', e);

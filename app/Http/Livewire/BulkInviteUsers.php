@@ -218,6 +218,22 @@ class BulkInviteUsers extends Component
         $this->successMessage = '';
     }
 
+    /**
+     * Header "select all" checkbox for the Send Invitation with proofing
+     * column. Sets every row to $value, then leans on revalidateAllRows()
+     * (same as setSendInvitationWithProofing()) to clamp School
+     * Administrator rows back to false, since they never show a checkbox.
+     */
+    public function toggleAllSendInvitationWithProofing(bool $value): void
+    {
+        foreach ($this->rows as $index => $row) {
+            $this->rows[$index]['send_invitation_with_proofing'] = $value;
+        }
+
+        $this->revalidateAllRows();
+        $this->successMessage = '';
+    }
+
     public function startEdit(int $index): void
     {
         if (!isset($this->rows[$index])) {
