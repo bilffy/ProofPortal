@@ -63,6 +63,13 @@ class FilenameFormatsTableSeeder extends Seeder
                 'visibility' => ['groups'],
                 'visibility_options' => ['portraits', 'groups'],
             ],
+            [
+                'name' => 'StudentID ',
+                'format' => '{subjects.subjectID}',
+                'format_key' => 8,
+                'visibility' => ['portraits'],
+                'visibility_options' => ['portraits', 'groups'],
+            ],
         ];
 
         foreach ($formats as $format) {

@@ -30,7 +30,7 @@
                     <!-- <label class="block text-sm font-medium text-gray-700 mb-3">Select a product</label> -->
 
                     @if (count($products))
-                        <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+                        <div class="grid" style="gap: 24px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
                             @foreach ($products as $product)
                                 <button type="button" wire:click="selectProduct({{ $product->id }})" class="product-tile">
                                     <div class="product-tile-thumb">
@@ -380,7 +380,7 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        padding: 12px;
+        padding: 18px;
         background-color: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 14px;
@@ -414,13 +414,13 @@
     }
     .product-tile-image {
         position: absolute;
-        top: 14px;
-        right: 14px;
-        bottom: 14px;
-        left: 14px;
+        top: 20px;
+        right: 20px;
+        bottom: 20px;
+        left: 20px;
         display: block;
-        width: calc(100% - 28px);
-        height: calc(100% - 28px);
+        width: calc(100% - 40px);
+        height: calc(100% - 40px);
         object-fit: contain;
         object-position: center;
         transition: transform 0.3s ease;
@@ -433,15 +433,15 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 2rem;
+        font-size: 3.5rem;
         color: #cbd5e1;
     }
     .product-tile-label {
         flex: 0 0 auto;
-        margin-top: 10px;
+        margin-top: 14px;
         padding: 0 4px;
         min-height: calc(1.3em * 2);
-        font-size: 14px;
+        font-size: 17px;
         font-weight: 600;
         line-height: 1.3;
         color: #1f2937;
