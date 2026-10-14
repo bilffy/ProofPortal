@@ -14,8 +14,12 @@
         {{-- Same heading wrapper as /users (Manage Users): py-4 gives the h3 the
              same gap from the top of the page, and the same gap below it that
              mb-4 used to give. --}}
-        <div class="py-4 flex items-center justify-between">
-            <h3 class="text-2xl">Ordering</h3>
+
+        <div class="py-4 flex" style="gap: 16px; align-items: center;">
+            <h3 class="text-2xl" style="margin: 0; line-height: 1.2;">{{ $selectedProductId ? (collect($products)->firstWhere('id', $selectedProductId)?->name ?? 'Ordering') : 'Ordering' }}</h3>
+            @if ($selectedProductId && collect($products)->firstWhere('id', $selectedProductId)?->name === 'Other')
+                <p class="font-medium" style="color: #dc2626; margin: 0 !important;">* Contact MSP for more details.</p>
+            @endif
         </div>
 
         @if ($successMessage)
@@ -30,7 +34,7 @@
                     <!-- <label class="block text-sm font-medium text-gray-700 mb-3">Select a product</label> -->
 
                     @if (count($products))
-                        <div class="grid" style="gap: 24px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+                        <div class="grid" style="gap: 28px; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));">
                             @foreach ($products as $product)
                                 <button type="button" wire:click="selectProduct({{ $product->id }})" class="product-tile">
                                     <div class="product-tile-thumb">
@@ -414,13 +418,13 @@
     }
     .product-tile-image {
         position: absolute;
-        top: 20px;
-        right: 20px;
-        bottom: 20px;
-        left: 20px;
+        top: 16px;
+        right: 16px;
+        bottom: 16px;
+        left: 16px;
         display: block;
-        width: calc(100% - 40px);
-        height: calc(100% - 40px);
+        width: calc(100% - 32px);
+        height: calc(100% - 32px);
         object-fit: contain;
         object-position: center;
         transition: transform 0.3s ease;
@@ -441,7 +445,7 @@
         margin-top: 14px;
         padding: 0 4px;
         min-height: calc(1.3em * 2);
-        font-size: 17px;
+        font-size: 19px;
         font-weight: 600;
         line-height: 1.3;
         color: #1f2937;
