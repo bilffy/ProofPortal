@@ -49,7 +49,7 @@
                             @endforeach
                         </div>
                     @else
-                        <p class="text-sm text-gray-500">No products are available to order yet.</p>
+                        <p class="text-sm text-gray-500">No products are available to order yet.</p> 
                     @endif
 
                     @error('selectedProductId') <p class="mt-2 text-sm text-alert">{{ $message }}</p> @enderror
@@ -410,7 +410,7 @@
         position: relative;
         flex: 0 0 auto;
         width: 100%;
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 16 / 10;
         overflow: hidden;
         border-radius: 10px;
         border: 1px solid #eef2f6;
@@ -418,13 +418,13 @@
     }
     .product-tile-image {
         position: absolute;
-        top: 16px;
-        right: 16px;
-        bottom: 16px;
-        left: 16px;
+        top: 10px;
+        right: 14px;
+        bottom: 10px;
+        left: 14px;
         display: block;
-        width: calc(100% - 32px);
-        height: calc(100% - 32px);
+        width: calc(100% - 28px);
+        height: calc(100% - 20px);
         object-fit: contain;
         object-position: center;
         transition: transform 0.3s ease;
