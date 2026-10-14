@@ -10,6 +10,9 @@ class Email extends Model
 {
     protected $table = 'emails';
 
+    public const ORDER_RECIPIENT_PRINT = 'print';
+    public const ORDER_RECIPIENT_REQUESTOR = 'requestor';
+
     use SoftDeletes;
     
     /**
@@ -35,12 +38,19 @@ class Email extends Model
         'email_token',
         'template_id',
         'status_id', 
+        'order_id',
+        'order_recipient',
         'deleted_at'
     ];
 
     public function status()
     {
         return $this->belongsTo(Status::class, 'status_id');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id');
     }
 
     public function template()

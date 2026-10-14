@@ -12,6 +12,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Livewire\Order\Order;
+use App\Http\Livewire\Products\CustomFieldsList;
+use App\Http\Livewire\Products\OrderDetail;
+use App\Http\Livewire\Products\OrdersList;
+use App\Http\Livewire\Products\ProductsList;
 use App\Http\Livewire\SchoolList;
 use App\Http\Livewire\SchoolView;
 use App\Http\Livewire\Proofing\FranchiseDashboard;
@@ -117,6 +121,14 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
     // Order routes
     Route::get('/order', Order::class)->name('order');
 
+    // Products / Product Fields / Orders admin (Super Admin only - each
+    // component's own mount() also redirects non-Super Admins, this route
+    // grouping is just for readability).
+    Route::get('/product-fields', CustomFieldsList::class)->name('product-fields.index');
+    Route::get('/products', ProductsList::class)->name('products.index');
+    Route::get('/orders', OrdersList::class)->name('orders.index');
+    Route::get('/orders/{order}', OrderDetail::class)->name('orders.show');
+
     // Impersonation routes
     Route::get('/impersonate/as/{id}', [ImpersonateController::class, 'store'])->name('impersonate.store');
     Route::get('/impersonate/leave', [ImpersonateController::class, 'leave'])->name('impersonate.leave');
@@ -194,6 +206,8 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
         Route::get('/emails', [EmailController::class, 'index'])->name('emails.index');
         Route::post('/emails/invitations/filter',[EmailController::class, 'filterInvitations'])->name('emails.invitations.filter');
         Route::get('/emails/invitations/{schoolId}', [EmailController::class, 'showInvitations'])->name('emails.invitations.show');
+        Route::post('/emails/ordering/filter',[EmailController::class, 'filterOrdering'])->name('emails.ordering.filter');
+        Route::get('/emails/ordering/{schoolId}', [EmailController::class, 'showOrdering'])->name('emails.ordering.show');
         Route::get('/emails/{tsJobId}', [EmailController::class, 'show'])->name('emails.show');
         Route::post('/emails/filter',[EmailController::class, 'filter'])->name('emails.filter');
         Route::post('/emails/view',[EmailController::class, 'view'])->name('emails.view');

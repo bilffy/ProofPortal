@@ -109,7 +109,6 @@ $(document).ready(function () {
                 }
 
                 metaHtml += ''
-                    + '<p class="mb-1"><strong>Template:</strong> ' + esc(data.template) + '</p>'
                     + '<p class="mb-1"><strong>Status:</strong> ' + esc(data.status) + '</p>'
                     + '<p class="mb-1"><strong>Created:</strong> ' + esc(data.created) + '</p>'
                     + '<p class="mb-3"><strong>Sent:</strong> ' + esc(data.sent) + '</p>'

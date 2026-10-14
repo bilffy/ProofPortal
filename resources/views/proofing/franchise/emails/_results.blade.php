@@ -4,11 +4,13 @@
             <thead>
                 <tr>
                     <th scope="col" style="width: 70px; max-width: 70px; white-space: nowrap;">{{ __('ID') }}</th>
+                    @if ($showOrder ?? false)
+                        <th scope="col">{{ __('Order') }}</th>
+                    @endif
                     <th scope="col">{{ __('Created') }}</th>
                     <th scope="col">{{ __('Sent') }}</th>
                     <th scope="col">{{ __('To') }}</th>
                     <th scope="col">{{ __('From') }}</th>
-                    <th scope="col">{{ __('Template') }}</th>
                     <th scope="col">{{ __('Status') }}</th>
                     <th scope="col">{{ __('Actions') }}</th>
                 </tr>
@@ -22,11 +24,13 @@
                     @endphp
                     <tr>
                         <td>{{ $rowNumber }}</td>
+                        @if ($showOrder ?? false)
+                            <td>{{ $message->order->order_number ?? '—' }}</td>
+                        @endif
                         <td>{{ $message->created_at ? $message->created_at->format('Y-m-d H:i') : '' }}</td>
                         <td>{{ $message->sentdate ? \Carbon\Carbon::parse($message->sentdate)->format('Y-m-d H:i') : '—' }}</td>
                         <td>{{ $message->email_to }}</td>
                         <td>{{ $message->email_from }}</td>
-                        <td>{{ $message->template->external_template_name ?? '—' }}</td>
                         <td>{{ $message->status->status_external_name ?? $message->status->status_internal_name ?? '—' }}</td>
                         <td>
                             <a

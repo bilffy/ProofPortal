@@ -13,4 +13,7 @@ export const NAV_TABS = {
     ORDER: 'Ordering',
     CONFIG_SCHOOL: 'School Config',
     APP_SETTINGS: 'App Settings',
+    CUSTOM_FIELDS: 'Product Fields',
+    PRODUCTS: 'Products',
+    ORDERS_ADMIN: 'Orders Admin',
 }

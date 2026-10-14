@@ -15,7 +15,7 @@
 
 @section('content')
     <div class="py-4 flex items-center justify-between">
-        <h3 class="text-2xl">Emails — {{ $jobTitle }}</h3>
+        <h3 class="text-2xl">Proofing Emails — {{ $jobTitle }}</h3>
     </div>
 
     <div class="row">
@@ -55,7 +55,6 @@
                                     <option value="sentdate">Sent</option>
                                     <option value="email_to">To</option>
                                     <option value="email_from">From</option>
-                                    <option value="template_id">Template</option>
                                     <option value="status_id">Status</option>
                                 </select>
                             </div>

@@ -55,7 +55,6 @@
                                     <option value="sentdate">Sent</option>
                                     <option value="email_to">To</option>
                                     <option value="email_from">From</option>
-                                    <option value="template_id">Template</option>
                                     <option value="status_id">Status</option>
                                 </select>
                             </div>

@@ -50,11 +50,11 @@
     @endhasanyrole
     
 
-    {{--
+
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Ordering</x-layout.navItem>
     @endcan
-    --}}   
+
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
     @endcan
@@ -68,6 +68,38 @@
 
     @if ($user->isAdmin())
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageSettings" navIcon="cogs" href="{{ route('settings.main') }}">App Settings</x-layout.navItem>
+    @endif
+
+    @if ($user->isSuperAdmin())
+        {{-- One "Ordering" entry that expands to Product Fields / Products /
+             Orders. Opens by itself when the current page is one of them; the
+             sub-items keep their original ids so the active-tab highlight
+             script below still finds them. --}}
+        @php
+            $superAdminOpen = request()->routeIs('product-fields.*', 'products.*', 'orders.*');
+        @endphp
+        <div id="superAdminMenu">
+            <button
+                type="button"
+                id="tabSuperAdmin"
+                aria-expanded="{{ $superAdminOpen ? 'true' : 'false' }}"
+                aria-controls="superAdminSubmenu"
+                class="flex gap-2 items-center pl-4 pr-4 pt-2 pb-2 mr-2 rounded-e-md whitespace-nowrap hover:bg-primary-100"
+                style="width: calc(100% - 0.5rem); text-align: left; cursor: pointer;">
+                <span class="w-[20px] h-[20px] flex items-center justify-center">
+                    <x-icon icon="credit-card"/>
+                </span>
+                <div class="hideOnCollapse {{ $visibility ? 'textCollapsed' : 'textExpanded' }}">Ordering</div>
+                <span id="superAdminChevron" style="margin-left: auto; transition: transform .15s;{{ $superAdminOpen ? ' transform: rotate(180deg);' : '' }}">
+                    <x-icon icon="angle-down"/>
+                </span>
+            </button>
+            <div id="superAdminSubmenu" class="{{ $superAdminOpen ? '' : 'hidden' }}">
+                <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabCustomFields" navIcon="list-ul" href="{{ route('product-fields.index') }}" :activeNav="request()->routeIs('product-fields.*')">Product Fields</x-layout.navItem>
+                <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabProducts" navIcon="th-large" href="{{ route('products.index') }}" :activeNav="request()->routeIs('products.*')">Products</x-layout.navItem>
+                <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabOrdersAdmin" navIcon="shopping-cart" href="{{ route('orders.index') }}" :activeNav="request()->routeIs('orders.*')">Orders</x-layout.navItem>
+            </div>
+        </div>
     @endif
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PROOFING))
@@ -104,6 +136,30 @@
 </script>
 
 @endpush
+
+@if ($user->isSuperAdmin())
+@push('scripts')
+<script>
+    // Expand / collapse the Ordering (admin) submenu.
+    (function () {
+        var button = document.getElementById('tabSuperAdmin');
+        var submenu = document.getElementById('superAdminSubmenu');
+        var chevron = document.getElementById('superAdminChevron');
+        if (!button || !submenu) {
+            return;
+        }
+
+        button.addEventListener('click', function () {
+            var isOpen = submenu.classList.toggle('hidden') === false;
+            button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (chevron) {
+                chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+            }
+        });
+    })();
+</script>
+@endpush
+@endif
 
 <style>
     .logoRegular, .logoSM {

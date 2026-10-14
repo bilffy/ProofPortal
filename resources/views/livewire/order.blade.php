@@ -1,8 +1,626 @@
 <div class="relative overflow-x-auto">
     <div class="container3 p-4">
-        <iframe aria-label='MSP Portal Orders' frameborder="0" style="width: 100%; height: 80vh; border: none;" 
-                src="https://forms.zohopublic.com.au/msp/form/IDCardOrderingviaPortal/formperma/znjNcllPz1C3h9cEX-B_jvCfwx-8z-7Vk94-K7_y-Ik?key={{ $schoolKey }}&first={{ $user->firstname }}&last={{ $user->lastname }}&email={{ $user->email }}">
-        </iframe>
+        {{--
+            Previous implementation: embedded the Zoho Forms "ID Card Ordering
+            via Portal" form directly. Kept here, commented out, per request
+            rather than deleted outright. The matching component logic in
+            app/Http/Livewire/Order/Order.php is commented out the same way.
+
+            <iframe aria-label='MSP Portal Orders' frameborder="0" style="width: 100%; height: 80vh; border: none;"
+                    src="https://forms.zohopublic.com.au/msp/form/IDCardOrderingviaPortal/formperma/znjNcllPz1C3h9cEX-B_jvCfwx-8z-7Vk94-K7_y-Ik?key={{ $schoolKey ?? '' }}&first={{ $user->firstname ?? '' }}&last={{ $user->lastname ?? '' }}&email={{ $user->email ?? '' }}">
+            </iframe>
+        --}}
+
+        {{-- Same heading wrapper as /users (Manage Users): py-4 gives the h3 the
+             same gap from the top of the page, and the same gap below it that
+             mb-4 used to give. --}}
+        <div class="py-4 flex items-center justify-between">
+            <h3 class="text-2xl">Ordering</h3>
+        </div>
+
+        @if ($successMessage)
+            <div class="rounded-xl border border-success-300 bg-success-100 px-4 py-3 text-sm text-success mb-4" role="status">
+                {{ $successMessage }}
+            </div>
+        @endif
+
+        <div class="w-full">
+            @if (!$selectedProductId)
+                <div class="mb-4">
+                    <!-- <label class="block text-sm font-medium text-gray-700 mb-3">Select a product</label> -->
+
+                    @if (count($products))
+                        <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+                            @foreach ($products as $product)
+                                <button type="button" wire:click="selectProduct({{ $product->id }})" class="product-tile">
+                                    <div class="product-tile-thumb">
+                                        @if ($product->image)
+                                            <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($product->image) }}" class="product-tile-image" loading="lazy" alt="{{ $product->name }}" />
+                                        @else
+                                            <i class="fa fa-image product-tile-placeholder"></i>
+                                        @endif
+                                    </div>
+                                    <span class="product-tile-label">{{ $product->name }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-sm text-gray-500">No products are available to order yet.</p>
+                    @endif
+
+                    @error('selectedProductId') <p class="mt-2 text-sm text-alert">{{ $message }}</p> @enderror
+                </div>
+            @else
+                {{-- @php($selectedProduct = collect($products)->firstWhere('id', $selectedProductId))
+
+                <div class="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3">
+                    <div class="flex items-center gap-3">
+                        @if ($selectedProduct && $selectedProduct->image)
+                            <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($selectedProduct->image) }}" class="h-16 w-16 object-cover rounded border border-neutral" alt="{{ $selectedProduct->name }}" />
+                        @endif
+                        <span class="text-sm font-medium text-gray-700">{{ $selectedProduct->name ?? '' }}</span>
+                    </div>
+                    <button type="button" wire:click="changeProduct" class="text-sm text-primary hover:underline">&larr; Change product</button>
+                </div> --}}
+
+                @if (count($customFields))
+                    @php($availableFieldIds = collect($customFields)->pluck('id')->all())
+                    <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                        <h5 class="text-lg font-semibold mb-4">Specifications</h5>
+                        <hr class="border-gray-400 mb-6">
+                        <div class="grid grid-cols-2 gap-4">
+                        @foreach ($customFields as $field)
+                            @continue(!$field->isVisibleGiven($fieldValues, $availableFieldIds))
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ $field->label }}
+                                    @if ($field->is_required)
+                                        <span class="text-alert">*</span>
+                                    @endif
+                                </label>
+
+                                @if ($field->type === \App\Models\CustomField::TYPE_RADIO)
+                                    <div class="flex flex-wrap gap-4">
+                                        @foreach ($field->fieldOptions as $option)
+                                            <label class="inline-flex items-center gap-2 text-sm">
+                                                <input type="radio" wire:model.live="fieldValues.{{ $field->id }}" value="{{ $option->option_value }}" class="h-4 w-4 border-neutral text-primary focus:ring-primary" />
+                                                {{ $option->option_name }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @elseif ($field->type === \App\Models\CustomField::TYPE_DROPDOWN)
+                                    <select wire:model.live="fieldValues.{{ $field->id }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm">
+                                        <option value="">{{ $field->placeholder ?: 'Select an option' }}</option>
+                                        @foreach ($field->fieldOptions as $option)
+                                            <option value="{{ $option->option_value }}">{{ $option->option_name }}</option>
+                                        @endforeach
+                                    </select>
+                                @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
+                                    <input type="number" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                                @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
+                                    <div class="flex flex-wrap gap-4">
+                                        @foreach ($field->fieldOptions as $option)
+                                            <label class="inline-flex items-center gap-2 text-sm">
+                                                <input type="checkbox" wire:model.live="fieldValues.{{ $field->id }}" value="{{ $option->option_value }}" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" />
+                                                {{ $option->option_name }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @elseif ($field->type === \App\Models\CustomField::TYPE_IMAGE)
+                                    @if ($field->image_url)
+                                        <a href="{{ $field->image_url }}" target="_blank" rel="noopener" title="Click the image to view it full size">
+                                            <img src="{{ $field->image_url }}" class="max-h-40 rounded border border-neutral" alt="{{ $field->label }}" />
+                                        </a>
+                                    @else
+                                        <p class="text-sm text-gray-500">No image provided for this field.</p>
+                                    @endif
+                                @else
+                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                                @endif
+
+                                @if ($field->otherOptionValue() && in_array($field->otherOptionValue(), (array) ($fieldValues[$field->id] ?? []), true))
+                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" class="mt-2 bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                                    @error('fieldOtherValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                                @endif
+
+                                @if ($field->note)
+                                    <p class="mt-1 text-xs text-gray-500">{{ $field->note }}</p>
+                                @endif
+                                @error('fieldValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                            </div>
+                        @endforeach
+                        </div>
+                    </div>
+                @else
+                    <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-sm text-gray-500">This product has no additional details to fill in.</p>
+                    </div>
+                @endif
+
+                {{-- Artwork section - the same on every product's order form --}}
+                <div class="artwork-section mt-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <h5 class="text-lg font-semibold mb-4">Artwork</h5>
+                    <hr class="border-gray-400 mb-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="artwork-field">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Artwork Required? <span class="text-alert">*</span>
+                            </label>
+                            <div class="artwork-radio-list">
+                                @foreach ($artworkRequiredOptions as $option)
+                                    <label class="inline-flex items-center gap-2 text-sm">
+                                        <input type="radio" wire:model="artworkRequiredId" value="{{ $option->id }}" class="h-4 w-4 border-neutral text-primary focus:ring-primary" />
+                                        {{ $option->details }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('artworkRequiredId') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="artwork-field">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Due Date <span class="text-alert">*</span>
+                            </label>
+                            <div wire:ignore>
+                                <input
+                                    type="text"
+                                    data-artwork-due-date
+                                    placeholder="DD/MM/YYYY"
+                                    autocomplete="off"
+                                    value="{{ $artworkDueDate }}"
+                                    class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"
+                                />
+                            </div>
+                            @error('artworkDueDate') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                            <p class="mt-1 text-xs text-gray-500">Please give us your printing deadline. This will ensure that the team will work with you to ensure the correct (or substitue) product/s that meet your requirements.</p>
+                        </div>
+
+                        <div class="artwork-field">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Artwork Brief <span class="text-alert">*</span>
+                            </label>
+                            <div wire:ignore>
+                                <textarea data-artwork-brief>{!! $artworkBrief !!}</textarea>
+                            </div>
+                            @error('artworkBrief') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                            <p class="mt-1 text-xs text-gray-500">*Please give us a brief overview of you and your clients&rsquo; expectations in regard to the artwork requirements. The more information we receive from you, the less back and forth we will have, which in turn leads to a decrease in artwork costs to you. Feel free to supply us with examples, images and any relevant information that you feel will assist in bringing your ideas to life.</p>
+                        </div>
+
+                        <div class="artwork-field">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload</label>
+
+                            <label for="artwork-upload-input" class="artwork-dropzone" data-artwork-dropzone>
+                                <span class="text-sm text-gray-600 mt-1">Drag &amp; drop files here, or click to browse</span>
+                                <span class="text-xs text-gray-400 mt-1">Images, PDF, or Word documents &middot; up to 15MB per file</span>
+                                <input
+                                    type="file"
+                                    id="artwork-upload-input"
+                                    wire:model="newArtworkFiles"
+                                    multiple
+                                    accept="image/*,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    class="hidden"
+                                />
+                            </label>
+
+                            <div wire:loading wire:target="newArtworkFiles" class="text-xs text-gray-500 mt-2">Uploading&hellip;</div>
+
+                            @error('artworkFiles') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+
+                            @if (count($artworkFiles))
+                                {{-- Images get a thumbnail preview; other types (PDF, Word) stay
+                                     name chips. $i indexes $artworkFiles so removal hits the right
+                                     file either way. Keep the line below in the one-line php form
+                                     used earlier in this file - do not turn it into a multi-line
+                                     php block, or Blade pairs it with the first one-line use. --}}
+                                @php($isImage = fn ($file) => str_starts_with((string) $file->getMimeType(), 'image/') && $file->isPreviewable())
+
+                                <div class="artwork-preview-grid mt-3">
+                                    @foreach ($artworkFiles as $i => $file)
+                                        @if ($isImage($file))
+                                            <div class="artwork-preview" wire:key="artwork-preview-{{ $i }}-{{ $file->getFilename() }}">
+                                                <img src="{{ $file->temporaryUrl() }}" alt="{{ $file->getClientOriginalName() }}" class="artwork-preview-img" />
+                                                <button type="button" wire:click="removeArtworkFile({{ $i }})" class="artwork-preview-remove" aria-label="Remove file">&times;</button>
+                                                <span class="artwork-preview-name" title="{{ $file->getClientOriginalName() }}">{{ $file->getClientOriginalName() }}</span>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+
+                                <ul class="artwork-file-list mt-3">
+                                    @foreach ($artworkFiles as $i => $file)
+                                        @unless ($isImage($file))
+                                            <li class="artwork-file-chip">
+                                                <span class="truncate max-w-xs">{{ $file->getClientOriginalName() }}</span>
+                                                <button type="button" wire:click="removeArtworkFile({{ $i }})" class="text-gray-400 hover:text-alert" aria-label="Remove file">&times;</button>
+                                            </li>
+                                        @endunless
+                                        @error('artworkFiles.' . $i) <p class="mt-1 text-xs text-alert">{{ $message }}</p> @enderror
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            <p class="mt-1 text-xs text-gray-500">Upload images and documentation to create your artwork.</p>
+                        </div>
+
+                        <div class="artwork-field">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Additional Comments</label>
+                            <textarea wire:model="additionalComments" rows="4" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
+                            @error('additionalComments') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex items-center gap-3">
+                    <x-button.secondary wire:click="cancel" wire:confirm="Cancel this order? Any details you've entered will be lost.">Cancel</x-button.secondary>
+                    <x-button.primary wire:click="submit">Submit</x-button.primary>
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
+@push('styles')
+<link href="{{ URL::asset('proofing-assets/vendors/css/flatpickr.min.css') }}" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet" />
+<style>
+    .artwork-radio-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .artwork-dropzone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1.25rem;
+        border: 2px dashed #cbd5e1;
+        border-radius: 0.5rem;
+        background-color: #f9fafb;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    /* 
+
+    */
+    /* .artwork-dropzone:hover,
+    .artwork-dropzone.is-dragover {
+        border-color: #b5d334;
+        background-color: #f7faec;
+    } */
+    .artwork-file-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .artwork-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+    .artwork-preview-grid:empty {
+        display: none;
+    }
+    .artwork-preview {
+        position: relative;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        background-color: #f9fafb;
+        overflow: hidden;
+    }
+    .artwork-preview-img {
+        display: block;
+        width: 100%;
+        height: 110px;
+        object-fit: cover;
+    }
+    .artwork-preview-name {
+        display: block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        color: #374151;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .artwork-preview-remove {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        line-height: 1.5rem;
+        text-align: center;
+        font-size: 1rem;
+        color: #ffffff;
+        background-color: rgba(17, 24, 39, 0.65);
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+    }
+    .artwork-preview-remove:hover {
+        background-color: rgba(220, 38, 38, 0.9);
+    }
+    .artwork-file-chip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        font-size: 0.8125rem;
+        color: #374151;
+    }
+    .artwork-file-chip button {
+        font-size: 1rem;
+        line-height: 1;
+        border: none;
+        background: none;
+        cursor: pointer;
+    }
+    /* summernote-lite ships its own layout; just make sure it doesn't look
+       cramped next to the rest of the form's rounded/bordered inputs. */
+    .note-editor.note-frame {
+        border-color: #d1d5db;
+        border-radius: 0.375rem;
+    }
+
+    /* Product selection tiles. The product artwork is a mix of landscape,
+       portrait and tall-banner mock-ups (many are transparent PNGs with soft
+       shadows baked in), so every image is shown whole (object-fit: contain,
+       never cropped) on a clean, light backdrop that lets those shadows read
+       naturally. The image files themselves are untouched. */
+    .product-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px;
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        text-align: center;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .product-tile:hover {
+        transform: translateY(-4px);
+        border-color: #005890;
+        box-shadow: 0 16px 28px rgba(15, 23, 42, 0.10), 0 4px 10px rgba(15, 23, 42, 0.06);
+    }
+    .product-tile:active {
+        transform: translateY(-1px) scale(0.98);
+        box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+    }
+    .product-tile:focus-visible {
+        outline: 2px solid #005890;
+        outline-offset: 2px;
+    }
+    .product-tile-thumb {
+        position: relative;
+        flex: 0 0 auto;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+        border-radius: 10px;
+        border: 1px solid #eef2f6;
+        background: radial-gradient(circle at 50% 40%, #ffffff 0%, #f3f6f9 100%);
+    }
+    .product-tile-image {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        bottom: 14px;
+        left: 14px;
+        display: block;
+        width: calc(100% - 28px);
+        height: calc(100% - 28px);
+        object-fit: contain;
+        object-position: center;
+        transition: transform 0.3s ease;
+    }
+    .product-tile:hover .product-tile-image {
+        transform: scale(1.04);
+    }
+    .product-tile-placeholder {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        color: #cbd5e1;
+    }
+    .product-tile-label {
+        flex: 0 0 auto;
+        margin-top: 10px;
+        padding: 0 4px;
+        min-height: calc(1.3em * 2);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #1f2937;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: color 0.18s ease;
+    }
+    .product-tile:hover .product-tile-label {
+        color: #005890;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+<script>
+(function () {
+    function findComponent(el) {
+        var root = el.closest('[wire\\:id]');
+        var componentId = root ? root.getAttribute('wire:id') : null;
+        return componentId && window.Livewire ? window.Livewire.find(componentId) : null;
+    }
+
+    function initDueDatePickers() {
+        if (typeof window.flatpickr !== 'function') {
+            console.warn('[Artwork] flatpickr is not loaded on window - the Due Date field will stay a plain text input.');
+            return;
+        }
+        document.querySelectorAll('[data-artwork-due-date]:not([data-fp-bound])').forEach(function (input) {
+            input.setAttribute('data-fp-bound', '1');
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            window.flatpickr(input, {
+                dateFormat: 'd/m/Y',
+                minDate: tomorrow,
+                allowInput: false,
+                onChange: function (selectedDates, dateStr) {
+                    var component = findComponent(input);
+                    if (component) {
+                        component.set('artworkDueDate', dateStr);
+                    }
+                },
+            });
+        });
+    }
+
+    function initArtworkBriefEditors() {
+        if (typeof window.jQuery === 'undefined') {
+            console.warn('[Artwork] jQuery is not loaded on window yet - the Artwork Brief field will stay a plain textarea.');
+            return;
+        }
+        if (!window.jQuery.fn || !window.jQuery.fn.summernote) {
+            console.warn('[Artwork] summernote is not registered on jQuery.fn - the CDN script may have failed to load, or loaded before jQuery was ready. The Artwork Brief field will stay a plain textarea.');
+            return;
+        }
+        var $ = window.jQuery;
+
+        document.querySelectorAll('[data-artwork-brief]:not([data-sn-bound])').forEach(function (textarea) {
+            textarea.setAttribute('data-sn-bound', '1');
+            var $textarea = $(textarea);
+            var debounceTimer = null;
+
+            $textarea.summernote({
+                height: 200,
+                // No images in the brief: this hides the "drop image here"
+                // overlay and stops dropped files being inserted.
+                disableDragAndDrop: true,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'hr']],
+                    ['view', ['fullscreen', 'codeview']],
+                ],
+                callbacks: {
+                    // Replaces summernote's default of embedding image files as
+                    // base64 - so a dropped OR pasted image file is ignored.
+                    onImageUpload: function () {},
+                    onChange: function (contents) {
+                        clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(function () {
+                            var component = findComponent(textarea);
+                            if (component) {
+                                component.set('artworkBrief', contents);
+                            }
+                        }, 400);
+                    },
+                },
+            });
+
+            // Belt and braces: swallow any file drag/drop over the editor before
+            // summernote (or the browser, which would otherwise insert or open
+            // the file) sees it. Text drags inside the editor are unaffected.
+            var editorEl = textarea.nextElementSibling;
+            if (editorEl && editorEl.classList.contains('note-editor')) {
+                ['dragover', 'drop'].forEach(function (evt) {
+                    editorEl.addEventListener(evt, function (e) {
+                        var types = e.dataTransfer && e.dataTransfer.types;
+                        if (types && Array.prototype.indexOf.call(types, 'Files') !== -1) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }, true);
+                });
+            }
+        });
+    }
+
+    function initDropzones() {
+        document.querySelectorAll('[data-artwork-dropzone]:not([data-dz-bound])').forEach(function (zone) {
+            zone.setAttribute('data-dz-bound', '1');
+            var input = zone.querySelector('input[type="file"]');
+            if (!input) {
+                return;
+            }
+
+            ['dragenter', 'dragover'].forEach(function (evt) {
+                zone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zone.classList.add('is-dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(function (evt) {
+                zone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zone.classList.remove('is-dragover');
+                });
+            });
+
+            zone.addEventListener('drop', function (e) {
+                var files = e.dataTransfer && e.dataTransfer.files;
+                if (!files || !files.length) {
+                    return;
+                }
+                input.files = files;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    }
+
+    function boot() {
+        initDueDatePickers();
+        initArtworkBriefEditors();
+        initDropzones();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+    function bootSoon() {
+        // Deferred a tick so this always runs after Livewire has finished
+        // applying the DOM patch it just hooked into, not mid-patch.
+        setTimeout(boot, 0);
+    }
+
+    document.addEventListener('livewire:navigated', bootSoon);
+
+    if (window.Livewire && typeof window.Livewire.hook === 'function') {
+        window.Livewire.hook('morph.updated', bootSoon);
+    } else {
+        document.addEventListener('livewire:initialized', function () {
+            if (window.Livewire && typeof window.Livewire.hook === 'function') {
+                window.Livewire.hook('morph.updated', bootSoon);
+            } else {
+                console.warn('[Artwork] window.Livewire.hook is not available - the Due Date, Artwork Brief, and Upload widgets will only initialize on full page loads, not after selecting a product.');
+            }
+        });
+    }
+})();
+</script>
+@endpush

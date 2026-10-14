@@ -21,6 +21,7 @@
     <x-tabs.tabContainer tabsWrapper="emailsCategoryTabsContent">
         <x-tabs.tab id="tab-proofing" :isActive="true">{{ __('Proofing') }}</x-tabs.tab>
         <x-tabs.tab id="tab-invitation" :isActive="false">{{ __('User Invitation') }}</x-tabs.tab>
+        <x-tabs.tab id="tab-ordering" :isActive="false">{{ __('Ordering') }}</x-tabs.tab>
     </x-tabs.tabContainer>
 
     <x-tabs.tabContentContainer id="emailsCategoryTabsContent">
@@ -173,6 +174,77 @@
                         </div>
             </div>
         </x-tabs.tabContent>
+        <x-tabs.tabContent id="tab-ordering">
+            <div class="card">
+                        <div class="card-header">
+                            <i class="fa fa-envelope"></i> {{ __('Select a School') }}
+                        </div>
+                        <div class="card-body">
+                            @if ($orderingSchools->isEmpty())
+                                <p class="mb-0">{{ __('No order emails have been sent yet.') }}</p>
+                            @else
+                                <div class="report-text mb-3">
+                                    {{ __('Please select a School') }}
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="row">
+                                            <div class="col-md-1 col-sm-12 align-self-center">
+                                                Filter:
+                                            </div>
+                                            <div class="col-md-5 col-sm-12">
+                                                <input class="form-control" id="ordering-choice-name-filter" type="text"
+                                                    placeholder="{{ __('Start typing to filter by...') }}">
+                                            </div>
+                                            <div class="col-md-6 col-sm-12 align-self-center" id="ordering-choice-name-filter-feedback">
+                                                &nbsp;
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <table class="table table-bordered table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">{{ __('School') }}</th>
+                                            <th scope="col" class="text-center">{{ __('Select') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($orderingSchools as $school)
+                                            @php
+                                                $encryptedSchoolId = Crypt::encryptString($school->id);
+                                            @endphp
+                                            <tr class="ordering-choice" data-choice-name="{{ strtolower($school->name) }}">
+                                                <td class="align-middle">{{ $school->name }}</td>
+                                                <td class="align-middle text-center">
+                                                    <a href="{{ route('emails.ordering.show', ['schoolId' => $encryptedSchoolId]) }}" class="btn btn-link">
+                                                        {{ __('Select') }}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+
+                                <div class="paginator mt-3">
+                                    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
+                                        <div class="flex gap-4">
+                                            <button type="button" id="ordering-choice-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                                                &lt; {{ __('Previous') }}
+                                            </button>
+                                            <button type="button" id="ordering-choice-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
+                                                {{ __('Next') }} &gt;
+                                            </button>
+                                        </div>
+                                    </nav>
+                                    <p class="mt-2 text-muted" id="ordering-choice-pagination-summary"></p>
+                                </div>
+                            @endif
+                        </div>
+            </div>
+        </x-tabs.tabContent>
     </x-tabs.tabContentContainer>
 
     @include('proofing.franchise.emails._modals')
@@ -295,11 +367,21 @@ $(document).ready(function () {
         perPage: 10,
     });
 
+    setupPaginatedChoiceTable({
+        rowSelector: '.ordering-choice',
+        filterInputSelector: '#ordering-choice-name-filter',
+        filterFeedbackSelector: '#ordering-choice-name-filter-feedback',
+        prevBtnSelector: '#ordering-choice-prev-page',
+        nextBtnSelector: '#ordering-choice-next-page',
+        summarySelector: '#ordering-choice-pagination-summary',
+        perPage: 10,
+    });
+
     // Tab switching itself is handled by Flowbite's Tabs component (initialised
     // app-wide from data-tabs-toggle/data-tabs-target attributes - see
     // x-tabs.tabContainer/x-tabs.tab). This just keeps the address bar hash in
     // sync so links can deep-link to a specific tab.
-    $('#tab-proofing-tab, #tab-invitation-tab').on('click', function () {
+    $('#tab-proofing-tab, #tab-invitation-tab, #tab-ordering-tab').on('click', function () {
         const target = $(this).data('tabs-target');
         if (history.replaceState) {
             history.replaceState(null, '', target);

@@ -33,7 +33,7 @@ return new class extends Migration
             $table->foreign('generated_from_user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('template_id')->references('id')->on('templates')->onDelete('cascade');
         });
-    }
+    } 
 
     /**
      * Reverse the migrations.

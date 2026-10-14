@@ -14,12 +14,16 @@ use App\Models\Status;
 use App\Models\Email;
 use App\Models\User;
 use App\Models\Job;
+use App\Models\Order as OrderModel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Mime\Email as SymfonyEmail;
 use Symfony\Component\Mime\MessageConverter;
 use Symfony\Component\Mime\Address;
 use Illuminate\Support\Str;
 use Symfony\Component\Mime\Part\TextPart;
+use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use Auth;
 use DB;
 
@@ -30,11 +34,13 @@ class EmailService
      * Create a new class instance.
      */
     protected $statusService;
+    protected $fileTransferService;
 
-    public function __construct(StatusService $statusService)
+    public function __construct(StatusService $statusService, FileTransferService $fileTransferService)
     {
         // 
         $this->statusService = $statusService;
+        $this->fileTransferService = $fileTransferService;
     }
 
     protected function generateEmail($authUser, $recipient, $subject, $content, $sentDate): SymfonyEmail
@@ -47,9 +53,10 @@ class EmailService
 
         $htmlPart = new TextPart($content, 'utf-8', 'html', 'base64');
         $dateTime = Carbon::parse($sentDate);
+        $senderAddress = trim((string) config('mail.from.address')) ?: 'noreply@msp.com.au';
         $email = (new SymfonyEmail())
             // ->from(new Address($authUser->email, $authUser->name))
-            ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
+            ->from(new Address($senderAddress, 'MSP Portal - Do Not Reply'))
             ->to(new Address($recipient->email, $recipient->name))
             ->subject($subject)
             ->setBody($htmlPart)
@@ -1050,17 +1057,6 @@ class EmailService
         }
     }   
 
-    /**
-     * For each newly invited user, insert pending email records for the 4
-     * scheduled notification templates (proof_start, proof_warning, proof_due,
-     * proof_catchup) using the job's corresponding date columns as sentdate.
-     *
-     * Template mapping:
-     *   ID 1  – proof_start    → jobs.proof_start
-     *   ID 2  – proof_warning  → jobs.proof_warning
-     *   ID 3  – proof_due      → jobs.proof_due
-     *   ID 4  – proof_catchup  → jobs.proof_catchup
-     */
     public function saveScheduledEmailsForInviteUsers(array $userIds, string $jobKey): void
     {
         $authUser = Auth::user();
@@ -1501,15 +1497,6 @@ class EmailService
         $this->storeEmailRecord($authUser, $job, $inviteUser, $template, $date, $emlContent, $jobkey);
     }    
 
-    /**
-     * Re-render an existing invitation email's content with a new/updated folder list.
-     *
-     * @param Email   $pendingEmail     The existing email record
-     * @param User    $inviteUser       The recipient user
-     * @param array   $remainingFolders Folder names the user still has access to
-     * @param Job     $jobObj           The job the email is linked to
-     * @return string|null              The new .eml content, or null on failure
-     */
     public function rebuildInvitationEmailContent($pendingEmail, $inviteUser, array $remainingFolders, $jobObj): ?string
     {
         $authUser = $this->usersWithOrganizationRelationsQuery()->find(Auth::id());
@@ -1680,5 +1667,402 @@ class EmailService
     
         return $content;
     }
-    
+
+    /**
+     * Logs the order notification as pending Email rows: one to the print
+     * team (PRINT_REQUEST_EMAIL) and one copy to the person who submitted
+     * the order, so they can check what they sent is right.
+     *
+     * Each recipient gets its own greeting/intro and its own single-use
+     * download link (the file-transfer links allow one download each, so
+     * sharing one link would let the first person to click kill it for the
+     * other). Both rows are written in one transaction.
+     *
+     * @return Email|null the print team's row, or null if nothing was logged
+     */
+    public function logOrderEmail(OrderModel $order, User $authUser): ?Email
+    {
+        $printEmail = trim((string) config('services.print_request_email'));
+
+        if ($printEmail === '') {
+            Log::warning('PRINT_REQUEST_EMAIL is not configured - skipping order notification email.', [
+                'order_id' => $order->id,
+            ]);
+
+            return null;
+        }
+
+        $template = Template::where('template_name', 'Ordering')->first();
+
+        if (!$template) {
+            Log::warning('No "Ordering" template row found - skipping order notification email.', [
+                'order_id' => $order->id,
+            ]);
+
+            return null;
+        }
+
+        $context = $this->orderEmailContext($order, $authUser, $template);
+        $school = $context['school'];
+        $franchise = $context['franchise'];
+
+        // Zip + upload once, one link per recipient (print team, sender).
+        $links = $order->artworkFiles->isEmpty()
+            ? []
+            : $this->fileTransferService->uploadOrderArtworkLinks($order, 2);
+
+        $sentDate = now();
+        $senderAddress = trim((string) config('mail.from.address')) ?: 'noreply@msp.com.au';
+
+        $printEml = $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_PRINT, $printEmail, $links[0] ?? null, $sentDate);
+
+        // Copy for the submitter so they can check the order is right.
+        $copyEml = filter_var($authUser->email, FILTER_VALIDATE_EMAIL)
+            ? $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_REQUESTOR, $authUser->email, $links[1] ?? null, $sentDate)
+            : null;
+
+        $rowDefaults = [
+            'generated_from_user_id' => $authUser->id,
+            'alphacode' => $franchise->alphacode ?? null,
+            'school_id' => $school?->id ?: null,
+            'ts_schoolkey' => $school?->schoolkey ?: null,
+            'sentdate' => $sentDate,
+            'template_id' => $template->id,
+            'status_id' => $this->statusService->pending,
+        ];
+
+        return DB::transaction(function () use ($order, $rowDefaults, $authUser, $printEmail, $printEml, $copyEml, $senderAddress) {
+            // Print team
+            $printRecord = Email::create($rowDefaults + [
+                'order_id' => $order->id,
+                'order_recipient' => Email::ORDER_RECIPIENT_PRINT,
+                'email_from' => $authUser->email,
+                'email_to' => $printEmail,
+                'email_content' => $printEml,
+            ]);
+
+            // Submitter's copy
+            if ($copyEml !== null) {
+                Email::create($rowDefaults + [
+                    'order_id' => $order->id,
+                    'order_recipient' => Email::ORDER_RECIPIENT_REQUESTOR,
+                    'email_from' => $senderAddress,
+                    'email_to' => $authUser->email,
+                    'email_content' => $copyEml,
+                ]);
+            }
+
+            return $printRecord;
+        });
+    }
+
+    /**
+     * Everything the order email templates need that does not depend on the
+     * recipient: the template text, the sender's school/franchise and the
+     * placeholder values shared by both emails.
+     *
+     * @return array{templateContent: string, school: mixed, franchise: mixed, sharedData: array<string, mixed>}
+     */
+    protected function orderEmailContext(OrderModel $order, User $authUser, Template $template): array
+    {
+        $templatePath = resource_path("views/proofing/emails/{$template->template_location}{$template->template_format}");
+        $templateContent = File::exists($templatePath) ? File::get($templatePath) : '';
+
+        $school = $authUser->getSchool();
+        $franchise = $authUser->getFranchise();
+
+        $order->loadMissing(['product', 'fieldValues.customField', 'artworkRequired', 'artworkFiles']);
+
+        $sharedData = [
+            'ORDER_NUMBER' => $order->order_number,
+            'PRODUCT_NAME' => $order->product->name ?? '—',
+            'FRANCHISE_NAME' => $franchise->name ?? '—',
+            'SCHOOL_NAME' => $school->name ?? '—',
+            'SUBMITTED_BY' => $authUser->name,
+            'SUBMITTED_EMAIL' => $authUser->email,
+            'SUBMITTED_CONTACT' => $authUser->contact ?? '—',
+            'ORDER_FIELDS_HTML' => $this->buildOrderFieldsHtml($order),
+            'ARTWORK_DETAILS_HTML' => $this->buildOrderArtworkHtml($order),
+        ];
+
+        return [
+            'templateContent' => $templateContent,
+            'school' => $school,
+            'franchise' => $franchise,
+            'sharedData' => $sharedData,
+        ];
+    }
+
+    /**
+     * Builds the raw EML for one order email (print team or requestor).
+     *
+     * @param array  $context   from orderEmailContext()
+     * @param string $recipient Email::ORDER_RECIPIENT_PRINT or ORDER_RECIPIENT_REQUESTOR
+     */
+    protected function buildOrderEml(array $context, OrderModel $order, User $authUser, string $recipient, string $toAddress, ?string $downloadUrl, $sentDate): string
+    {
+        if ($recipient === Email::ORDER_RECIPIENT_PRINT) {
+            $recipientData = [
+                'HEADING_TEXT' => 'Artwork/Print Request',
+                'SIGNATURE_HTML' => $this->buildPrintTeamSignatureHtml($order),
+                'ORDER_NUMBER_LINE_HTML' => $this->buildOrderNumberLineHtml($order),
+                'RECIPIENT_NAME' => 'Printing Team',
+                'INTRO_TEXT' => 'Please find the request received for Artwork/Print below.',
+            ];
+            $toName = 'Print Request';
+            $subject = "We have received a Artwork/Print Request - {$order->order_number}";
+        } else {
+            $recipientData = [
+                'HEADING_TEXT' => 'THANK YOU FOR ORDERING WITH MSP PHOTOGRAPHY',
+                'SIGNATURE_HTML' => $this->buildRequestorSignatureHtml($order, $context['franchise']),
+                'ORDER_NUMBER_LINE_HTML' => '',
+                'RECIPIENT_NAME' => e($authUser->name ?: 'there'),
+                'INTRO_TEXT' => 'Thanks for your order. This is a copy of the request we have sent to our print team - please check the details below are correct, and let your Local MSP Photography Expert know if anything needs changing.',
+            ];
+            $toName = $authUser->name ?: $toAddress;
+            $subject = "Please check your Artwork/Print Request - {$order->order_number}";
+        }
+
+        $content = $this->replaceTemplateVariables($context['templateContent'], $context['sharedData'] + $recipientData + [
+            'ARTWORK_DOWNLOAD_BUTTON_HTML' => $this->buildOrderDownloadButtonHtml($order, $downloadUrl),
+        ]);
+
+        return MessageConverter::toEmail($this->generateEmail(
+            $authUser,
+            (object) ['email' => $toAddress, 'name' => $toName],
+            $subject,
+            $content,
+            $sentDate
+        ))->toString();
+    }
+
+    /**
+     * Called when an order email is resent. The artwork download link in the
+     * stored body is single-use and expires (file_transfer.expiry_days), so
+     * resending the stored body late would send a dead link. This zips the
+     * order's artwork again, uploads it for a fresh link, and rebuilds the
+     * stored EML with that link. The caller saves the row.
+     *
+     * Returns true when the body was regenerated. It returns false - and the
+     * stored body is left alone - when this is not an order email, the order
+     * has no artwork, the artwork files are no longer on disk, or the new
+     * upload fails, so resending is never blocked by this step.
+     */
+    public function refreshOrderEmailForResend(Email $email): bool
+    {
+        if (!$email->order_id || !$email->order_recipient) {
+            return false;
+        }
+
+        try {
+            $order = OrderModel::with('artworkFiles')->find($email->order_id);
+            $authUser = $email->generated_from_user_id ? User::find($email->generated_from_user_id) : null;
+            $template = Template::where('template_name', 'Ordering')->first();
+
+            if (!$order || !$authUser || !$template || $order->artworkFiles->isEmpty()) {
+                return false;
+            }
+
+            $anyOnDisk = $order->artworkFiles->contains(
+                fn ($file) => Storage::disk('public')->exists($file->path)
+            );
+
+            if (!$anyOnDisk) {
+                Log::warning('Order email resend: artwork files are no longer on disk, keeping the old download link.', [
+                    'order_id' => $order->id,
+                    'email_id' => $email->id,
+                ]);
+
+                return false;
+            }
+
+            $link = $this->fileTransferService->uploadOrderArtworkLinks($order, 1)[0] ?? null;
+
+            if ($link === null) {
+                return false;
+            }
+
+            $context = $this->orderEmailContext($order, $authUser, $template);
+
+            $email->email_content = $this->buildOrderEml(
+                $context,
+                $order,
+                $authUser,
+                $email->order_recipient,
+                (string) $email->email_to,
+                $link,
+                now()
+            );
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Order email resend: could not regenerate the download link.', [
+                'email_id' => $email->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Sign-off for the print team's email (fixed MSP Resource Centre details).
+     */
+    protected function buildPrintTeamSignatureHtml(OrderModel $order): string
+    {
+        $link = 'text-decoration: none; color: #666666; font-weight: 700;';
+        $subject = 'MSP%20Artwork/Print%20Request%20-%20' . rawurlencode((string) $order->order_number);
+
+        return 'Regards,<br/>'
+            . 'MSP Photography<br/>'
+            . 'Resource Centre<br/>'
+            . '1800 273 283<br/>'
+            . '<a href="mailto:info@msp.com.au?subject=' . $subject . '" style="' . $link . '">info@msp.com.au</a><br/>'
+            . '<a href="https://www.msp.com.au" style="' . $link . '">www.msp.com.au</a>';
+    }
+
+    /**
+     * Sign-off for the requestor's copy: their own franchise's contact details.
+     */
+    protected function buildRequestorSignatureHtml(OrderModel $order, $franchise): string
+    {
+        $link = 'text-decoration: none; color: #666666; font-weight: 700;';
+        $name = trim((string) ($franchise->name ?? '')) ?: 'MSP Photography';
+        $email = trim((string) ($franchise->email ?? ''));
+        $web = trim((string) config('app.franchise_web_address', 'www.msp.com.au')) ?: 'www.msp.com.au';
+        $webHref = preg_match('#^https?://#i', $web) ? $web : 'https://' . $web;
+        $subject = 'MSP%20Artwork/Print%20Request%20-%20' . rawurlencode((string) $order->order_number);
+
+        $html = 'Regards,<br/>' . e($name) . '<br/>';
+
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $html .= '<a href="mailto:' . e($email) . '?subject=' . $subject . '" style="' . $link . '">' . e($email) . '</a><br/>';
+        }
+
+        return $html . '<a href="' . e($webHref) . '" style="' . $link . '">' . e(preg_replace('#^https?://#i', '', $web)) . '</a>';
+    }
+
+    protected function buildOrderNumberLineHtml(OrderModel $order): string
+    {
+        return '<p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 11px; color: #999999; letter-spacing: 0.02em; margin: 4px 0 0 0;">'
+            . 'Order #' . e($order->order_number)
+            . '</p>';
+    }
+
+    protected function buildOrderFieldsHtml(OrderModel $order): string
+    {
+        $rows = $this->orderDetailRow('Product Required', e($order->product->name ?? '—'));
+
+        foreach ($order->fieldValues as $fieldValue) {
+            $label = e($fieldValue->customField->label ?? 'Field');
+            $value = nl2br(e($fieldValue->value ?? '—'));
+            $rows .= $this->orderDetailRow($label, $value);
+        }
+
+        return '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; table-layout: fixed;">' . $rows . '</table>';
+    }
+
+    protected function buildOrderArtworkHtml(OrderModel $order): string
+    {
+        $rows = '';
+        $rows .= $this->orderDetailRow('Artwork Required?', e($order->artworkRequired->details ?? '—'));
+        $rows .= $this->orderDetailRow('Due Date', e($order->artwork_due_date?->format('d/m/Y') ?: '—'));
+        $rows .= $this->orderDetailRow('Additional Comments', nl2br(e($order->additional_comments ?: '—')));
+        $rows .= $this->orderDetailRow('Artwork Brief', $order->artwork_brief ? $this->inlineRichTextStyles($order->artwork_brief) : '—');
+
+        return '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; table-layout: fixed;">' . $rows . '</table>';
+    }
+
+    protected function buildOrderDownloadButtonHtml(OrderModel $order, ?string $downloadUrl): string
+    {
+        if ($order->artworkFiles->isEmpty()) {
+            return '<p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 13px; color: #999999; margin: 0;">No files were uploaded with this order.</p>';
+        }
+
+        if ($downloadUrl === null) {
+            return '<p style="font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 13px; color: #999999; margin: 0;">Uploaded files are available in the admin portal.</p>';
+        }
+
+        $fileCount = $order->artworkFiles->count();
+        $label = $fileCount === 1 ? 'Download File' : "Download Files ({$fileCount})";
+
+        return '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0;">'
+            . '<tr>'
+            . '<td style="border-radius: 6px; background-color: #00b3e0;">'
+            . '<a href="' . e($downloadUrl) . '" target="_blank" style="display: inline-block; padding: 12px 26px; font-family: \'Montserrat\', Helvetica, Arial, sans-serif !important; font-size: 13px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px;">'
+            . '⬇ ' . e($label)
+            . '</a>'
+            . '</td>'
+            . '</tr>'
+            . '</table>';
+    }
+
+    protected function orderDetailRow(string $label, string $valueHtml): string
+    {
+        // Same geometry as the hand-written Order Details rows in the template
+        // (190px label column, no side padding) so every section lines up.
+        // table-layout:fixed on the parent table makes the label column stick
+        // to 190px even when a value (e.g. the rich-text brief) is wide.
+        $font = "font-family: 'Montserrat', Helvetica, Arial, sans-serif !important; font-size: 13px; vertical-align: top; line-height: 1.5; border-bottom: 1px solid #e7ecf2;";
+
+        return '<tr>'
+            . '<td width="190" style="padding: 10px 12px 10px 0; ' . $font . ' color: #5b6b82; width: 190px; min-width: 190px;"><strong>' . e($label) . '</strong></td>'
+            . '<td style="padding: 10px 0; ' . $font . ' color: #1f2937; word-wrap: break-word;">' . $valueHtml . '</td>'
+            . '</tr>';
+    }
+
+    protected function inlineRichTextStyles(string $html): string
+    {
+        $html = preg_replace('/\s+on\w+\s*=\s*("[^"]*"|\'[^\']*\')/i', '', $html) ?? $html;
+
+        static $buttonCss = <<<'CSS'
+            .btn {
+                display: inline-block;
+                font-weight: 400;
+                line-height: 1.5;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: middle;
+                cursor: pointer;
+                user-select: none;
+                background-color: transparent;
+                border: 1px solid transparent;
+                padding: 6px 12px;
+                font-size: 14px;
+                border-radius: 6px;
+                margin: 2px 4px 2px 0;
+                text-decoration: none;
+            }
+            .btn-primary { color: #ffffff; background-color: #0d6efd; border-color: #0d6efd; }
+            .btn-secondary { color: #ffffff; background-color: #6c757d; border-color: #6c757d; }
+            .btn-success { color: #ffffff; background-color: #198754; border-color: #198754; }
+            .btn-danger { color: #ffffff; background-color: #dc3545; border-color: #dc3545; }
+            .btn-warning { color: #000000; background-color: #ffc107; border-color: #ffc107; }
+            .btn-info { color: #000000; background-color: #0dcaf0; border-color: #0dcaf0; }
+            .btn-light { color: #000000; background-color: #f8f9fa; border-color: #f8f9fa; }
+            .btn-dark { color: #ffffff; background-color: #212529; border-color: #212529; }
+            p { margin: 0 0 8px 0; line-height: 1.6; }
+            ul, ol { margin: 0 0 8px 20px; padding: 0; }
+            li { margin: 0 0 3px 0; line-height: 1.6; }
+            hr { border: 0; border-top: 1px solid #e7ecf2; margin: 12px 0; }
+            td, th { padding: 4px 8px; vertical-align: top; }
+            CSS;
+
+        try {
+            $inlined = (new CssToInlineStyles())->convert($html, $buttonCss);
+
+            if (preg_match('/<body[^>]*>(.*)<\/body>/is', $inlined, $match)) {
+                return trim($match[1]);
+            }
+
+            return $inlined;
+        } catch (\Throwable $e) {
+            Log::warning('Could not inline Artwork Brief rich-text styles for the order email - using it as-is.', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return $html;
+        }
+    }
+
 }

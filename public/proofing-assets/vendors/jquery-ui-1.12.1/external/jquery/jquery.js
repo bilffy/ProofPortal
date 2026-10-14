@@ -10213,7 +10213,7 @@ if ( xhrSupported ) {
 						options.password
 					);
 
-					// Apply custom fields if provided
+					// Apply product fields if provided
 					if ( options.xhrFields ) {
 						for ( i in options.xhrFields ) {
 							xhr[ i ] = options.xhrFields[ i ];

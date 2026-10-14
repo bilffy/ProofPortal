@@ -309,10 +309,13 @@ class SendUserInviteJob implements ShouldQueue
     protected function buildEmlFromHtml(string $subject, string $htmlBody): string
     {
         $htmlPart = new TextPart($htmlBody, 'utf-8', 'html', 'base64');
+        // config(), not env(): env() returns null once config is cached.
+        $senderAddress = trim((string) config('mail.from.address')) ?: 'noreply@msp.com.au';
+        $senderName = (string) (config('mail.from.name') ?: 'MSP Portal - Do Not Reply');
 
         $rebuilt = (new SymfonyEmail())
-            ->from(new Address('noreply@msp.com.au', 'MSP Portal - Do Not Reply'))
-            ->to(new Address($this->user->email, $this->user->name))
+            ->from(new Address($senderAddress, $senderName))
+            ->to(new Address($this->user->email, (string) ($this->user->name ?: $this->user->email)))
             ->subject($subject)
             ->setBody($htmlPart)
             ->date(now());

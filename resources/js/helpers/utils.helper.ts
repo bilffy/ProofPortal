@@ -1,7 +1,7 @@
 import { NAV_TABS } from "./constants.helper";
 
 export const getCurrentNav = (): string => {
-    const { HOME, FRANCHISE_DASHBOARD, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS, REPORTS, EMAILS} = NAV_TABS;
+    const { HOME, FRANCHISE_DASHBOARD, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS, REPORTS, EMAILS, CUSTOM_FIELDS, PRODUCTS, ORDERS_ADMIN} = NAV_TABS;
     const segments = window.location.pathname.split('/').filter(Boolean);
     const path = segments[0] ?? '';
     const subPath = segments[1] ?? '';
@@ -28,13 +28,19 @@ export const getCurrentNav = (): string => {
             return REPORTS;
         case 'emails':
             return EMAILS;
+        case 'product-fields':
+            return CUSTOM_FIELDS;
+        case 'products':
+            return PRODUCTS;
+        case 'orders':
+            return ORDERS_ADMIN;
         default:
           return '';
     }
 };
 
 export const getNavTabId = (tab: string): string => {
-    const { HOME, FRANCHISE_DASHBOARD, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS, REPORTS, EMAILS} = NAV_TABS;
+    const { HOME, FRANCHISE_DASHBOARD, MANAGE_USERS, PROOFING, CONFIG_SCHOOL, PHOTOGRAPHY , ORDER, APP_SETTINGS, REPORTS, EMAILS, CUSTOM_FIELDS, PRODUCTS, ORDERS_ADMIN} = NAV_TABS;
 
     switch(tab) {
         case '':
@@ -58,6 +64,12 @@ export const getNavTabId = (tab: string): string => {
             return 'tabOrder';    
         case APP_SETTINGS:
             return 'tabManageSettings';    
+        case CUSTOM_FIELDS:
+            return 'tabCustomFields';
+        case PRODUCTS:
+            return 'tabProducts';
+        case ORDERS_ADMIN:
+            return 'tabOrdersAdmin';
         default:
           return 'tabHome';
     }

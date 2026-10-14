@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('templates', function (Blueprint $table) {
             $table->id();
+            $table->string('external_template_name', 100)->nullable();
             $table->string('template_name', 100)->nullable();
             $table->string('template_location', 100)->nullable();
             $table->string('template_subject', 100)->nullable();

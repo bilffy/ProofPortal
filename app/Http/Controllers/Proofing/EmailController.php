@@ -62,12 +62,14 @@ class EmailController extends Controller
 
         $franchise = $user->getFranchise();
         $invitationSchools = $this->invitationSchoolsQuery($franchise)->get();
+        $orderingSchools = $this->orderingSchoolsQuery($franchise)->get();
 
         return view('proofing.franchise.emails.index', [
             'jobs' => $jobs,
             'seasonList' => $seasonList,
             'user' => new UserResource($user),
             'invitationSchools' => $invitationSchools,
+            'orderingSchools' => $orderingSchools,
         ]);
     }
 
@@ -204,6 +206,67 @@ class EmailController extends Controller
     }
 
     /**
+     * Show the requestor copies of Artwork/Print order emails for a selected school.
+     */
+    public function showOrdering(string $schoolId)
+    {
+        try {
+            $decryptedSchoolId = (int) Crypt::decryptString($schoolId);
+        } catch (DecryptException $e) {
+            session()->flash('error', __('Invalid school selection. Please try again.'));
+            return redirect()->route('emails.index');
+        }
+
+        $school = $this->resolveAccessibleInvitationSchool($decryptedSchoolId);
+        if (!$school) {
+            session()->flash('error', __('School not found or you do not have access.'));
+            return redirect()->route('emails.index');
+        }
+
+        $emails = $this->schoolOrderingEmailsQuery($school)
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        return view('proofing.franchise.emails.ordering-show', [
+            'school' => $school,
+            'emails' => $emails,
+            'schoolIdEncrypted' => $schoolId,
+            'user' => new UserResource(Auth::user()),
+        ]);
+    }
+
+    /**
+     * Filter a school's order emails (AJAX).
+     */
+    public function filterOrdering(Request $request)
+    {
+        $schoolIdEncrypted = $request->input('school_id');
+        try {
+            $decryptedSchoolId = (int) Crypt::decryptString($schoolIdEncrypted);
+        } catch (DecryptException $e) {
+            return response('<div class="alert alert-danger">Invalid school.</div>', 400);
+        }
+
+        $school = $this->resolveAccessibleInvitationSchool($decryptedSchoolId);
+        if (!$school) {
+            return response('<div class="alert alert-danger">School not found.</div>', 404);
+        }
+
+        [$orderColumn, $direction, $limit, $filter, $page] = $this->parseFilterInput($request);
+
+        $query = $this->schoolOrderingEmailsQuery($school);
+
+        $this->applyKeywordFilter($query, $filter);
+
+        $messages = $query->orderBy($orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
+
+        return view('proofing.franchise.emails._results', [
+            'messages' => $messages,
+            'showOrder' => true,
+        ]);
+    }
+
+    /**
      * View email details (AJAX modal).
      * Returns JSON so jQuery .html() does not strip a full <html> document.
      */
@@ -237,62 +300,7 @@ class EmailController extends Controller
      */
     protected function extractHtmlFromEmailContent(string $eml): string
     {
-        if ($eml === '') {
-            return '<p class="text-muted mb-0">No email content.</p>';
-        }
-
-        // Already HTML (legacy / pre-rendered rows)
-        if (preg_match('/^\s*(<!DOCTYPE\s+html|<html[\s>])/i', $eml)) {
-            return $eml;
-        }
-
-        $parts = preg_split("/\r\n\r\n|\n\n/", $eml, 2);
-        if (count($parts) < 2) {
-            return '<pre class="mb-0" style="white-space: pre-wrap;">' . e($eml) . '</pre>';
-        }
-
-        [$headers, $body] = $parts;
-        $encoding = null;
-        if (preg_match('/Content-Transfer-Encoding:\s*([^\r\n;]+)/i', $headers, $match)) {
-            $encoding = strtolower(trim($match[1]));
-        }
-
-        $contentType = '';
-        if (preg_match('/Content-Type:\s*([^\r\n;]+)/i', $headers, $match)) {
-            $contentType = strtolower(trim($match[1]));
-        }
-
-        // Multipart: find the text/html section
-        if (str_starts_with($contentType, 'multipart/') && preg_match('/boundary=("?)([^";\r\n]+)\1/i', $headers, $boundaryMatch)) {
-            $boundary = $boundaryMatch[2];
-            $segments = preg_split('/--' . preg_quote($boundary, '/') . '(?:--)?/', $body);
-            foreach ($segments as $segment) {
-                $segment = ltrim($segment, "\r\n");
-                if ($segment === '' || !str_contains(strtolower($segment), 'text/html')) {
-                    continue;
-                }
-                $html = $this->extractHtmlFromEmailContent($segment);
-                if ($html !== '' && !str_contains($html, 'No email content')) {
-                    return $html;
-                }
-            }
-        }
-
-        $decoded = match ($encoding) {
-            'base64' => base64_decode(preg_replace('/\s+/', '', $body), true),
-            'quoted-printable' => quoted_printable_decode($body),
-            default => $body,
-        };
-
-        if ($decoded === false || $decoded === '') {
-            return '<pre class="mb-0" style="white-space: pre-wrap;">' . e($eml) . '</pre>';
-        }
-
-        if (preg_match('/<html[\s>]|<!DOCTYPE\s+html/i', $decoded) || str_contains($contentType, 'text/html')) {
-            return $decoded;
-        }
-
-        return '<pre class="mb-0" style="white-space: pre-wrap;">' . e($decoded) . '</pre>';
+        return app(\App\Services\Proofing\EmailBodyExtractor::class)->extract($eml);
     }
 
     /**
@@ -319,6 +327,11 @@ class EmailController extends Controller
         if (!in_array($templateName, $proofScheduleTemplates, true)) {
             $email->sentdate = now();
         }
+
+        // Ordering emails carry a single-use, expiring artwork download link.
+        // Rebuild the body with a fresh link so a late resend isn't a dead one
+        // (does nothing for other emails, and never blocks the resend).
+        app(\App\Services\Proofing\EmailService::class)->refreshOrderEmailForResend($email);
 
         $email->smtp_code = null;
         $email->smtp_message = null;
@@ -470,6 +483,38 @@ class EmailController extends Controller
         $limit = in_array($limit, [10, 20, 50, 100], true) ? $limit : 10;
 
         return [$orderColumn, $direction, $limit, $filter, $page];
+    }
+
+    /**
+     * Schools belonging to this franchise that have at least one order email
+     * sent to the requestor, for the "Ordering" tab's school list.
+     */
+    protected function orderingSchoolsQuery(?Franchise $franchise): Builder|BelongsToMany
+    {
+        if (!$franchise) {
+            return School::query()->whereRaw('1 = 0');
+        }
+
+        $schoolIdsWithOrders = Email::where('order_recipient', Email::ORDER_RECIPIENT_REQUESTOR)
+            ->whereNotNull('school_id')
+            ->distinct()
+            ->pluck('school_id');
+
+        return $franchise->schools()
+            ->whereIn('schools.id', $schoolIdsWithOrders)
+            ->orderBy('schools.name');
+    }
+
+    /**
+     * Requestor copies of order emails for one school (the print team's copy
+     * is internal and not listed here).
+     */
+    protected function schoolOrderingEmailsQuery(School $school): Builder
+    {
+        return Email::query()
+            ->with(['status', 'template', 'order'])
+            ->where('order_recipient', Email::ORDER_RECIPIENT_REQUESTOR)
+            ->where('school_id', $school->id);
     }
 
     protected function applyKeywordFilter(Builder $query, string $filter): void

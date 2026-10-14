@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('keyorigin', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->integer('image_type_id')->nullable();
             $table->integer('exportStatus')->nullable();
+            $table->tinyInteger('is_deleted')->nullable();
             $table->tinyInteger('protected')->nullable();
             $table->timestamps();
         });

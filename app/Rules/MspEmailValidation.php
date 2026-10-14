@@ -19,7 +19,6 @@ class MspEmailValidation implements ValidationRule
             // WIP: Transfer to a database table
             $allowedDomains = [
                 "msp.com",
-                "chromedia.com",
                 "gmail.com", // For testing only
                 "email.com", // For testing only
                 "test.com", // For testing only

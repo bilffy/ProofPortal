@@ -22,6 +22,7 @@ return new class extends Migration
             $table->integer('ts_job_id')->nullable()->index();
             $table->string('ts_jobkey', 25)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('ts_jobname', 25)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->integer('school_id')->nullable();
             $table->string('ts_schoolkey', 25)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->unsignedBigInteger('jobsync_status_id')->nullable();
             $table->unsignedBigInteger('foldersync_status_id')->nullable();
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->dateTime('proof_due')->nullable();
             $table->integer('force_sync')->nullable();
             $table->timestamps();
+            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->foreign('jobsync_status_id')->references('id')->on('status')->onDelete('cascade');
             $table->foreign('foldersync_status_id')->references('id')->on('status')->onDelete('cascade');
             $table->foreign('job_status_id')->references('id')->on('status')->onDelete('cascade');

@@ -28,3 +28,5 @@ Schedule::command('images:sync-scheduler')
     ->withoutOverlapping(10); // Prevents locks from hanging forever if a process crashes
 
 Schedule::command('images:cleanup-staging --days=3')->daily();
+
+Schedule::command('artwork:cleanup --days=90')->daily();

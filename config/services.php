@@ -55,6 +55,16 @@ return [
     // ONLY for the validations/email endpoint - it has no permission to send
     // mail, read bounces, etc. - so it's a separate credential from
     // MAIL_PASSWORD (the SMTP-send key).
+    // Where the "new Artwork/Print order" notification email is sent.
+    'print_request_email' => env('PRINT_REQUEST_EMAIL'),
+
+    // External file-transfer API used to share an order's zipped artwork.
+    'file_transfer' => [
+        'url' => env('FILE_TRANSFER_URL'),
+        'api_key' => env('FILE_TRANSFER_APIKEY'),
+        'expiry_days' => env('FILE_TRANSFER_EXPIRY_DAY', 7),
+    ],
+
     'sendgrid' => [
         'validation_key' => env('MAIL_VALIDATION_PASSWORD'),
     ],

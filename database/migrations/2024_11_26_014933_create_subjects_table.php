@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('lastname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('portal_firstname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('portal_lastname', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
+            $table->string('StudentID', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('portrait_prefix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('portrait_suffix', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
             $table->string('sort_order', 100)->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable();
