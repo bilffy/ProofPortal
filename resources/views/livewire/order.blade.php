@@ -18,7 +18,7 @@
         <div class="py-4 flex" style="gap: 16px; align-items: center;">
             <h3 class="text-2xl" style="margin: 0; line-height: 1.2;">{{ $selectedProductId ? (collect($products)->firstWhere('id', $selectedProductId)?->name ?? 'Ordering') : 'Ordering' }}</h3>
             @if ($selectedProductId && collect($products)->firstWhere('id', $selectedProductId)?->name === 'Other')
-                <p class="font-medium" style="color: #dc2626; margin: 0 !important;">* Contact MSP for more details.</p>
+                <p class="font-medium" style="color: #dc2626; margin: 0 !important; font-weight:700 !important;">* Contact MSP for more details.</p>
             @endif
         </div>
 
