@@ -420,7 +420,7 @@
         position: relative;
         flex: 0 0 auto;
         width: 100%;
-        aspect-ratio: 16 / 10;
+        height: 220px;
         overflow: hidden;
         border-radius: 10px;
         border: 0;
@@ -428,13 +428,13 @@
     }
     .product-tile-image {
         position: absolute;
-        top: 10px;
-        right: 14px;
-        bottom: 10px;
-        left: 14px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
         display: block;
-        width: calc(100% - 28px);
-        height: calc(100% - 20px);
+        width: 100%;
+        height: 100%;
         object-fit: contain;
         object-position: center;
         transition: transform 0.3s ease;
