@@ -34,7 +34,7 @@
                     <!-- <label class="block text-sm font-medium text-gray-700 mb-3">Select a product</label> -->
 
                     @if (count($products))
-                        <div class="grid" style="gap: 28px; grid-template-columns: repeat(auto-fill, 393.167px); justify-content: start;">
+                        <div class="grid" style="gap: 28px; grid-template-columns: repeat(auto-fill, minmax(393.167px, 1fr));">
                             @foreach ($products as $product)
                                 <button type="button" wire:click="selectProduct({{ $product->id }})" class="product-tile">
                                     <div class="product-tile-thumb">
@@ -395,7 +395,8 @@
         flex-direction: column;
         align-items: stretch;
         box-sizing: border-box;
-        width: 393.167px;
+        width: 100%;
+        min-width: 393.167px;
         height: 264.458px;
         padding: 18px;
         background-color: #ffffff;
@@ -455,10 +456,10 @@
     }
     .product-tile-label {
         flex: 0 0 auto;
-        margin-top: 14px;
+        margin-top: 12px;
         padding: 0 4px;
-        min-height: calc(1.3em * 2);
-        font-size: 19px;
+        min-height: calc(1.3em * 1);
+        font-size: 16px;
         font-weight: 600;
         line-height: 1.3;
         color: #1f2937;
