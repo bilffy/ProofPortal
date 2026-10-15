@@ -75,7 +75,7 @@
                         <div class="grid grid-cols-2 gap-4">
                         @foreach ($customFields as $field)
                             @continue(!$field->isVisibleGiven($fieldValues, $availableFieldIds))
-                            <div>
+                            <div wire:key="field-{{ $selectedProductId }}-{{ $field->id }}" @if ($field->type === \App\Models\CustomField::TYPE_IMAGE) style="grid-column: 1 / -1;" @endif>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     {{ $field->label }}
                                     @if ($field->is_required)
@@ -93,14 +93,21 @@
                                         @endforeach
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_DROPDOWN)
-                                    <select wire:model.live="fieldValues.{{ $field->id }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm">
-                                        <option value="">{{ $field->placeholder ?: 'Select an option' }}</option>
-                                        @foreach ($field->fieldOptions as $option)
-                                            <option value="{{ $option->option_value }}">{{ $option->option_name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div wire:ignore>
+                                        <select
+                                            wire:model.live="fieldValues.{{ $field->id }}"
+                                            class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5"
+                                            data-field-select
+                                            data-placeholder="{{ $field->placeholder ?: 'Select an option' }}"
+                                        >
+                                            <option value="">{{ $field->placeholder ?: 'Select an option' }}</option>
+                                            @foreach ($field->fieldOptions as $option)
+                                                <option value="{{ $option->option_value }}">{{ $option->option_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
-                                    <input type="number" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                                    <input type="number" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
                                     <div class="flex flex-wrap gap-4">
                                         @foreach ($field->fieldOptions as $option)
@@ -112,18 +119,16 @@
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_IMAGE)
                                     @if ($field->image_url)
-                                        <a href="{{ $field->image_url }}" target="_blank" rel="noopener" title="Click the image to view it full size">
-                                            <img src="{{ $field->image_url }}" class="max-h-40 rounded border border-neutral" alt="{{ $field->label }}" />
-                                        </a>
+                                        <img src="{{ $field->image_url }}" class="rounded border border-neutral" style="display: block; width: auto; max-width: 100%; max-height: 480px;" alt="{{ $field->label }}" />
                                     @else
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
                                 @else
-                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
                                 @endif
 
                                 @if ($field->otherOptionValue() && in_array($field->otherOptionValue(), (array) ($fieldValues[$field->id] ?? []), true))
-                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" class="mt-2 bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" class="mt-2 bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
                                     @error('fieldOtherValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
                                 @endif
 
@@ -166,14 +171,19 @@
                                 Due Date <span class="text-alert">*</span>
                             </label>
                             <div wire:ignore>
-                                <input
-                                    type="text"
-                                    data-artwork-due-date
-                                    placeholder="DD/MM/YYYY"
-                                    autocomplete="off"
-                                    value="{{ $artworkDueDate }}"
-                                    class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"
-                                />
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        data-artwork-due-date
+                                        placeholder="DD/MM/YYYY"
+                                        autocomplete="off"
+                                        value="{{ $artworkDueDate }}"
+                                        class="bg-gray-50 border border-neutral rounded-md block w-full pr-10 p-2.5 text-sm"
+                                    />
+                                    <div class="absolute inset-y-0 right-[16px] flex items-center pointer-events-none">
+                                        <span class="fa fa-calendar"></span>
+                                    </div>
+                                </div>
                             </div>
                             @error('artworkDueDate') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
                             <p class="mt-1 text-xs text-gray-500">Please give us your printing deadline. This will ensure that the team will work with you to ensure the correct (or substitue) product/s that meet your requirements.</p>
@@ -413,8 +423,8 @@
         aspect-ratio: 16 / 10;
         overflow: hidden;
         border-radius: 10px;
-        border: 1px solid #eef2f6;
-        background: radial-gradient(circle at 50% 40%, #ffffff 0%, #f3f6f9 100%);
+        border: 0;
+        background: transparent;
     }
     .product-tile-image {
         position: absolute;
@@ -595,7 +605,34 @@
         });
     }
 
+    function initFieldSelects() {
+        if (!window.jQuery || !window.jQuery.fn || typeof window.jQuery.fn.select2 !== 'function') {
+            console.warn('[Order] select2 is not loaded - custom-field dropdowns will stay native selects.');
+            return;
+        }
+        var $ = window.jQuery;
+        document.querySelectorAll('select[data-field-select]').forEach(function (el) {
+            var $el = $(el);
+            if (!$el.hasClass('select2-hidden-accessible')) {
+                $el.select2({
+                    width: '100%',
+                    placeholder: el.getAttribute('data-placeholder') || 'Select an option',
+                    allowClear: false,
+                    minimumResultsForSearch: 8
+                });
+                $el.next('.select2-container').find('.select2-selection').addClass('border-neutral');
+                // select2 only fires jQuery events; Livewire's wire:model listens for the native one.
+                $el.on('select2:select', function () {
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            }
+            // Keep the select2 display in step with the value Livewire has set.
+            $el.trigger('change.select2');
+        });
+    }
+
     function boot() {
+        initFieldSelects();
         initDueDatePickers();
         initArtworkBriefEditors();
         initDropzones();
