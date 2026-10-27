@@ -407,7 +407,7 @@
        column). Images are shown whole (object-fit: contain), never cropped. */
     .product-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 360px));
+        grid-template-columns: repeat(2, minmax(0, 480px));
         justify-content: center;
         gap: 20px;
     }
@@ -522,7 +522,7 @@
     .tile-left .product-tile-button { align-self: flex-end; }
     .tile-right .product-tile-button { align-self: flex-start; }
     @media (max-width: 900px) {
-        .product-grid { grid-template-columns: minmax(0, 360px); }
+        .product-grid { grid-template-columns: minmax(0, 480px); }
 
     }
 </style>
