@@ -73,6 +73,20 @@ class Subject extends Model
         return FilenameFormatHelper::applyFormat($format, $options);
     }
     
+    /**
+     * Placeholders of the given filename format that have no value for this subject.
+     */
+    public function missingFilenameFields(string $format): array
+    {
+        $folder = $this->folder;
+        $season = $folder?->job()->first()?->seasons()->first();
+        return FilenameFormatHelper::emptyFields($format, [
+            'subjects' => $this->id,
+            'folders' => $folder?->id,
+            'seasons' => $season?->id,
+        ]);
+    }
+
     //Proofing
     public function proofingChangelogs(){
         return $this->hasMany('App\Models\ProofingChangelog', 'keyvalue', 'ts_subjectkey'); 

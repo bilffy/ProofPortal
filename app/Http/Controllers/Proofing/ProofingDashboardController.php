@@ -87,8 +87,10 @@ class ProofingDashboardController extends Controller
             $approvedSubjectChanges = $this->proofingChangelogService->getAllApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
             $approvedFolderGroupChangesCount = $this->proofingChangelogService->getAllApprovedFolderGroupChangeByJobKey($selectedJob->ts_jobkey);
             $awaitApprovalSubjectChanges = $this->proofingChangelogService->getAllAwaitApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
-            $approvedSubjectChangesCount = isset($approvedSubjectChanges['subjectChanges']) ? $approvedSubjectChanges['subjectChanges']->count() : 0;
-            $awaitApprovalSubjectChangesCount = isset($awaitApprovalSubjectChanges['subjectChanges']) ? $awaitApprovalSubjectChanges['subjectChanges']->count() : 0;
+            $approvedSubjectChangesCount = (isset($approvedSubjectChanges['subjectChanges']) ? $approvedSubjectChanges['subjectChanges']->count() : 0)
+                + (isset($approvedSubjectChanges['schoolNameChange']) ? $approvedSubjectChanges['schoolNameChange']->count() : 0);
+            $awaitApprovalSubjectChangesCount = (isset($awaitApprovalSubjectChanges['subjectChanges']) ? $awaitApprovalSubjectChanges['subjectChanges']->count() : 0)
+                + (isset($awaitApprovalSubjectChanges['schoolNameChange']) ? $awaitApprovalSubjectChanges['schoolNameChange']->count() : 0);
 
             // Store session data
             session([
@@ -161,8 +163,10 @@ class ProofingDashboardController extends Controller
                 $approvedSubjectChanges = $this->proofingChangelogService->getAllApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
                 $approvedFolderGroupChangesCount = $this->proofingChangelogService->getAllApprovedFolderGroupChangeByJobKey($selectedJob->ts_jobkey);
                 $awaitApprovalSubjectChanges = $this->proofingChangelogService->getAllAwaitApprovedSubjectChangeByJobKey($selectedJob->ts_jobkey);
-                $approvedSubjectChangesCount = isset($approvedSubjectChanges['subjectChanges']) ? $approvedSubjectChanges['subjectChanges']->count() : 0;
-                $awaitApprovalSubjectChangesCount = isset($awaitApprovalSubjectChanges['subjectChanges']) ? $awaitApprovalSubjectChanges['subjectChanges']->count() : 0;
+                $approvedSubjectChangesCount = (isset($approvedSubjectChanges['subjectChanges']) ? $approvedSubjectChanges['subjectChanges']->count() : 0)
+                    + (isset($approvedSubjectChanges['schoolNameChange']) ? $approvedSubjectChanges['schoolNameChange']->count() : 0);
+                $awaitApprovalSubjectChangesCount = (isset($awaitApprovalSubjectChanges['subjectChanges']) ? $awaitApprovalSubjectChanges['subjectChanges']->count() : 0)
+                    + (isset($awaitApprovalSubjectChanges['schoolNameChange']) ? $awaitApprovalSubjectChanges['schoolNameChange']->count() : 0);
 
                 // Store session data
                 session([

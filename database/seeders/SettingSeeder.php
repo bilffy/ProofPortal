@@ -71,6 +71,41 @@ class SettingSeeder extends Seeder
                 'property_key' => 'screen_quality_download_option',
                 'property_value' => 'true',
             ],
+            [
+                'name' => 'resolution: 400 X 400: 72dpi',
+                'description' => '400 x 400 pixels 72DPI can be downloaded',
+                'property_group' => 'portal_feature',
+                'property_key' => '400_400_72dpi_low_res_download_option',
+                'property_value' => 'true',
+            ],
+            [
+                'name' => 'resolution: 150 X 200: 72dpi',
+                'description' => '150 x 200 pixels 72DPI can be downloaded',
+                'property_group' => 'portal_feature',
+                'property_key' => '150_200_72dpi_low_res_download_option',
+                'property_value' => 'true',
+            ],
+            [
+                'name' => 'resolution: 100 X 125: 72dpi',
+                'description' => '100 x 125 pixels 72DPI can be downloaded',
+                'property_group' => 'portal_feature',
+                'property_key' => '100_125_72dpi_low_res_download_option',
+                'property_value' => 'true',
+            ],
+            [
+                'name' => 'resolution: 500 X 625: 72dpi',
+                'description' => '500 x 625 pixels 72DPI can be downloaded',
+                'property_group' => 'portal_feature',
+                'property_key' => '500_625_72dpi_low_res_download_option',
+                'property_value' => 'true',
+            ],
+            [
+                'name' => 'resolution: 500 X 700: 72dpi',
+                'description' => '500 x 700 pixels 72DPI can be downloaded',
+                'property_group' => 'portal_feature',
+                'property_key' => '500_700_72dpi_low_res_download_option',
+                'property_value' => 'true',
+            ],
         ];
 
         foreach ($settings as $setting) {

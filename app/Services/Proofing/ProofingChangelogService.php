@@ -134,7 +134,34 @@ class ProofingChangelogService
         return;
     }
 
-    public function getAllApprovedFolderGroupChangeByJobKey($jobKey)
+    public function approveSchoolNameChangelogById($id)
+    {
+        $proofingChangelog = ProofingChangelog::find($id);
+        $proofingChangelog->user_id = Auth::user()->id;
+        $proofingChangelog->resolved_status_id = $this->statusService->active;
+        $proofingChangelog->approvalStatus = $this->statusService->approved;
+        $proofingChangelog->change_datetime = Carbon::now();
+        $proofingChangelog->decision_datetime = Carbon::now();
+        $proofingChangelog->save();
+        return;
+    }
+
+    public function modifySchoolNameChangelogById($id, $newSchoolName)
+    {
+        $proofingChangelog = ProofingChangelog::find($id);
+        $proofingChangelog->user_id = Auth::user()->id;
+        $proofingChangelog->change_to = $newSchoolName;
+        $proofingChangelog->notes = 'School name changed from "' . $proofingChangelog->change_from . '" to "' . $newSchoolName . '"';
+        $proofingChangelog->resolved_status_id = $this->statusService->active;
+        $proofingChangelog->approvalStatus = $this->statusService->modified;
+        $proofingChangelog->user_id = Auth::user()->id;
+        $proofingChangelog->change_datetime = Carbon::now();
+        $proofingChangelog->decision_datetime = Carbon::now();
+        $proofingChangelog->save();
+        return;
+    }
+
+    public function getAllApprovedFolderGroupChangeByJobKey($jobKey) 
     {
         return ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
             ->where('ts_jobkey', $jobKey)
@@ -179,11 +206,32 @@ class ProofingChangelogService
             ->orderBy('changelogs.change_datetime', 'ASC')
             ->get();
 
+        $schoolNameChange = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+            ->with(['user:id,firstname,lastname'])
+            ->where([
+                ['issues.issue_name', 'SCHOOL_NAME_SPELL'],
+                ['ts_jobkey', $jobKey],
+                ['resolved_status_id', $this->statusService->active]
+            ])
+            ->select(
+                'issues.external_issue_name',
+                'changelogs.id',
+                'changelogs.notes',
+                'changelogs.change_from',
+                'changelogs.change_to',
+                'changelogs.user_id',
+                'changelogs.change_datetime',
+                'changelogs.decision_datetime'
+            )
+            ->orderBy('changelogs.change_datetime', 'ASC')
+            ->get();
+
         $subjectsFolderList = $this->getAllFolderList($subjectChanges);
 
         return [
             'subjectsFolderList' => $subjectsFolderList,
-            'subjectChanges' => $subjectChanges
+            'subjectChanges' => $subjectChanges,
+            'schoolNameChange' => $schoolNameChange
         ];
 
     }
@@ -219,12 +267,34 @@ class ProofingChangelogService
         ->orderBy('changelogs.change_datetime', 'ASC')
         ->get();
 
+        $schoolNameChange = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
+        ->with(['user:id,firstname,lastname'])
+        ->where([
+            ['issues.issue_name', 'SCHOOL_NAME_SPELL'],
+            ['ts_jobkey', $jobKey],
+            ['resolved_status_id', $this->statusService->inactive],
+            ['approvalStatus', $this->statusService->awaitingApproval]
+        ])
+        ->select(
+            'issues.external_issue_name', 
+            'changelogs.id', 
+            'changelogs.notes', 
+            'changelogs.change_from',
+            'changelogs.change_to',
+            'changelogs.user_id', 
+            'changelogs.change_datetime'
+        )
+        ->orderBy('changelogs.change_datetime', 'ASC')
+        ->get();
+
         $subjectsFolderList = $this->getAllFolderList($subjectChanges);
 
         return [
+            'schoolNameChange' => $schoolNameChange,
             'subjectsFolderList' => $subjectsFolderList, 
             'subjectChanges' => $subjectChanges,
             'classFolderKeysById' => $this->buildClassFolderKeysById($subjectChanges),
+            'schoolNameChange' => $schoolNameChange,
         ];
     }
 

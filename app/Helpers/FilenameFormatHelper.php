@@ -22,6 +22,28 @@ class FilenameFormatHelper
         return $resultFormat;
     }
 
+    /**
+     * Returns the `table.column` placeholders of the format that have no value
+     * (missing row, NULL or blank) for the given record ids.
+     */
+    public static function emptyFields(string $format, array $options): array
+    {
+        $empty = [];
+        foreach (self::extractValuesFromBraces($format) as $variable) {
+            $parts = explode('.', $variable);
+            if (count($parts) < 2) {
+                continue;
+            }
+            $id = $options[$parts[0]] ?? null;
+            $row = $id ? DB::table($parts[0])->find($id) : null;
+            $value = $row ? ($row->{$parts[1]} ?? null) : null;
+            if ($value === null || trim((string) $value) === '') {
+                $empty[$variable] = $variable;
+            }
+        }
+        return array_values($empty);
+    }
+
     private static function extractValuesFromBraces(string $input): array
     {
         // Use a regular expression to match values inside curly braces

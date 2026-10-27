@@ -316,6 +316,29 @@ class PhotographyController extends Controller
             } 
         }
         
+        // Every selected subject must have a value for each field of the chosen filename format.
+        if ($tab === PhotographyHelper::TAB_PORTRAITS && !empty($keys)) {
+            $chosenFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
+            if ($chosenFormat) {
+                $subjectsWithoutValue = Subject::whereIn('ts_subjectkey', $keys)
+                    ->where('is_deleted', 0)
+                    ->get()
+                    ->filter(fn ($subject) => !empty($subject->missingFilenameFields($chosenFormat->format)))
+                    ->map(fn ($subject) => trim(($subject->portal_firstname ?: $subject->firstname) . ' ' . ($subject->portal_lastname ?: $subject->lastname)))
+                    ->values();
+
+                if ($subjectsWithoutValue->isNotEmpty()) {
+                    $shown = $subjectsWithoutValue->take(3)->implode(', ');
+                    $more = $subjectsWithoutValue->count() - 3;
+                    $message = $subjectsWithoutValue->count() === 1
+                        ? "This subject has no value for the selected filename format: {$shown}."
+                        : "These subjects have no value for the selected filename format: {$shown}" . ($more > 0 ? " and {$more} more." : '.');
+
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+            }
+        }
+
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
             'requested_date' => now(),

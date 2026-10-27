@@ -37,6 +37,57 @@
                 <a href="{{ $urlDone }}" class="{{ $btnAttrCancel['class'] }}">{{ __('Done') }}</a>
             </div>
         </div>
+
+        @if (count($schoolNameChange) !== 0)
+            @php $jobHash = Crypt::encryptString($selectedJob->ts_jobkey); @endphp
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fa fa-align-justify"></i> {{ __('Changes to School Name') }}
+                        </div>
+                        <div class="card-body">
+                            @if (count($subjectChanges) === 0)
+                                <div class="row">
+                                    <div class="col-lg-12 mb-3">
+                                        <span id="approval-acknowledge" class="p-2"></span>&nbsp;
+                                    </div>
+                                </div>
+                            @endif
+                            <table class="table table-bordered table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Issue Type</th>
+                                        <th scope="col">Note</th>
+                                        <th scope="col">Change Requested</th>
+                                        <th scope="col">By User</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($schoolNameChange as $change)
+                                        @php
+                                            $rowIdSelector = 'school-name-' . $change->id;
+                                            $signedUrl = URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $jobHash]);
+                                        @endphp
+                                        <tr id="{{ $rowIdSelector }}">
+                                            <td>{{ $change->external_issue_name }}</td>
+                                            <td>{{ $change->notes }}</td>
+                                            <td>{{ $change->change_datetime ? \Carbon\Carbon::parse($change->change_datetime)->format('Y-m-d H:i:s') : '' }}</td>
+                                            <td>{{ $change->user?->firstname }} {{ $change->user?->lastname }}</td>
+                                            <td>
+                                                <a href="#" data-signed-url="{{ $signedUrl }}" data-issue-type="School Name" data-full-name="{{ $selectedJob->ts_jobname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ sha1($selectedJob->ts_jobkey) }}" data-skencrypted="{{ $jobHash }}" data-correction-id="{{ $change->id }}" data-action="approve">Approve</a> |
+                                                <a href="#" data-signed-url="{{ $signedUrl }}" data-issue-type="School Name" data-change-from="{{ $change->change_from }}" data-full-name="{{ $selectedJob->ts_jobname }}" data-toggle="modal" data-target="#ModifyApproval_Modal" data-row-selector="{{ $rowIdSelector }}" data-skhash="{{ sha1($selectedJob->ts_jobkey) }}" data-skencrypted="{{ $jobHash }}" data-correction-id="{{ $change->id }}" data-action="modify">Modify</a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
         
         @if (count($subjectChanges) !== 0)
             <div class="row">
@@ -140,7 +191,9 @@
                     </div>
                 </div>
             </div>
+        @endif
 
+        @if (count($subjectChanges) !== 0 || count($schoolNameChange) !== 0)
             <div class="modal fade" id="ModifyApproval_Modal" tabindex="-1" role="dialog" aria-labelledby="ModifyApprovalTitle" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                     <div class="modal-content">
@@ -166,6 +219,12 @@
                                     <div id="picture-issue-wrapper" class="d-none mt-4 mb-4">
                                         <label for="picture_issue" class="m-0">Do you know who this is? Type their name below.</label>
                                         <input type="text" name="picture_issue" id="picture_issue" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div id="school-name-issue-wrapper" class="d-none mt-4 mb-4">
+                                        <label for="school_name" class="m-0">Type the correct school name below.</label>
+                                        <input type="text" name="school_name" id="school_name" class="form-control">
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -241,8 +300,14 @@
                 modal.find("#folder-issue-wrapper").addClass('d-none');
                 modal.find("#approve-issue-wrapper").addClass('d-none');
                 modal.find("#reject-issue-wrapper").addClass('d-none');
+                modal.find("#school-name-issue-wrapper").addClass('d-none');
 
-                if (approvalAction === 'modify' && issueType === 'Class') {
+                if (approvalAction === 'modify' && issueType === 'School Name') {
+                    modal.find("#ModifyApproval_Modal_Title").html("Modify School Name");
+                    modal.find("#send-correction").html("Modify & Approve");
+                    modal.find("#school_name").val(button.data('change-from') || '');
+                    modal.find("#school-name-issue-wrapper").removeClass('d-none');
+                } else if (approvalAction === 'modify' && issueType === 'Class') {
                     modal.find("#ModifyApproval_Modal_Title").html("Modify Approval for " + subjectFullName);
                     modal.find("#send-correction").html("Modify & Approve");
                     modal.find("#folder-issue-wrapper").removeClass('d-none');
@@ -282,6 +347,11 @@
 
                     } else if (issueType === 'Picture') {
                         picture_issue = $('#picture_issue').val()
+                    }
+
+                    if (issueType === 'School Name') {
+                        formData.append("school_name", $('#school_name').val());
+                        formData.append("issue_type", issueType);
                     }
 
                     formData.append("subject_key_hash", skHash);

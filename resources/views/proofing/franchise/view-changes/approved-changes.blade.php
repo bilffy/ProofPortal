@@ -111,6 +111,40 @@
                 </div>
             </div>
         @endif
+
+        @if (count($schoolNameChange) !== 0)
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fa fa-align-justify"></i> {{ __('Changes to School Name') }}
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Issue Type</th>
+                                        <th scope="col">Note</th>
+                                        <th scope="col">Change Made</th>
+                                        <th scope="col">By User</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($schoolNameChange as $change)
+                                    <tr>
+                                        <td>{{ $change->external_issue_name }}</td>
+                                        <td>{{ $change->notes }}</td>
+                                        <td>{{ $change->change_datetime ? \Carbon\Carbon::parse($change->change_datetime)->format('Y-m-d H:i:s') : '' }}</td>
+                                        <td>{{ $change->user?->firstname }} {{ $change->user?->lastname }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
         
         @if (count($subjectChanges) !== 0)
             <div class="row">
@@ -184,7 +218,7 @@
                 </div>
             </div>
         @endif
-    
+
     @else
         @include('proofing.franchise.flash-error')
     @endif

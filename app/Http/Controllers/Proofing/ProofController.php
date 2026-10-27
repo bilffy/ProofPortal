@@ -98,7 +98,7 @@ class ProofController extends Controller
             ->whereNotIn('issue_id', $issueID)
             ->select('keyvalue')
             ->get();
-        $changelogKeysMap = $getChangelog->pluck('keyvalue')->unique()->flip();
+        $changelogKeysMap = $getChangelog->pluck('keyvalue')->filter()->unique()->flip();
 
         $folderSubjectChangeCounts = $this->proofingChangelogService->getSubjectChangedFolderCountsByFolderIds(
             $selectedFolders->pluck('id')

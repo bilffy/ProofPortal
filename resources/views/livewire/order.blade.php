@@ -34,17 +34,34 @@
                     <!-- <label class="block text-sm font-medium text-gray-700 mb-3">Select a product</label> -->
 
                     @if (count($products))
-                        <div class="grid" style="gap: 28px; grid-template-columns: repeat(auto-fill, minmax(393.167px, 1fr));">
+                        @php
+                            // Pill colours, following the rainbow ribbon from the brand artwork (left to right).
+                            $tileColours = ['redorange', 'orange', 'amber', 'yellow', 'lime', 'teal', 'cyan', 'blue', 'deepblue', 'navy', 'red'];
+                        @endphp
+                        <div class="product-grid">
                             @foreach ($products as $product)
-                                <button type="button" wire:click="selectProduct({{ $product->id }})" class="product-tile">
-                                    <div class="product-tile-thumb">
+                                @php
+                                    // Everything but the last word is bold, the last word is light
+                                    // ("A4 PROSPECTUS" + "BOOKLETS"); a single word is all bold.
+                                    $nameWords = preg_split('/\s+/', trim($product->name));
+                                    $nameLight = count($nameWords) > 1 ? array_pop($nameWords) : '';
+                                    $nameBold = implode(' ', $nameWords);
+                                @endphp
+                                <button type="button" wire:click="selectProduct({{ $product->id }})" class="product-tile tile-{{ $tileColours[$loop->index % count($tileColours)] }} {{ $loop->even ? 'tile-right' : 'tile-left' }}">
+                                    <span class="product-tile-thumb">
                                         @if ($product->image)
                                             <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($product->image) }}" class="product-tile-image" loading="lazy" alt="{{ $product->name }}" />
                                         @else
                                             <i class="fa fa-image product-tile-placeholder"></i>
                                         @endif
-                                    </div>
-                                    <span class="product-tile-label">{{ $product->name }}</span>
+                                    </span>
+                                    <span class="product-tile-body">
+                                        <span class="product-tile-title">
+                                            <strong>{{ $nameBold }}</strong>
+                                            @if ($nameLight !== '')<span>{{ $nameLight }}</span>@endif
+                                        </span>
+                                        <span class="product-tile-button">Order Now</span>
+                                    </span>
                                 </button>
                             @endforeach
                         </div>
@@ -70,7 +87,7 @@
                 @if (count($customFields))
                     @php($availableFieldIds = collect($customFields)->pluck('id')->all())
                     <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-                        <h5 class="text-lg font-semibold mb-4">Specifications</h5>
+                        <h5 class="text-lg font-semibold mb-4">Print Specifications</h5>
                         <hr class="border-gray-400 mb-6">
                         <div class="grid grid-cols-2 gap-4">
                         @foreach ($customFields as $field)
@@ -107,7 +124,7 @@
                                         </select>
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
-                                    <input type="number" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
+                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
                                     <div class="flex flex-wrap gap-4">
                                         @foreach ($field->fieldOptions as $option)
@@ -127,10 +144,10 @@
                                     <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
                                 @endif
 
-                                @if ($field->otherOptionValue() && in_array($field->otherOptionValue(), (array) ($fieldValues[$field->id] ?? []), true))
+                                {{-- @if ($field->otherOptionValue() && in_array($field->otherOptionValue(), (array) ($fieldValues[$field->id] ?? []), true))
                                     <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" class="mt-2 bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
                                     @error('fieldOtherValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
-                                @endif
+                                @endif --}}
 
                                 @if ($field->note)
                                     <p class="mt-1 text-xs text-gray-500">{{ $field->note }}</p>
@@ -205,7 +222,7 @@
 
                             <label for="artwork-upload-input" class="artwork-dropzone" data-artwork-dropzone>
                                 <span class="text-sm text-gray-600 mt-1">Drag &amp; drop files here, or click to browse</span>
-                                <span class="text-xs text-gray-400 mt-1">Images, PDF, or Word documents &middot; up to 15MB per file</span>
+                                <span class="text-xs text-gray-400 mt-1">Images, PDF, or Word documents up to 15MB per file</span>
                                 <input
                                     type="file"
                                     id="artwork-upload-input"
@@ -385,92 +402,126 @@
         border-radius: 0.375rem;
     }
 
-    /* Product selection tiles. The product artwork is a mix of landscape,
-       portrait and tall-banner mock-ups (many are transparent PNGs with soft
-       shadows baked in), so every image is shown whole (object-fit: contain,
-       never cropped) on a clean, light backdrop that lets those shadows read
-       naturally. The image files themselves are untouched. */
+    /* Product selection tiles: coloured pills, image in a white circle on the
+       outer end, title + "Order Now" on the inner end (mirrored for the right
+       column). Images are shown whole (object-fit: contain), never cropped. */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
     .product-tile {
+        --tile-bg: #00b4e6;
         display: flex;
-        flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         box-sizing: border-box;
         width: 100%;
-        min-width: 393.167px;
-        height: 264.458px;
-        padding: 18px;
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        text-align: center;
+        height: 140px;
+        padding: 0 16px;
+        background-color: var(--tile-bg);
+        border: 0;
+        color: #ffffff;
         cursor: pointer;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        transition: transform 0.18s ease, filter 0.18s ease;
+    }
+    .product-tile.tile-left {
+        flex-direction: row;
+        border-radius: 70px 0 0 70px;
+        text-align: right;
+    }
+    .product-tile.tile-right {
+        flex-direction: row-reverse;
+        border-radius: 0 70px 70px 0;
+        text-align: left;
     }
     .product-tile:hover {
-        transform: translateY(-4px);
-        border-color: #005890;
-        box-shadow: 0 16px 28px rgba(15, 23, 42, 0.10), 0 4px 10px rgba(15, 23, 42, 0.06);
+        transform: translateY(-3px);
+        filter: brightness(1.05);
     }
     .product-tile:active {
-        transform: translateY(-1px) scale(0.98);
-        box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+        transform: scale(0.99);
     }
     .product-tile:focus-visible {
         outline: 2px solid #005890;
         outline-offset: 2px;
     }
+    .tile-redorange { --tile-bg: #ee4b27; }
+    .tile-orange    { --tile-bg: #f6921e; }
+    .tile-amber     { --tile-bg: #fbb61a; }
+    .tile-yellow    { --tile-bg: #f2d600; }
+    .tile-lime      { --tile-bg: #b5d334; }
+    .tile-teal      { --tile-bg: #4cc0a6; }
+    .tile-cyan      { --tile-bg: #00b4e6; }
+    .tile-blue      { --tile-bg: #0090d4; }
+    .tile-deepblue  { --tile-bg: #0072b5; }
+    .tile-navy      { --tile-bg: #005890; }
+    .tile-red       { --tile-bg: #e2231a; }
     .product-tile-thumb {
         position: relative;
-        flex: 1 1 auto;
-        min-height: 0;
-        width: 100%;
+        flex: 0 0 auto;
+        width: 108px;
+        height: 108px;
         overflow: hidden;
-        border-radius: 10px;
-        border: 0;
-        background: transparent;
+        border-radius: 50%;
+        background: #ffffff;
     }
     .product-tile-image {
         position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        display: block;
-        width: 100%;
-        height: 100%;
+        inset: 8px;
+        width: calc(100% - 16px);
+        height: calc(100% - 16px);
         object-fit: contain;
         object-position: center;
         transition: transform 0.3s ease;
     }
     .product-tile:hover .product-tile-image {
-        transform: scale(1.04);
+        transform: scale(1.05);
     }
     .product-tile-placeholder {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 3.5rem;
+        font-size: 3rem;
         color: #cbd5e1;
     }
-    .product-tile-label {
-        flex: 0 0 auto;
-        margin-top: 12px;
-        padding: 0 4px;
-        min-height: calc(1.3em * 1);
-        font-size: 16px;
-        font-weight: 600;
-        line-height: 1.3;
-        color: #1f2937;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        transition: color 0.18s ease;
+    .product-tile-body {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 0 18px;
     }
-    .product-tile:hover .product-tile-label {
-        color: #005890;
+    .product-tile-title {
+        display: block;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+        font-size: 18px;
+        line-height: 1.15;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .product-tile-title strong,
+    .product-tile-title span {
+        font-weight: 700;
+    }
+    .product-tile-button {
+        display: inline-block;
+        padding: 4px 20px;
+        border: 2px solid #ffffff;
+        border-radius: 999px;
+        background: #6d6e71;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .tile-left .product-tile-button { align-self: flex-end; }
+    .tile-right .product-tile-button { align-self: flex-start; }
+    @media (max-width: 900px) {
+        .product-grid { grid-template-columns: 1fr; }
     }
 </style>
 @endpush

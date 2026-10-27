@@ -54,6 +54,7 @@ class SubjectChangesController extends Controller
         return view('proofing.franchise.view-changes.approved-changes', 
         [
             'subjectChanges' => $subjectData['subjectChanges'],
+            'schoolNameChange' => $subjectData['schoolNameChange'],
             'attachedFolderNames' => $subjectData['subjectsFolderList'],
             'selectedJob' => $selectedJob,
             'allFolders' => $allFolders, 
@@ -77,10 +78,11 @@ class SubjectChangesController extends Controller
         $folderChanges = $this->proofingChangelogService->getFolderGeneralChangeByJobKey($selectedJob->ts_jobkey);
         $user = Auth::user();
         return view('proofing.franchise.view-changes.await-approve-changes-franchise', [
-            'subjectChanges' => $subjectData['subjectChanges'], 
-            'attachedFolderNames' => $subjectData['subjectsFolderList'], 
-            'selectedJob' => $selectedJob, 
-            'allFolders' => $allFolders, 
+            'subjectChanges' => $subjectData['subjectChanges'],
+            'schoolNameChange' => $subjectData['schoolNameChange'],
+            'attachedFolderNames' => $subjectData['subjectsFolderList'],
+            'selectedJob' => $selectedJob,
+            'allFolders' => $allFolders,
             'folderChanges' => $folderChanges,
             'user' => new UserResource($user)
         ]);
@@ -106,8 +108,9 @@ class SubjectChangesController extends Controller
         return view('proofing.franchise.view-changes.await-approve-changes-coordinator', [
             'folderissueID' => $folderissueID, 
             'pictureissueID' => $pictureissueID, 
-            'subjectChanges' => $subjectData['subjectChanges'], 
-            'attachedFolderNames' => $subjectData['subjectsFolderList'], 
+            'subjectChanges' => $subjectData['subjectChanges'],
+            'schoolNameChange' => $subjectData['schoolNameChange'],
+            'attachedFolderNames' => $subjectData['subjectsFolderList'],
             'classFolderKeysById' => $subjectData['classFolderKeysById'] ?? collect(),
             'selectedJob' => $selectedJob, 
             'allFolders' => $allFolders, 
@@ -122,9 +125,14 @@ class SubjectChangesController extends Controller
             'subject_correction_id' => 'required|integer',
         ]);
 
-        if($request->action == 'modify'){
+        if($request->action == 'modify' && $request->issue_type === 'School Name'){
+            $request->validate(['school_name' => 'required|string|max:255']);
+            $this->proofingChangelogService->modifySchoolNameChangelogById($request->subject_correction_id, trim($request->school_name));
+        }else if($request->action == 'modify'){
             $this->proofingChangelogService->insertSubjectProofingChangeLog($request->all());
             $this->proofingChangelogService->modifyProofingChangelogById($request->subject_correction_id);
+        }else if($request->action == 'approve' && $request->issue_type === 'School Name'){
+            $this->proofingChangelogService->approveSchoolNameChangelogById($request->subject_correction_id);
         }else if($request->action == 'approve'){
             $this->proofingChangelogService->approveProofingChangelogById($request->subject_correction_id);
         }else if($request->action == 'reject'){

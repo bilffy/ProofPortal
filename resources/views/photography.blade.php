@@ -954,6 +954,18 @@
                 )
             });
             
+            // a subject has no value for the selected filename format: tell the user and keep the modal open
+            if (response.status === 422) {
+                const errorResult = await response.json().catch(() => null);
+                if (errorResult && errorResult.message) {
+                    window.dispatchEvent(new CustomEvent('show-toast-message', {
+                        detail: { status: 'error', message: errorResult.message },
+                    }));
+                    $(downloadBtn).html("Download");
+                    return;
+                }
+            }
+
             // check if response has error and throw error, get the error status
             if (await !response.ok) {
                 throw new Error('Network response was not ok');
