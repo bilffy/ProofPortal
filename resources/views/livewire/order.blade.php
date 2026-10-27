@@ -23,8 +23,9 @@
         </div>
 
         @if ($successMessage)
-            <div class="rounded-xl border border-success-300 bg-success-100 px-4 py-3 text-sm text-success mb-4" role="status">
-                {{ $successMessage }}
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-success-300 bg-success-100 px-4 py-3 text-sm text-success mb-4" role="status">
+                <span>{{ $successMessage }}</span>
+                <button type="button" wire:click="$set('successMessage', '')" class="text-success hover:opacity-70 text-xl leading-none" aria-label="Close">&times;</button>
             </div>
         @endif
 
@@ -89,7 +90,7 @@
                     <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
                         <h5 class="text-lg font-semibold mb-4">Print Specifications</h5>
                         <hr class="border-gray-400 mb-6">
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 custom-fields-grid">
                         @foreach ($customFields as $field)
                             @continue(!$field->isVisibleGiven($fieldValues, $availableFieldIds))
                             <div wire:key="field-{{ $selectedProductId }}-{{ $field->id }}" @if ($field->type === \App\Models\CustomField::TYPE_IMAGE) style="grid-column: 1 / -1;" @endif>
@@ -113,7 +114,7 @@
                                     <div wire:ignore>
                                         <select
                                             wire:model.live="fieldValues.{{ $field->id }}"
-                                            class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5"
+                                            class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5"
                                             data-field-select
                                             data-placeholder="{{ $field->placeholder ?: 'Select an option' }}"
                                         >
@@ -124,7 +125,7 @@
                                         </select>
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
-                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
+                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
                                     <div class="flex flex-wrap gap-4">
                                         @foreach ($field->fieldOptions as $option)
@@ -141,13 +142,13 @@
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
                                 @else
-                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
+                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @endif
 
-                                {{-- @if ($field->otherOptionValue() && in_array($field->otherOptionValue(), (array) ($fieldValues[$field->id] ?? []), true))
-                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" class="mt-2 bg-gray-50 border border-neutral rounded-md block w-full p-2.5" />
+                                @if ($field->type === \App\Models\CustomField::TYPE_RADIO && $field->otherOptionValue() && ($fieldValues[$field->id] ?? null) === $field->otherOptionValue())
+                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" style="margin-top: 1.75rem;" class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                     @error('fieldOtherValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
-                                @endif --}}
+                                @endif
 
                                 @if ($field->note)
                                     <p class="mt-1 text-xs text-gray-500">{{ $field->note }}</p>
@@ -167,7 +168,7 @@
                 <div class="artwork-section mt-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
                     <h5 class="text-lg font-semibold mb-4">Artwork</h5>
                     <hr class="border-gray-400 mb-6">
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 custom-fields-grid">
                         <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Artwork Required? <span class="text-alert">*</span>
@@ -195,7 +196,7 @@
                                         placeholder="DD/MM/YYYY"
                                         autocomplete="off"
                                         value="{{ $artworkDueDate }}"
-                                        class="bg-gray-50 border border-neutral rounded-md block w-full pr-10 p-2.5 text-sm"
+                                        class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full pr-10 p-2.5"
                                     />
                                     <div class="absolute inset-y-0 right-[16px] flex items-center pointer-events-none">
                                         <span class="fa fa-calendar"></span>
@@ -207,10 +208,16 @@
                         </div>
 
                         <div class="artwork-field">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Additional Comments</label>
+                            <textarea wire:model="additionalComments" rows="4" class="artwork-wide bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
+                            @error('additionalComments') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Artwork Brief <span class="text-alert">*</span>
                             </label>
-                            <div wire:ignore>
+                            <div wire:ignore class="artwork-wide">
                                 <textarea data-artwork-brief>{!! $artworkBrief !!}</textarea>
                             </div>
                             @error('artworkBrief') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
@@ -272,16 +279,10 @@
 
                             <p class="mt-1 text-xs text-gray-500">Upload images and documentation to create your artwork.</p>
                         </div>
-
-                        <div class="artwork-field">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Additional Comments</label>
-                            <textarea wire:model="additionalComments" rows="4" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
-                            @error('additionalComments') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
-                        </div>
                     </div>
                 </div>
 
-                <div class="pt-4 flex items-center gap-3">
+                <div class="pt-4 flex items-center justify-end gap-3">
                     <x-button.secondary wire:click="cancel" wire:confirm="Cancel this order? Any details you've entered will be lost.">Cancel</x-button.secondary>
                     <x-button.primary wire:click="submit">Submit</x-button.primary>
                 </div>
@@ -402,6 +403,27 @@
         border-radius: 0.375rem;
     }
 
+    /* Custom fields (Print Specifications): one field per row, with the
+       controls kept to a comfortable width rather than stretching full width. */
+    .custom-fields-grid input[type="text"],
+    .custom-fields-grid input[type="number"],
+    .custom-fields-grid select,
+    .custom-fields-grid .select2-container,
+    .custom-fields-grid > div > div[wire\:ignore] {
+        max-width: 502px;
+    }
+    .custom-fields-grid .select2-container {
+        width: 100% !important;
+    }
+    /* Long-form controls (brief editor, comments, upload) get a bit more room. */
+    .custom-fields-grid > div > div.artwork-wide,
+    .custom-fields-grid textarea.artwork-wide,
+    .custom-fields-grid .artwork-dropzone {
+        max-width: 800px;
+    }
+    .custom-fields-grid {
+        row-gap: 1.75rem;
+    }
     /* Product selection tiles: coloured pills, image in a white circle on the
        outer end, title + "Order Now" on the inner end (mirrored for the right
        column). Images are shown whole (object-fit: contain), never cropped. */

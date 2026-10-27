@@ -1771,7 +1771,7 @@ class EmailService
         $school = $authUser->getSchool();
         $franchise = $authUser->getFranchise();
 
-        $order->loadMissing(['product', 'fieldValues.customField', 'artworkRequired', 'artworkFiles']);
+        $order->loadMissing(['product', 'fieldValues.customField.fieldOptions', 'artworkRequired', 'artworkFiles']);
 
         $sharedData = [
             'ORDER_NUMBER' => $order->order_number,
@@ -1955,11 +1955,36 @@ class EmailService
 
         foreach ($order->fieldValues as $fieldValue) {
             $label = e($fieldValue->customField->label ?? 'Field');
-            $value = nl2br(e($fieldValue->value ?? '—'));
+            $value = nl2br(e($this->orderFieldDisplayValue($fieldValue) ?? '—'));
             $rows .= $this->orderDetailRow($label, $value);
         }
 
         return '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; table-layout: fixed;">' . $rows . '</table>';
+    }
+
+    /**
+     * Orders store the selected option's option_value; show the option_name
+     * instead. A checkbox field stores several values joined by ", ". Text typed
+     * for an "Other" option matches no option_value and is shown as typed.
+     */
+    protected function orderFieldDisplayValue($fieldValue): ?string
+    {
+        $value = $fieldValue->value;
+        $field = $fieldValue->customField;
+
+        if ($value === null || $value === '' || !$field || !$field->hasOptions()) {
+            return $value;
+        }
+
+        $names = $field->fieldOptions->pluck('option_name', 'option_value');
+
+        if ($names->has($value)) {
+            return $names[$value];
+        }
+
+        return collect(explode(', ', $value))
+            ->map(fn ($part) => $names->get($part, $part))
+            ->implode(', ');
     }
 
     protected function buildOrderArtworkHtml(OrderModel $order): string
