@@ -407,7 +407,8 @@
        column). Images are shown whole (object-fit: contain), never cropped. */
     .product-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 360px));
+        justify-content: center;
         gap: 20px;
     }
     .product-tile {
@@ -416,7 +417,7 @@
         align-items: center;
         box-sizing: border-box;
         width: 100%;
-        height: 140px;
+        height: 190px;
         padding: 0 16px;
         background-color: var(--tile-bg);
         border: 0;
@@ -426,12 +427,12 @@
     }
     .product-tile.tile-left {
         flex-direction: row;
-        border-radius: 70px 0 0 70px;
+        border-radius: 95px 0 0 95px;
         text-align: right;
     }
     .product-tile.tile-right {
         flex-direction: row-reverse;
-        border-radius: 0 70px 70px 0;
+        border-radius: 0 95px 95px 0;
         text-align: left;
     }
     .product-tile:hover {
@@ -459,8 +460,8 @@
     .product-tile-thumb {
         position: relative;
         flex: 0 0 auto;
-        width: 108px;
-        height: 108px;
+        width: 130px;
+        height: 130px;
         overflow: hidden;
         border-radius: 50%;
         background: #ffffff;
@@ -491,7 +492,7 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        padding: 0 18px;
+        padding: 0 12px;
     }
     .product-tile-title {
         display: block;
@@ -521,7 +522,8 @@
     .tile-left .product-tile-button { align-self: flex-end; }
     .tile-right .product-tile-button { align-self: flex-start; }
     @media (max-width: 900px) {
-        .product-grid { grid-template-columns: 1fr; }
+        .product-grid { grid-template-columns: minmax(0, 360px); }
+
     }
 </style>
 @endpush
