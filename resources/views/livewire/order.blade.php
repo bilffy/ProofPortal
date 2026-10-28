@@ -496,8 +496,6 @@
         left: 50%;
         width: auto;
         height: auto;
-        max-width: calc(100% - 16px);
-        max-height: calc(100% - 16px);
         transform: translate(-50%, -50%);
         transition: transform 0.3s ease;
     }
