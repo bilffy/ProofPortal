@@ -492,15 +492,17 @@
     }
     .product-tile-image {
         position: absolute;
-        inset: 8px;
-        width: calc(100% - 16px);
-        height: calc(100% - 16px);
-        object-fit: contain;
-        object-position: center;
+        top: 50%;
+        left: 50%;
+        width: auto;
+        height: auto;
+        max-width: calc(100% - 16px);
+        max-height: calc(100% - 16px);
+        transform: translate(-50%, -50%);
         transition: transform 0.3s ease;
     }
     .product-tile:hover .product-tile-image {
-        transform: scale(1.05);
+        transform: translate(-50%, -50%) scale(1.05);
     }
     .product-tile-placeholder {
         position: absolute;
