@@ -221,7 +221,9 @@
                                 <textarea data-artwork-brief>{!! $artworkBrief !!}</textarea>
                             </div>
                             @error('artworkBrief') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
-                            <p class="mt-1 text-xs text-gray-500">*Please give us a brief overview of you and your clients&rsquo; expectations in regard to the artwork requirements. The more information we receive from you, the less back and forth we will have, which in turn leads to a decrease in artwork costs to you. Feel free to supply us with examples, images and any relevant information that you feel will assist in bringing your ideas to life.</p>
+                            <p class="mt-1 mb-0 text-xs text-gray-500">*Please give us a brief overview of you and your clients&rsquo; expectations in regard to the artwork requirements.</p>
+                            <p class="m-0 text-xs text-gray-500">The more information we receive from you, the less back and forth we will have, which in turn leads to a decrease in artwork costs to you.</p>
+                            <p class="m-0 text-xs text-gray-500">Feel free to supply us with examples, images and any relevant information that you feel will assist in bringing your ideas to life.</p>
                         </div>
 
                         <div class="artwork-field">
