@@ -555,6 +555,16 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 <script>
+    window.addEventListener('order-scroll-top', () => {
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            const root = document.scrollingElement || document.documentElement;
+            root.scrollTop = 0;
+            document.querySelectorAll('main, #content, .content, .overflow-y-auto').forEach(el => { el.scrollTop = 0; });
+        }, 0);
+    });
+</script>
+<script>
 (function () {
     function findComponent(el) {
         var root = el.closest('[wire\\:id]');

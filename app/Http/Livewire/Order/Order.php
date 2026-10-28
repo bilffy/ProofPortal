@@ -115,12 +115,14 @@ class Order extends Component
     {
         $this->selectedProductId = $productId;
         $this->refreshFieldsForSelectedProduct();
+        $this->dispatch('order-scroll-top');
     }
 
     public function changeProduct(): void
     {
         $this->selectedProductId = null;
         $this->refreshFieldsForSelectedProduct();
+        $this->dispatch('order-scroll-top');
     }
 
     public function updatedSelectedProductId(): void
