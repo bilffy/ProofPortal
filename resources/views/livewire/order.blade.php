@@ -137,7 +137,7 @@
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_IMAGE)
                                     @if ($field->image_url)
-                                        <img src="{{ $field->image_url }}" class="rounded border border-neutral" style="display: block; width: auto; max-width: 100%; max-height: 480px;" alt="{{ $field->label }}" />
+                                        <img src="{{ $field->image_url }}" class="rounded border border-neutral" style="display: block;" alt="{{ $field->label }}" />
                                     @else
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
@@ -492,15 +492,15 @@
     }
     .product-tile-image {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        width: auto;
-        height: auto;
-        transform: translate(-50%, -50%);
+        inset: 8px;
+        width: calc(100% - 16px);
+        height: calc(100% - 16px);
+        object-fit: contain;
+        object-position: center;
         transition: transform 0.3s ease;
     }
     .product-tile:hover .product-tile-image {
-        transform: translate(-50%, -50%) scale(1.05);
+        transform: scale(1.05);
     }
     .product-tile-placeholder {
         position: absolute;
