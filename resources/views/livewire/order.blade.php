@@ -137,7 +137,7 @@
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_IMAGE)
                                     @if ($field->image_url)
-                                        <img src="{{ $field->image_url }}" class="rounded border border-neutral" style="display: block; width: auto; max-width: 100%; max-height: 480px;" alt="{{ $field->label }}" />
+                                        <img src="{{ $field->image_url }}" class="rounded border border-neutral" style="display: block; width: 100%; max-width: 502px; height: auto;" alt="{{ $field->label }}" />
                                     @else
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
