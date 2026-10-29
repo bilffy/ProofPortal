@@ -2918,7 +2918,7 @@
 
     <div class="sd-panel fd-summary-card" x-data="{ open: true }">
         <div class="sd-panel-head fd-summary-head">
-            <h6 class="sd-card-title">Overview</h6>
+            <h5 class="fd-jobs-title">Overview</h5>
             <button
                 type="button"
                 class="fd-summary-toggle"
