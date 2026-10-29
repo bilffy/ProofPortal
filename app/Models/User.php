@@ -214,27 +214,6 @@ class User extends Authenticatable
         return $this->schools()->first();
     }
 
-    /**
-     * Message shown when someone tries to add an email that already has an account,
-     * e.g. "User exists as Teacher in Springfield Primary".
-     */
-    public function existsMessage(): string
-    {
-        $message = 'User exists';
-
-        $role = $this->getRole();
-        if ($role) {
-            $message .= ' as ' . $role;
-        }
-
-        $organisation = $this->isSchoolLevel() ? $this->getSchool() : $this->franchises()->first();
-        if ($organisation) {
-            $message .= ' in ' . $organisation->name;
-        }
-
-        return $message;
-    }
-
     protected ?int $memoizedJobsCount = null;
 
     public function getJobsCount(): int

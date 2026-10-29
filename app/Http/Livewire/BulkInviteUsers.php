@@ -535,8 +535,8 @@ class BulkInviteUsers extends Component
             $errors[] = 'Email is required.';
         } elseif (!filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Invalid email format.';
-        } elseif ($existingUser = User::where('email', $row['email'])->first()) {
-            $errors[] = $existingUser->existsMessage() . '.';
+        } elseif (User::where('email', $row['email'])->exists()) {
+            $errors[] = 'User already exists. Please contact the Franchise.';
         } else {
             $duplicateIndexes = [];
             foreach ($all as $i => $other) {
