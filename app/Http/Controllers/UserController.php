@@ -207,7 +207,18 @@ class UserController extends Controller
         $validator = $this->validator($decrypted);
         
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            $errors = $validator->errors();
+
+            // Email already registered: say who the existing user is and where.
+            if (array_key_exists('Unique', $validator->failed()['email'] ?? [])) {
+                $existing = User::where('email', $decrypted['email'])->first();
+                if ($existing) {
+                    $errors->forget('email');
+                    $errors->add('email', $existing->existsMessage());
+                }
+            }
+
+            return response()->json(['errors' => $errors], 422);
         }
 
         $scopeError = $this->validateRegistrationScope($decrypted);

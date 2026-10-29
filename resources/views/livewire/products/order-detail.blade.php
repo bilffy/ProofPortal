@@ -1,6 +1,6 @@
 <div>
     <div class="py-2 flex items-center justify-end">
-        <a href="{{ route('orders.index') }}" class="text-sm text-primary hover:underline">&larr; Back to Orders</a>
+        <a href="{{ route('orders.index') }}" class="text-sm text-primary hover:underline">&larr; Back to Quotes</a>
     </div>
 
     <div class="od-page">

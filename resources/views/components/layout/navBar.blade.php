@@ -97,7 +97,7 @@
             <div id="superAdminSubmenu" class="{{ $superAdminOpen ? '' : 'hidden' }}">
                 <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabCustomFields" navIcon="list-ul" href="{{ route('product-fields.index') }}" :activeNav="request()->routeIs('product-fields.*')">Product Fields</x-layout.navItem>
                 <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabProducts" navIcon="th-large" href="{{ route('products.index') }}" :activeNav="request()->routeIs('products.*')">Products</x-layout.navItem>
-                <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabOrdersAdmin" navIcon="shopping-cart" href="{{ route('orders.index') }}" :activeNav="request()->routeIs('orders.*')">Orders</x-layout.navItem>
+                <x-layout.navItem visibility="{{ $visibility }}" :subNav="true" id="tabOrdersAdmin" navIcon="shopping-cart" href="{{ route('orders.index') }}" :activeNav="request()->routeIs('orders.*')">Quotes</x-layout.navItem>
             </div>
         </div>
     @endif

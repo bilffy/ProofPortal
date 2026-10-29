@@ -1,6 +1,6 @@
 <div>
     <div class="py-4 flex items-center justify-between">
-        <h3 class="text-2xl">Orders</h3>
+        <h3 class="text-2xl">Quotes</h3>
         <div class="relative">
             <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 <x-icon icon="search"/>

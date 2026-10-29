@@ -1813,7 +1813,7 @@ class EmailService
             $subject = "We have received a Artwork/Print Request - {$order->order_number}";
         } else {
             $recipientData = [
-                'HEADING_TEXT' => 'THANK YOU FOR ORDERING WITH MSP PHOTOGRAPHY',
+                'HEADING_TEXT' => 'THANK YOU FOR YOUR INTEREST IN MSP PHOTOGRAPHY',
                 'SIGNATURE_HTML' => $this->buildRequestorSignatureHtml($order, $context['franchise']),
                 'ORDER_NUMBER_LINE_HTML' => '',
                 'RECIPIENT_NAME' => e($authUser->name ?: 'there'),
