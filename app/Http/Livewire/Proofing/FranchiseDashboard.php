@@ -41,7 +41,6 @@ class FranchiseDashboard extends Component
     {
         /** @var User $user */
         $user = Auth::user();
-        $franchise = $user->getFranchise();
 
         $seasons = $seasonService
             ->getAllSeasonDataForPortalAndProofing('code', 'ts_season_id', 'is_default')
@@ -51,20 +50,12 @@ class FranchiseDashboard extends Component
             ->values();
 
         $seasonFilter = $this->selectedSeasonId !== '' ? $this->selectedSeasonId : null;
-        $dashboard = $dashboardService->getUnifiedDashboard($user, $seasonFilter);
-        $proofingJobsTable = $dashboardService->getProofingJobsTable($user, $seasonFilter);
-        // $unsyncedProofingJobsTable = $dashboardService->getUnsyncedProofingJobsTable($user, $seasonFilter);
 
         return view('livewire.proofing.franchise-dashboard', [
-            'franchise' => $franchise,
             'seasons' => $seasons,
             'selectedSeasonId' => $this->selectedSeasonId,
-            'metrics' => $dashboard['metrics'],
-            'roleCounts' => $dashboard['roleCounts'],
-            'breakdowns' => $dashboard['breakdowns'],
-            'recentActivity' => $dashboard['recentActivity'],
-            'proofingJobsTable' => $proofingJobsTable,
-            // 'unsyncedProofingJobsTable' => $unsyncedProofingJobsTable,
+            'metrics' => $dashboardService->getDashboardMetrics($user, $seasonFilter),
+            'proofingJobsTable' => $dashboardService->getProofingJobsTable($user, $seasonFilter),
         ])->layout('layouts.authenticated', [
             'user' => new UserResource($user),
         ]);
