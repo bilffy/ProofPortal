@@ -254,6 +254,53 @@
         color: #fff;
     }
 
+    /* .sd-panel is declared later with the same specificity, so chain both classes
+       to make sure the zero padding wins and the header runs edge to edge. */
+    .sd-panel.fd-summary-card {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .fd-summary-card .fd-summary-head {
+        margin-bottom: 0;
+        padding: 0.75rem 1.25rem;
+        background: #f0f3f5;
+    }
+
+    .fd-summary-card .fd-summary-body {
+        padding: 1rem 1.1rem 1.1rem;
+        border-top: 1px solid #c2cfd6;
+    }
+
+    .fd-summary-card .fd-summary-body .sd-panel {
+        margin-bottom: 0;
+    }
+
+    .fd-summary-card .fd-summary-body section:last-child .sd-charts-bottom {
+        margin-bottom: 0;
+    }
+
+    .fd-summary-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border: 1px solid #E8EDF3;
+        border-radius: 9999px;
+        background: #F8FAFC;
+        color: #5B6575;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .fd-summary-toggle:hover {
+        background: #E3F2FD;
+        border-color: #BBDEFB;
+        color: #1565C0;
+    }
+
     .sd-kpi-grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -2869,11 +2916,27 @@
     <div wire:key="fd-metrics-{{ $selectedSeasonId === '' ? 'all' : $selectedSeasonId }}">
     <script type="application/json" id="franchise-dashboard-chart-data">@json($chartPayload)</script>
 
+    <div class="sd-panel fd-summary-card" x-data="{ open: true }">
+        <div class="sd-panel-head fd-summary-head">
+            <h6 class="sd-card-title">Overview</h6>
+            <button
+                type="button"
+                class="fd-summary-toggle"
+                x-on:click="open = ! open; if (open) { $nextTick(() => window.dispatchEvent(new Event('resize'))); }"
+                x-bind:aria-expanded="open.toString()"
+                x-bind:title="open ? 'Minimise' : 'Expand'"
+                aria-label="Toggle overview"
+            >
+                <i class="fa" x-bind:class="open ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="fd-summary-body" x-show="open" x-transition.opacity.duration.150ms>
     <div class="sd-kpi-grid">
         <!-- <div
             class="sd-kpi-card is-orange sd-clickable cursor-pointer"
             data-modal-target="fdSchoolsModal"
-            data-modal-toggle="fdSchoolsModal"
+            data-modal-toggle="fdSchoolsModal" 
         > -->
         <div
             class="sd-kpi-card is-orange"
@@ -3026,6 +3089,8 @@
             </div>
         </div>
     </section>
+        </div>
+    </div>
 
     @php
         $proofingJobsTable = $proofingJobsTable ?? [];
@@ -3516,9 +3581,9 @@
 
             try {
                 var dt = $table.DataTable({
-                    pageLength: 10,
+                    pageLength: 20,
                     lengthChange: true,
-                    lengthMenu: [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
+                    lengthMenu: [[5, 10, 20, 50, 100], [5, 10, 20, 50, 100]],
                     paging: true,
                     searching: true,
                     info: true,
