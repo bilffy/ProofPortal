@@ -34,3 +34,4 @@ docker-compose.override.yml
 /image_repository
 cursorignore
 cursorrules
+CLAUDE.md

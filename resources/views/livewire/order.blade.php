@@ -137,7 +137,16 @@
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_IMAGE)
                                     @if ($field->image_url)
-                                        <img src="{{ $field->image_url }}" class="rounded border border-neutral" style="display: block;" alt="{{ $field->label }}" />
+                                        <div x-data="{ full: false }">
+                                            <div style="overflow: auto;">
+                                                <img src="{{ $field->image_url }}" class="rounded border border-neutral" x-bind:style="full ? 'display: block; width: auto; max-width: none;' : 'display: block; width: auto; max-width: 100%; height: auto;'" alt="{{ $field->label }}" />
+                                            </div>
+                                            <div class="mt-1 text-sm">
+                                                <a href="#" x-on:click.prevent="full = true" x-bind:class="full ? 'font-bold no-underline' : ''">Full Size</a>
+                                                <span> | </span>
+                                                <a href="#" x-on:click.prevent="full = false" x-bind:class="! full ? 'font-bold no-underline' : ''">Normal Size</a>
+                                            </div>
+                                        </div>
                                     @else
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
