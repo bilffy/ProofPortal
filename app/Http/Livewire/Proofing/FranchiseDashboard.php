@@ -55,7 +55,7 @@ class FranchiseDashboard extends Component
         $proofingJobsTable = $dashboardService->getProofingJobsTable($user, $seasonFilter);
         // $unsyncedProofingJobsTable = $dashboardService->getUnsyncedProofingJobsTable($user, $seasonFilter);
 
-        return view('livewire.proofing.franchise-dashboard-v2', [
+        return view('livewire.proofing.franchise-dashboard', [
             'franchise' => $franchise,
             'seasons' => $seasons,
             'selectedSeasonId' => $this->selectedSeasonId,
