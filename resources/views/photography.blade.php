@@ -167,7 +167,7 @@
                             <div class="flex flex-col gap-2">
                                 <select id="folder_format" class="input">
                                     <option value="all">All images in one folder</option>
-                                    <option value="organize">All images in Class/Group</option>
+                                    <option value="organize">All images in Class/Group Folder</option>
                                 </select>
                             </div>
                         </div>

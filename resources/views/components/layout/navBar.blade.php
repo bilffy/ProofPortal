@@ -52,7 +52,7 @@
 
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Ordering</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Promotional Materials</x-layout.navItem>
     @endcan
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
@@ -89,7 +89,7 @@
                 <span class="w-[20px] h-[20px] flex items-center justify-center">
                     <x-icon icon="credit-card"/>
                 </span>
-                <div class="hideOnCollapse {{ $visibility ? 'textCollapsed' : 'textExpanded' }}">Ordering</div>
+                <div class="hideOnCollapse {{ $visibility ? 'textCollapsed' : 'textExpanded' }}">Promotional Materials</div>
                 <span id="superAdminChevron" style="margin-left: auto; transition: transform .15s;{{ $superAdminOpen ? ' transform: rotate(180deg);' : '' }}">
                     <x-icon icon="angle-down"/>
                 </span>

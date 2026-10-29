@@ -21,7 +21,7 @@
     <x-tabs.tabContainer tabsWrapper="emailsCategoryTabsContent">
         <x-tabs.tab id="tab-proofing" :isActive="true">{{ __('Proofing') }}</x-tabs.tab>
         <x-tabs.tab id="tab-invitation" :isActive="false">{{ __('User Invitation') }}</x-tabs.tab>
-        <x-tabs.tab id="tab-ordering" :isActive="false">{{ __('Ordering') }}</x-tabs.tab>
+        <x-tabs.tab id="tab-ordering" :isActive="false">{{ __('Promotional Materials') }}</x-tabs.tab>
     </x-tabs.tabContainer>
 
     <x-tabs.tabContentContainer id="emailsCategoryTabsContent">

@@ -16,7 +16,7 @@
              mb-4 used to give. --}}
 
         <div class="py-4 flex" style="gap: 16px; align-items: center;">
-            <h3 class="text-2xl" style="margin: 0; line-height: 1.2;">{{ $selectedProductId ? (collect($products)->firstWhere('id', $selectedProductId)?->name ?? 'Ordering') : 'Ordering' }}</h3>
+            <h3 class="text-2xl" style="margin: 0; line-height: 1.2;">{{ $selectedProductId ? (collect($products)->firstWhere('id', $selectedProductId)?->name ?? 'Promotional Materials') : 'Promotional Materials' }}</h3>
             @if ($selectedProductId && collect($products)->firstWhere('id', $selectedProductId)?->name === 'Other')
                 <p class="font-medium" style="color: #dc2626; margin: 0 !important; font-weight:700 !important;">* Contact MSP for more details.</p>
             @endif
@@ -61,7 +61,7 @@
                                             <strong>{{ $nameBold }}</strong>
                                             @if ($nameLight !== '')<span>{{ $nameLight }}</span>@endif
                                         </span>
-                                        <span class="product-tile-button">Order Now</span>
+                                        <span class="product-tile-button">Request Quote</span>
                                     </span>
                                 </button>
                             @endforeach
