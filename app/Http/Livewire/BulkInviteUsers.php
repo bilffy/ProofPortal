@@ -340,7 +340,7 @@ class BulkInviteUsers extends Component
             $roleName = self::ROLE_LABEL_MAP[$row['role']] ?? null;
             $role = $roleName ? Role::where('name', $roleName)->first() : null;
             if (!$role) {
-                $failed[] = 'Row ' . ($index + 1) . ': role could not be resolved.';
+                $failed[] = ($row['email'] ?: 'no email') . ': role could not be resolved.';
                 continue;
             }
 
@@ -538,14 +538,11 @@ class BulkInviteUsers extends Component
         } elseif (User::where('email', $row['email'])->exists()) {
             $errors[] = 'User already exists. Please contact the Franchise.';
         } else {
-            $duplicateIndexes = [];
             foreach ($all as $i => $other) {
                 if ($i !== $index && strcasecmp($other['email'] ?? '', $row['email']) === 0) {
-                    $duplicateIndexes[] = $i + 1;
+                    $errors[] = 'Duplicate email in spreadsheet.';
+                    break;
                 }
-            }
-            if (!empty($duplicateIndexes)) {
-                $errors[] = 'Duplicate email in spreadsheet (also on row ' . implode(', ', $duplicateIndexes) . ').';
             }
         }
 
@@ -571,7 +568,7 @@ class BulkInviteUsers extends Component
         $messages = [];
         foreach ($this->rows as $index => $row) {
             foreach ($row['errors'] as $error) {
-                $messages[] = 'Row ' . ($index + 1) . ' (' . ($row['email'] ?: 'no email') . '): ' . $error;
+                $messages[] = ($row['email'] ?: 'no email') . ': ' . $error;
             }
         }
         $this->topErrors = $messages;
