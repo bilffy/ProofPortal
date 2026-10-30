@@ -271,6 +271,7 @@ class ProofingJobController extends Controller
                 }
                 // $this->jobService->updateJobData($jobKey, 'proof_catchup', Carbon::now()->addDays(40)->setTime(9, 0, 0));
                 \Log::info('Proof date updated', ['jobKey' => $jobKey]);
+                $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
             }
 
             $folderResponse = $client->get("{$baseUrl}/folders/sync/{$jobKey}");
@@ -306,9 +307,6 @@ class ProofingJobController extends Controller
                 
                 \Log::info("Dispatching SyncImagesToProd02 for Job: $jobKey");
                 SyncImagesToProd02::dispatch($jobKey);
-
-                // Ensure permissions and visibility
-                $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
     
                 return response()->json([
                     'success' => true,
