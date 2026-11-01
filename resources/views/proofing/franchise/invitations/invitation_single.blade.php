@@ -95,18 +95,22 @@
                                         </div>
                                     </div>
 
-                                    {{-- Folder --}}
-                                    <div class="form-group row">
-                                        <label class="{{ $labelClass }}">Class/Group</label>
-                                        <div class="col-md-9">
-                                            <select name="folder" id="folder" class="{{ $inputClass }}">
-                                                <option value="*">All Folders</option>
-                                                @foreach($foldersTmp as $folderKey => $folderName)
-                                                    <option value="{{ $folderKey }}">{{ $folderName }}</option>
-                                                @endforeach
-                                            </select>
+                                    {{-- Folder (Photo-Coordinators are always assigned to all folders) --}}
+                                    @if($role === 'photocoordinator')
+                                        <input type="hidden" name="folder" value="*">
+                                    @else
+                                        <div class="form-group row">
+                                            <label class="{{ $labelClass }}">Class/Group</label>
+                                            <div class="col-md-9">
+                                                <select name="folder" id="folder" class="{{ $inputClass }}">
+                                                    <option value="*">All Folders</option>
+                                                    @foreach($foldersTmp as $folderKey => $folderName)
+                                                        <option value="{{ $folderKey }}">{{ $folderName }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
+                                    @endif
 
                                     {{-- Activation Date --}}
                                     <div class="form-group row datetime d-none">

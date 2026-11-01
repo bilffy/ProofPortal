@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Auth;
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\EncryptionHelper;
+use App\Helpers\RoleHelper;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
@@ -72,7 +73,7 @@ class Login extends Component
                 // Log LOGIN activity
                 Auth::loginUsingId($user->id);
                 ActivityLogHelper::log(LogConstants::LOGIN, []);
-                return redirect()->route('dashboard');    
+                return redirect()->route($user->hasRole(RoleHelper::ROLE_FRANCHISE) ? 'franchise.dashboard' : 'dashboard');
             }
             
             // Send OTP to the user

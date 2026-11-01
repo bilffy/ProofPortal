@@ -19,6 +19,8 @@
                 $btnAttrCancel = "btn btn-primary float-right pl-4 pr-4";
                 $urlDone = route('invitation.index', ['role' => $role]);
                 $title = $role === 'photocoordinator' ? 'Photo-Coordinator' : 'Teacher';
+                // Photo-Coordinators are always assigned to every folder, so no Class / Group is asked for
+                $showFolder = $role !== 'photocoordinator';
             @endphp
             <a href="{{ $urlDone }}" class="{{ $btnAttrCancel }}">Back</a>
         </div>
@@ -36,7 +38,9 @@
                     <div class="mt-4 mr-4 ml-4">
                         <p class="mb-2">
                             Type directly into the Spreadsheet below or copy-and-paste from an Excel document.<br>
-                            In Class / Group, paste <strong>All Folders</strong> to assign every folder, or paste a folder name to assign that folder.<br>
+                            @if($showFolder)
+                                In Class / Group, paste <strong>All Folders</strong> to assign every folder, or paste a folder name to assign that folder.<br>
+                            @endif
                             Invitations are only sent to users who already belong to this school and have the {{ $title }} role.
                         </p>
                         <div id="invite-validation" class="alert alert-warning mt-3 d-none" role="alert"></div>
@@ -107,6 +111,7 @@
             var emailList = @json($emailList);
             var spreadsheetData = @json($spreadsheetData);
             var sourceList = @json($sourceList);
+            var showFolder = @json($showFolder);
             var syncingNames = false;
             // row index → pasted name that did not match a folder (dropdown clears unknown names)
             var unrecognizedByRow = {};
@@ -251,7 +256,7 @@
             $('#invite-spreadsheet').jexcel({
                 data: spreadsheetData,
                 colHeaders: ['First Name', 'Last Name', 'Email', 'Class / Group'],
-                colWidths: [120, 120, 280, 200],
+                colWidths: [120, 120, 280, showFolder ? 200 : 0],
                 minDimensions: [4, 4],
                 maxDimensions: [4, 40],
                 allowInsertColumn: false,
@@ -261,7 +266,8 @@
                     { type: 'text' },
                     // plain text so Excel-pasted emails are kept even when not in the allow-list
                     { type: 'text' },
-                    { type: 'dropdown', source: sourceList }
+                    // hidden for Photo-Coordinators: the value stays '*' (All Folders)
+                    showFolder ? { type: 'dropdown', source: sourceList } : { type: 'hidden' }
                 ],
                 // jexcel dropdown only matches source ids; pasted names would be discarded.
                 // Resolve name → id here while newValue is still available.

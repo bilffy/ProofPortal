@@ -69,7 +69,7 @@ class TimestoneTableService
             ->where('Jobs.AccountID', $tsAccountId)
             ->where('JobDetails.SchoolKey', $schoolKey)
             ->select(['Jobs.Name', 'Jobs.JobKey', 'Jobs.JobID', 'Seasons.code'])
-            ->orderBy('Jobs.Name', 'asc');
+            ->orderBy('Seasons.code', 'desc');
     }
 
     // public function isJobEligibleForSync($tsJobKey)

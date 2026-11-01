@@ -164,14 +164,21 @@
         box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.15);
     }
 
-    /* .sd-panel is declared later with the same specificity, so chain both classes
-       to make sure the zero padding wins and the header runs edge to edge. */
-    .sd-panel.fd-summary-card {
+    /* Shared box for the "Overview" and "Proofing Jobs" containers. .sd-panel is
+       declared later with the same specificity, so chain both classes to make sure
+       the zero padding wins and the header runs edge to edge. */
+    .sd-panel.fd-box {
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        background: #fff;
+        border: 1px solid #c2cfd6;
+        border-radius: 0.25rem;
         padding: 0;
+        box-shadow: none;
         overflow: hidden;
     }
 
-    .fd-summary-card .fd-summary-head {
+    .fd-box .fd-box-head {
         margin-bottom: 0;
         padding: 0.75rem 1.25rem;
         background: #f0f3f5;
@@ -397,31 +404,13 @@
         grid-auto-flow: row;
     }
 
-    .fd-jobs-panel {
-        margin-top: 0.25rem;
-        margin-bottom: 1.25rem;
-        background: #fff;
-        border: 1px solid #c2cfd6;
-        border-radius: 0.25rem;
-        padding: 0;
-        box-shadow: none;
-        overflow: hidden;
-    }
-
-    .fd-jobs-panel .sd-panel-head {
-        margin-bottom: 1rem;
-    }
-
     /* Header box above the Proofing Jobs table - mirrors the "Your Synced (Active)
        Jobs" panel header on /proofing (proofing-home.blade.php): light background,
        bold title + a plain-language summary line, and a job-name search box. */
     .fd-jobs-info-box {
-        background: #f0f3f5;
         border: 0;
         border-bottom: 1px solid #c2cfd6;
         border-radius: 0;
-        padding: 0.75rem 1.25rem;
-        margin-bottom: 0;
     }
 
     .fd-jobs-info-line {
@@ -1008,8 +997,8 @@
     <div wire:key="fd-metrics-{{ $selectedSeasonId === '' ? 'all' : $selectedSeasonId }}">
     <script type="application/json" id="franchise-dashboard-chart-data">@json($chartPayload)</script>
 
-    <div class="sd-panel fd-summary-card" x-data="{ open: true }">
-        <div class="sd-panel-head fd-summary-head">
+    <div class="sd-panel fd-box fd-summary-card" x-data="{ open: true }">
+        <div class="sd-panel-head fd-box-head fd-summary-head">
             <h5 class="fd-jobs-title">Overview</h5>
             <button
                 type="button"
@@ -1155,8 +1144,8 @@
         $today = \Carbon\Carbon::today();
     @endphp
 
-    <section class="sd-panel fd-jobs-panel">
-        <div class="fd-jobs-info-box">
+    <section class="sd-panel fd-box fd-jobs-panel">
+        <div class="fd-box-head fd-jobs-info-box">
             <div class="fd-jobs-info-line">
                 <h5 class="fd-jobs-title">Proofing Jobs</h5>
                 <span class="fd-jobs-count-text">

@@ -6,6 +6,7 @@ use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Models\User;
 use Auth;
+use App\Helpers\RoleHelper;
 use App\Helpers\SchoolContextHelper;
 use App\Helpers\PermissionHelper;
 
@@ -41,7 +42,19 @@ class ImpersonateController extends Controller
 
         $this->clearProofingSessionContext();
 
-        return redirect()->route('dashboard')->with('success', 'You are logged in as ' . $user->email);
+        $message = 'You are logged in as ' . $user->email;
+
+        // Franchise users land on their dashboard first; drop any school context left
+        // over from the admin session, since the dashboard redirects school-context users away.
+        if ($user->hasRole(RoleHelper::ROLE_FRANCHISE)) {
+            if (SchoolContextHelper::isSchoolContext()) {
+                SchoolContextHelper::removeSchoolContext();
+            }
+
+            return redirect()->route('franchise.dashboard')->with('success', $message);
+        }
+
+        return redirect()->route('dashboard')->with('success', $message);
     }
 
     public function leave()

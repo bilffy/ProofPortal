@@ -586,10 +586,11 @@
                                 <span class="jobs-archive-heading font-bold text-red-600 text-lg">Warning!</span>
                             </div>
                             <p class="text-sm text-amber-700 mt-1">
-                                Jobs with completed proofing (status completed or past proofing date) are not archived yet and will not sync automatically. Please archive them to enable syncing and pull new changes for portraits.
+                                If a Job has finished its proofing stage (either marked as "Completed" or the proofing start date has passed), it won't sync automatically until it is "Archived". 
+                                Please archive these jobs so the system can sync them and pull in any new portrait updates.
                             </p>
                             <p class="jobs-archive-description text-sm text-red-600">
-                                Jobs having digital download date will automatically sync after 7pm.
+                                Any Jobs that have a digital download date will sync automatically every night after 7:00 PM.
                             </p>
                         </div>
                     </div>

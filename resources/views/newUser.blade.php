@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-row gap-4 max-w-screen-md mb-8">
+            <div class="flex flex-row gap-4 max-w-screen-md mb-3">
                 <div class="w-full">
                     <x-form.select class="w-full" value="{{ old('role') }}" context="role" :options="$roleOptions" required>User Role</x-form.select>
                     <x-form.input.error errorMessage="{{$roleError}}" />
@@ -94,7 +94,19 @@
                     <x-form.input.error errorMessage="{{$franchiseError}}" />
                 </div>
             </div>
-            
+
+            <div id="send-invitation-row" class="hidden flex-row gap-4 items-center max-w-screen-md mb-4">
+                <input
+                    type="checkbox"
+                    id="send_invitation_with_proofing"
+                    name="send_invitation_with_proofing"
+                    value="1"
+                    @checked(old('send_invitation_with_proofing'))
+                    class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary cursor-pointer"
+                />
+                <label for="send_invitation_with_proofing" class="cursor-pointer">Send Invitation with proofing</label>
+            </div>
+
             @php($previous_url = old('previous_url', strcmp(url()->current(), url()->previous()) ? url()->previous() : route('users')) ?? route('users'))
             <input type="hidden" name="previous_url" value="{{ $previous_url }}">
 
@@ -128,7 +140,16 @@
         }
     };
 
+    function toggleSendInvitation(role) {
+        let show = role === 'Photo Coordinator' || role === 'Teacher';
+        $('#send-invitation-row').toggleClass('hidden', !show).toggleClass('flex', show);
+        if (!show) {
+            $('#send_invitation_with_proofing').prop('checked', false);
+        }
+    }
+
     function updateSelectByRole(role) {
+        toggleSendInvitation(role);
         switch(role) {
             case 'Super Admin':
             case 'Admin':

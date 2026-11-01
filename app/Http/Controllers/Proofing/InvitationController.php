@@ -360,7 +360,8 @@ class InvitationController extends Controller
             $attemptedEmails[$email] = true;
             $entries[] = [
                 'email' => $email,
-                'folder_key' => $person[3] ?? null,
+                // Photo-Coordinators are always assigned to every folder
+                'folder_key' => $normalizedRole === 'photocoordinator' ? '*' : ($person[3] ?? null),
             ];
         }
 

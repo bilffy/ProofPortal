@@ -151,9 +151,9 @@ class FranchiseDashboardService
         $archivedId = (int) $this->statusService->archived;
         $syncId = (int) $this->statusService->sync;
 
-        // Active proofing = jobs whose folders are still being worked on (the
-        // "Your Proofing Jobs" tile), separate from the Job Proofing Status chart.
-        $activeProofingStatusIds = array_values(array_filter([$modifiedId, $unlockedId, $incompleteId]));
+        // "Your Proofing Jobs" tile: show_proofing = 1 (from proofingJobsQuery), status
+        // not Archived/Deleted/Completed, and proof_start already in the past.
+        $excludedProofingStatusIds = array_values(array_filter([$archivedId, (int) $this->statusService->deleted, $completedId]));
 
         $validSchoolIds = array_flip($schoolIds);
 
@@ -213,13 +213,15 @@ class FranchiseDashboardService
         ];
 
         $proofingJobs = $this->proofingJobsQuery($schoolIds, $schoolKeys, $seasonIds)
-            ->get(['jobs.ts_job_id', 'jobs.school_id', 'jobs.ts_schoolkey', 'jobs.jobsync_status_id', 'jobs.job_status_id']);
+            ->get(['jobs.ts_job_id', 'jobs.school_id', 'jobs.ts_schoolkey', 'jobs.jobsync_status_id', 'jobs.job_status_id', 'jobs.proof_start']);
 
         foreach ($proofingJobs as $job) {
             $statusId = (int) ($job->job_status_id ?? 0);
             $count = $schoolCountFor($job);
 
-            if (in_array($statusId, $activeProofingStatusIds, true)) {
+            if (!in_array($statusId, $excludedProofingStatusIds, true)
+                && $job->proof_start !== null
+                && \Carbon\Carbon::parse($job->proof_start)->isPast()) {
                 $metrics['active_proofing'] += $count;
             }
 

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Auth;
 use App\Helpers\ActivityLogHelper;
 use App\Helpers\Constants\LogConstants;
 use App\Helpers\OTPHelper;
+use App\Helpers\RoleHelper;
 use App\Models\User;
 use App\Services\UserService;
 use Carbon\Carbon;
@@ -96,7 +97,7 @@ class OtpVerification extends Component
         session()->flash('message', config('app.dialog_config.otp.verified.message'));
         // Log LOGIN activity
         ActivityLogHelper::log(LogConstants::LOGIN, []);
-        return redirect()->route('dashboard');
+        return redirect()->route(Auth::user()->hasRole(RoleHelper::ROLE_FRANCHISE) ? 'franchise.dashboard' : 'dashboard');
     }
     public function resendOtp(UserService $userService, $email)
     {

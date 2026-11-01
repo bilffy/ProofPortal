@@ -87,7 +87,7 @@ class JobService
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->where('job_users.user_id', Auth::user()->id)
             ->whereNotIn('jobs.job_status_id', [$this->statusService->archived, $tnjNotFound, $deleted])
-            ->orderBy('jobs.id', 'asc')
+            ->orderBy('jobs.updated_at', 'desc')
             ->get();
     }
 
@@ -458,6 +458,7 @@ class JobService
             $jobs = $query->whereNotIn('jobs.job_status_id', [$archiveStatus, $tnjNotFound, $deleted])
                           ->where('jobs.jobsync_status_id', $this->statusService->sync)
                           ->with('folders')
+                          ->orderBy('jobs.updated_at', 'desc')
                           ->get();
         }
 

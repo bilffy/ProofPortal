@@ -35,3 +35,4 @@ docker-compose.override.yml
 cursorignore
 cursorrules
 CLAUDE.md
+.claude

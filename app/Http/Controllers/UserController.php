@@ -226,7 +226,12 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
 
-            $status = Status::where('status_external_name', 'new')->first();
+            $roleName = Role::findOrFail($decrypted['role'])->name;
+            $sendWithProofing = !empty($decrypted['send_invitation_with_proofing'])
+                && in_array($roleName, [RoleHelper::ROLE_PHOTO_COORDINATOR, RoleHelper::ROLE_TEACHER], true);
+
+            $status = Status::where('status_external_name', $sendWithProofing ? 'invited' : 'new')->first()
+                ?? Status::where('status_external_name', 'new')->first();
             
             $user = User::create([
                 'name' => $decrypted['firstname'] . " " . $decrypted['lastname'],
@@ -234,13 +239,14 @@ class UserController extends Controller
                 'username' => $decrypted['email'],
                 'firstname' => $decrypted['firstname'],
                 'lastname' => $decrypted['lastname'],
-                'status' => User::STATUS_NEW, // initialize user with NEW status
+                'status' => $sendWithProofing ? User::STATUS_INVITED : User::STATUS_NEW,
                 'password' => Hash::make(Str::random(32)),
                 'active_status_id' => $status->id,
                 'email_verified_at' => now(), // Auto-verify for immediate access
+                'send_invitation_with_proofing' => $sendWithProofing ? 1 : 0,
             ]);
     
-            $role = Role::findOrFail($decrypted['role'])->name;
+            $role = $roleName;
             $user->assignRole($role);
     
             switch ($role)
@@ -269,8 +275,10 @@ class UserController extends Controller
             return redirect()->back()->withInput()->withErrors(['general' => 'Unable to create user. Please try again.']);
         }
         
-        // Send invitation email
-        $this->userService->sendInvite($user, auth()->user()->id);
+        // With proofing: the account setup email is sent later, when the user is assigned to a folder in proofing.
+        if (!$sendWithProofing) {
+            $this->userService->sendInvite($user, auth()->user()->id);
+        }
         session()->forget('register_token'); // Remove token after use
         return response()->json(['redirect_url' => route('users')], 200);
     }
@@ -424,8 +432,12 @@ class UserController extends Controller
                 $changes = $user->getChanges();
                 
                 if ($changes && array_key_exists('email', $changes)) {
-                    // If email is changed, send invitation email
-                    $this->userService->sendInvite($user, auth()->user()->id);
+                    // If email is changed, send invitation email, unless the user is waiting
+                    // for the proofing invitation (sent later when assigned to a proofing folder)
+                    $waitingForProofing = $user->status === User::STATUS_INVITED && $user->send_invitation_with_proofing;
+                    if (!$waitingForProofing) {
+                        $this->userService->sendInvite($user, auth()->user()->id);
+                    }
                 }
                 
                 $role = Role::findOrFail($updatedData['role'])->name;
