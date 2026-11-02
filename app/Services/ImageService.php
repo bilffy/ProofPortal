@@ -8,6 +8,7 @@ use App\Helpers\PhotographyHelper;
 use App\Helpers\PhotographyJobQueryHelper;
 use App\Models\Folder;
 use App\Models\Image;
+use App\Models\ImageOptions;
 use App\Models\SchoolPhotoUpload;
 use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -962,31 +963,22 @@ class ImageService
         });
     }
 
-    private function getImageUrls(string $key, $resolutionId = null, $tab = ''): array
+    private function getImageUrls(string $key, $resolutionId = null, $tab = '', string $suffix = '_400'): array
     {
         $upperTab = strtoupper((string)($tab ?? ''));
         $resKey = (string)($resolutionId ?? 'any');
-        $cacheKey = "photography_urls_{$key}_{$resKey}_{$upperTab}";
+        $cacheKey = "photography_urls_{$key}_{$resKey}_{$upperTab}{$suffix}";
 
-        return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab) {
+        return Cache::remember($cacheKey, 600, function() use ($key, $resolutionId, $upperTab, $suffix) {
             $baseImage = env('PORTRAITIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
             $baseGroup = env('GROUPIMAGELOCATION')."{$key[0]}/{$key[1]}/{$key}";
 
+            // Served from the 400px file unless a larger source ($suffix) is asked for.
             // --- DEFINE PORTRAIT URLS ---
-            if ($resolutionId == 1) { // High Quality
-                $portraitUrls = ["{$baseImage}_1600.jpg"];
-            } else {
-                // Default to 400 if resolutionId is 2 OR null
-                $portraitUrls = ["{$baseImage}_400.jpg"];
-            }
+            $portraitUrls = ["{$baseImage}{$suffix}.jpg"];
 
             // --- DEFINE GROUP URLS ---
-            if ($resolutionId == 1) { // High Quality
-                $groupUrls = ["{$baseGroup}_1600.jpg"];
-            } else {
-                // Default to 400 if resolutionId is 2 OR null
-                $groupUrls = ["{$baseGroup}_400.jpg"];
-            }
+            $groupUrls = ["{$baseGroup}{$suffix}.jpg"];
 
             // --- FINAL FILTERING BASED ON TAB ---
             if ($upperTab === PhotographyHelper::TAB_PORTRAITS) {
@@ -1000,6 +992,56 @@ class ImageService
 
             return $result;
         });
+    }
+
+    /**
+     * Base64 JPEG for a download option.
+     *
+     * Options whose image_options.size is {"width", "height", "dpi"} are cut from the original
+     * file with no suffix (cropped to the target shape from the centre, then shrunk, so nothing is
+     * enlarged); if the original is missing the plain _400 file is served as is. The
+     * DIGI1 / DIGI2 options (LowRes / HighRes) get the _200 / _400 file as is.
+     */
+    public function getDownloadImageContent(string $key, $resolutionId = null, $tab = ''): ?string
+    {
+        $option = $resolutionId ? ImageOptions::find($resolutionId) : null;
+        if ($option === null) {
+            return $this->getImageContent($key, $resolutionId, $tab);
+        }
+
+        $target = $option->targetSize();
+        $suffixes = $target !== null ? [''] : [$option->sourceSuffix()];
+
+        foreach ($suffixes as $suffix) {
+            foreach ($this->getImageUrls($key, $resolutionId, $tab, $suffix) as $url) {
+                $binary = $this->fetchImageBinary($url);
+                if ($binary !== null) {
+                    return base64_encode($target !== null ? $this->resizeToTarget($binary, $target) : $binary);
+                }
+            }
+        }
+
+        return $this->getImageContent($key, $resolutionId, $tab);
+    }
+
+    /**
+     * @param array{width: int, height: int, dpi: int} $target
+     */
+    private function resizeToTarget(string $binary, array $target): string
+    {
+        $jpeg = (string) \Intervention\Image\Facades\Image::make($binary)
+            ->fit($target['width'], $target['height'])
+            ->encode('jpg', 90);
+
+        // GD writes a JFIF header with no density; stamp the option's dpi into it.
+        if (substr($jpeg, 2, 2) === "\xFF\xE0" && substr($jpeg, 6, 5) === "JFIF\0") {
+            $dpi = (int) $target['dpi'];
+            $jpeg[13] = "\x01"; // units: dots per inch
+            $jpeg[14] = $jpeg[16] = chr($dpi >> 8);
+            $jpeg[15] = $jpeg[17] = chr($dpi & 255);
+        }
+
+        return $jpeg;
     }
 
     /**
@@ -1166,7 +1208,8 @@ class ImageService
     }
 
     /**
-     * Get all the Image Options.
+     * Get the Image Options offered in the photo resolution dropdown: those whose
+     * `visibility` JSON list contains "portraits".
      *
      * @return \Illuminate\Support\Collection
      */
@@ -1174,6 +1217,7 @@ class ImageService
     {
         return DB::table('image_options')
             ->select('id', 'display_name')
+            ->where('visibility', 'like', '%"portraits"%')
             ->orderBy('id', 'asc')
             ->get();
     }

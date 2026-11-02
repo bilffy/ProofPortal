@@ -47,8 +47,11 @@
 
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch biu-upload-import-grid">
         {{-- Upload spreadsheet --}}
-        <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm flex flex-col">
-            <h4 class="text-lg font-semibold text-gray-900 mb-4">Upload spreadsheet</h4>
+        <section class="biu-box flex flex-col">
+            <div class="biu-box-head">
+                <h4 class="biu-box-title">Upload spreadsheet</h4>
+            </div>
+            <div class="biu-box-body flex-1 flex flex-col">
 
             {{-- Light-blue info strip (inline styles beat Bootstrap/Tailwind conflicts) --}}
             <div
@@ -154,10 +157,10 @@
             </div>
 
                 @if ($showSchoolSelector)
-                    <div class="mt-6 pt-6 border-t border-neutral-300">
-                        <div class="rounded-xl border border-neutral-300 bg-[#f8fafb] p-4">
+                    <div class="mt-6">
+                        <div class="rounded-xl border border-neutral-300 p-4" style="background:#f0f3f5;">
                             <div class="mb-4">
-                                <h4 class="text-lg font-semibold text-gray-900 mb-0.5">Assign school</h4>
+                                <h4 class="biu-box-title mb-0.5">Assign school</h4>
                                 <p class="mt-5 text-xs mb-0">Select the school associated with your franchise to assign all invited users.</p>
                             </div>
                             <div class="max-w-xl">
@@ -176,12 +179,13 @@
                         </div>
                     </div>
                 @endif
+            </div>
         </section>
 
         {{-- Imported users --}}
-        <section class="rounded-2xl border border-neutral-400 bg-white p-6 shadow-sm flex flex-col">
-            <div class="mb-4 flex items-center justify-between gap-3 flex-shrink-0">
-                <h4 class="text-lg font-semibold text-gray-900">Imported users</h4>
+        <section class="biu-box flex flex-col">
+            <div class="biu-box-head flex items-center justify-between gap-3 flex-shrink-0">
+                <h4 class="biu-box-title">Imported users</h4>
                 <span
                     class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold"
                 >
@@ -189,7 +193,7 @@
                 </span>
             </div>
 
-            <div class="flex-1 flex flex-col">
+            <div class="biu-box-body flex-1 flex flex-col">
             @if (empty($rows))
                 <div
                     style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-height:160px;padding:28px 16px;text-align:center;background:#f0f3f5;border:1px dashed #D9DDE2;border-radius:12px;"
@@ -354,6 +358,33 @@
 
     @push('styles')
     <style>
+        /* Boxes match the franchise dashboard (.fd-box): same border, radius, shadow and header strip. */
+        .biu-box {
+            background: #fff;
+            border: 1px solid #c2cfd6;
+            border-radius: 0.25rem;
+            box-shadow: none;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .biu-box-head {
+            padding: 0.75rem 1.25rem;
+            background: #f0f3f5;
+        }
+
+        .biu-box-title {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1A2B4A;
+        }
+
+        .biu-box-body {
+            padding: 1rem 1.1rem 1.1rem;
+            border-top: 1px solid #c2cfd6;
+        }
+
         /* Upload spreadsheet = 1/3 of row, Imported users = 2/3 of row
            (Upload spreadsheet is first in markup, Imported users is second). */
         @media (min-width: 1024px) {

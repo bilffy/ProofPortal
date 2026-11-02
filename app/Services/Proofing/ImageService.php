@@ -19,7 +19,7 @@ class ImageService
     public function getImagesBySubjectKey(string $subjectKey)
     {
         return Image::where('keyorigin', 'Subject')
-            ->where('keyvalue', $subjectKey)
+            ->where([['keyvalue', $subjectKey],['exportStatus', 1]])
             ->notDeleted()
             ->get();
     }

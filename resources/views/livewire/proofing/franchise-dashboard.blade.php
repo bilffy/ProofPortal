@@ -57,16 +57,16 @@
         ['label' => 'Modified', 'value' => $statusModified, 'color' => $chartPalette[1]],
         ['label' => 'Unlocked', 'value' => $statusUnlocked, 'color' => $chartPalette[8]],
         ['label' => 'None', 'value' => $statusNotOpened, 'color' => $chartPalette[9]],
-        ['label' => 'Completed (Pending Archived)', 'value' => $statusCompleted, 'color' => $chartPalette[7]],
+        ['label' => 'Completed', 'value' => $statusCompleted, 'color' => $chartPalette[7]],
     ];
     $statusColorMap = [];
     foreach ($statusLegend as $legendItem) {
         $statusColorMap[strtolower($legendItem['label'])] = $legendItem['color'];
     }
     // The table's job_status column uses the plain "Completed" wording, while the
-    // chart legend spells it out as "Completed (Pending Archived)" - map both.
-    if (isset($statusColorMap['completed (pending archived)'])) {
-        $statusColorMap['completed'] = $statusColorMap['completed (pending archived)'];
+    // chart legend spells it out as "Completed" - map both.
+    if (isset($statusColorMap['completed'])) {
+        $statusColorMap['completed'] = $statusColorMap['completed'];
     }
 
     $photographyLegend = [
@@ -1013,129 +1013,129 @@
         </div>
 
         <div class="fd-summary-body" x-show="open" x-transition.opacity.duration.150ms>
-    <div class="sd-kpi-grid">
-        <div
-            class="sd-kpi-card is-orange"
-        >
-            <div class="sd-kpi-top-row">
-                <div class="sd-kpi-icon-label">
-                    <span class="sd-kpi-icon"><x-icon icon="university" /></span>
-                    <span class="sd-kpi-tile-label" style="color:#fbac3d">Your Schools</span>
-                </div>
-                <span class="sd-kpi-count-badge">{{ number_format($schoolsCount) }}</span>
-            </div>
-        </div>
-
-
-        <div
-            class="sd-kpi-card is-blue"
-        >
-            <div class="sd-kpi-top-row">
-                <div class="sd-kpi-icon-label">
-                    <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
-                    <span class="sd-kpi-tile-label" style="color:#00b4df">Your Proofing Jobs</span>
-                </div>
-                <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
-            </div>
-        </div>
-
-        <div
-            class="sd-kpi-card is-teal"
-        >
-            <div class="sd-kpi-top-row">
-                <div class="sd-kpi-icon-label">
-                    <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-                    <span class="sd-kpi-tile-label" style="color:#07a88f">Your Photography Jobs</span>
-                </div>
-                <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
-            </div>
-        </div>
-    </div>
-
-    <section>
-        <div class="sd-charts-bottom">
-
-            <div class="sd-panel sd-donut-card is-blue">
-                <div class="sd-panel-head">
-                    <h6 class="sd-card-title">
-                        Job Proofing Status
-                    </h6>
-                    <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
-                </div>
-                @if ($statusMixTotal === 0)
-                    <p class="sd-empty">No proofing status data found.</p>
-                @else
-                    <div class="sd-progress-summary">
-                        <strong>{{ number_format($synced) }}</strong>
-                        <span>{{ $syncedJobsLabel }}</span>
-                        <span aria-hidden="true">•</span>
-                        <strong>{{ number_format($statusDeleted) }}</strong>
-                        <span>{{ $deletedJobsLabel }}</span>
-                    </div>
-                    <div class="sd-pie-layout">
-                        <div class="sd-chart-box" wire:ignore>
-                            <canvas id="franchise-dashboard-proofing-status-chart"></canvas>
+            <div class="sd-kpi-grid">
+                <div
+                    class="sd-kpi-card is-orange"
+                >
+                    <div class="sd-kpi-top-row">
+                        <div class="sd-kpi-icon-label">
+                            <span class="sd-kpi-icon"><x-icon icon="university" /></span>
+                            <span class="sd-kpi-tile-label" style="color:#fbac3d">Your Schools</span>
                         </div>
-                        <div class="sd-progress-list">
-                            @foreach ($statusLegend as $item)
-                                @php $itemPct = $pct($item['value'], max($statusMixTotal, 1)); @endphp
-                                <div class="sd-progress-row">
-                                    <div class="sd-progress-meta">
-                                        <span class="dot" style="background: {{ $item['color'] }};"></span>
-                                        <span class="lbl" style="color: {{ $item['color'] }};">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
-                                        <span class="pct">{{ $itemPct }}%</span>
-                                    </div>
-                                    <div class="sd-progress-track">
-                                        <div class="sd-progress-fill" style="width: {{ $itemPct }}%; background: {{ $item['color'] }};"></div>
-                                    </div>
+                        <span class="sd-kpi-count-badge">{{ number_format($schoolsCount) }}</span>
+                    </div>
+                </div>
+
+
+                <div
+                    class="sd-kpi-card is-blue"
+                >
+                    <div class="sd-kpi-top-row">
+                        <div class="sd-kpi-icon-label">
+                            <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
+                            <span class="sd-kpi-tile-label" style="color:#00b4df">Your Active Proofing Jobs</span>
+                        </div>
+                        <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
+                    </div>
+                </div>
+
+                <div
+                    class="sd-kpi-card is-teal"
+                >
+                    <div class="sd-kpi-top-row">
+                        <div class="sd-kpi-icon-label">
+                            <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
+                            <span class="sd-kpi-tile-label" style="color:#07a88f">Your Photography Jobs</span>
+                        </div>
+                        <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <section>
+                <div class="sd-charts-bottom">
+
+                    <div class="sd-panel sd-donut-card is-blue">
+                        <div class="sd-panel-head">
+                            <h6 class="sd-card-title">
+                                Job Proofing Status
+                            </h6>
+                            <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
+                        </div>
+                        @if ($statusMixTotal === 0)
+                            <p class="sd-empty">No proofing status data found.</p>
+                        @else
+                            <div class="sd-progress-summary">
+                                <strong>{{ number_format($synced) }}</strong>
+                                <span>{{ $syncedJobsLabel }}</span>
+                                <span aria-hidden="true">•</span>
+                                <strong>{{ number_format($statusDeleted) }}</strong>
+                                <span>{{ $deletedJobsLabel }}</span>
+                            </div>
+                            <div class="sd-pie-layout">
+                                <div class="sd-chart-box" wire:ignore>
+                                    <canvas id="franchise-dashboard-proofing-status-chart"></canvas>
                                 </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            
-            <div
-                class="sd-panel sd-donut-card is-teal"
-            >
-                <div class="sd-panel-head">
-                    <h6 class="sd-card-title">
-                        School Photography Status
-                    </h6>
-                    <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
-                </div>
-                @if ($photographyTotal === 0)
-                    <p class="sd-empty">No photography jobs found.</p>
-                @else
-                    <div class="sd-progress-summary">
-                        <strong>{{ number_format($photographyTotal) }}</strong>
-                        <span>{{ $photographyTotal === 1 ? 'Photography Job' : 'Photography Jobs' }}</span>
-                    </div>
-                    <div class="sd-pie-layout">
-                        <div class="sd-chart-box" wire:ignore>
-                            <canvas id="franchise-dashboard-photography-chart"></canvas>
-                        </div>
-                        <div class="sd-progress-list">
-                            @foreach ($photographyLegend as $item)
-                                @php $itemPct = $pct($item['value'], max($photographyTotal, 1)); @endphp
-                                <div class="sd-progress-row">
-                                    <div class="sd-progress-meta">
-                                        <span class="dot" style="background: {{ $item['color'] }};"></span>
-                                        <span class="lbl">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
-                                        <span class="pct">{{ $itemPct }}%</span>
-                                    </div>
-                                    <div class="sd-progress-track">
-                                        <div class="sd-progress-fill" style="width: {{ $itemPct }}%; background: {{ $item['color'] }};"></div>
-                                    </div>
+                                <div class="sd-progress-list">
+                                    @foreach ($statusLegend as $item)
+                                        @php $itemPct = $pct($item['value'], max($statusMixTotal, 1)); @endphp
+                                        <div class="sd-progress-row">
+                                            <div class="sd-progress-meta">
+                                                <span class="dot" style="background: {{ $item['color'] }};"></span>
+                                                <span class="lbl" style="color: {{ $item['color'] }};">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
+                                                <span class="pct">{{ $itemPct }}%</span>
+                                            </div>
+                                            <div class="sd-progress-track">
+                                                <div class="sd-progress-fill" style="width: {{ $itemPct }}%; background: {{ $item['color'] }};"></div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
-                            @endforeach
-                        </div>
+                            </div>
+                        @endif
                     </div>
-                @endif
-            </div>
-        </div>
-    </section>
+
+                    
+                    <div
+                        class="sd-panel sd-donut-card is-teal"
+                    >
+                        <div class="sd-panel-head">
+                            <h6 class="sd-card-title">
+                                School Photography Status
+                            </h6>
+                            <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
+                        </div>
+                        @if ($photographyTotal === 0)
+                            <p class="sd-empty">No photography jobs found.</p>
+                        @else
+                            <div class="sd-progress-summary">
+                                <strong>{{ number_format($photographyTotal) }}</strong>
+                                <span>{{ $photographyTotal === 1 ? 'Photography Job' : 'Photography Jobs' }}</span>
+                            </div>
+                            <div class="sd-pie-layout">
+                                <div class="sd-chart-box" wire:ignore>
+                                    <canvas id="franchise-dashboard-photography-chart"></canvas>
+                                </div>
+                                <div class="sd-progress-list">
+                                    @foreach ($photographyLegend as $item)
+                                        @php $itemPct = $pct($item['value'], max($photographyTotal, 1)); @endphp
+                                        <div class="sd-progress-row">
+                                            <div class="sd-progress-meta">
+                                                <span class="dot" style="background: {{ $item['color'] }};"></span>
+                                                <span class="lbl">{{ $item['label'] }} ({{ number_format($item['value']) }})</span>
+                                                <span class="pct">{{ $itemPct }}%</span>
+                                            </div>
+                                            <div class="sd-progress-track">
+                                                <div class="sd-progress-fill" style="width: {{ $itemPct }}%; background: {{ $item['color'] }};"></div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 

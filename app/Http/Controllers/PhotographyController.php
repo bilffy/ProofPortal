@@ -31,7 +31,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\Process\Process;
 
 class PhotographyController extends Controller
 {
@@ -413,8 +412,6 @@ class PhotographyController extends Controller
             // get the path of the image in .env IMAGE_REPOSITORY/print_quality
             // UPDATED: Refer to filesystems' disks configuration for the path
             // $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
-            $imageOption = ImageOptions::where('id', $selectedFilters['resolution'])->first();
-
             //CODE BY chromedia
             $files = ImageHelper::findImageFiles($key);
             // check if the file exists in the print_quality
@@ -441,11 +438,10 @@ class PhotographyController extends Controller
             $isGroup = ($tabFolder === PhotographyHelper::TAB_GROUPS || $tabFolder === PhotographyHelper::TAB_OTHERS);
             $baseLoc = $isGroup ? env('GROUPIMAGELOCATION') : env('PORTRAITIMAGELOCATION');
             
-            // Generate the proper physical paths for high res / low res
+            // Generate the physical path of the 400px file
             $basePath = rtrim($baseLoc, '/\\') . DIRECTORY_SEPARATOR . $key[0] . DIRECTORY_SEPARATOR . $key[1] . DIRECTORY_SEPARATOR . $key;
-            
+
             $potentialPaths = [
-                $basePath . "_1600.jpg",
                 $basePath . "_400.jpg"
             ];
 
@@ -460,13 +456,9 @@ class PhotographyController extends Controller
             $fileExtension = pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg';
             //CODE BY IT
 
-            // and make sure to resizeImage if the long_edge option is set
-            if ($imageOption->long_edge) {
-                return $this->resizeImage($path, $imageOption->long_edge, $filename, $fileExtension);
-            }
             // retrieve the image content using the ImageService - as is?
             // $imageContent = base64_encode($this->imageService->getImageContent($key)); //CODE BY Chromedia
-            $imageContent = $this->imageService->getImageContent($key, $selectedFilters['resolution'], $tab); //CODE BY IT
+            $imageContent = $this->imageService->getDownloadImageContent($key, $selectedFilters['resolution'], $tab); //CODE BY IT
             return response()->json([
                 'success' => true,
                 'data' => $imageContent,
@@ -651,32 +643,6 @@ class PhotographyController extends Controller
         return response()->json(['success' => $deleted, 'key' => $originKey]);
     }
     
-    private function resizeImage($path, $long_edge, $filename, $fileExtension)
-    {
-        $scriptPath = base_path('image_resizer/resizer.py'); // adjust path to your script
-
-        // Run Python script
-        $process = new Process([
-            'python3',
-            $scriptPath,
-            $path,
-            $long_edge
-        ]);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            return response()->json([
-                'error' => $process->getErrorOutput()
-            ], 500);
-        }
-        return response()->json([
-            'success' => true,
-            'data' => trim($process->getOutput()),
-            'filename' => $filename,
-            'extension' => $fileExtension
-        ]);
-    }
-
     //CODE BY IT
     public function servePhotographyImage(Request $request)
     {
