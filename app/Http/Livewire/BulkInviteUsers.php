@@ -532,15 +532,15 @@ class BulkInviteUsers extends Component
             $errors[] = 'Last name is required.';
         }
         if ($row['email'] === '') {
-            $errors[] = 'Email is required.';
+            $errors[] = 'Email address is required.';
         } elseif (!filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Invalid email format.';
+            $errors[] = 'Invalid email address format.';
         } elseif (User::where('email', $row['email'])->exists()) {
-            $errors[] = 'User already exists. Please contact the Franchise.';
+            $errors[] = 'Email address already exists. Please contact the Franchise.';
         } else {
             foreach ($all as $i => $other) {
                 if ($i !== $index && strcasecmp($other['email'] ?? '', $row['email']) === 0) {
-                    $errors[] = 'Duplicate email in spreadsheet.';
+                    $errors[] = 'Duplicate email address in spreadsheet.';
                     break;
                 }
             }

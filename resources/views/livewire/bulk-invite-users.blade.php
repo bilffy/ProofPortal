@@ -232,7 +232,7 @@
                                             @checked($allSendInvitationChecked)
                                             class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary cursor-pointer"
                                         />
-                                        <span>Send Invitation with proofing</span>
+                                        <span>Hold Invitation Until Proofing</span>
                                     </div>
                                 </th>
                                 <th scope="col" class="text-center w-[140px]">Actions</th>

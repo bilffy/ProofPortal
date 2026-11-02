@@ -111,7 +111,7 @@
             @if ($targetUser->status === \App\Models\User::STATUS_INVITED && $targetUser->send_invitation_with_proofing)
                 <div class="max-w-screen-md mb-8">
                     <span class="inline-flex items-center px-2 py-1 me-2 text-sm font-medium text-blue-800 bg-blue-100 rounded dark:bg-blue-900 dark:text-blue-300">   
-                        Invitation sent with Proofing
+                        Invitation Status: On Hold Until Proofing
                     </span>
                 </div>
             @endif
@@ -121,7 +121,7 @@
 
             <div class="py-4 max-w-screen-md flex flex-row gap-4 justify-end border-t-[1px] border-t-neutral-400">
                 <x-button.secondary onclick="window.location='{{ url($previous_url) }}'">Cancel</x-button.secondary>
-                <x-button.primary id="save-user" type="submit">Save</x-button.primary>
+                <x-button.primary id="save-user" type="submit">Update Changes</x-button.primary>
             </div>
         </form>
     </div>
