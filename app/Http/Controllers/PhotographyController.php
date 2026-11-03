@@ -181,6 +181,11 @@ class PhotographyController extends Controller
                 $tsAccountId,
             )->pluck('external_name')->toArray();
 
+            // A specific View limits the request to the folders having that folder tag.
+            if ($view !== 'ALL') {
+                $tags = in_array($view, $tags, true) ? [$view] : [];
+            }
+
             $folders = $this->imageService->getFoldersByTag(
                 $selectedFilters['year'],
                 $schoolId,
