@@ -1042,24 +1042,24 @@
 
 
                 <div
-                    class="sd-kpi-card is-blue"
+                    class="sd-kpi-card is-teal"
                 >
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#00b4df">Your Active Proofing Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#07a88f">Your Active Proofing Jobs</span>
                         </div>
                         <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
                     </div>
                 </div>
 
                 <div
-                    class="sd-kpi-card is-teal"
+                    class="sd-kpi-card is-blue"
                 >
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#07a88f">Your Photography Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#00b4df">Your Photography Jobs</span>
                         </div>
                         <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
                     </div>
