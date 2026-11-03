@@ -426,20 +426,36 @@
         flex-shrink: 0;
     }
 
+    /* Same heading as /proofing ("text-black d-inline mr-2"); this layout has no coreui
+       h5 / d-inline rules, so spell out what they give there. */
+    .fd-jobs-info-line h5,
     .fd-jobs-title {
+        display: inline;
         margin: 0;
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #1A2B4A;
+        font-size: 1.09375rem;
+        font-weight: 600;
+        line-height: 1.1;
+        color: #000;
     }
 
+    .fd-jobs-info-line .show-hide-completed,
+    .fd-jobs-info-line .show-hide-archived,
+    .fd-jobs-info-line .show-hide-deleted {
+        cursor: pointer;
+        color: rgb(0, 88, 144);
+    }
+    .fd-jobs-info-line .show-hide-completed:hover,
+    .fd-jobs-info-line .show-hide-archived:hover,
+    .fd-jobs-info-line .show-hide-deleted:hover {
+        color: #007693;
+    }
     .fd-jobs-count-text {
-        font-size: 0.85rem;
-        color: #5B6575;
+        font-size: 0.875rem;
+        color: #536c79;
     }
 
     .fd-jobs-count-text strong {
-        color: #1A2B4A;
+        font-weight: 700;
     }
 
     .fd-jobs-search-row {
@@ -465,9 +481,9 @@
     }
 
     .fd-jobs-hint {
-        margin: 0.85rem 1.25rem 0.75rem;
-        font-size: 0.85rem;
-        color: #7A8699;
+        margin: 0.85rem 1.25rem 1rem;
+        font-size: 0.875rem;
+        color: #151b1e;
     }
 
     .fd-jobs-table-wrap {
@@ -517,21 +533,38 @@
         white-space: nowrap;
     }
 
+    /* "Display" length dropdown: same values /proofing gets from
+       `custom-select custom-select-sm form-control form-control-sm` (coreui style.css). */
+    .fd-jobs-toolbar .dataTables_length label {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #151b1e;
+    }
+
     .fd-jobs-toolbar .dataTables_length select {
-        min-width: 4.5rem;
-        height: 2rem;
-        padding: 0.2rem 1.6rem 0.2rem 0.45rem;
+        display: inline-block;
+        width: auto;
+        max-width: 100%;
+        min-width: 0;
+        height: calc(1.64844rem + 2px);
+        padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+        font-size: 75%;
+        line-height: 1.5;
+        color: #3e515b;
+        vertical-align: middle;
+        background: #fff url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23333' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+        background-size: 8px 10px;
         border: 1px solid #c2cfd6;
         border-radius: 0;
-        background-color: #fff;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%233e515b' d='M4.2 6h7.6a.6.6 0 0 1 .46.98l-3.8 4.56a.6.6 0 0 1-.92 0l-3.8-4.56A.6.6 0 0 1 4.2 6z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 0.5rem center;
-        background-size: 0.7rem;
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-        color: #3e515b;
+    }
+
+    .fd-jobs-toolbar .dataTables_length select:focus {
+        outline: none;
+        border-color: #60e0ff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 179, 223, 0.25);
     }
 
     .fd-jobs-toolbar .dataTables_filter input {
@@ -583,11 +616,11 @@
         margin: 0 auto !important;
         padding: 0 !important;
         float: none !important;
-        border: 1px solid #d0d7de !important;
-        border-radius: 8px !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.375rem !important;
         overflow: hidden !important;
         background: #ffffff !important;
-        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+        box-shadow: none !important;
     }
 
     .fd-jobs-footer .dataTables_paginate ul.pagination {
@@ -611,14 +644,6 @@
         background: transparent !important;
     }
 
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item:not(:last-child) .page-link,
-    .fd-jobs-footer .dataTables_paginate .paginate_button:not(:last-child) a,
-    .fd-jobs-footer .dataTables_paginate > a:not(:last-child),
-    .fd-jobs-footer .dataTables_paginate > span > a:not(:last-child),
-    .fd-jobs-footer .dataTables_paginate > span > .paginate_button:not(:last-child) {
-        border-right: 1px solid #d0d7de !important;
-    }
-
     .fd-jobs-footer .dataTables_paginate ul.pagination .page-link,
     .fd-jobs-footer .dataTables_paginate .paginate_button a,
     .fd-jobs-footer .dataTables_paginate a {
@@ -628,9 +653,9 @@
         padding: 0.5rem 1rem !important;
         min-width: 2.5rem !important;
         height: 100% !important;
-        font-size: 0.85rem !important;
+        font-size: 1rem !important;
         font-weight: 400 !important;
-        color: #0f4c67 !important;
+        color: #536c79 !important;
         background: #ffffff !important;
         border-top: 0 !important;
         border-bottom: 0 !important;
@@ -645,36 +670,25 @@
 
     .fd-jobs-footer .dataTables_paginate ul.pagination .page-item:not(.active):not(.disabled) .page-link:hover,
     .fd-jobs-footer .dataTables_paginate .paginate_button:not(.current):not(.disabled) a:hover {
-        background-color: #f0f4f8 !important;
-        color: #005b94 !important;
+        background-color: #f0f3f5 !important;
+        color: #005890 !important;
     }
 
     .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.active .page-link,
     .fd-jobs-footer .dataTables_paginate .paginate_button.current,
     .fd-jobs-footer .dataTables_paginate .paginate_button.current a {
-        background-color: #005b94 !important;
+        background-color: #005890 !important;
         color: #ffffff !important;
-        font-weight: 500 !important;
+        font-weight: 400 !important;
         border-radius: 0 !important;
     }
 
     .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.disabled .page-link,
     .fd-jobs-footer .dataTables_paginate .paginate_button.disabled,
     .fd-jobs-footer .dataTables_paginate .paginate_button.disabled a {
-        color: #9aa8b3 !important;
+        color: #536c79 !important;
         background-color: #ffffff !important;
         cursor: default !important;
-        opacity: 0.8 !important;
-    }
-
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.previous .page-link,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.previous a {
-        color: #0f4c67 !important;
-    }
-
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.next .page-link,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.next a {
-        color: #0f4c67 !important;
     }
 
     @media (max-width: 768px) {
@@ -695,8 +709,8 @@
         width: 100% !important;
         border-collapse: collapse !important;
         border-spacing: 0 !important;
-        font-size: 0.85rem;
-        color: #3e515b;
+        font-size: 0.875rem;
+        color: #151b1e;
         margin: 0 !important;
         border: 1px solid #c2cfd6 !important;
         background: #fff;
@@ -711,7 +725,7 @@
         background: #fff !important;
         border: 1px solid #c2cfd6 !important;
         border-bottom: 2px solid #c2cfd6 !important;
-        padding: 0.3rem 0.5rem !important;
+        padding: 0.3rem !important;
         text-align: left;
         white-space: nowrap;
         font-weight: 700;
@@ -727,7 +741,7 @@
     .fd-jobs-table.dataTable thead > tr > th.sorting_asc,
     .fd-jobs-table.dataTable thead > tr > th.sorting_desc,
     .fd-jobs-table.dataTable.table-sm > thead > tr > th {
-        padding-right: 0.5rem !important;
+        padding-right: 0.3rem !important;
     }
 
     .fd-jobs-table.dataTable thead .sorting:before,
@@ -747,7 +761,7 @@
     .fd-jobs-table tbody td,
     .fd-jobs-table.dataTable tbody td {
         border: 1px solid #c2cfd6 !important;
-        padding: 0.3rem 0.5rem;
+        padding: 0.3rem;
         vertical-align: top;
         background: #fff;
     }
@@ -994,7 +1008,7 @@
         </div>
     </div>
 
-    <div wire:key="fd-metrics-{{ $selectedSeasonId === '' ? 'all' : $selectedSeasonId }}">
+    <div wire:key="fd-metrics-{{ $selectedSeasonId === '' ? 'all' : $selectedSeasonId }}-{{ (int) $showArchived }}{{ (int) $showDeleted }}{{ (int) $showCompleted }}">
     <script type="application/json" id="franchise-dashboard-chart-data">@json($chartPayload)</script>
 
     <div class="sd-panel fd-box fd-summary-card" x-data="{ open: true }">
@@ -1144,13 +1158,30 @@
         $today = \Carbon\Carbon::today();
     @endphp
 
+    @php
+        // Title and count wording follow the view picked with the Show / Hide links.
+        $jobsView = $showCompleted ? 'completed' : ($showArchived ? 'archived' : ($showDeleted ? 'deleted' : 'active'));
+        $jobsViewTitle = ['active' => 'Your Active Proofing Jobs', 'completed' => 'Your Completed Proofing Jobs', 'archived' => 'Your Archived Proofing Jobs', 'deleted' => 'Your Deleted Proofing Jobs'][$jobsView];
+        $jobsShownCount = count($proofingJobsTable);
+    @endphp
+
     <section class="sd-panel fd-box fd-jobs-panel">
         <div class="fd-box-head fd-jobs-info-box">
             <div class="fd-jobs-info-line">
-                <h5 class="fd-jobs-title">Proofing Jobs</h5>
+                <h5 class="text-black d-inline mr-2">{{ $jobsViewTitle }}</h5>
                 <span class="fd-jobs-count-text">
-                    - There are <strong>{{ number_format($synced) }}</strong> synced out of
-                    <strong>{{ number_format(count($proofingJobsTable)) }}</strong> jobs shown for {{ $selectedSeasonLabel }}.
+                    -  There {{ $jobsShownCount === 1 ? 'is' : 'are' }} <strong>{{ number_format($jobsShownCount) }}</strong> {{ $jobsShownCount === 1 ? 'Job' : 'Jobs' }} marked as {{ $jobsView }} in {{ $selectedSeasonLabel }}
+                </span>
+                <span class="btn-link ml-2 show-hide-completed" data-toggle-url="" wire:click="toggleCompleted">
+                    {{ $showCompleted ? 'Hide Completed Jobs' : 'Show Completed Jobs' }}
+                </span>
+                <span class="ml-2 text-muted">|</span>
+                <span class="btn-link ml-2 show-hide-archived" data-toggle-url="" wire:click="toggleArchived">
+                    {{ $showArchived ? 'Hide Archived Jobs' : 'Show Archived Jobs' }}
+                </span>
+                <span class="ml-2 text-muted">|</span>
+                <span class="btn-link ml-2 show-hide-deleted" data-toggle-url="" wire:click="toggleDeleted">
+                    {{ $showDeleted ? 'Hide Deleted Jobs' : 'Show Deleted Jobs' }}
                 </span>
                 <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
             </div>
@@ -1167,7 +1198,7 @@
         <p class="fd-jobs-hint">Click headings to sort by that column.</p>
 
         @if (count($proofingJobsTable) === 0)
-            <p class="sd-empty">No synced proofing jobs found for this season.</p>
+            <p class="sd-empty">No {{ $jobsView }} proofing jobs found for this season.</p>
         @else
             <div class="fd-jobs-table-wrap">
                 <table id="fd-proofing-jobs-table" class="fd-jobs-table display nowrap" style="width:100%">
@@ -1486,12 +1517,22 @@
             }
         }
 
+        // Toggling Archived / Deleted swaps in a brand-new table (the metrics block's wire:key
+        // changes), which Livewire reports as added nodes, not "updated" ones, and DataTables'
+        // Display dropdown / pagination are injected nodes. Rebuild once, after the whole morph
+        // has finished.
+        var morphTimer = null;
+        function scheduleRebuild() {
+            clearTimeout(morphTimer);
+            morphTimer = setTimeout(onMorphUpdated, 0);
+        }
+
         if (window.Livewire && typeof window.Livewire.hook === 'function') {
-            window.Livewire.hook('morph.updated', onMorphUpdated);
+            window.Livewire.hook('morphed', scheduleRebuild);
         } else {
             document.addEventListener('livewire:initialized', function () {
                 if (window.Livewire && typeof window.Livewire.hook === 'function') {
-                    window.Livewire.hook('morph.updated', onMorphUpdated);
+                    window.Livewire.hook('morphed', scheduleRebuild);
                 }
             });
         }

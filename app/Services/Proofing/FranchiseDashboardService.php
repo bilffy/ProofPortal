@@ -249,12 +249,13 @@ class FranchiseDashboardService
      */
     /**
      * Synced proofing jobs table for the franchise dashboard (mirrors /proofing home columns,
-     * plus school name). Includes archived and deleted-status jobs. Respects the dashboard season filter.
+     * plus school name). Completed, archived and deleted-status jobs are left out; $showCompleted / $showArchived /
+     * $showDeleted switch the list to only the jobs in that status. Respects the dashboard season filter.
      *
      * @param  int|string|null  $seasonId
      * @return array<int, array<string, mixed>>
      */
-    public function getProofingJobsTable(User $user, $seasonId = null): array
+    public function getProofingJobsTable(User $user, $seasonId = null, bool $showArchived = false, bool $showDeleted = false, bool $showCompleted = false): array
     {
         $schools = $this->getFranchiseSchools($user);
         $schoolIds = $schools->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -277,21 +278,25 @@ class FranchiseDashboardService
         $deletedId = (int) $this->statusService->deleted;
         $tnjNotFoundId = (int) $this->statusService->tnjNotFound;
         $completedId = (int) $this->statusService->completed;
-        $excludeStatusIds = array_values(array_filter([
-            $tnjNotFoundId,
+        // "Show Completed / Archived / Deleted Jobs" lists only the jobs in that status; otherwise the
+        // normal synced list (the active jobs: without Completed / Archived / Deleted / not-found).
+        $onlyStatusIds = array_values(array_filter([
+            $showCompleted ? $completedId : null,
+            $showArchived ? $archivedId : null,
+            $showDeleted ? $deletedId : null,
         ]));
 
         $query = Job::query()
             ->leftJoin('schools', 'schools.id', '=', 'jobs.school_id')
             ->leftJoin('seasons', 'jobs.ts_season_id', '=', 'seasons.ts_season_id')
-            ->where(function (Builder $q) use ($syncId, $deletedId, $archivedId) {
-                $q->where(function (Builder $synced) use ($syncId) {
-                    $synced->where('jobs.show_proofing', 1)
-                        ->where('jobs.jobsync_status_id', $syncId);
-                })
-                    ->orWhereIn('jobs.job_status_id', array_values(array_filter([$deletedId, $archivedId])));
-            })
-            ->when(!empty($excludeStatusIds), fn (Builder $q) => $q->whereNotIn('jobs.job_status_id', $excludeStatusIds))
+            ->when(
+                !empty($onlyStatusIds),
+                fn (Builder $q) => $q->whereIn('jobs.job_status_id', $onlyStatusIds),
+                fn (Builder $q) => $q
+                    ->where('jobs.show_proofing', 1)
+                    ->where('jobs.jobsync_status_id', $syncId)
+                    ->whereNotIn('jobs.job_status_id', array_values(array_filter([$tnjNotFoundId, $completedId, $archivedId, $deletedId])))
+            )
             ->with(['reviewStatuses'])
             ->select([
                 'jobs.id',

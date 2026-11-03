@@ -344,7 +344,8 @@ class PhotographyController extends Controller
             'download_category_id' => $category,
             'download_type_id' => $downloadType->id,
             'filters' => json_encode($selectedFilters),
-            'status_id' => Status::where('status_internal_name', 'PENDING')->first()->id,
+            // Individual downloads (category 1) are served straight away, so they start as completed.
+            'status_id' => Status::where('status_internal_name', (int) $category === 1 ? 'Download Completed' : 'PENDING')->first()->id,
             'filename_format' => $request->input('filenameFormat'),
         ]);
 

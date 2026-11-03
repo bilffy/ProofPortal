@@ -11,6 +11,8 @@ use App\Models\SchoolUser;
 use App\Models\Status;
 use App\Models\User;
 use App\Services\UserService;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,12 +20,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Spatie\Permission\Models\Role;
 
 class BulkInviteUsers extends Component
 {
     use WithFileUploads;
+    use WithPagination;
+
+    /** Imported rows shown per page (same Livewire pagination view as /school). */
+    private const ROWS_PER_PAGE = 10;
 
     /** Spreadsheet role values must match roles.name exactly */
     public const ROLE_LABEL_MAP = [
@@ -111,9 +118,21 @@ class BulkInviteUsers extends Component
         ]);
     }
 
+    /** Choosing or dropping a file imports it straight away. */
     public function updatedFile(): void
     {
+        $this->resetErrorBag('file');
+
+        if ($this->file) {
+            $this->uploadFile();
+        }
+    }
+
+    public function uploadFile(): void
+    {
         if (!$this->file) {
+            $this->addError('file', 'Please choose a CSV or Excel file.');
+
             return;
         }
 
@@ -121,6 +140,7 @@ class BulkInviteUsers extends Component
         $this->topErrors = [];
         $this->rows = [];
         $this->editingRows = [];
+        $this->resetPage();
 
         try {
             $this->validate([
@@ -428,7 +448,24 @@ class BulkInviteUsers extends Component
 
     public function render()
     {
+        $total = count($this->rows);
+        $lastPage = max(1, (int) ceil($total / self::ROWS_PER_PAGE));
+        if ($this->getPage() > $lastPage) {
+            $this->setPage($lastPage);
+        }
+        $page = $this->getPage();
+
+        // Keys are preserved so the view binds each row to its real index in $rows.
+        $pagedRows = new LengthAwarePaginator(
+            array_slice($this->rows, ($page - 1) * self::ROWS_PER_PAGE, self::ROWS_PER_PAGE, true),
+            $total,
+            self::ROWS_PER_PAGE,
+            $page,
+            ['path' => Paginator::resolveCurrentPath()]
+        );
+
         return view('livewire.bulk-invite-users', [
+            'pagedRows' => $pagedRows,
             'roleOptions' => $this->roleOptions,
             'validRoleLabels' => array_keys(self::ROLE_LABEL_MAP),
         ]);

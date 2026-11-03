@@ -16,6 +16,13 @@ class FranchiseDashboard extends Component
     /** Empty string = all portal + proofing seasons. */
     public string $selectedSeasonId = '';
 
+    /** Proofing Jobs table hides Archived / Deleted jobs; each toggle (Completed / Archived / Deleted) shows only the jobs in that status. */
+    public bool $showArchived = false;
+
+    public bool $showDeleted = false;
+
+    public bool $showCompleted = false;
+
     public function mount(): mixed
     {
         /** @var User $user */
@@ -37,6 +44,30 @@ class FranchiseDashboard extends Component
         return null;
     }
 
+    /** Show only Completed jobs (switches off the other views). */
+    public function toggleCompleted(): void
+    {
+        $this->showCompleted = !$this->showCompleted;
+        $this->showArchived = false;
+        $this->showDeleted = false;
+    }
+
+    /** Show only Archived jobs (switches off the other views). */
+    public function toggleArchived(): void
+    {
+        $this->showArchived = !$this->showArchived;
+        $this->showCompleted = false;
+        $this->showDeleted = false;
+    }
+
+    /** Show only Deleted jobs (switches off the other views). */
+    public function toggleDeleted(): void
+    {
+        $this->showDeleted = !$this->showDeleted;
+        $this->showCompleted = false;
+        $this->showArchived = false;
+    }
+
     public function render(FranchiseDashboardService $dashboardService, SeasonService $seasonService)
     {
         /** @var User $user */
@@ -54,8 +85,11 @@ class FranchiseDashboard extends Component
         return view('livewire.proofing.franchise-dashboard', [
             'seasons' => $seasons,
             'selectedSeasonId' => $this->selectedSeasonId,
+            'showArchived' => $this->showArchived,
+            'showDeleted' => $this->showDeleted,
+            'showCompleted' => $this->showCompleted,
             'metrics' => $dashboardService->getDashboardMetrics($user, $seasonFilter),
-            'proofingJobsTable' => $dashboardService->getProofingJobsTable($user, $seasonFilter),
+            'proofingJobsTable' => $dashboardService->getProofingJobsTable($user, $seasonFilter, $this->showArchived, $this->showDeleted, $this->showCompleted),
         ])->layout('layouts.authenticated', [
             'user' => new UserResource($user),
         ]);
