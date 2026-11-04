@@ -87,9 +87,9 @@
 
                 @if (count($customFields))
                     @php($availableFieldIds = collect($customFields)->pluck('id')->all())
-                    <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-                        <h5 class="text-lg font-semibold mb-4">Print Specifications</h5>
-                        <hr class="border-gray-400 mb-6">
+                    <div class="order-box">
+                        <div class="order-box-head"><h5 class="order-box-title">Print Specifications</h5></div>
+                        <div class="order-box-body">
                         <div class="grid grid-cols-1 gap-4 custom-fields-grid">
                         @foreach ($customFields as $field)
                             @continue(!$field->isVisibleGiven($fieldValues, $availableFieldIds))
@@ -114,7 +114,7 @@
                                     <div wire:ignore>
                                         <select
                                             wire:model.live="fieldValues.{{ $field->id }}"
-                                            class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5"
+                                            class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5"
                                             data-field-select
                                             data-placeholder="{{ $field->placeholder ?: 'Select an option' }}"
                                         >
@@ -125,7 +125,7 @@
                                         </select>
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
-                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
+                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
                                     <div class="flex flex-wrap gap-4">
                                         @foreach ($field->fieldOptions as $option)
@@ -151,11 +151,11 @@
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
                                 @else
-                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
+                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @endif
 
                                 @if ($field->type === \App\Models\CustomField::TYPE_RADIO && $field->otherOptionValue() && ($fieldValues[$field->id] ?? null) === $field->otherOptionValue())
-                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" style="margin-top: 1.75rem;" class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
+                                    <input type="text" wire:model="fieldOtherValues.{{ $field->id }}" placeholder="Please specify" style="margin-top: 1.75rem;" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                     @error('fieldOtherValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
                                 @endif
 
@@ -166,6 +166,7 @@
                             </div>
                         @endforeach
                         </div>
+                        </div>
                     </div>
                 @else
                     <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
@@ -174,9 +175,9 @@
                 @endif
 
                 {{-- Artwork section - the same on every product's order form --}}
-                <div class="artwork-section mt-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-                    <h5 class="text-lg font-semibold mb-4">Artwork</h5>
-                    <hr class="border-gray-400 mb-6">
+                <div class="artwork-section order-box mt-6">
+                    <div class="order-box-head"><h5 class="order-box-title">Artwork</h5></div>
+                    <div class="order-box-body">
                     <div class="grid grid-cols-1 gap-4 custom-fields-grid">
                         <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -205,7 +206,7 @@
                                         placeholder="DD/MM/YYYY"
                                         autocomplete="off"
                                         value="{{ $artworkDueDate }}"
-                                        class="bg-gray-50 border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full pr-10 p-2.5"
+                                        class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full pr-10 p-2.5"
                                     />
                                     <div class="absolute inset-y-0 right-[16px] flex items-center pointer-events-none">
                                         <span class="fa fa-calendar"></span>
@@ -218,7 +219,7 @@
 
                         <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Additional Comments</label>
-                            <textarea wire:model="additionalComments" rows="4" class="artwork-wide bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
+                            <textarea wire:model="additionalComments" rows="4" class="artwork-wide bg-white border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
                             @error('additionalComments') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
                         </div>
 
@@ -290,6 +291,7 @@
 
                             <p class="mt-1 text-xs text-gray-500">Upload images and documentation to create your artwork.</p>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -414,6 +416,53 @@
         border-radius: 0.375rem;
     }
 
+    /* Section boxes (Print Specifications, Artwork): grey title strip over a white body. */
+    .order-box {
+        background: #ffffff;
+        border: 1px solid #c2cfd6;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    .order-box-head {
+        padding: 0.75rem 1.25rem;
+        background: #f0f3f5;
+        border-bottom: 1px solid #c2cfd6;
+    }
+    .order-box-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1A2B4A;
+    }
+    .order-box-body {
+        padding: 1.5rem;
+    }
+
+    /* Option buttons (radio) are drawn as rounded squares, like the checkboxes. */
+    .custom-fields-grid input[type="radio"],
+    .artwork-section input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+        background-color: #ffffff;
+        border: 1px solid #9ca3af;
+        border-radius: 0.3rem;
+        cursor: pointer;
+    }
+    .custom-fields-grid input[type="radio"]:checked,
+    .artwork-section input[type="radio"]:checked {
+        background-color: #005890;
+        border-color: #005890;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6.5'/%3E%3C/svg%3E");
+        background-size: 100% 100%;
+    }
+    .custom-fields-grid input[type="radio"]:focus,
+    .artwork-section input[type="radio"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 88, 144, 0.25);
+    }
     /* Custom fields (Print Specifications): one field per row, with the
        controls kept to a comfortable width rather than stretching full width. */
     .custom-fields-grid input[type="text"],

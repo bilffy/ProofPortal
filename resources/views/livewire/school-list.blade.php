@@ -26,7 +26,7 @@
             <tr>
                 <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}" >School Key</x-table.headerCell>
                 <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('name')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">School Name</x-table.headerCell>
-                <x-table.headerCell id="name" isLivewire="{{true}}" wireEvent="sortBy('suburb')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">Suburb</x-table.headerCell>
+                <x-table.headerCell id="suburb" isLivewire="{{true}}" wireEvent="sortBy('suburb')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">Suburb</x-table.headerCell>
                 <x-table.headerCell class="{{ $hideFranchise ? 'hidden' : '' }}" id="franchise_name" isLivewire="{{true}}" wireEvent="sortBy('franchise_name')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}">Franchise</x-table.headerCell>
             </tr>
         </thead>

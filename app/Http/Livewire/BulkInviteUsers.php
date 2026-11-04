@@ -414,7 +414,7 @@ class BulkInviteUsers extends Component
                     'email' => $row['email'],
                     'exception' => $e->getMessage(),
                 ]);
-                $failed[] = $row['email'] . ': unable to create user.';
+                $failed[] = "Unable to create user for email address '{$row['email']}'.";
             }
         }
 
@@ -555,6 +555,8 @@ class BulkInviteUsers extends Component
     private function rowErrors(array $row, int $index, ?array $all = null): array
     {
         $errors = [];
+        // Messages name the row by its email, so they can be told apart in the top error list.
+        $for = $row['email'] !== '' ? " for email address '{$row['email']}'" : '';
         $all = $all ?? array_map(fn ($r) => [
             'firstname' => $r['firstname'],
             'lastname' => $r['lastname'],
@@ -563,21 +565,21 @@ class BulkInviteUsers extends Component
         ], $this->rows);
 
         if ($row['firstname'] === '') {
-            $errors[] = 'First name is required.';
+            $errors[] = "First name is required{$for}.";
         }
         if ($row['lastname'] === '') {
-            $errors[] = 'Last name is required.';
+            $errors[] = "Last name is required{$for}.";
         }
         if ($row['email'] === '') {
             $errors[] = 'Email address is required.';
         } elseif (!filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Invalid email address format.';
+            $errors[] = "Invalid email address '{$row['email']}'.";
         } elseif (User::where('email', $row['email'])->exists()) {
-            $errors[] = 'Email address already exists. Please contact the Franchise.';
+            $errors[] = "Email address '{$row['email']}' already exists. Please contact the Franchise.";
         } else {
             foreach ($all as $i => $other) {
                 if ($i !== $index && strcasecmp($other['email'] ?? '', $row['email']) === 0) {
-                    $errors[] = 'Duplicate email address in spreadsheet.';
+                    $errors[] = "Duplicate email address '{$row['email']}' in spreadsheet.";
                     break;
                 }
             }
@@ -585,15 +587,15 @@ class BulkInviteUsers extends Component
 
         $role = $row['role'] ?? '';
         if ($role === '') {
-            $errors[] = 'Role is required.';
+            $errors[] = "Role is required{$for}.";
         } elseif (!array_key_exists($role, self::ROLE_LABEL_MAP)) {
             $allowed = implode(', ', array_keys(self::ROLE_LABEL_MAP));
-            $errors[] = "Invalid role \"{$role}\". Role must be exactly one of: {$allowed}.";
+            $errors[] = "Invalid role \"{$role}\"{$for}. Role must be exactly one of: {$allowed}.";
         } else {
             $dbName = self::ROLE_LABEL_MAP[$role];
             $allowedDbNames = RoleHelper::getAllowedRoleNames(Auth::user()->getRole());
             if (!in_array($dbName, $allowedDbNames, true)) {
-                $errors[] = "You are not allowed to assign the role \"{$role}\".";
+                $errors[] = "You are not allowed to assign the role \"{$role}\"{$for}.";
             }
         }
 
@@ -605,7 +607,7 @@ class BulkInviteUsers extends Component
         $messages = [];
         foreach ($this->rows as $index => $row) {
             foreach ($row['errors'] as $error) {
-                $messages[] = ($row['email'] ?: 'no email') . ': ' . $error;
+                $messages[] = $error;
             }
         }
         $this->topErrors = $messages;

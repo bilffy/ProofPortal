@@ -438,15 +438,15 @@
         color: #000;
     }
 
-    .fd-jobs-info-line .show-hide-completed,
-    .fd-jobs-info-line .show-hide-archived,
-    .fd-jobs-info-line .show-hide-deleted {
+    .fd-jobs-info-box .show-hide-completed,
+    .fd-jobs-info-box .show-hide-archived,
+    .fd-jobs-info-box .show-hide-deleted {
         cursor: pointer;
         color: rgb(0, 88, 144);
     }
-    .fd-jobs-info-line .show-hide-completed:hover,
-    .fd-jobs-info-line .show-hide-archived:hover,
-    .fd-jobs-info-line .show-hide-deleted:hover {
+    .fd-jobs-info-box .show-hide-completed:hover,
+    .fd-jobs-info-box .show-hide-archived:hover,
+    .fd-jobs-info-box .show-hide-deleted:hover {
         color: #007693;
     }
     .fd-jobs-count-text {
@@ -458,27 +458,73 @@
         font-weight: 700;
     }
 
-    .fd-jobs-search-row {
+    /* Search box in the panel header: same look as the /school search (rounded field, search icon, clear x). */
+    .fd-jobs-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .fd-jobs-view-links .show-hide-completed {
+        margin-left: 0 !important;
+    }
+
+    .fd-jobs-controls .fd-jobs-search-box {
+        margin-left: auto;
+    }
+
+    .fd-jobs-search-box {
+        position: relative;
         width: 100%;
+        max-width: 28rem;
+    }
+
+    .fd-jobs-search-icon {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0.75rem;
+        display: flex;
+        align-items: center;
+        color: #000;
+        pointer-events: none;
     }
 
     .fd-jobs-search-input {
+        display: block;
         width: 100%;
-        max-width: 28rem;
-        padding: 0.375rem 0.75rem;
-        border: 1px solid #c2cfd6;
-        border-radius: 0;
-        background: #fff;
-        color: #3e515b;
+        padding: 0.5rem 2.5rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: #ffffff;
+        color: #111827;
         font-size: 0.875rem;
         box-sizing: border-box;
     }
 
     .fd-jobs-search-input:focus {
         outline: none;
-        border-color: #60e0ff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 179, 223, 0.25);
+        box-shadow: 0 0 0 2px #005890;
     }
+
+    .fd-jobs-search-clear {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 0.75rem;
+        color: #6b7280;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .fd-jobs-search-clear:hover { color: #111827; }
+    .fd-jobs-search-clear svg { width: 1rem; height: 1rem; }
 
     .fd-jobs-hint {
         margin: 0.85rem 1.25rem 1rem;
@@ -610,16 +656,16 @@
         padding: 0 !important;
     }
 
+    /* Pagination copies the /school one (vendor.livewire.pagination): "< Prev 1 2 3 ... Next >",
+       no border, the current page on a #e9e6e3 square with blue text. */
     .fd-jobs-footer .dataTables_paginate,
     .fd-jobs-footer .fd-jobs-paginate {
         display: inline-flex !important;
         margin: 0 auto !important;
         padding: 0 !important;
         float: none !important;
-        border: 1px solid #dee2e6 !important;
-        border-radius: 0.375rem !important;
-        overflow: hidden !important;
-        background: #ffffff !important;
+        border: 0 !important;
+        background: transparent !important;
         box-shadow: none !important;
     }
 
@@ -634,8 +680,7 @@
         background: transparent !important;
     }
 
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item,
-    .fd-jobs-footer .dataTables_paginate .paginate_button {
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item {
         margin: 0 !important;
         padding: 0 !important;
         display: flex !important;
@@ -644,50 +689,42 @@
         background: transparent !important;
     }
 
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-link,
-    .fd-jobs-footer .dataTables_paginate .paginate_button a,
-    .fd-jobs-footer .dataTables_paginate a {
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-link {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 0.5rem !important;
         padding: 0.5rem 1rem !important;
-        min-width: 2.5rem !important;
-        height: 100% !important;
-        font-size: 1rem !important;
+        height: 2.25rem !important;
+        font-size: 0.875rem !important;
         font-weight: 400 !important;
-        color: #536c79 !important;
-        background: #ffffff !important;
-        border-top: 0 !important;
-        border-bottom: 0 !important;
-        border-left: 0 !important;
+        line-height: 1.25rem !important;
+        color: #374151 !important;
+        background: transparent !important;
+        border: 0 !important;
         border-radius: 0 !important;
         text-decoration: none !important;
-        transition: background-color 0.15s ease, color 0.15s ease !important;
         box-shadow: none !important;
         margin: 0 !important;
-        line-height: 1.2 !important;
+        transition: color 0.15s ease !important;
     }
 
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item:not(.active):not(.disabled) .page-link:hover,
-    .fd-jobs-footer .dataTables_paginate .paginate_button:not(.current):not(.disabled) a:hover {
-        background-color: #f0f3f5 !important;
-        color: #005890 !important;
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.previous .page-link,
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.next .page-link {
+        color: #6b7280 !important;
     }
 
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.active .page-link,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.current,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.current a {
-        background-color: #005890 !important;
-        color: #ffffff !important;
-        font-weight: 400 !important;
-        border-radius: 0 !important;
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+        color: #9ca3af !important;
+        background: transparent !important;
     }
 
-    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.disabled .page-link,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.disabled,
-    .fd-jobs-footer .dataTables_paginate .paginate_button.disabled a {
-        color: #536c79 !important;
-        background-color: #ffffff !important;
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.active .page-link {
+        background-color: #e9e6e3 !important;
+        color: #2563eb !important;
+    }
+
+    .fd-jobs-footer .dataTables_paginate ul.pagination .page-item.disabled .page-link {
         cursor: default !important;
     }
 
@@ -712,36 +749,36 @@
         font-size: 0.875rem;
         color: #151b1e;
         margin: 0 !important;
-        border: 1px solid #c2cfd6 !important;
+        border: 0 !important;
         background: #fff;
     }
 
     .fd-jobs-table.dataTable.no-footer {
-        border-bottom: 1px solid #c2cfd6 !important;
+        border-bottom: 0 !important;
     }
 
     .fd-jobs-table thead th,
     .fd-jobs-table.dataTable thead th {
         background: #fff !important;
-        border: 1px solid #c2cfd6 !important;
-        border-bottom: 2px solid #c2cfd6 !important;
-        padding: 0.3rem !important;
+        border: 0 !important;
+        border-bottom: 2px solid #d4d4d4 !important; /* /school header rule (border-neutral-300) */
+        padding: 1rem !important;
         text-align: left;
         white-space: nowrap;
         font-weight: 700;
-        color: #808080;
+        color: #151b1e;
         vertical-align: middle;
     }
 
     /* DataTables (bootstrap4 integration) auto-adds its own up/down sort arrows via
        :before/:after on .sorting/.sorting_asc/.sorting_desc, reserving 30px/20px of
-       right padding for them. We already show a fa-sort icon to the left of each
-       heading, so hide the library's right-side arrows and reclaim that padding. */
+       right padding for them. We show our own sort arrow to the left of each
+       heading (see below), so hide the library's right-side arrows and reclaim that padding. */
     .fd-jobs-table.dataTable thead > tr > th.sorting,
     .fd-jobs-table.dataTable thead > tr > th.sorting_asc,
     .fd-jobs-table.dataTable thead > tr > th.sorting_desc,
     .fd-jobs-table.dataTable.table-sm > thead > tr > th {
-        padding-right: 0.3rem !important;
+        padding-right: 1rem !important;
     }
 
     .fd-jobs-table.dataTable thead .sorting:before,
@@ -760,8 +797,10 @@
 
     .fd-jobs-table tbody td,
     .fd-jobs-table.dataTable tbody td {
-        border: 1px solid #c2cfd6 !important;
-        padding: 0.3rem;
+        border: 0 !important;
+        border-bottom: 1px solid #E6E7E8 !important; /* /school row rule */
+        padding: 1rem;
+        text-align: left !important;
         vertical-align: top;
         background: #fff;
     }
@@ -797,6 +836,20 @@
         font-size: 0.85rem;
         color: #5B6575;
     }
+
+    /* Sort arrows copy /school (x-table.headerCell): no icon on unsorted columns, an up arrow on the
+       column sorted ascending and a down arrow when descending, placed before the heading text. */
+    .fd-jobs-table thead th .fa-sort {
+        display: none;
+    }
+    .fd-jobs-table thead th.sorting_asc .fa-sort,
+    .fd-jobs-table thead th.sorting_desc .fa-sort {
+        display: inline-block;
+        font-size: 0.875em;
+        color: #151b1e;
+    }
+    .fd-jobs-table thead th.sorting_asc .fa-sort::before { content: "\f062"; }
+    .fd-jobs-table thead th.sorting_desc .fa-sort::before { content: "\f063"; }
 
     .fd-jobs-table thead .fa-play { color: #43A047; }
     .fd-jobs-table thead .fa-circle { color: #FB8C00; }
@@ -1172,30 +1225,41 @@
                 <span class="fd-jobs-count-text">
                     -  There {{ $jobsShownCount === 1 ? 'is' : 'are' }} <strong>{{ number_format($jobsShownCount) }}</strong> {{ $jobsShownCount === 1 ? 'Job' : 'Jobs' }} marked as {{ $jobsView }} in {{ $selectedSeasonLabel }}
                 </span>
-                <span class="btn-link ml-2 show-hide-completed" data-toggle-url="" wire:click="toggleCompleted">
-                    {{ $showCompleted ? 'Hide Completed Jobs' : 'Show Completed Jobs' }}
-                </span>
-                <span class="ml-2 text-muted">|</span>
-                <span class="btn-link ml-2 show-hide-archived" data-toggle-url="" wire:click="toggleArchived">
-                    {{ $showArchived ? 'Hide Archived Jobs' : 'Show Archived Jobs' }}
-                </span>
-                <span class="ml-2 text-muted">|</span>
-                <span class="btn-link ml-2 show-hide-deleted" data-toggle-url="" wire:click="toggleDeleted">
-                    {{ $showDeleted ? 'Hide Deleted Jobs' : 'Show Deleted Jobs' }}
-                </span>
                 <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
             </div>
-            <div class="fd-jobs-search-row">
-                <input
-                    type="search"
-                    id="fd-proofing-jobs-search"
-                    class="fd-jobs-search-input"
-                    placeholder="Start typing to filter by..."
-                    autocomplete="off"
-                >
+            <div class="fd-jobs-controls">
+                <div class="fd-jobs-view-links">
+                    <span class="btn-link ml-2 show-hide-completed" data-toggle-url="" wire:click="toggleCompleted">
+                        {{ $showCompleted ? 'Hide Completed Jobs' : 'Show Completed Jobs' }}
+                    </span>
+                    <span class="ml-2 text-muted">|</span>
+                    <span class="btn-link ml-2 show-hide-archived" data-toggle-url="" wire:click="toggleArchived">
+                        {{ $showArchived ? 'Hide Archived Jobs' : 'Show Archived Jobs' }}
+                    </span>
+                    <span class="ml-2 text-muted">|</span>
+                    <span class="btn-link ml-2 show-hide-deleted" data-toggle-url="" wire:click="toggleDeleted">
+                        {{ $showDeleted ? 'Hide Deleted Jobs' : 'Show Deleted Jobs' }}
+                    </span>
+                </div>
+                @if (count($proofingJobsTable) > 0)
+                    <div class="fd-jobs-search-box">
+                        <span class="fd-jobs-search-icon"><i class="fa fa-search"></i></span>
+                        <input
+                            type="text"
+                            id="fd-proofing-jobs-search"
+                            class="fd-jobs-search-input"
+                            placeholder="Search..."
+                            autocomplete="off"
+                        >
+                        <button type="button" class="fd-jobs-search-clear" aria-label="Clear search"
+                            onclick="var i = document.getElementById('fd-proofing-jobs-search'); i.value = ''; i.dispatchEvent(new Event('search')); i.focus();">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+            
+                @endif
             </div>
         </div>
-        <p class="fd-jobs-hint">Click headings to sort by that column.</p>
 
         @if (count($proofingJobsTable) === 0)
             <p class="sd-empty">No {{ $jobsView }} proofing jobs found for this season.</p>
@@ -1204,7 +1268,6 @@
                 <table id="fd-proofing-jobs-table" class="fd-jobs-table display nowrap" style="width:100%">
                     <thead>
                         <tr>
-                            <th><i class="fa fa-sort"></i> ID</th>
                             <th><i class="fa fa-sort"></i> School Name</th>
                             <th><i class="fa fa-sort"></i> Job Key</th>
                             <th><i class="fa fa-sort"></i> Job</th>
@@ -1240,7 +1303,6 @@
                                 $statusColor = $statusColorMap[strtolower($statusName)] ?? null;
                             @endphp
                             <tr class="{{ !empty($jobRow['is_completed']) ? 'is-completed' : '' }}">
-                                <td>{{ $index + 1 }}</td>
                                 <td>{{ $jobRow['school_name'] }}</td>
                                 <td>{{ $jobRow['ts_jobkey'] }}</td>
                                 <td>{{ $jobRow['ts_jobname'] }}</td>
@@ -1421,44 +1483,31 @@
             // name to filter by..." box in the panel header), drop DataTables' own
             // built-in search box from the toolbar so there isn't a duplicate.
             var domStr = opts.externalSearchId
-                ? "<'fd-jobs-toolbar'<'fd-jobs-length'l>>" +
+                ? "<'fd-jobs-scroll't>" +
+                  "<'fd-jobs-footer'<'fd-jobs-paginate'p>>"
+                : "<'fd-jobs-toolbar'<'fd-jobs-search'f>>" +
                   "<'fd-jobs-scroll't>" +
-                  "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>"
-                : "<'fd-jobs-toolbar'<'fd-jobs-length'l><'fd-jobs-search'f>>" +
-                  "<'fd-jobs-scroll't>" +
-                  "<'fd-jobs-footer'<'fd-jobs-info'i><'fd-jobs-paginate'p>>";
+                  "<'fd-jobs-footer'<'fd-jobs-paginate'p>>";
 
             try {
                 var dt = $table.DataTable({
                     pageLength: 20,
-                    lengthChange: true,
-                    lengthMenu: [[5, 10, 20, 50, 100], [5, 10, 20, 50, 100]],
+                    lengthChange: false,
                     paging: true,
                     searching: true,
-                    info: true,
+                    info: false,
                     autoWidth: false,
                     scrollX: false,
-                    order: [[1, 'asc']],
-                    columnDefs: [
-                        { orderable: false, targets: 0 },
-                    ],
+                    order: [[0, 'asc']],
                     dom: domStr,
                     language: {
-                        lengthMenu: 'Display _MENU_',
                         info: 'Showing _START_ to _END_ of _TOTAL_ entries',
                         infoEmpty: 'Showing 0 to 0 of 0 entries',
                         search: 'Search:',
                         paginate: {
-                            previous: 'Previous',
-                            next: 'Next',
+                            previous: '<i class="fa fa-angle-left"></i> Prev',
+                            next: 'Next <i class="fa fa-angle-right"></i>',
                         },
-                    },
-                    drawCallback: function () {
-                        var api = this.api();
-                        var start = api.page.info().start;
-                        api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
-                            cell.innerHTML = String(start + i + 1);
-                        });
                     },
                 });
 

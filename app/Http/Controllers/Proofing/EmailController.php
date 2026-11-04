@@ -8,8 +8,10 @@ use App\Http\Resources\UserResource;
 use App\Models\Email;
 use App\Models\Franchise;
 use App\Models\Job;
+use App\Models\Order;
 use App\Models\School;
 use App\Models\Season;
+use App\Models\Status;
 use App\Models\Template;
 use App\Repositories\ReportRepository;
 use App\Services\Proofing\StatusService;
@@ -103,6 +105,13 @@ class EmailController extends Controller
         if (!empty($job->ts_season_id) && isset($seasonList[$job->ts_season_id])) {
             $jobTitle .= ' (' . $seasonList[$job->ts_season_id] . ')';
         }
+        // The school's name goes in brackets after the season (school_id first, school key as a fallback).
+        $schoolName = $job->school_id
+            ? School::where('id', $job->school_id)->value('name')
+            : ($job->ts_schoolkey ? School::where('schoolkey', $job->ts_schoolkey)->value('name') : null);
+        if (!empty($schoolName)) {
+            $jobTitle .= ' (' . $schoolName . ')';
+        }
 
         return view('proofing.franchise.emails.show', [
             'job' => $job,
@@ -138,10 +147,12 @@ class EmailController extends Controller
 
         $this->applyKeywordFilter($query, $filter);
 
-        $messages = $query->orderBy($orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
+        $messages = $this->applySort($query, $request, $orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
 
         return view('proofing.franchise.emails._results', [
             'messages' => $messages,
+            'sortBy' => $request->input('email_filter_order_by', 'created_at'),
+            'sortDir' => $request->input('email_filter_order_direction', 'descending'),
         ]);
     }
 
@@ -198,10 +209,12 @@ class EmailController extends Controller
 
         $this->applyKeywordFilter($query, $filter);
 
-        $messages = $query->orderBy($orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
+        $messages = $this->applySort($query, $request, $orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
 
         return view('proofing.franchise.emails._results', [
             'messages' => $messages,
+            'sortBy' => $request->input('email_filter_order_by', 'created_at'),
+            'sortDir' => $request->input('email_filter_order_direction', 'descending'),
         ]);
     }
 
@@ -258,11 +271,13 @@ class EmailController extends Controller
 
         $this->applyKeywordFilter($query, $filter);
 
-        $messages = $query->orderBy($orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
+        $messages = $this->applySort($query, $request, $orderColumn, $direction)->paginate($limit, ['*'], 'page', $page);
 
         return view('proofing.franchise.emails._results', [
             'messages' => $messages,
             'showOrder' => true,
+            'sortBy' => $request->input('email_filter_order_by', 'created_at'),
+            'sortDir' => $request->input('email_filter_order_direction', 'descending'),
         ]);
     }
 
@@ -356,7 +371,7 @@ class EmailController extends Controller
 
         return Job::withoutGlobalScopes()
             ->where('ts_job_id', $tsJobId)
-            ->first(['id', 'ts_job_id', 'ts_jobkey', 'ts_jobname', 'ts_season_id']);
+            ->first(['id', 'ts_job_id', 'ts_jobkey', 'ts_jobname', 'ts_season_id', 'school_id', 'ts_schoolkey']);
     }
 
     /**
@@ -451,6 +466,32 @@ class EmailController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Order the email list by the clicked column. The status and order number columns are sorted
+     * by what is shown (status name / order number) rather than by the foreign key.
+     */
+    protected function applySort(Builder $query, Request $request, string $orderColumn, string $direction): Builder
+    {
+        switch ($request->input('email_filter_order_by')) {
+            case 'status_name':
+                $query->orderBy(
+                    Status::select('status_external_name')->whereColumn('status.id', 'emails.status_id'),
+                    $direction
+                );
+                break;
+            case 'order_number':
+                $query->orderBy(
+                    Order::select('order_number')->whereColumn('orders.id', 'emails.order_id'),
+                    $direction
+                );
+                break;
+            default:
+                $query->orderBy($orderColumn, $direction);
+        }
+
+        return $query->orderBy('emails.id', $direction);
     }
 
     /**

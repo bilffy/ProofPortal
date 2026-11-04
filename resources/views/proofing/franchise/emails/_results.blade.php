@@ -1,29 +1,33 @@
 @if ($messages->count())
     <div class="table-responsive">
-        <table id="emails-messages-table" class="table table-bordered table-striped table-sm">
+        <table id="emails-messages-table" class="table">
+            @php
+                $sortBy = $sortBy ?? 'created_at';
+                $sortDir = $sortDir ?? 'descending';
+                $sortHead = function (string $key, string $label) use ($sortBy, $sortDir) {
+                    $arrow = $sortBy === $key
+                        ? '<i class="fa fa-arrow-' . ($sortDir === 'ascending' ? 'up' : 'down') . ' fa-sm"></i> '
+                        : '';
+
+                    return '<th scope="col" class="emails-sortable" data-sort="' . $key . '">' . $arrow . e($label) . '</th>';
+                };
+            @endphp
             <thead>
                 <tr>
-                    <th scope="col" style="width: 70px; max-width: 70px; white-space: nowrap;">{{ __('ID') }}</th>
                     @if ($showOrder ?? false)
-                        <th scope="col">{{ __('Order') }}</th>
+                        {!! $sortHead('order_number', __('Order')) !!}
                     @endif
-                    <th scope="col">{{ __('Created') }}</th>
-                    <th scope="col">{{ __('Sent') }}</th>
-                    <th scope="col">{{ __('To') }}</th>
-                    <th scope="col">{{ __('From') }}</th>
-                    <th scope="col">{{ __('Status') }}</th>
+                    {!! $sortHead('created_at', __('Created')) !!}
+                    {!! $sortHead('sentdate', __('Sent')) !!}
+                    {!! $sortHead('email_to', __('To')) !!}
+                    {!! $sortHead('email_from', __('From')) !!}
+                    {!! $sortHead('status_name', __('Status')) !!}
                     <th scope="col">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($messages as $message)
-                    @php
-                        $rowNumber = method_exists($messages, 'firstItem') && $messages->firstItem()
-                            ? $messages->firstItem() + $loop->index
-                            : $loop->iteration;
-                    @endphp
                     <tr>
-                        <td>{{ $rowNumber }}</td>
                         @if ($showOrder ?? false)
                             <td>{{ $message->order->order_number ?? '—' }}</td>
                         @endif
@@ -56,40 +60,48 @@
     </div>
 
     @if (method_exists($messages, 'hasPages'))
-        <div class="paginator mt-3">
-            <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
-                <div class="flex gap-4">
-                    @if ($messages->onFirstPage())
-                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md dark:text-gray-600 dark:bg-gray-800 dark:border-gray-600">
-                            &lt; {{ __('Previous') }}
-                        </span>
-                    @else
-                        <a href="#" data-page="{{ $messages->currentPage() - 1 }}" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300">
-                            &lt; {{ __('Previous') }}
-                        </a>
-                    @endif
+        @php
+            $current = $messages->currentPage();
+            $last = $messages->lastPage();
+            $pageList = [];
+            if ($last <= 7) {
+                $pageList = range(1, $last);
+            } else {
+                $shown = collect([1, 2, $last - 1, $last, $current - 1, $current, $current + 1])
+                    ->filter(fn ($p) => $p >= 1 && $p <= $last)->unique()->sort()->values();
+                $prevShown = 0;
+                foreach ($shown as $p) {
+                    if ($prevShown && $p - $prevShown > 1) {
+                        $pageList[] = '...';
+                    }
+                    $pageList[] = $p;
+                    $prevShown = $p;
+                }
+            }
+        @endphp
+        <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="emails-pager">
+            @if ($messages->onFirstPage())
+                <span class="emails-page-btn emails-page-nav is-disabled"><i class="fa fa-angle-left"></i> {{ __('Prev') }}</span>
+            @else
+                <a href="#" data-page="{{ $current - 1 }}" class="emails-page-btn emails-page-nav"><i class="fa fa-angle-left"></i> {{ __('Prev') }}</a>
+            @endif
 
-                    @if ($messages->hasMorePages())
-                        <a href="#" data-page="{{ $messages->currentPage() + 1 }}" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:text-gray-400 dark:active:bg-gray-700 dark:focus:border-blue-800">
-                            {{ __('Next') }} &gt;
-                        </a>
-                    @else
-                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md dark:text-gray-600 dark:bg-gray-800 dark:border-gray-600">
-                            {{ __('Next') }} &gt;
-                        </span>
-                    @endif
-                </div>
-            </nav>
+            @foreach ($pageList as $p)
+                @if ($p === '...')
+                    <span class="emails-page-gap">...</span>
+                @elseif ($p === $current)
+                    <span class="emails-page-btn is-current" aria-current="page">{{ $p }}</span>
+                @else
+                    <a href="#" data-page="{{ $p }}" class="emails-page-btn">{{ $p }}</a>
+                @endif
+            @endforeach
 
-            <p class="mt-2 text-muted">
-                {{ __('Page :page of :pages, showing :current record(s) out of :count total', [
-                    'page' => $messages->currentPage(),
-                    'pages' => $messages->lastPage(),
-                    'current' => $messages->count(),
-                    'count' => $messages->total(),
-                ]) }}
-            </p>
-        </div>
+            @if ($messages->hasMorePages())
+                <a href="#" data-page="{{ $current + 1 }}" class="emails-page-btn emails-page-nav">{{ __('Next') }} <i class="fa fa-angle-right"></i></a>
+            @else
+                <span class="emails-page-btn emails-page-nav is-disabled">{{ __('Next') }} <i class="fa fa-angle-right"></i></span>
+            @endif
+        </nav>
     @endif
 @else
     <div class="text-center py-4">

@@ -39,13 +39,13 @@
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_PHOTOGRAPHY))
         @unlessrole($RoleHelper::ROLE_FRANCHISE)
-            <x-layout.navItem visibility="{{ $visibility }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photography</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" id="tabPhotography" navIcon="camera" href="{{ route('photography') }}">Photo Library</x-layout.navItem>
         @endunlessrole
     @endcan
 
     @hasanyrole(implode("|", $nonSchoolLevelRoles))
         @if ($SchoolContextHelper->isSchoolContext())
-            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography.configure-new') }}" :activeNav="request()->routeIs('photography.configure-new', 'photography', 'photography.portraits', 'photography.groups', 'photography.others')">Photography</x-layout.navItem>
+            <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabPhotography" navIcon="camera" href="{{ route('photography.configure-new') }}" :activeNav="request()->routeIs('photography.configure-new', 'photography', 'photography.portraits', 'photography.groups', 'photography.others')">Photo Library</x-layout.navItem>
         @endif
     @endhasanyrole
     

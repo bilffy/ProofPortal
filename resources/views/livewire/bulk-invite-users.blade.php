@@ -51,7 +51,7 @@
 
                 @if ($showSchoolSelector)
                     <div class="mb-4">
-                        <div class="rounded-xl border border-neutral-300 p-4" style="background:#f9fafb;">
+                        <div class="rounded-xl border border-neutral-300 p-4" style="background:#fff;">
                             <div class="mb-4">
                                 <h4 class="biu-box-title mb-0.5">Assign school</h4>
                                 <p class="mt-5 text-xs mb-0">Select the school associated with your franchise to assign all invited users.</p>
@@ -74,14 +74,14 @@
                 @endif
 
                 @if (!$showSchoolSelector && $lockedSchoolName !== '')
-                    <div class="mb-4" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:100%;max-width:100%;padding:10px 14px;overflow:visible;background:#f9fafb;border:none;border-left:4px solid #005890;border-radius:8px;color:#00000;">
-                        <span style="flex-shrink:0font-weight:600;">School Assigned:</span>
+                    <div class="mb-4" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:100%;max-width:100%;padding:10px 14px;overflow:visible;background:#fff;border:none;border-radius:8px;color:#000;">
+                        <span style="flex-shrink:0;font-weight:600;">School Assigned:</span>
                         <strong class="biu-box-title" style="min-width:0;word-break:break-word;overflow-wrap:anywhere;">{{ $lockedSchoolName }}</strong>
                     </div>
                 @endif
 
             {{-- Column format, designated roles and sample download --}}
-            <div class="flex-1 flex flex-col rounded-xl border border-neutral-300 p-4" style="background:#f9fafb;">
+            <div class="flex-1 flex flex-col rounded-xl border border-neutral-300 p-4" style="background:#fff;">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div
                         class="bulk-invite-format-row"
@@ -176,7 +176,7 @@
             <div class="biu-box-body flex-1 flex flex-col">
             @if (empty($rows))
                 <div
-                    style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-height:160px;padding:28px 16px;text-align:center;background:#f9fafb;border:1px dashed #D9DDE2;border-radius:12px;"
+                    style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-height:160px;padding:28px 16px;text-align:center;background:#fff;border:1px dashed #D9DDE2;border-radius:12px;"
                 >
                     <!-- <div
                         style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;margin-bottom:12px;color:#4A90BC;background:#B9E4FF;border-radius:14px;"
@@ -205,11 +205,11 @@
                     <table id="biu-imported-users-table" class="w-full text-sm text-left rtl:text-right">
                         <thead>
                             <tr>
-                                <x-table.headerCell :sortable="false" :clickable="false">First Name</x-table.headerCell>
-                                <x-table.headerCell :sortable="false" :clickable="false">Last Name</x-table.headerCell>
-                                <x-table.headerCell :sortable="false" :clickable="false">Email</x-table.headerCell>
-                                <x-table.headerCell :sortable="false" :clickable="false">Role</x-table.headerCell>
-                                <x-table.headerCell :sortable="false" :clickable="false" :centered="true">
+                                <x-table.headerCell :sortable="false" :clickable="false" class="w-[16%]">First Name</x-table.headerCell>
+                                <x-table.headerCell :sortable="false" :clickable="false" class="w-[16%]">Last Name</x-table.headerCell>
+                                <x-table.headerCell :sortable="false" :clickable="false" class="w-[28%] min-w-[14rem]">Email</x-table.headerCell>
+                                <x-table.headerCell :sortable="false" :clickable="false" class="w-[18%] min-w-[11rem]">Role</x-table.headerCell>
+                                <x-table.headerCell :sortable="false" :clickable="false" :centered="true" class="min-w-[10.5rem]">
                                     <input
                                         type="checkbox"
                                         wire:click="toggleAllSendInvitationWithProofing($event.target.checked)"
@@ -218,7 +218,7 @@
                                     />
                                     <span>Hold Invitation Until Proofing</span>
                                 </x-table.headerCell>
-                                <x-table.headerCell :sortable="false" :clickable="false" :centered="true" class="w-[140px]">Actions</x-table.headerCell>
+                                <x-table.headerCell :sortable="false" :clickable="false" :centered="true" class="min-w-[13rem] whitespace-nowrap">Actions</x-table.headerCell>
                             </tr>
                         </thead>
                         <tbody>
@@ -280,13 +280,14 @@
                                         @endif
                                     </x-table.cell>
                                     <x-table.cell class="text-center">
-                                        <div class="inline-flex items-center gap-2">
+                                        <div class="inline-flex items-center gap-2 whitespace-nowrap">
                                             @if ($isEditing)
                                                 <button type="button" wire:click="finishEdit({{ $index }})" class="biu-row-btn biu-row-btn-edit">Done</button>
                                             @else
-                                                <button type="button" wire:click="startEdit({{ $index }})" class="biu-row-btn biu-row-btn-edit">Edit</button>
+                                                <button type="button" wire:click="startEdit({{ $index }})" class="biu-row-btn biu-row-btn-edit">Edit User</button>
                                             @endif
-                                            <button type="button" wire:click="removeRow({{ $index }})" class="biu-row-btn biu-row-btn-remove">Remove</button>
+                                            <span style="color:#536c79;">|</span>
+                                            <button type="button" wire:click="removeRow({{ $index }})" class="biu-row-btn biu-row-btn-remove">Remove User</button>
                                         </div>
                                     </x-table.cell>
                                 </tr>
@@ -352,24 +353,22 @@
             color: #991b1b;
         }
 
-        /* Row action buttons: solid blue Edit/Done and solid red Remove. */
+        /* Row action buttons look like the /proofing "Open Job" link. */
         .biu-row-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            display: inline;
             border: 0;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1.1rem;
+            padding: 0;
+            background: transparent;
             font-size: 0.875rem;
-            font-weight: 700;
-            line-height: 1.25;
-            color: #fff;
+            font-weight: 400;
+            color: rgb(0, 88, 144);
+            text-decoration: none;
             cursor: pointer;
-            transition: filter 0.15s;
         }
-        .biu-row-btn:hover { filter: brightness(0.92); }
-        .biu-row-btn-edit { background: #005890; }
-        .biu-row-btn-remove { background: #dc3545; }
+        .biu-row-btn:hover {
+            color: #007693;
+            text-decoration: underline;
+        }
         .biu-row-error td,
         .biu-row-error td .text-neutral,
         .biu-invalid-role {

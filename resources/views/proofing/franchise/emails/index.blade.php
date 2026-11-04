@@ -10,6 +10,144 @@
     #invitation-messages-table .btn-link {
         text-decoration: underline;
     }
+
+    /* Section boxes ("Select a Job" / "Select a School"): same as the franchise dashboard "Overview" box
+       (.fd-box-head + .fd-jobs-title: #f0f3f5 strip, 1.09375rem / 600 / black title). */
+    #emailsCategoryTabsContent .card {
+        border: 1px solid #c2cfd6;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    #emailsCategoryTabsContent .card-header {
+        padding: 0.75rem 1.25rem;
+        background: #f0f3f5;
+        border-bottom: 1px solid #c2cfd6;
+        margin-bottom: 0;
+        color: #000;
+        font-size: 1.09375rem;
+        font-weight: 600;
+        line-height: 1.1;
+    }
+
+    /* Search box in each card header (right side), same look as the franchise dashboard search. */
+    #emailsCategoryTabsContent .emails-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    #emailsCategoryTabsContent .emails-search-box {
+        position: relative;
+        width: 100%;
+        max-width: 28rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
+    #emailsCategoryTabsContent .emails-search-icon {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0.75rem;
+        display: flex;
+        align-items: center;
+        color: #000;
+        pointer-events: none;
+    }
+    #emailsCategoryTabsContent .emails-search-input {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 2.5rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: #fff;
+        color: #111827;
+        font-size: 0.875rem;
+        box-sizing: border-box;
+    }
+    #emailsCategoryTabsContent .emails-search-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #005890;
+    }
+    #emailsCategoryTabsContent .emails-search-clear {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 0.75rem;
+        color: #6b7280;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+    #emailsCategoryTabsContent .emails-search-clear:hover { color: #111827; }
+    #emailsCategoryTabsContent .emails-search-clear svg { width: 1rem; height: 1rem; }
+
+    /* Pagination like /school: "< Prev 1 2 3 ... Next >", current page on a #e9e6e3 square with blue text. */
+    #emailsCategoryTabsContent .emails-pager {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem 0 0.25rem;
+    }
+    #emailsCategoryTabsContent .emails-page-btn,
+    #emailsCategoryTabsContent .emails-page-gap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        height: 2.25rem;
+        padding: 0 1rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: #374151;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+    }
+    #emailsCategoryTabsContent .emails-page-btn { cursor: pointer; }
+    #emailsCategoryTabsContent .emails-page-btn:hover:not(:disabled):not(.is-current) { color: #9ca3af; }
+    #emailsCategoryTabsContent .emails-page-nav { color: #6b7280; }
+    #emailsCategoryTabsContent .emails-page-btn:disabled { cursor: default; }
+    #emailsCategoryTabsContent .emails-page-btn.is-current {
+        background: #e9e6e3;
+        color: #2563eb;
+        cursor: default;
+    }
+
+    /* Choice tables look like the /school table: bold header over a 2px rule, one thin rule per row. */
+    #emailsCategoryTabsContent .emails-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        color: #151b1e;
+        background: #fff;
+    }
+    #emailsCategoryTabsContent .emails-table thead th {
+        padding: 1rem;
+        background: #fff;
+        border: 0;
+        border-bottom: 2px solid #d4d4d4;
+        font-weight: 700;
+        color: #151b1e;
+        text-align: left;
+        vertical-align: middle;
+    }
+    #emailsCategoryTabsContent .emails-table thead th.text-center {
+        text-align: center;
+    }
+    #emailsCategoryTabsContent .emails-table tbody td {
+        padding: 1rem;
+        background: #fff;
+        border: 0;
+        border-bottom: 1px solid #E6E7E8;
+        vertical-align: middle;
+    }
+    #emailsCategoryTabsContent .emails-table tbody td.text-center {
+        text-align: center;
+    }
 </style>
 @endsection
 
@@ -27,35 +165,24 @@
     <x-tabs.tabContentContainer id="emailsCategoryTabsContent">
         <x-tabs.tabContent id="tab-proofing">
             <div class="card">
-                        <div class="card-header">
-                            <i class="fa fa-envelope"></i> {{ __('Select a Job') }}
+                        <div class="card-header emails-card-head">
+                            <span>{{ __('Select a Job') }}</span>
+                            @if ($jobs->isNotEmpty())
+                                <div class="emails-search-box">
+                                    <span class="emails-search-icon"><i class="fa fa-search"></i></span>
+                                    <input class="emails-search-input" id="choice-name-filter" type="text" placeholder="{{ __('Search...') }}" autocomplete="off">
+                                    <button type="button" class="emails-search-clear" aria-label="{{ __('Clear search') }}"
+                                        onclick="var i = document.getElementById('choice-name-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                         <div class="card-body">
                             @if ($jobs->isEmpty())
                                 <p class="mb-0">{{ __('No Jobs have been synced for proofing yet.') }}</p>
                             @else
-                                <div class="report-text mb-3">
-                                    {{ __('Please select a Job') }}
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-12">
-                                        <div class="row">
-                                            <div class="col-md-1 col-sm-12 align-self-center">
-                                                Filter:
-                                            </div>
-                                            <div class="col-md-5 col-sm-12">
-                                                <input class="form-control" id="choice-name-filter" type="text"
-                                                    placeholder="{{ __('Start typing to filter by...') }}">
-                                            </div>
-                                            <div class="col-md-6 col-sm-12 align-self-center" id="choice-name-filter-feedback">
-                                                &nbsp;
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <table class="table table-bordered table-striped table-sm">
+                                <table class="table emails-table">
                                     <thead>
                                         <tr>
                                             <th scope="col">{{ __('School') }}</th>
@@ -85,19 +212,7 @@
                                     </tbody>
                                 </table>
 
-                                <div class="paginator mt-3">
-                                    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
-                                        <div class="flex gap-4">
-                                            <button type="button" id="choice-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                                                &lt; {{ __('Previous') }}
-                                            </button>
-                                            <button type="button" id="choice-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                                                {{ __('Next') }} &gt;
-                                            </button>
-                                        </div>
-                                    </nav>
-                                    <p class="mt-2 text-muted" id="choice-pagination-summary"></p>
-                                </div>
+                                <div class="emails-pager" id="choice-pager"></div>
                             @endif
                         </div>
             </div>
@@ -105,35 +220,24 @@
 
         <x-tabs.tabContent id="tab-invitation">
             <div class="card">
-                        <div class="card-header">
-                            <i class="fa fa-envelope"></i> {{ __('Select a School') }}
+                        <div class="card-header emails-card-head">
+                            <span>{{ __('Select a School') }}</span>
+                            @if ($invitationSchools->isNotEmpty())
+                                <div class="emails-search-box">
+                                    <span class="emails-search-icon"><i class="fa fa-search"></i></span>
+                                    <input class="emails-search-input" id="invitation-choice-name-filter" type="text" placeholder="{{ __('Search...') }}" autocomplete="off">
+                                    <button type="button" class="emails-search-clear" aria-label="{{ __('Clear search') }}"
+                                        onclick="var i = document.getElementById('invitation-choice-name-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                         <div class="card-body">
                             @if ($invitationSchools->isEmpty())
                                 <p class="mb-0">{{ __('No user invitation emails have been sent yet.') }}</p>
                             @else
-                                <div class="report-text mb-3">
-                                    {{ __('Please select a School') }}
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-12">
-                                        <div class="row">
-                                            <div class="col-md-1 col-sm-12 align-self-center">
-                                                Filter:
-                                            </div>
-                                            <div class="col-md-5 col-sm-12">
-                                                <input class="form-control" id="invitation-choice-name-filter" type="text"
-                                                    placeholder="{{ __('Start typing to filter by...') }}">
-                                            </div>
-                                            <div class="col-md-6 col-sm-12 align-self-center" id="invitation-choice-name-filter-feedback">
-                                                &nbsp;
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <table class="table table-bordered table-striped table-sm">
+                                <table class="table emails-table">
                                     <thead>
                                         <tr>
                                             <th scope="col">{{ __('School') }}</th>
@@ -157,54 +261,31 @@
                                     </tbody>
                                 </table>
 
-                                <div class="paginator mt-3">
-                                    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
-                                        <div class="flex gap-4">
-                                            <button type="button" id="invitation-choice-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                                                &lt; {{ __('Previous') }}
-                                            </button>
-                                            <button type="button" id="invitation-choice-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                                                {{ __('Next') }} &gt;
-                                            </button>
-                                        </div>
-                                    </nav>
-                                    <p class="mt-2 text-muted" id="invitation-choice-pagination-summary"></p>
-                                </div>
+                                <div class="emails-pager" id="invitation-choice-pager"></div>
                             @endif
                         </div>
             </div>
         </x-tabs.tabContent>
         <x-tabs.tabContent id="tab-ordering">
             <div class="card">
-                        <div class="card-header">
-                            <i class="fa fa-envelope"></i> {{ __('Select a School') }}
+                        <div class="card-header emails-card-head">
+                            <span>{{ __('Select a School') }}</span>
+                            @if ($orderingSchools->isNotEmpty())
+                                <div class="emails-search-box">
+                                    <span class="emails-search-icon"><i class="fa fa-search"></i></span>
+                                    <input class="emails-search-input" id="ordering-choice-name-filter" type="text" placeholder="{{ __('Search...') }}" autocomplete="off">
+                                    <button type="button" class="emails-search-clear" aria-label="{{ __('Clear search') }}"
+                                        onclick="var i = document.getElementById('ordering-choice-name-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                         <div class="card-body">
                             @if ($orderingSchools->isEmpty())
                                 <p class="mb-0">{{ __('No order emails have been sent yet.') }}</p>
                             @else
-                                <div class="report-text mb-3">
-                                    {{ __('Please select a School') }}
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-12">
-                                        <div class="row">
-                                            <div class="col-md-1 col-sm-12 align-self-center">
-                                                Filter:
-                                            </div>
-                                            <div class="col-md-5 col-sm-12">
-                                                <input class="form-control" id="ordering-choice-name-filter" type="text"
-                                                    placeholder="{{ __('Start typing to filter by...') }}">
-                                            </div>
-                                            <div class="col-md-6 col-sm-12 align-self-center" id="ordering-choice-name-filter-feedback">
-                                                &nbsp;
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <table class="table table-bordered table-striped table-sm">
+                                <table class="table emails-table">
                                     <thead>
                                         <tr>
                                             <th scope="col">{{ __('School') }}</th>
@@ -228,19 +309,7 @@
                                     </tbody>
                                 </table>
 
-                                <div class="paginator mt-3">
-                                    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-start">
-                                        <div class="flex gap-4">
-                                            <button type="button" id="ordering-choice-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                                                &lt; {{ __('Previous') }}
-                                            </button>
-                                            <button type="button" id="ordering-choice-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                                                {{ __('Next') }} &gt;
-                                            </button>
-                                        </div>
-                                    </nav>
-                                    <p class="mt-2 text-muted" id="ordering-choice-pagination-summary"></p>
-                                </div>
+                                <div class="emails-pager" id="ordering-choice-pager"></div>
                             @endif
                         </div>
             </div>
@@ -261,9 +330,7 @@ $(document).ready(function () {
         const rowSelector = options.rowSelector;
         const filterInputSelector = options.filterInputSelector;
         const filterFeedbackSelector = options.filterFeedbackSelector;
-        const prevBtnSelector = options.prevBtnSelector;
-        const nextBtnSelector = options.nextBtnSelector;
-        const summarySelector = options.summarySelector;
+        const pagerSelector = options.pagerSelector;
         const perPage = options.perPage || 10;
 
         let currentPage = 1;
@@ -310,37 +377,53 @@ $(document).ready(function () {
                 }
             }
 
-            if (summarySelector) {
-                $(summarySelector).text(
-                    total === 0
-                        ? "{{ __('No records to show.') }}"
-                        : "{{ __('Page') }} " + currentPage + " {{ __('of') }} " + totalPages
-                            + ", {{ __('showing') }} " + pageRows.length + " {{ __('record(s) out of') }} " + total + " {{ __('total') }}"
-                );
+            renderPager(totalPages);
+        }
+
+        // "< Prev 1 2 3 ... Next >" like the /school pagination.
+        function renderPager(totalPages) {
+            const $pager = $(pagerSelector).empty();
+            if ($pager.length === 0) {
+                return;
             }
 
-            $(prevBtnSelector)
+            const pages = [];
+            if (totalPages <= 7) {
+                for (let p = 1; p <= totalPages; p++) pages.push(p);
+            } else {
+                const set = new Set([1, 2, totalPages - 1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+                let last = 0;
+                Array.from(set).filter(p => p >= 1 && p <= totalPages).sort((x, y) => x - y).forEach(function (p) {
+                    if (last && p - last > 1) pages.push('...');
+                    pages.push(p);
+                    last = p;
+                });
+            }
+
+            const $prev = $('<button type="button" class="emails-page-btn emails-page-nav"><i class="fa fa-angle-left"></i> Prev</button>')
                 .prop('disabled', currentPage <= 1)
-                .toggleClass('opacity-50 cursor-not-allowed', currentPage <= 1);
-            $(nextBtnSelector)
+                .on('click', function () { currentPage -= 1; render(); });
+            const $next = $('<button type="button" class="emails-page-btn emails-page-nav">Next <i class="fa fa-angle-right"></i></button>')
                 .prop('disabled', currentPage >= totalPages)
-                .toggleClass('opacity-50 cursor-not-allowed', currentPage >= totalPages);
+                .on('click', function () { currentPage += 1; render(); });
+
+            $pager.append($prev);
+            pages.forEach(function (p) {
+                if (p === '...') {
+                    $pager.append('<span class="emails-page-gap">...</span>');
+                } else {
+                    $('<button type="button" class="emails-page-btn"></button>')
+                        .text(p)
+                        .toggleClass('is-current', p === currentPage)
+                        .on('click', function () { currentPage = p; render(); })
+                        .appendTo($pager);
+                }
+            });
+            $pager.append($next);
         }
 
         $(filterInputSelector).on('keyup', function () {
             currentPage = 1;
-            render();
-        });
-
-        $(prevBtnSelector).on('click', function () {
-            if (currentPage > 1) {
-                currentPage -= 1;
-                render();
-            }
-        });
-
-        $(nextBtnSelector).on('click', function () {
-            currentPage += 1;
             render();
         });
 
@@ -351,9 +434,7 @@ $(document).ready(function () {
         rowSelector: '.choice',
         filterInputSelector: '#choice-name-filter',
         filterFeedbackSelector: '#choice-name-filter-feedback',
-        prevBtnSelector: '#choice-prev-page',
-        nextBtnSelector: '#choice-next-page',
-        summarySelector: '#choice-pagination-summary',
+        pagerSelector: '#choice-pager',
         perPage: 10,
     });
 
@@ -361,9 +442,7 @@ $(document).ready(function () {
         rowSelector: '.invitation-choice',
         filterInputSelector: '#invitation-choice-name-filter',
         filterFeedbackSelector: '#invitation-choice-name-filter-feedback',
-        prevBtnSelector: '#invitation-choice-prev-page',
-        nextBtnSelector: '#invitation-choice-next-page',
-        summarySelector: '#invitation-choice-pagination-summary',
+        pagerSelector: '#invitation-choice-pager',
         perPage: 10,
     });
 
@@ -371,9 +450,7 @@ $(document).ready(function () {
         rowSelector: '.ordering-choice',
         filterInputSelector: '#ordering-choice-name-filter',
         filterFeedbackSelector: '#ordering-choice-name-filter-feedback',
-        prevBtnSelector: '#ordering-choice-prev-page',
-        nextBtnSelector: '#ordering-choice-next-page',
-        summarySelector: '#ordering-choice-pagination-summary',
+        pagerSelector: '#ordering-choice-pager',
         perPage: 10,
     });
 

@@ -14,6 +14,8 @@ class SchoolList extends Component
 {
     use WithPagination;
 
+    private const SORTABLE_FIELDS = ['schoolkey', 'name', 'suburb', 'franchise_name'];
+
     public $search = '';
     public $sortField = 'name';
     public $sortDirection = 'asc';
@@ -54,6 +56,10 @@ class SchoolList extends Component
     
     public function sortBy($field)
     {
+        if (!in_array($field, self::SORTABLE_FIELDS, true)) {
+            return;
+        }
+
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -61,6 +67,7 @@ class SchoolList extends Component
         }
 
         $this->sortField = $field;
+        $this->resetPage();
     }
     
     public function render()
@@ -104,7 +111,12 @@ class SchoolList extends Component
             $schools->where('franchises.id', $franchise->id);    
         }
         
-        $schools->orderBy($this->sortField === 'franchise_name' ? 'franchises.name' : 'schools.' . $this->sortField, $this->sortDirection);
+        // sortField comes from the query string, so fall back to the defaults when it is not allowed.
+        $sortField = in_array($this->sortField, self::SORTABLE_FIELDS, true) ? $this->sortField : 'name';
+        $sortDirection = $this->sortDirection === 'desc' ? 'desc' : 'asc';
+
+        $schools->orderBy($sortField === 'franchise_name' ? 'franchises.name' : 'schools.' . $sortField, $sortDirection)
+            ->orderBy('schools.id');
         
         return view('livewire.school-list',
             [

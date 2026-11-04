@@ -223,7 +223,10 @@ class PhotoGrid extends Component
             $resetClass = key_exists('view', $this->filters) && $view != $this->filters['view'];
             $allClasses = [];
             foreach ($options as $option) {
-                $classOptions[$option->ts_folderkey] = $option->portal_ts_foldername;
+                // Folders without a name are not listed in the Class / Group dropdown.
+                if (trim((string) $option->portal_ts_foldername) !== '') {
+                    $classOptions[$option->ts_folderkey] = $option->portal_ts_foldername;
+                }
                 $allClasses[] = $option->ts_folderkey;
             }
             $this->filters['allClasses'] = array_values(array_unique($allClasses));
