@@ -1817,7 +1817,7 @@ class EmailService
                 'SIGNATURE_HTML' => $this->buildRequestorSignatureHtml($order, $context['franchise']),
                 'ORDER_NUMBER_LINE_HTML' => '',
                 'RECIPIENT_NAME' => e($authUser->name ?: 'there'),
-                'INTRO_TEXT' => 'Thanks for your order. This is a copy of the request we have sent to our print team - please check the details below are correct, and let your Local MSP Photography Expert know if anything needs changing.',
+                'INTRO_TEXT' => 'Thanks for your interest. This is a copy of the request we have sent to our print team - please check the details below are correct, and let your Local MSP Photography Expert know if anything needs changing.',
             ];
             $toName = $authUser->name ?: $toAddress;
             $subject = "Please check your Artwork/Print Request - {$order->order_number}";

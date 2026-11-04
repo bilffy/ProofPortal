@@ -30,3 +30,11 @@ Schedule::command('images:sync-scheduler')
 Schedule::command('images:cleanup-staging --days=3')->daily();
 
 Schedule::command('artwork:cleanup --days=90')->daily();
+
+// Delete sync_errors, synclogs, user_otps and logs rows created over 180 days ago, every 3 days
+// (Laravel has no "every three days" helper, so it is checked daily and runs on every third day of the year).
+Schedule::command('records:cleanup --days=180')
+    ->dailyAt('02:00')
+    ->when(fn () => now()->dayOfYear % 3 === 0)
+    ->name('records_cleanup')
+    ->withoutOverlapping();

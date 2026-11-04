@@ -16,7 +16,7 @@
                     <h5 class="emails-head-title">Proofing - {{ $jobTitle }}</h5>
                     <div class="emails-search-box">
                         <span class="emails-search-icon"><i class="fa fa-search"></i></span>
-                        <input type="search" class="form-control emails-search-input" id="email-filter" aria-label="Keyword search" placeholder="Start typing to filter by to, from, or content..." autocomplete="off">
+                        <input type="search" class="form-control emails-search-input" id="email-filter" aria-label="Keyword search" placeholder="Search..." autocomplete="off">
                         <button type="button" class="emails-search-clear" aria-label="Clear search"
                             onclick="var i = document.getElementById('email-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

@@ -9,6 +9,7 @@ use App\Helpers\RoleHelper;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -17,6 +18,8 @@ use Livewire\Component;
 #[Layout('layouts.guest')]
 class Login extends Component
 {
+    private const MAX_ATTEMPTS = 5;
+
     public $email = '';
     public $password = '';
     public $remember = false;
@@ -51,6 +54,15 @@ class Login extends Component
         // Transfer data to local variables
         $email = $this->email;
         $password = $this->password;
+
+        // Throttle failed logins: 5 attempts per minute per email + IP.
+        $throttleKey = Str::transliterate(Str::lower($email) . '|' . request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
         // Encrypt the user credentials back
         // $this->email = EncryptionHelper::simpleEncrypt($this->email, $this->nonce);
         // $this->password = EncryptionHelper::simpleEncrypt($this->password, $this->nonce);
@@ -60,6 +72,7 @@ class Login extends Component
         if (Auth::validate(['email' => $email, 'password' => $password])) {
             /** @var User $user */
             $user = User::where('email', $email)->firstOrFail();
+            RateLimiter::clear($throttleKey);
             
             // check if user is disabled
             if ($user->disabled) {
@@ -84,6 +97,8 @@ class Login extends Component
                 ->with('msp-user', $email);
         }
         
+        RateLimiter::hit($throttleKey, 60);
+
         throw ValidationException::withMessages([
             'email' => config('app.dialog_config.invalid_login.message'),
         ]);
