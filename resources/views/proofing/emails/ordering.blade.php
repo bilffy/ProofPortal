@@ -116,6 +116,7 @@
                                             {INTRO_TEXT}
                                         </p>
 
+                                        <!--ORDER_DETAILS_START-->
                                         <!-- Order Details -->
                                         <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 18px 0;">
                                             <tr>
@@ -149,6 +150,8 @@
                                             </tr>
                                         </table>
 
+                                        <!--ORDER_DETAILS_END-->
+
                                         <!-- Product Details (what was ordered, plus that product's own fields) -->
                                         <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 18px 0;">
                                             <tr>
@@ -161,6 +164,7 @@
                                             </tr>
                                         </table>
 
+                                        <!--ARTWORK_START-->
                                         <!-- Artwork Details -->
                                         <table role="presentation" aria-hidden="true" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 18px 0;">
                                             <tr>
@@ -184,6 +188,7 @@
                                                 </td>
                                             </tr>
                                         </table>
+                                        <!--ARTWORK_END-->
                                     </td>
                                 </tr>
                                 <!-- <tr>

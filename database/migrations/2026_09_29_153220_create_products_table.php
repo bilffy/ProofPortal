@@ -21,6 +21,8 @@ return new class extends Migration
             // $table->decimal('base_price', 12, 4)->nullable();
             $table->string('sku')->unique()->nullable();
             $table->boolean('is_active')->default(true);
+            // false: the order form has no Artwork section (only expected delivery date + other details)
+            $table->boolean('show_artwork')->default(true);
             $table->timestamps();
         });
     }

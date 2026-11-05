@@ -46,6 +46,29 @@ class Order extends Model
         return $this->hasMany(OrderFieldValue::class);
     }
 
+    /**
+     * Name, email and phone the customer typed into fields pre-filled from
+     * their account (custom_fields.prefill_source). They address the order
+     * emails and override the account's own details.
+     *
+     * @return array<string, string> keyed by prefill_source
+     */
+    public function contactOverrides(): array
+    {
+        $overrides = [];
+
+        foreach ($this->fieldValues as $fieldValue) {
+            $source = $fieldValue->customField?->prefill_source;
+
+            if (in_array($source, ['first_name', 'last_name', 'email', 'phone', 'school_name'], true)
+                && trim((string) $fieldValue->value) !== '') {
+                $overrides[$source] = trim((string) $fieldValue->value);
+            }
+        }
+
+        return $overrides;
+    }
+
     public function artworkFiles()
     {
         return $this->hasMany(OrderArtworkFile::class);

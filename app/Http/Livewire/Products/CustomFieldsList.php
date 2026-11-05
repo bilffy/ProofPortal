@@ -25,6 +25,7 @@ class CustomFieldsList extends Component
     public string $placeholder = '';
     public string $note = '';
     public bool $isRequired = true;
+    public string $prefillSource = ''; // custom_fields.prefill_source
     /** @var array<int, array{option_name: string, option_value: string}> */
     public array $options = [];
 
@@ -49,6 +50,7 @@ class CustomFieldsList extends Component
             'placeholder' => 'nullable|string|max:255',
             'note' => 'nullable|string|max:255',
             'isRequired' => 'boolean',
+            'prefillSource' => 'nullable|in:' . implode(',', array_keys(CustomField::PREFILL_SOURCES)),
         ];
 
         if (in_array($this->type, CustomField::OPTION_TYPES, true)) {
@@ -136,6 +138,7 @@ class CustomFieldsList extends Component
         $this->placeholder = (string) $field->placeholder;
         $this->note = (string) $field->note; // note below the field
         $this->isRequired = (bool) $field->is_required;
+        $this->prefillSource = (string) $field->prefill_source;
         $this->options = $field->fieldOptions->map(fn ($option) => [
             'option_name' => $option->option_name,
             'option_value' => $option->option_value,
@@ -181,6 +184,7 @@ class CustomFieldsList extends Component
             $field->placeholder = $this->placeholder ?: null;
             $field->note = $this->note ?: null;
             $field->is_required = $this->isRequired;
+            $field->prefill_source = in_array($this->type, [CustomField::TYPE_IMAGE], true) ? null : ($this->prefillSource ?: null);
 
             if ($this->type === CustomField::TYPE_IMAGE) {
                 if ($this->image) {
@@ -243,6 +247,7 @@ class CustomFieldsList extends Component
         $this->placeholder = '';
         $this->note = '';
         $this->isRequired = true;
+        $this->prefillSource = '';
         $this->options = [];
         $this->image = null;
         $this->existingImagePath = null;
@@ -255,6 +260,7 @@ class CustomFieldsList extends Component
     {
         return view('livewire.products.custom-fields-list', [
             'typeOptions' => CustomField::TYPES,
+            'prefillOptions' => CustomField::PREFILL_SOURCES,
         ])->layout('layouts.authenticated', [
             'user' => new UserResource(Auth::user()),
         ]);

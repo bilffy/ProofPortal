@@ -73,6 +73,11 @@
                     <input type="checkbox" wire:model="isActive" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="isActive" />
                     <label for="isActive" class="text-sm font-medium text-gray-700">Active (visible on the ordering page)</label>
                 </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" wire:model="showArtwork" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="showArtwork" />
+                    <label for="showArtwork" class="text-sm font-medium text-gray-700">Show the Artwork section on the order form (otherwise only Expected Delivery Date and Any other details? are asked)</label>
+                </div>
             </div>
 
             {{-- Drag-and-drop custom fields: between Active and the Save buttons,

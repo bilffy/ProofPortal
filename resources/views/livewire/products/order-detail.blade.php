@@ -118,9 +118,22 @@
                         <p>No fields were configured for this product at the time of order.</p>
                     </div>
                 @endif
+                @if ($order->product && !$order->product->show_artwork)
+                    <div class="od-columns" style="margin-top: 1rem;">
+                        <div class="od-tile">
+                            <p class="od-info-label">Expected Delivery Date</p>
+                            <p class="od-info-value">{{ $order->artwork_due_date?->format('d/m/Y') ?: '—' }}</p>
+                        </div>
+                        <div class="od-tile">
+                            <p class="od-info-label">Any other details?</p>
+                            <p class="od-info-value" style="white-space: pre-line;">{{ $order->additional_comments ?: '—' }}</p>
+                        </div>
+                    </div>
+                @endif
             </div>
 
-            {{-- Artwork --}}
+            {{-- Artwork (hidden for products without an artwork section) --}}
+            @unless ($order->product && !$order->product->show_artwork)
             <div class="od-card">
                 <h5 class="od-card-title">
                     Artwork
@@ -198,6 +211,7 @@
                     </div>
                 </div>
             </div>
+            @endunless
     </div>
     </div>
 

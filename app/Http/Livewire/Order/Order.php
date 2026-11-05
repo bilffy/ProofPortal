@@ -125,6 +125,39 @@ class Order extends Component
         $this->dispatch('order-scroll-top');
     }
 
+    /**
+     * Whether the selected product's form has the Artwork section. When it
+     * does not, the form ends with an Expected Delivery Date and
+     * "Any other details?" instead (saved in the same order columns).
+     */
+    public function showsArtwork(): bool
+    {
+        $product = collect($this->products)->firstWhere('id', $this->selectedProductId);
+
+        return !$product || $product->show_artwork;
+    }
+
+    /**
+     * Starts fields flagged "prefill from user" with the logged-in user's
+     * details (custom_fields.prefill_source). The customer can still edit them.
+     */
+    private function prefillFieldValues(): void
+    {
+        $user = Auth::user();
+
+        foreach ($this->customFields as $field) {
+            if (!$field->prefill_source) {
+                continue;
+            }
+
+            $value = $field->prefillValueFor($user);
+
+            if ($value !== null) {
+                $this->fieldValues[$field->id] = $value;
+            }
+        }
+    }
+
     public function updatedSelectedProductId(): void
     {
         $this->refreshFieldsForSelectedProduct();
@@ -185,6 +218,11 @@ class Order extends Component
 
         $product = Product::with('customFields.fieldOptions')->find($this->selectedProductId);
         $this->customFields = $product ? $product->customFields : [];
+
+        $this->artworkDueDate = '';
+        $this->additionalComments = '';
+
+        $this->prefillFieldValues();
     }
 
     /**
@@ -213,7 +251,12 @@ class Order extends Component
                 continue;
             }
 
-            if ($field->type === \App\Models\CustomField::TYPE_NUMBER) {
+            if ($field->prefill_source === 'email') {
+                $rules["fieldValues.{$field->id}"] = $requiredRule . '|email|max:255';
+            } elseif ($field->type === \App\Models\CustomField::TYPE_TEL) {
+                // digits with the usual phone punctuation: + ( ) - and spaces
+                $rules["fieldValues.{$field->id}"] = [$requiredRule, 'string', 'max:30', 'regex:/^[+(]?[0-9][0-9\s().-]{5,}$/'];
+            } elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER) {
                 $rules["fieldValues.{$field->id}"] = $requiredRule . '|numeric';
             } elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX) {
                 // A checkbox field lets more than one option be ticked at
@@ -245,7 +288,37 @@ class Order extends Component
             }
         }
 
-        return array_merge($rules, $this->artworkRules());
+        return array_merge($rules, $this->showsArtwork() ? $this->artworkRules() : $this->deliveryRules());
+    }
+
+    /**
+     * Rules for products without an Artwork section: an optional expected
+     * delivery date and optional extra details.
+     *
+     * @return array<string, mixed>
+     */
+    protected function deliveryRules(): array
+    {
+        return [
+            'artworkDueDate' => [
+                'nullable',
+                'date_format:d/m/Y',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    try {
+                        $date = Carbon::createFromFormat('d/m/Y', $value)->startOfDay();
+                    } catch (\Exception $e) {
+                        return;
+                    }
+                    if ($date->lessThanOrEqualTo(Carbon::today())) {
+                        $fail('The expected delivery date must be a date in the future.');
+                    }
+                },
+            ],
+            'additionalComments' => 'nullable|string|max:5000',
+        ];
     }
 
     /**
@@ -299,6 +372,8 @@ class Order extends Component
             'selectedProductId.required' => 'This field is required.',
             'fieldValues.*.required' => 'This field is required.',
             'fieldValues.*.numeric' => 'This field must be a number.',
+            'fieldValues.*.email' => 'Please enter a valid email address.',
+            'fieldValues.*.regex' => 'Please enter a valid phone number.',
             'fieldOtherValues.*.required_if' => 'This field is required.',
             'artworkRequiredId.required' => 'This field is required.',
             'artworkRequiredId.exists' => 'Please choose one of the options above.',
@@ -313,15 +388,19 @@ class Order extends Component
     {
         $this->validate($this->fieldRules());
 
-        $order = DB::transaction(function () use ($statusService) {
+        $showsArtwork = $this->showsArtwork();
+
+        $order = DB::transaction(function () use ($statusService, $showsArtwork) {
             $order = OrderModel::create([
                 'user_id' => Auth::id(),
                 'product_id' => $this->selectedProductId,
                 'order_number' => OrderModel::generateOrderNumber(),
                 'status_id' => $statusService->new,
-                'artwork_required_id' => $this->artworkRequiredId,
-                'artwork_due_date' => Carbon::createFromFormat('d/m/Y', $this->artworkDueDate)->toDateString(),
-                'artwork_brief' => $this->artworkBrief,
+                'artwork_required_id' => $showsArtwork ? $this->artworkRequiredId : null,
+                'artwork_due_date' => $this->artworkDueDate !== ''
+                    ? Carbon::createFromFormat('d/m/Y', $this->artworkDueDate)->toDateString()
+                    : null,
+                'artwork_brief' => $showsArtwork ? $this->artworkBrief : null,
                 'additional_comments' => $this->additionalComments ?: null,
             ]);
 
@@ -388,7 +467,7 @@ class Order extends Component
                 ]);
             }
 
-            foreach ($this->artworkFiles as $file) {
+            foreach ($showsArtwork ? $this->artworkFiles : [] as $file) {
                 $path = $file->store('artwork-uploads', 'public');
 
                 OrderArtworkFile::create([
@@ -403,6 +482,11 @@ class Order extends Component
             return $order;
         });
 
+        $this->finishSubmit($order, $emailService);
+    }
+
+    private function finishSubmit(OrderModel $order, EmailService $emailService): void
+    {
         // Notification email is logged outside the transaction, and
         // failure here is never allowed to undo an order that was
         // otherwise submitted successfully - it's only logged.

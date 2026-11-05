@@ -43,6 +43,20 @@
                     <input type="text" wire:model="note" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
                 </div>
 
+                @if ($type !== \App\Models\CustomField::TYPE_IMAGE)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pre-fill from logged-in user</label>
+                        <select wire:model="prefillSource" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm">
+                            <option value="">Don't pre-fill</option>
+                            @foreach ($prefillOptions as $value => $labelText)
+                                <option value="{{ $value }}">{{ $labelText }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">The customer can still edit it. Name, email and phone fields also address the order emails.</p>
+                        @error('prefillSource') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                    </div>
+                @endif
+
                 <div class="flex items-center gap-2 md:col-span-2">
                     <input type="checkbox" wire:model="isRequired" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="isRequired" />
                     <label for="isRequired" class="text-sm font-medium text-gray-700">Required field</label>

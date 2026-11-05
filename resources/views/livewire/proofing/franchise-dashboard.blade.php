@@ -1064,13 +1064,13 @@
     <div wire:key="fd-metrics-{{ $selectedSeasonId === '' ? 'all' : $selectedSeasonId }}-{{ (int) $showArchived }}{{ (int) $showDeleted }}{{ (int) $showCompleted }}">
     <script type="application/json" id="franchise-dashboard-chart-data">@json($chartPayload)</script>
 
-    <div class="sd-panel fd-box fd-summary-card" x-data="{ open: true }">
+    <div class="sd-panel fd-box fd-summary-card" x-data="{ open: window.fdOverviewOpen ?? true }">
         <div class="sd-panel-head fd-box-head fd-summary-head">
             <h5 class="fd-jobs-title">Overview</h5>
             <button
                 type="button"
                 class="fd-summary-toggle"
-                x-on:click="open = ! open; if (open) { $nextTick(() => window.dispatchEvent(new Event('resize'))); }"
+                x-on:click="open = ! open; window.fdOverviewOpen = open; if (open) { $nextTick(() => window.dispatchEvent(new Event('resize'))); }"
                 x-bind:aria-expanded="open.toString()"
                 x-bind:title="open ? 'Minimise' : 'Expand'"
                 aria-label="Toggle overview"

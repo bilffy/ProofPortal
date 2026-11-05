@@ -13,6 +13,7 @@ class CustomField extends Model
 
     public const TYPE_INPUT = 'input';
     public const TYPE_NUMBER = 'number';
+    public const TYPE_TEL = 'tel';
     public const TYPE_RADIO = 'radio';
     public const TYPE_DROPDOWN = 'dropdown';
     public const TYPE_IMAGE = 'image';
@@ -21,10 +22,24 @@ class CustomField extends Model
     public const TYPES = [
         self::TYPE_INPUT => 'Text Input',
         self::TYPE_NUMBER => 'Number',
+        self::TYPE_TEL => 'Phone Number',
         self::TYPE_RADIO => 'Radio',
         self::TYPE_DROPDOWN => 'Dropdown',
         self::TYPE_IMAGE => 'Image',
         self::TYPE_CHECKBOX => 'Checkbox',
+    ];
+
+    // Logged-in user details a field can be pre-filled with on the order page
+    // (the customer can still edit them). The first_name, last_name, email and
+    // phone sources also address the order emails.
+    public const PREFILL_SOURCES = [
+        'first_name' => 'User first name',
+        'last_name' => 'User last name',
+        'email' => 'User email address',
+        'phone' => 'User phone number',
+        'school_name' => 'User school name',
+        'school_postcode' => 'User school postcode',
+        'role' => 'User role',
     ];
 
     // An option on a radio/dropdown field literally labelled "Other" gets a
@@ -44,6 +59,7 @@ class CustomField extends Model
         'placeholder',
         'note',
         'is_required',
+        'prefill_source',
     ];
 
     protected $casts = [
@@ -77,6 +93,38 @@ class CustomField extends Model
     public function dependents()
     {
         return $this->hasMany(self::class, 'depends_on_field_id');
+    }
+
+    /**
+     * The value this field starts with for the given user, or null. A
+     * choice field only gets it when it matches one of its options.
+     */
+    public function prefillValueFor(User $user): ?string
+    {
+        $school = in_array($this->prefill_source, ['school_name', 'school_postcode'], true) ? $user->getSchool() : null;
+
+        $value = match ($this->prefill_source) {
+            'first_name' => $user->firstname,
+            'last_name' => $user->lastname,
+            'email' => $user->email,
+            'phone' => $user->contact,
+            'school_name' => $school?->name,
+            'school_postcode' => $school?->postcode,
+            'role' => $user->getRole(),
+            default => null,
+        };
+
+        $value = $value === null ? null : trim((string) $value);
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($this->hasOptions() && !$this->fieldOptions->contains('option_value', $value)) {
+            return null;
+        }
+
+        return $value;
     }
 
     public function hasOptions(): bool

@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-row gap-4 max-w-screen-md mb-3">
+            <div class="flex flex-row gap-4 max-w-screen-md mb-8"> {{-- mb-3 --}}
                 <div class="w-full">
                     <x-form.select class="w-full" value="{{ old('role') }}" context="role" :options="$roleOptions" required>User Role</x-form.select>
                     <x-form.input.error errorMessage="{{$roleError}}" />

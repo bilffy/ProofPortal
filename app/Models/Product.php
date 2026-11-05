@@ -21,10 +21,12 @@ class Product extends Model
         // 'base_price',
         'sku',
         'is_active',
+        'show_artwork',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'show_artwork' => 'boolean',
         'sort_order' => 'integer',
         // 'base_price' => 'decimal:4',
     ];

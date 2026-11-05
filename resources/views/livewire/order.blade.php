@@ -85,7 +85,7 @@
                     <button type="button" wire:click="changeProduct" class="text-sm text-primary hover:underline">&larr; Change product</button>
                 </div> --}}
 
-                @if (count($customFields))
+                @if (count($customFields) || !$this->showsArtwork())
                     @php($availableFieldIds = collect($customFields)->pluck('id')->all())
                     <div class="order-box">
                         <div class="order-box-head"><h5 class="order-box-title">Print Specifications</h5></div>
@@ -124,6 +124,8 @@
                                             @endforeach
                                         </select>
                                     </div>
+                                @elseif ($field->type === \App\Models\CustomField::TYPE_TEL)
+                                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
                                     <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
@@ -165,6 +167,33 @@
                                 @error('fieldValues.' . $field->id) <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
                             </div>
                         @endforeach
+                        @unless ($this->showsArtwork())
+                            <div wire:key="delivery-date">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Expected Delivery Date</label>
+                                <div wire:ignore>
+                                    <div class="relative">
+                                        <input
+                                            type="text"
+                                            data-artwork-due-date
+                                            placeholder="DD/MM/YYYY"
+                                            autocomplete="off"
+                                            value="{{ $artworkDueDate }}"
+                                            class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full pr-10 p-2.5"
+                                        />
+                                        <div class="absolute inset-y-0 right-[16px] flex items-center pointer-events-none">
+                                            <span class="fa fa-calendar"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @error('artworkDueDate') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div wire:key="delivery-details">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Any other details?</label>
+                                <textarea wire:model="additionalComments" rows="4" class="yb-textarea bg-white border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
+                                @error('additionalComments') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                            </div>
+                        @endunless
                         </div>
                         </div>
                     </div>
@@ -174,7 +203,8 @@
                     </div>
                 @endif
 
-                {{-- Artwork section - the same on every product's order form --}}
+                {{-- Artwork section - on every product's order form unless the product turns it off --}}
+                @if ($this->showsArtwork())
                 <div class="artwork-section order-box mt-6">
                     <div class="order-box-head"><h5 class="order-box-title">Artwork</h5></div>
                     <div class="order-box-body">
@@ -294,6 +324,7 @@
                     </div>
                     </div>
                 </div>
+                @endif
 
                 <div class="pt-4 flex items-center justify-end gap-3">
                     <x-button.secondary wire:click="cancel" wire:confirm="Cancel this order? Any details you've entered will be lost.">Cancel</x-button.secondary>
@@ -467,6 +498,9 @@
        controls kept to a comfortable width rather than stretching full width. */
     .custom-fields-grid input[type="text"],
     .custom-fields-grid input[type="number"],
+    .custom-fields-grid input[type="tel"],
+    .custom-fields-grid input[type="email"],
+    .custom-fields-grid textarea.yb-textarea,
     .custom-fields-grid select,
     .custom-fields-grid .select2-container,
     .custom-fields-grid > div > div[wire\:ignore] {

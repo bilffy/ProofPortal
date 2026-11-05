@@ -74,9 +74,14 @@
                 @endif
 
                 @if (!$showSchoolSelector && $lockedSchoolName !== '')
-                    <div class="mb-4" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;box-sizing:border-box;width:100%;max-width:100%;padding:10px 14px;overflow:visible;background:#fff;border:none;border-radius:8px;color:#000;">
-                        <span style="flex-shrink:0;font-weight:600;">School Assigned:</span>
-                        <strong class="biu-box-title" style="min-width:0;word-break:break-word;overflow-wrap:anywhere;">{{ $lockedSchoolName }}</strong>
+                    <div class="mb-4">
+                        <div class="rounded-xl border border-neutral-300 p-4" style="background:#fff;">
+                            <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;">
+                                <strong style="font-weight:600;">School assigned :</strong>
+                                <h4 class="biu-box-title mb-0" style="min-width:0;word-break:break-word;overflow-wrap:anywhere;">{{ $lockedSchoolName }}</h4>
+                            </div>
+                            <div style="font-weight:500;margin-top:0.25rem;">Imported users will be assigned to this school.</div>
+                        </div>
                     </div>
                 @endif
 

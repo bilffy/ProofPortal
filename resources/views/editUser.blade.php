@@ -95,7 +95,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-row gap-4 max-w-screen-md mb-4">
+            <div class="flex flex-row gap-4 max-w-screen-md @if ($targetUser->status === \App\Models\User::STATUS_INVITED && $targetUser->send_invitation_with_proofing) mb-4 @else mb-8 @endif">
                 <div class="w-full">
                     <x-form.select class="w-full" value="{{ old('role', $targetUser->getRoleId()) }}" context="role" :options="$roleOptions" required>User Role</x-form.select>
                     <x-form.input.error errorMessage="{{$roleError}}" />

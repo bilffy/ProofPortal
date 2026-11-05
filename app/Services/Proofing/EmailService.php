@@ -1717,8 +1717,12 @@ class EmailService
         $printEml = $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_PRINT, $printEmail, $links[0] ?? null, $sentDate);
 
         // Copy for the submitter so they can check the order is right.
-        $copyEml = filter_var($authUser->email, FILTER_VALIDATE_EMAIL)
-            ? $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_REQUESTOR, $authUser->email, $links[1] ?? null, $sentDate)
+        // Customers can edit the pre-filled name/email on the form; the copy
+        // is addressed to what they entered.
+        $order->loadMissing('fieldValues.customField');
+        $requestorEmail = $order->contactOverrides()['email'] ?? $authUser->email;
+        $copyEml = filter_var($requestorEmail, FILTER_VALIDATE_EMAIL)
+            ? $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_REQUESTOR, $requestorEmail, $links[1] ?? null, $sentDate)
             : null;
 
         $rowDefaults = [
@@ -1731,7 +1735,7 @@ class EmailService
             'status_id' => $this->statusService->pending,
         ];
 
-        return DB::transaction(function () use ($order, $rowDefaults, $authUser, $printEmail, $printEml, $copyEml, $senderAddress) {
+        return DB::transaction(function () use ($order, $rowDefaults, $authUser, $printEmail, $printEml, $copyEml, $senderAddress, $requestorEmail) {
             // Print team
             $printRecord = Email::create($rowDefaults + [
                 'order_id' => $order->id,
@@ -1747,7 +1751,7 @@ class EmailService
                     'order_id' => $order->id,
                     'order_recipient' => Email::ORDER_RECIPIENT_REQUESTOR,
                     'email_from' => $senderAddress,
-                    'email_to' => $authUser->email,
+                    'email_to' => $requestorEmail,
                     'email_content' => $copyEml,
                 ]);
             }
@@ -1773,14 +1777,18 @@ class EmailService
 
         $order->loadMissing(['product', 'fieldValues.customField.fieldOptions', 'artworkRequired', 'artworkFiles']);
 
+        // Contact details the customer edited on the form win over the account's.
+        $contact = $order->contactOverrides();
+        $contactName = trim(($contact['first_name'] ?? '') . ' ' . ($contact['last_name'] ?? ''));
+
         $sharedData = [
             'ORDER_NUMBER' => $order->order_number,
             'PRODUCT_NAME' => $order->product->name ?? '—',
             'FRANCHISE_NAME' => $franchise->name ?? '—',
-            'SCHOOL_NAME' => $school->name ?? '—',
-            'SUBMITTED_BY' => $authUser->name,
-            'SUBMITTED_EMAIL' => $authUser->email,
-            'SUBMITTED_CONTACT' => $authUser->contact ?? '—',
+            'SCHOOL_NAME' => ($contact['school_name'] ?? null) ?: ($school->name ?? '—'),
+            'SUBMITTED_BY' => $contactName !== '' ? $contactName : $authUser->name,
+            'SUBMITTED_EMAIL' => ($contact['email'] ?? null) ?: $authUser->email,
+            'SUBMITTED_CONTACT' => ($contact['phone'] ?? null) ?: ($authUser->contact ?? '—'),
             'ORDER_FIELDS_HTML' => $this->buildOrderFieldsHtml($order),
             'ARTWORK_DETAILS_HTML' => $this->buildOrderArtworkHtml($order),
         ];
@@ -1812,18 +1820,32 @@ class EmailService
             $toName = 'Print Request';
             $subject = "We have received a Artwork/Print Request - {$order->order_number}";
         } else {
+            $contact = $order->contactOverrides();
+            $requestorName = trim(($contact['first_name'] ?? '') . ' ' . ($contact['last_name'] ?? '')) ?: $authUser->name;
             $recipientData = [
                 'HEADING_TEXT' => 'THANK YOU FOR YOUR INTEREST IN MSP PHOTOGRAPHY',
                 'SIGNATURE_HTML' => $this->buildRequestorSignatureHtml($order, $context['franchise']),
                 'ORDER_NUMBER_LINE_HTML' => '',
-                'RECIPIENT_NAME' => e($authUser->name ?: 'there'),
+                'RECIPIENT_NAME' => e($requestorName ?: 'there'),
                 'INTRO_TEXT' => 'Thanks for your interest. This is a copy of the request we have sent to our print team - please check the details below are correct, and let your Local MSP Photography Expert know if anything needs changing.',
             ];
-            $toName = $authUser->name ?: $toAddress;
+            $toName = $requestorName ?: $toAddress;
             $subject = "Please check your Artwork/Print Request - {$order->order_number}";
         }
 
-        $content = $this->replaceTemplateVariables($context['templateContent'], $context['sharedData'] + $recipientData + [
+        $templateContent = $context['templateContent'];
+
+        // Products without an artwork section (e.g. Yearbooks) only show the
+        // Product Details block: no Order Details, Artwork Details or Uploaded Files.
+        if ($order->product && !$order->product->show_artwork) {
+            $templateContent = preg_replace(
+                ['/<!--ORDER_DETAILS_START-->.*?<!--ORDER_DETAILS_END-->/s', '/<!--ARTWORK_START-->.*?<!--ARTWORK_END-->/s'],
+                '',
+                $templateContent
+            ) ?? $templateContent;
+        }
+
+        $content = $this->replaceTemplateVariables($templateContent, $context['sharedData'] + $recipientData + [
             'ARTWORK_DOWNLOAD_BUTTON_HTML' => $this->buildOrderDownloadButtonHtml($order, $downloadUrl),
         ]);
 
@@ -1954,9 +1976,20 @@ class EmailService
         $rows = $this->orderDetailRow('Product Required', e($order->product->name ?? '—'));
 
         foreach ($order->fieldValues as $fieldValue) {
+            if (!$fieldValue->customField) {
+                continue; // field was deleted after the order
+            }
+
             $label = e($fieldValue->customField->label ?? 'Field');
             $value = nl2br(e($this->orderFieldDisplayValue($fieldValue) ?? '—'));
             $rows .= $this->orderDetailRow($label, $value);
+        }
+
+        if ($order->product && !$order->product->show_artwork) {
+            // No artwork section for this product: its delivery date and extra
+            // details are part of Product Details.
+            $rows .= $this->orderDetailRow('Expected Delivery Date', e($order->artwork_due_date?->format('d/m/Y') ?: '—'));
+            $rows .= $this->orderDetailRow('Any other details?', nl2br(e($order->additional_comments ?: '—')));
         }
 
         return '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; table-layout: fixed;">' . $rows . '</table>';
@@ -1990,6 +2023,7 @@ class EmailService
     protected function buildOrderArtworkHtml(OrderModel $order): string
     {
         $rows = '';
+
         $rows .= $this->orderDetailRow('Artwork Required?', e($order->artworkRequired->details ?? '—'));
         $rows .= $this->orderDetailRow('Due Date', e($order->artwork_due_date?->format('d/m/Y') ?: '—'));
         $rows .= $this->orderDetailRow('Additional Comments', nl2br(e($order->additional_comments ?: '—')));

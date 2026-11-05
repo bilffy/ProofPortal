@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string('placeholder')->nullable();
             $table->string('note')->nullable();
             $table->boolean('is_required')->default(true);
+            // Logged-in user detail that pre-fills the field on the order page (first_name, last_name, email, phone, school_name, school_postcode, role)
+            $table->string('prefill_source', 30)->nullable();
             $table->timestamps();
         });
     }

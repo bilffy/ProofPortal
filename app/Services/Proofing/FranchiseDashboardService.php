@@ -152,7 +152,7 @@ class FranchiseDashboardService
         $syncId = (int) $this->statusService->sync;
 
         // "Your Proofing Jobs" tile: show_proofing = 1 (from proofingJobsQuery), status
-        // not Archived/Deleted/Completed, and proof_start already in the past.
+        // not Archived/Deleted/Completed, and proof_start before today (jobs starting today are not counted).
         $excludedProofingStatusIds = array_values(array_filter([$archivedId, (int) $this->statusService->deleted, $completedId]));
 
         $validSchoolIds = array_flip($schoolIds);
@@ -221,7 +221,7 @@ class FranchiseDashboardService
 
             if (!in_array($statusId, $excludedProofingStatusIds, true)
                 && $job->proof_start !== null
-                && \Carbon\Carbon::parse($job->proof_start)->isPast()) {
+                && \Carbon\Carbon::parse($job->proof_start)->startOfDay()->lt(today())) {
                 $metrics['active_proofing'] += $count;
             }
 
