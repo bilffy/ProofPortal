@@ -87,6 +87,7 @@
     }
     .emails-filter-head .emails-search-box {
         position: relative;
+        height: 36px;
     }
     .emails-filter-head .emails-search-icon {
         position: absolute;
@@ -99,7 +100,8 @@
         pointer-events: none;
     }
     .emails-filter-head .emails-search-input {
-        height: 2.5rem;
+        width: 216px;
+        height: 36px;
         padding: 0 2.5rem;
         border: 0;
         border-radius: 0.5rem;
@@ -195,7 +197,6 @@
         color: #000;
     }
     .emails-filter-head .emails-search-box {
-        width: 100%;
-        max-width: 28rem;
+        width: 216px;
         margin-left: auto;
     }

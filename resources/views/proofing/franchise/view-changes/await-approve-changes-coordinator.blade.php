@@ -44,7 +44,7 @@
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-header">
-                            <i class="fa fa-align-justify"></i> {{ __('Changes to School Name') }}
+                            <i class="fa fa-align-justify"></i> {{ __('Verify School Name') }}
                         </div>
                         <div class="card-body">
                             @if (count($subjectChanges) === 0)

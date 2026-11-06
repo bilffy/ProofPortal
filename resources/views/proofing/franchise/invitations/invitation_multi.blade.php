@@ -43,6 +43,9 @@
                             @endif
                             Invitations are only sent to users who already belong to this school and have the {{ $title }} role.
                         </p>
+                        @unless($showFolder)
+                            <span class="d-inline-block px-3 py-2" style="background:#e1effe;color:#1e429f;border-radius:0.5rem;">All folders will be assigned to the user for proofing.</span>
+                        @endunless
                         <div id="invite-validation" class="alert alert-warning mt-3 d-none" role="alert"></div>
                     </div>
                     

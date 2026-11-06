@@ -38,8 +38,8 @@
     }
     #emailsCategoryTabsContent .emails-search-box {
         position: relative;
-        width: 100%;
-        max-width: 28rem;
+        width: 216px;
+        height: 36px;
         font-size: 0.875rem;
         font-weight: 400;
     }
@@ -55,13 +55,15 @@
     }
     #emailsCategoryTabsContent .emails-search-input {
         display: block;
-        width: 100%;
-        padding: 0.5rem 2.5rem;
+        width: 216px;
+        height: 36px;
+        padding: 0 2.25rem;
         border: 0;
         border-radius: 0.5rem;
         background: #fff;
         color: #111827;
         font-size: 0.875rem;
+        line-height: 36px;
         box-sizing: border-box;
     }
     #emailsCategoryTabsContent .emails-search-input:focus {
@@ -135,6 +137,13 @@
         text-align: left;
         vertical-align: middle;
     }
+    #emailsCategoryTabsContent .emails-table thead th.emails-sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+    #emailsCategoryTabsContent .emails-table thead th.emails-sortable .emails-sort-icon {
+        margin-right: 0.5rem;
+    }
     #emailsCategoryTabsContent .emails-table thead th.text-center {
         text-align: center;
     }
@@ -185,8 +194,8 @@
                                 <table class="table emails-table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">{{ __('School') }}</th>
-                                            <th scope="col">{{ __('Job') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="job">{{ __('Job') }}</th>
                                             <th scope="col" class="text-center">{{ __('Select') }}</th>
                                         </tr>
                                     </thead>
@@ -199,7 +208,7 @@
                                                 $encryptedTsJobId = Crypt::encryptString($job->ts_job_id);
                                                 $choiceName = strtolower(trim($title . ' ' . ($job->school_name ?? '')));
                                             @endphp
-                                            <tr class="choice" data-choice-name="{{ $choiceName }}">
+                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-sort-school="{{ strtolower($job->school_name ?? '') }}" data-sort-job="{{ strtolower($title) }}">
                                                 <td class="align-middle">{{ $job->school_name ?? '—' }}</td>
                                                 <td class="align-middle">{{ $title }}</td>
                                                 <td class="align-middle text-center">
@@ -240,7 +249,7 @@
                                 <table class="table emails-table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">{{ __('School') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School') }}</th>
                                             <th scope="col" class="text-center">{{ __('Select') }}</th>
                                         </tr>
                                     </thead>
@@ -249,7 +258,7 @@
                                             @php
                                                 $encryptedSchoolId = Crypt::encryptString($school->id);
                                             @endphp
-                                            <tr class="invitation-choice" data-choice-name="{{ strtolower($school->name) }}">
+                                            <tr class="invitation-choice" data-choice-name="{{ strtolower($school->name) }}" data-sort-school="{{ strtolower($school->name) }}">
                                                 <td class="align-middle">{{ $school->name }}</td>
                                                 <td class="align-middle text-center">
                                                     <a href="{{ route('emails.invitations.show', ['schoolId' => $encryptedSchoolId]) }}" class="btn btn-link">
@@ -288,7 +297,7 @@
                                 <table class="table emails-table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">{{ __('School') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School') }}</th>
                                             <th scope="col" class="text-center">{{ __('Select') }}</th>
                                         </tr>
                                     </thead>
@@ -297,7 +306,7 @@
                                             @php
                                                 $encryptedSchoolId = Crypt::encryptString($school->id);
                                             @endphp
-                                            <tr class="ordering-choice" data-choice-name="{{ strtolower($school->name) }}">
+                                            <tr class="ordering-choice" data-choice-name="{{ strtolower($school->name) }}" data-sort-school="{{ strtolower($school->name) }}">
                                                 <td class="align-middle">{{ $school->name }}</td>
                                                 <td class="align-middle text-center">
                                                     <a href="{{ route('emails.ordering.show', ['schoolId' => $encryptedSchoolId]) }}" class="btn btn-link">
@@ -334,6 +343,44 @@ $(document).ready(function () {
         const perPage = options.perPage || 10;
 
         let currentPage = 1;
+
+        // Click a sortable header to sort the rows (asc, then desc), like /school: an
+        // up / down arrow shows beside the active column; it loads sorted by School ascending. Rows are reordered in the DOM,
+        // so filtering and paging keep working on the new order.
+        const $table = $(rowSelector).first().closest('table');
+        let sortKey = null;
+        let sortDir = 'asc';
+
+        function applySort(key, dir) {
+            sortKey = key;
+            sortDir = dir;
+
+            const $tbody = $table.find('tbody');
+            const rows = $(rowSelector).get().sort(function (x, y) {
+                const xv = ($(x).attr('data-sort-' + key) || '').toString();
+                const yv = ($(y).attr('data-sort-' + key) || '').toString();
+                const cmp = xv.localeCompare(yv, undefined, { numeric: true, sensitivity: 'base' });
+                return dir === 'asc' ? cmp : -cmp;
+            });
+            $tbody.append(rows);
+
+            $table.find('.emails-sort-icon').remove();
+            $table.find('th.emails-sortable').filter(function () {
+                return $(this).data('sort-key') === key;
+            }).prepend('<i class="fa fa-arrow-' + (dir === 'asc' ? 'up' : 'down') + ' fa-sm emails-sort-icon"></i>');
+        }
+
+        $table.find('th.emails-sortable').on('click', function () {
+            const key = $(this).data('sort-key');
+            applySort(key, (sortKey === key && sortDir === 'asc') ? 'desc' : 'asc');
+            currentPage = 1;
+            render();
+        });
+
+        // Initial order: School ascending, arrow up.
+        if ($table.find('th.emails-sortable[data-sort-key="school"]').length) {
+            applySort('school', 'asc');
+        }
 
         function matchingRows() {
             const filterByTextOriginal = $(filterInputSelector).val() || '';

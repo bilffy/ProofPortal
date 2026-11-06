@@ -270,7 +270,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Upload</label>
 
                             <label for="artwork-upload-input" class="artwork-dropzone" data-artwork-dropzone>
-                                <span class="text-sm text-gray-600 mt-1">Drag &amp; drop files here, or click to browse</span>
+                                <span class="text-sm text-gray-600 mt-1" data-dz-title data-dz-default="Drag &amp; drop files here, or click to browse" data-dz-active="Drop your file to import">Drag &amp; drop files here, or click to browse</span>
                                 <span class="text-xs text-gray-400 mt-1">Images, PDF, or Word documents up to 15MB per file</span>
                                 <input
                                     type="file"
@@ -351,20 +351,18 @@
         justify-content: center;
         text-align: center;
         padding: 1.25rem;
+        min-height: 12rem;
         border: 2px dashed #cbd5e1;
         border-radius: 0.5rem;
         background-color: #f9fafb;
         cursor: pointer;
         transition: border-color 0.15s ease, background-color 0.15s ease;
     }
-    /* 
-
-    */
-    /* .artwork-dropzone:hover,
+    /* Same drag-over look as the /users/bulk-invite dropzone */
     .artwork-dropzone.is-dragover {
-        border-color: #b5d334;
-        background-color: #f7faec;
-    } */
+        border-color: #005890;
+        background-color: #B9E4FF;
+    }
     .artwork-file-list {
         list-style: none;
         padding: 0;
@@ -761,23 +759,43 @@
                 return;
             }
 
-            ['dragenter', 'dragover'].forEach(function (evt) {
-                zone.addEventListener(evt, function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    zone.classList.add('is-dragover');
-                });
+            var title = zone.querySelector('[data-dz-title]');
+            var depth = 0;
+
+            function setDragging(on) {
+                zone.classList.toggle('is-dragover', on);
+                if (title) {
+                    title.textContent = on ? title.getAttribute('data-dz-active') : title.getAttribute('data-dz-default');
+                }
+            }
+
+            zone.addEventListener('dragenter', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                depth++;
+                setDragging(true);
             });
 
-            ['dragleave', 'drop'].forEach(function (evt) {
-                zone.addEventListener(evt, function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    zone.classList.remove('is-dragover');
-                });
+            zone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragging(true);
+            });
+
+            zone.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                depth = Math.max(0, depth - 1);
+                if (depth === 0) {
+                    setDragging(false);
+                }
             });
 
             zone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                depth = 0;
+                setDragging(false);
                 var files = e.dataTransfer && e.dataTransfer.files;
                 if (!files || !files.length) {
                     return;

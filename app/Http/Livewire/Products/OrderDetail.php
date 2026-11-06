@@ -49,7 +49,8 @@ class OrderDetail extends Component
     /**
      * The order's print-team and requestor emails, keyed by recipient. A key
      * is null when that email was never raised (e.g. the order predates email
-     * logging, or PRINT_REQUEST_EMAIL was unset at the time).
+     * logging, or the product had no print request email at the time). With
+     * several print addresses, the latest print email is the one shown.
      *
      * @return array{print: ?Email, requestor: ?Email}
      */

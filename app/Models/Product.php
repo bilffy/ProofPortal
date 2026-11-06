@@ -22,11 +22,16 @@ class Product extends Model
         'sku',
         'is_active',
         'show_artwork',
+        'print_request_email',
+        'print_to_franchise',
+        'show_in_emails',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'show_artwork' => 'boolean',
+        'show_in_emails' => 'boolean',
+        'print_to_franchise' => 'boolean',
         'sort_order' => 'integer',
         // 'base_price' => 'decimal:4',
     ];
@@ -43,6 +48,33 @@ class Product extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Splits a "a@x.com, b@y.com" style value (commas, semicolons, spaces or
+     * new lines) into a unique list of trimmed addresses. Invalid ones are
+     * kept so validation can report them.
+     *
+     * @return string[]
+     */
+    public static function splitEmails(?string $value): array
+    {
+        $parts = preg_split('/[\s,;]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_values(array_unique($parts));
+    }
+
+    /**
+     * The valid addresses the print team's request email goes to.
+     *
+     * @return string[]
+     */
+    public function printRequestEmails(): array
+    {
+        return array_values(array_filter(
+            self::splitEmails($this->print_request_email),
+            fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+        ));
     }
 
     public static function generateUniqueSlug(string $name, ?int $ignoreId = null): string

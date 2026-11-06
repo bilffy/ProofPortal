@@ -50,6 +50,17 @@
                     <textarea wire:model="description" rows="3" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
                 </div>
 
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Print Request Email(s)</label>
+                    <textarea wire:model="printRequestEmail" rows="2" placeholder="print@msp.com.au, marketing@msp.com.au" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm"></textarea>
+                    <p class="mt-1 text-xs text-neutral">Who receives this product's Artwork/Print request email. Separate several addresses with commas.</p>
+                    @error('printRequestEmail') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                    <div class="mt-2 flex items-center gap-2">
+                        <input type="checkbox" wire:model="printToFranchise" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="printToFranchise" />
+                        <label for="printToFranchise" class="text-sm font-medium text-gray-700">Also send it to the email of the submitting user's franchise</label>
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
                     <input type="number" step="1" min="0" wire:model="sortOrder" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
@@ -77,6 +88,11 @@
                 <div class="flex items-center gap-2">
                     <input type="checkbox" wire:model="showArtwork" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="showArtwork" />
                     <label for="showArtwork" class="text-sm font-medium text-gray-700">Show the Artwork section on the order form (otherwise only Expected Delivery Date and Any other details? are asked)</label>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" wire:model="showInEmails" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="showInEmails" />
+                    <label for="showInEmails" class="text-sm font-medium text-gray-700">Show this product's order emails on the Emails &gt; Promotional Materials page</label>
                 </div>
             </div>
 

@@ -41,12 +41,13 @@
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-header">
-                            <i class="fa fa-align-justify"></i> {{ __('Changes to School Name') }}
+                            <i class="fa fa-align-justify"></i> {{ __('Verify School Name') }}
                         </div>
                         <div class="card-body">
                             <table class="table table-bordered table-striped table-sm">
                                 <thead>
                                     <tr>
+                                        <th scope="col">School Name</th>
                                         <th scope="col">Issue Type</th>
                                         <th scope="col">Note</th>
                                         <th scope="col">Change Requested</th>
@@ -56,6 +57,7 @@
                                 <tbody>
                                     @foreach($schoolNameChange as $change)
                                     <tr>
+                                        <td>{{ $change->change_from }}</td>
                                         <td>{{ $change->external_issue_name }}</td>
                                         <td>{{ $change->notes }}</td>
                                         <td>{{ $change->change_datetime ? \Carbon\Carbon::parse($change->change_datetime)->format('Y-m-d H:i:s') : '' }}</td>

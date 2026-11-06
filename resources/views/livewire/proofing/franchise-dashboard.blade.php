@@ -477,8 +477,8 @@
 
     .fd-jobs-search-box {
         position: relative;
-        width: 100%;
-        max-width: 28rem;
+        width: 216px;
+        height: 36px;
     }
 
     .fd-jobs-search-icon {
@@ -494,13 +494,15 @@
 
     .fd-jobs-search-input {
         display: block;
-        width: 100%;
-        padding: 0.5rem 2.5rem;
+        width: 216px;
+        height: 36px;
+        padding: 0 2.25rem;
         border: 0;
         border-radius: 0.5rem;
         background: #ffffff;
         color: #111827;
         font-size: 0.875rem;
+        line-height: 36px;
         box-sizing: border-box;
     }
 

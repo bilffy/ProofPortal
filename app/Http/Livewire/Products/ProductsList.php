@@ -30,6 +30,9 @@ class ProductsList extends Component
     public $basePrice = '';
     public bool $isActive = true;
     public bool $showArtwork = true;
+    public string $printRequestEmail = '';
+    public bool $showInEmails = true;
+    public bool $printToFranchise = false;
     public $sortOrder = 0;
     public $image = null; // new upload, if any
     public ?string $existingImagePath = null;
@@ -55,6 +58,16 @@ class ProductsList extends Component
             'basePrice' => 'nullable|numeric|min:0',
             'isActive' => 'boolean',
             'showArtwork' => 'boolean',
+            'showInEmails' => 'boolean',
+            'printToFranchise' => 'boolean',
+            'printRequestEmail' => ['nullable', 'string', 'max:1000', function ($attribute, $value, $fail) {
+                foreach (Product::splitEmails($value) as $email) {
+                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $fail("\"{$email}\" is not a valid email address.");
+                        return;
+                    }
+                }
+            }],
             'sortOrder' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:5120',
             'assignedFieldIds' => 'array',
@@ -111,6 +124,9 @@ class ProductsList extends Component
         // $this->basePrice = $product->base_price !== null ? (string) $product->base_price : '';
         $this->isActive = (bool) $product->is_active;
         $this->showArtwork = (bool) $product->show_artwork;
+        $this->printRequestEmail = implode(', ', Product::splitEmails($product->print_request_email));
+        $this->showInEmails = (bool) $product->show_in_emails;
+        $this->printToFranchise = (bool) $product->print_to_franchise;
         $this->sortOrder = (int) $product->sort_order;
         $this->existingImagePath = $product->image;
         $this->image = null;
@@ -137,6 +153,9 @@ class ProductsList extends Component
         // $product->base_price = $this->basePrice !== '' ? $this->basePrice : null;
         $product->is_active = $this->isActive;
         $product->show_artwork = $this->showArtwork;
+        $product->print_request_email = implode(', ', Product::splitEmails($this->printRequestEmail)) ?: null;
+        $product->show_in_emails = $this->showInEmails;
+        $product->print_to_franchise = $this->printToFranchise;
         $product->sort_order = $this->sortOrder !== '' ? (int) $this->sortOrder : 0;
 
         if ($this->image) {
@@ -192,6 +211,9 @@ class ProductsList extends Component
         $this->basePrice = '';
         $this->isActive = true;
         $this->showArtwork = true;
+        $this->printRequestEmail = '';
+        $this->showInEmails = true;
+        $this->printToFranchise = false;
         $this->sortOrder = 0;
         $this->image = null;
         $this->existingImagePath = null;

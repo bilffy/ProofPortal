@@ -31,6 +31,7 @@ class FilenameFormat extends Model
         'format_key',
         'visibility',
         'visibility_options',
+        'validation_check',
     ];
 
     /**
@@ -41,5 +42,6 @@ class FilenameFormat extends Model
     protected $casts = [
         'visibility' => 'array',
         'visibility_options' => 'array',
+        'validation_check' => 'boolean',
     ];
 }

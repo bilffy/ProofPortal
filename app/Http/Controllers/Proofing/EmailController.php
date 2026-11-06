@@ -18,6 +18,7 @@ use App\Services\Proofing\StatusService;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -44,7 +45,7 @@ class EmailController extends Controller
         }
 
         $user = Auth::user();
-        $jobs = $this->reportRepository->getSchoolsIds();
+        $jobs = $this->franchiseJobs();
         $seasonList = Season::orderBy('code', 'asc')->pluck('code', 'ts_season_id')->toArray();
 
         // Prefer school_id (schools.id) when the job has one; ts_schoolkey is a
@@ -361,9 +362,51 @@ class EmailController extends Controller
         );
     }
 
+    /**
+     * Synced proofing jobs (show_proofing = 1, not archived / deleted / not
+     * found) of the Franchise user's franchise, matched on
+     * jobs.ts_account_id = franchises.ts_account_id, not just the jobs
+     * assigned to that user. Other users keep the jobs assigned to them.
+     */
+    protected function franchiseJobs(): Collection
+    {
+        $user = Auth::user();
+        $franchise = $user?->isFranchiseLevel() ? $user->getFranchise() : null;
+
+        if (!$franchise) {
+            return $this->reportRepository->getSchoolsIds();
+        }
+
+        if ($franchise->ts_account_id === null) {
+            return collect();
+        }
+
+        return Job::query()
+            ->join('status', 'status.id', '=', 'jobs.jobsync_status_id')
+            ->where('jobs.ts_account_id', $franchise->ts_account_id)
+            ->where('jobs.show_proofing', 1)
+            ->where('jobs.jobsync_status_id', $this->statusService->sync)
+            ->whereNotIn('jobs.job_status_id', [
+                $this->statusService->archived,
+                $this->statusService->tnjNotFound,
+                $this->statusService->deleted,
+            ])
+            ->select(
+                'jobs.id',
+                'jobs.ts_job_id',
+                'jobs.ts_jobname',
+                'jobs.ts_season_id',
+                'jobs.school_id',
+                'jobs.ts_schoolkey',
+                'status.status_external_name as sync_status'
+            )
+            ->orderBy('jobs.ts_jobname', 'asc')
+            ->get();
+    }
+
     protected function resolveAccessibleJob(int $tsJobId): ?Job
     {
-        $accessibleIds = $this->reportRepository->getSchoolsIds()->pluck('ts_job_id')->map(fn ($id) => (int) $id);
+        $accessibleIds = $this->franchiseJobs()->pluck('ts_job_id')->map(fn ($id) => (int) $id);
 
         if (!$accessibleIds->contains($tsJobId)) {
             return null;
@@ -537,6 +580,7 @@ class EmailController extends Controller
         }
 
         $schoolIdsWithOrders = Email::where('order_recipient', Email::ORDER_RECIPIENT_REQUESTOR)
+            ->whereHas('order.product', fn ($q) => $q->where('show_in_emails', true))
             ->whereNotNull('school_id')
             ->distinct()
             ->pluck('school_id');
@@ -555,6 +599,7 @@ class EmailController extends Controller
         return Email::query()
             ->with(['status', 'template', 'order'])
             ->where('order_recipient', Email::ORDER_RECIPIENT_REQUESTOR)
+            ->whereHas('order.product', fn ($q) => $q->where('show_in_emails', true))
             ->where('school_id', $school->id);
     }
 

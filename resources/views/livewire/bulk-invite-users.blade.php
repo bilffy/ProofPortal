@@ -2,10 +2,12 @@
     <div class="py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h3 class="text-2xl">Bulk Invite</h3>
-            <p class="text-sm text-neutral mt-1">
-                Import from CSV or Excel, 
-                @if ($showSchoolSelector && $lockedSchoolName === '') assign a school, @endif
-                then send invitations.
+            <p class="text-sm text-xs mt-1">
+                @if ($showSchoolSelector && $lockedSchoolName === '') 
+                    Assign the school, upload the user details, and then send the invitations.
+                @else
+                    Upload the user details, and then send the invitations.
+                @endif
             </p>
         </div>
         <!-- <button
@@ -39,12 +41,12 @@
         @endif
 
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch biu-upload-import-grid">
-        {{-- Upload spreadsheet --}}
+        {{-- Upload users --}}
         <section class="biu-box flex flex-col">
             <div class="biu-box-head">
                 <h4 class="biu-box-title flex items-center gap-2">
                     <i class="fa fa-upload"></i>
-                    Upload spreadsheet
+                    Upload Users
                 </h4>
             </div>
             <div class="biu-box-body flex-1 flex flex-col">
@@ -54,7 +56,7 @@
                         <div class="rounded-xl border border-neutral-300 p-4" style="background:#fff;">
                             <div class="mb-4">
                                 <h4 class="biu-box-title mb-0.5">Assign school</h4>
-                                <p class="mt-5 text-xs mb-0">Select the school associated with your franchise to assign all invited users.</p>
+                                <p class="mt-5 text-xs mb-0">Select the school the users are to be invited to.</p>
                             </div>
                             <div class="max-w-xl">
                                 <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-gray-800">
@@ -92,7 +94,7 @@
                         class="bulk-invite-format-row"
                         style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;max-width:100%;font-size:14px;line-height:1.4;color:#273444;"
                     >
-                        <span style="color:#6F6F6E;">Column Format:</span>
+                        <span>Upload user details:</span>
                         <span class="bulk-invite-format-code" style="display:inline-block;box-sizing:border-box;max-width:100%;padding:4px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.45;color:#111827;background:#ffffff;border-radius:6px;overflow-wrap:anywhere;word-break:break-word;">firstname, lastname, email address, user role</span>
                     </div>
 
@@ -170,11 +172,11 @@
         {{-- Imported users --}}
         <section class="biu-box flex flex-col">
             <div class="biu-box-head flex items-center justify-between gap-3 flex-shrink-0">
-                <h4 class="biu-box-title">Imported users</h4>
+                <h4 class="biu-box-title">User Invitation Details</h4>
                 <span
                     class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold"
                 >
-                    {{ count($rows) }} {{ count($rows) === 1 ? 'user' : 'users' }} imported
+                    {{ count($rows) }} Uploaded {{ count($rows) === 1 ? 'user' : 'users' }}
                 </span>
             </div>
 
@@ -190,8 +192,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                     </div> -->
-                    <p style="margin:0 0 4px;font-size:14px;font-weight:600;line-height:1.4;color:#273444;">No users imported yet</p>
-                    <p style="margin:0;font-size:12px;line-height:1.4;color:#6F6F6E;">Upload a spreadsheet to preview and edit users here before sending invitations.</p>
+                    <p style="margin:0;font-size:12px;line-height:1.4;">After uploading the user details spreadsheet, you can preview the user details here.</p>
                 </div>
             @else
                 <div id="biu-imported-users-panel" class="w-full">
@@ -397,7 +398,6 @@
             border-top: 1px solid #c2cfd6;
         }
 
-        /* Same look as the /order artwork dropzone. */
         .biu-dropzone {
             display: flex;
             flex-direction: column;
@@ -405,6 +405,7 @@
             justify-content: center;
             text-align: center;
             padding: 1.25rem;
+            min-height: 12rem;
             border: 2px dashed #cbd5e1;
             border-radius: 0.5rem;
             background-color: #f9fafb;

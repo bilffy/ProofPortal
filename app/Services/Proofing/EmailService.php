@@ -15,6 +15,7 @@ use App\Models\Email;
 use App\Models\User;
 use App\Models\Job;
 use App\Models\Order as OrderModel;
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -1669,11 +1670,13 @@ class EmailService
     }
 
     /**
-     * Logs the order notification as pending Email rows: one to the print
-     * team (PRINT_REQUEST_EMAIL) and one copy to the person who submitted
-     * the order, so they can check what they sent is right.
+     * Logs the order notification as pending Email rows: one per print team
+     * address on the product (products.print_request_email, falling back to
+     * PRINT_REQUEST_EMAIL when the product has none) and one copy to the
+     * person who submitted the order, so they can check what they sent is right.
      *
-     * Each recipient gets its own greeting/intro and its own single-use
+     * Each recipient (every print address and the submitter) gets its own
+     * greeting/intro and its own single-use
      * download link (the file-transfer links allow one download each, so
      * sharing one link would let the first person to click kill it for the
      * other). Both rows are written in one transaction.
@@ -1682,11 +1685,31 @@ class EmailService
      */
     public function logOrderEmail(OrderModel $order, User $authUser): ?Email
     {
-        $printEmail = trim((string) config('services.print_request_email'));
+        $order->loadMissing('product');
+        $printEmails = $order->product?->printRequestEmails() ?? [];
 
-        if ($printEmail === '') {
-            Log::warning('PRINT_REQUEST_EMAIL is not configured - skipping order notification email.', [
+        // Some products also go to the email of the submitting user's franchise.
+        if ($order->product?->print_to_franchise) {
+            $franchiseEmail = trim((string) ($authUser->getFranchise()?->email ?? ''));
+
+            if (filter_var($franchiseEmail, FILTER_VALIDATE_EMAIL)) {
+                $printEmails[] = $franchiseEmail;
+                $printEmails = array_values(array_unique($printEmails));
+            }
+        }
+
+        // Products without their own print address keep using the global one.
+        if (empty($printEmails)) {
+            $printEmails = array_values(array_filter(
+                Product::splitEmails((string) config('services.print_request_email')),
+                fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+            ));
+        }
+
+        if (empty($printEmails)) {
+            Log::warning('No print request email is set for this product (and PRINT_REQUEST_EMAIL is not configured) - skipping order notification email.', [
                 'order_id' => $order->id,
+                'product_id' => $order->product_id,
             ]);
 
             return null;
@@ -1706,15 +1729,18 @@ class EmailService
         $school = $context['school'];
         $franchise = $context['franchise'];
 
-        // Zip + upload once, one link per recipient (print team, sender).
+        // Zip + upload once, one link per recipient (each print address, then the sender).
         $links = $order->artworkFiles->isEmpty()
             ? []
-            : $this->fileTransferService->uploadOrderArtworkLinks($order, 2);
+            : $this->fileTransferService->uploadOrderArtworkLinks($order, count($printEmails) + 1);
 
         $sentDate = now();
         $senderAddress = trim((string) config('mail.from.address')) ?: 'noreply@msp.com.au';
 
-        $printEml = $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_PRINT, $printEmail, $links[0] ?? null, $sentDate);
+        $printEmls = [];
+        foreach ($printEmails as $index => $printEmail) {
+            $printEmls[$printEmail] = $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_PRINT, $printEmail, $links[$index] ?? null, $sentDate);
+        }
 
         // Copy for the submitter so they can check the order is right.
         // Customers can edit the pre-filled name/email on the form; the copy
@@ -1722,7 +1748,7 @@ class EmailService
         $order->loadMissing('fieldValues.customField');
         $requestorEmail = $order->contactOverrides()['email'] ?? $authUser->email;
         $copyEml = filter_var($requestorEmail, FILTER_VALIDATE_EMAIL)
-            ? $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_REQUESTOR, $requestorEmail, $links[1] ?? null, $sentDate)
+            ? $this->buildOrderEml($context, $order, $authUser, Email::ORDER_RECIPIENT_REQUESTOR, $requestorEmail, $links[count($printEmails)] ?? null, $sentDate)
             : null;
 
         $rowDefaults = [
@@ -1735,15 +1761,19 @@ class EmailService
             'status_id' => $this->statusService->pending,
         ];
 
-        return DB::transaction(function () use ($order, $rowDefaults, $authUser, $printEmail, $printEml, $copyEml, $senderAddress, $requestorEmail) {
-            // Print team
-            $printRecord = Email::create($rowDefaults + [
-                'order_id' => $order->id,
-                'order_recipient' => Email::ORDER_RECIPIENT_PRINT,
-                'email_from' => $authUser->email,
-                'email_to' => $printEmail,
-                'email_content' => $printEml,
-            ]);
+        return DB::transaction(function () use ($order, $rowDefaults, $authUser, $printEmls, $copyEml, $senderAddress, $requestorEmail) {
+            // Print team: one row per address
+            $printRecord = null;
+            foreach ($printEmls as $printEmail => $printEml) {
+                $record = Email::create($rowDefaults + [
+                    'order_id' => $order->id,
+                    'order_recipient' => Email::ORDER_RECIPIENT_PRINT,
+                    'email_from' => $authUser->email,
+                    'email_to' => $printEmail,
+                    'email_content' => $printEml,
+                ]);
+                $printRecord ??= $record;
+            }
 
             // Submitter's copy
             if ($copyEml !== null) {
@@ -1811,14 +1841,14 @@ class EmailService
     {
         if ($recipient === Email::ORDER_RECIPIENT_PRINT) {
             $recipientData = [
-                'HEADING_TEXT' => 'Artwork/Print Request',
+                'HEADING_TEXT' => 'Print Request',
                 'SIGNATURE_HTML' => $this->buildPrintTeamSignatureHtml($order),
                 'ORDER_NUMBER_LINE_HTML' => $this->buildOrderNumberLineHtml($order),
-                'RECIPIENT_NAME' => 'Printing Team',
-                'INTRO_TEXT' => 'Please find the request received for Artwork/Print below.',
+                'RECIPIENT_NAME' => 'Team',
+                'INTRO_TEXT' => 'Please find the request received for Print below.',
             ];
             $toName = 'Print Request';
-            $subject = "We have received a Artwork/Print Request - {$order->order_number}";
+            $subject = "We have received a Print Request - {$order->order_number}";
         } else {
             $contact = $order->contactOverrides();
             $requestorName = trim(($contact['first_name'] ?? '') . ' ' . ($contact['last_name'] ?? '')) ?: $authUser->name;
@@ -1830,7 +1860,7 @@ class EmailService
                 'INTRO_TEXT' => 'Thanks for your interest. This is a copy of the request we have sent to our print team - please check the details below are correct, and let your Local MSP Photography Expert know if anything needs changing.',
             ];
             $toName = $requestorName ?: $toAddress;
-            $subject = "Please check your Artwork/Print Request - {$order->order_number}";
+            $subject = "Please check your Print Request - {$order->order_number}";
         }
 
         $templateContent = $context['templateContent'];

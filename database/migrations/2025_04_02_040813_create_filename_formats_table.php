@@ -18,6 +18,8 @@ return new class extends Migration
             $table->integer('format_key')->unique();
             $table->json('visibility')->nullable();
             $table->json('visibility_options')->nullable(false);
+            // 1: a portraits download using this format is blocked when a selected subject has no value for one of its fields
+            $table->boolean('validation_check')->default(false);
         });
     }
 

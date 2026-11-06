@@ -98,6 +98,11 @@
                                     {{-- Folder (Photo-Coordinators are always assigned to all folders) --}}
                                     @if($role === 'photocoordinator')
                                         <input type="hidden" name="folder" value="*">
+                                        <div class="form-group row">
+                                            <div class="col-md-9 offset-md-3">
+                                                <span class="d-inline-block px-3 py-2" style="background:#e1effe;color:#1e429f;border-radius:0.5rem;">All folders will be assigned to the user for proofing.</span>
+                                            </div>
+                                        </div>
                                     @else
                                         <div class="form-group row">
                                             <label class="{{ $labelClass }}">Class/Group</label>

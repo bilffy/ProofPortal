@@ -704,7 +704,7 @@ class ProductsSeeder extends Seeder
 
     private function seedProducts(): void
     {
-        $this->upsert('products', array_map(fn ($row) => $row + ['show_artwork' => 1], [
+        $this->upsert('products', array_map(fn ($row) => $row + ['show_artwork' => 1, 'print_request_email' => null, 'print_to_franchise' => 0, 'show_in_emails' => 1], [
             [
                 'id' => 1,
                 'name' => 'Presentation Folder',

@@ -320,10 +320,11 @@ class PhotographyController extends Controller
             } 
         }
         
-        // Every selected subject must have a value for each field of the chosen filename format.
+        // Every selected subject must have a value for each field of the chosen filename format,
+        // but only for formats flagged with validation_check = 1 (single and multiple downloads).
         if ($tab === PhotographyHelper::TAB_PORTRAITS && !empty($keys)) {
             $chosenFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
-            if ($chosenFormat) {
+            if ($chosenFormat && $chosenFormat->validation_check) {
                 $subjectsWithoutValue = Subject::whereIn('ts_subjectkey', $keys)
                     ->where('is_deleted', 0)
                     ->get()
