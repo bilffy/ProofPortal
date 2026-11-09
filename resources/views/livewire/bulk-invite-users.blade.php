@@ -55,7 +55,7 @@
                     <div class="mb-4">
                         <div class="rounded-xl border border-neutral-300 p-4" style="background:#fff;">
                             <div class="mb-4">
-                                <h4 class="biu-box-title mb-0.5">Assign school</h4>
+                                <h4 class="biu-box-title mb-0.5">Assign School</h4>
                                 <p class="mt-5 text-xs mb-0">Select the school the users are to be invited to.</p>
                             </div>
                             <div class="max-w-xl">
@@ -176,7 +176,7 @@
                 <span
                     class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold"
                 >
-                    {{ count($rows) }} Uploaded {{ count($rows) === 1 ? 'user' : 'users' }}
+                    {{ count($rows) }} Uploaded {{ count($rows) === 1 ? 'User' : 'Users' }}
                 </span>
             </div>
 
