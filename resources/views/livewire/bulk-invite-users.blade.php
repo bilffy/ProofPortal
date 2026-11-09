@@ -94,7 +94,7 @@
                         class="bulk-invite-format-row"
                         style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;max-width:100%;font-size:14px;line-height:1.4;color:#273444;"
                     >
-                        <span>Upload user details:</span>
+                        <h4 class="biu-box-title mb-0.5">Column Format:</h4>
                         <span class="bulk-invite-format-code" style="display:inline-block;box-sizing:border-box;max-width:100%;padding:4px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.45;color:#111827;background:#ffffff;border-radius:6px;overflow-wrap:anywhere;word-break:break-word;">firstname, lastname, email address, user role</span>
                     </div>
 
@@ -388,7 +388,7 @@
 
         .biu-box-title {
             margin: 0;
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #1A2B4A;
         }

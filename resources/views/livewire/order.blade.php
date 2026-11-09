@@ -351,7 +351,6 @@
         justify-content: center;
         text-align: center;
         padding: 1.25rem;
-        min-height: 12rem;
         border: 2px dashed #cbd5e1;
         border-radius: 0.5rem;
         background-color: #f9fafb;

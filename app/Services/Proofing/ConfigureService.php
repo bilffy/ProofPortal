@@ -69,9 +69,9 @@ class ConfigureService
 
         $this->jobService->updateJobData($tsJobKey, $dataType, $date);
 
-        if ($dataType === 'proof_catchup') {
-            $this->jobService->updateJobData($tsJobKey, 'is_in_catchup', 0);
-        }
+        // if ($dataType === 'proof_catchup') {
+        //     $this->jobService->updateJobData($tsJobKey, 'is_in_catchup', 0);
+        // }
 
         // Keep {REVIEW_DUE} in pending start/warning/catchup emails in sync with the new due date
         if ($dataType === 'proof_due') {
