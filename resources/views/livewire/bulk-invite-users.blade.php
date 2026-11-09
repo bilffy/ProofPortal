@@ -149,7 +149,7 @@
                 wire:target="file"
             >
                 <span class="text-sm text-gray-600 mt-1" x-text="dragging ? 'Drop your file to import' : 'Drag & drop spreadsheet here, or click to browse'">Drag &amp; drop spreadsheet here, or click to browse</span>
-                <span class="text-xs text-gray-400 mt-1">.xlsx, .xls, .csv</span>
+                <span class="text-xs text-gray-400 mt-1">.xlsx, .xls, .csv, .txt</span>
                 <input
                     type="file"
                     id="bulk-invite-file-input"
