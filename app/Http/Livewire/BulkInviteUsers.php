@@ -147,7 +147,7 @@ class BulkInviteUsers extends Component
                 'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
             ], [
                 'file.required' => 'Please choose a CSV or Excel file.',
-                'file.mimes' => 'File must be CSV or Excel (.xlsx, .xls, .csv).',
+                'file.mimes' => 'File must be CSV or Excel (.xlsx, .xls, .csv, .txt).',
             ]);
 
             $path = $this->file->getRealPath();
