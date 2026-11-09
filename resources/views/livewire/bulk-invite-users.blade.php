@@ -79,7 +79,7 @@
                     <div class="mb-4">
                         <div class="rounded-xl border border-neutral-300 p-4" style="background:#fff;">
                             <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;">
-                                <strong style="font-weight:600;">School assigned :</strong>
+                                <h4 class="biu-box-title mb-0.5">School assigned :</h4>
                                 <h4 class="biu-box-title mb-0" style="min-width:0;word-break:break-word;overflow-wrap:anywhere;">{{ $lockedSchoolName }}</h4>
                             </div>
                             <div style="font-weight:500;margin-top:0.25rem;">Imported users will be assigned to this school.</div>
