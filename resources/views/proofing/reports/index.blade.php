@@ -30,15 +30,6 @@
         <h3 class="text-2xl">{{ __('Reports') }}</h3>
     </div>
 
-    @if(session('awaitApprovalSubjectChangesCount') > 0)
-        <p class="mb-4">
-            <span class="alert alert-danger p-2">
-                There are {{ session('awaitApprovalSubjectChangesCount') }} unapproved changes in this Job that will not show in your reports.
-                Please contact a Photo Coordinator and have them approve the changes before running reports.
-            </span>
-        </p>
-    @endif
-
     <div class="row">
         <div class="col-lg-12">
             <div class="reports index">
