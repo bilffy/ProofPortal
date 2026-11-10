@@ -15,6 +15,7 @@ class DownloadDetail extends Model
         'ts_jobkey',
         'keyorigin', 
         'keyvalue',
+        'filename_format',
     ];
 
     public function downloadRequested(){

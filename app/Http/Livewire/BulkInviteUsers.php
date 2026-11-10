@@ -638,7 +638,7 @@ class BulkInviteUsers extends Component
             $messages[] = "Invalid role selected for {$emails}. Please change the role.";
         }
         if (!empty($emailsByKind['exists'])) {
-            $emails = $list('exists', '"');
+            $emails = $list('exists', "'");
             $messages[] = "User {$emails} already exists. Please click 'Remove User'.";
         }
         if (!empty($emailsByKind['duplicate'])) {
@@ -646,7 +646,7 @@ class BulkInviteUsers extends Component
             $messages[] = "User {$emails} is duplicated. Please click 'Remove User'.";
         }
         if (!empty($emailsByKind['invalid_email'])) {
-            $emails = $list('invalid_email', '"');
+            $emails = $list('invalid_email', "'");
             $messages[] = "User {$emails} is invalid. Please click 'Edit User' and update the email address.";
         }
         if ($hasMissing) {

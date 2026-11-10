@@ -27,6 +27,9 @@ return new class extends Migration
             $table->string('ts_jobkey', 255)->nullable();
             $table->string('keyorigin', 255)->nullable();
             $table->string('keyvalue', 255)->nullable();
+            // Filename format key used for this file's name: the request's filename_format, or the
+            // "First Name Last Name" format when the subject has no value for the chosen one.
+            $table->integer('filename_format')->default(1);
             $table->foreign('download_id')->references('id')->on('download_requested')->onDelete('cascade');
             $table->timestamps();
         });

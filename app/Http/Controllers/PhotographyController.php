@@ -122,6 +122,21 @@ class PhotographyController extends Controller
         return response()->json(['success' => true, 'data' => ['nonce' => $nonce]]);
     }
     
+    /**
+     * Readable name for a `table.column` filename format placeholder.
+     */
+    private function filenameFieldLabel(string $field): string
+    {
+        return [
+            'subjects.subjectID' => 'Student ID',
+            'subjects.ts_subjectkey' => 'Subject Key',
+            'subjects.portal_firstname' => 'First Name',
+            'subjects.portal_lastname' => 'Last Name',
+            'folders.portal_ts_foldername' => 'Folder Name',
+            'seasons.code' => 'Year',
+        ][$field] ?? Str::headline(substr(strrchr('.' . $field, '.'), 1));
+    }
+
     public function requestDownloadDetails(Request $request)
     {   
         $school = SchoolContextHelper::getSchool();
@@ -320,26 +335,59 @@ class PhotographyController extends Controller
             } 
         }
         
-        // Every selected subject must have a value for each field of the chosen filename format,
-        // but only for formats flagged with validation_check = 1 (single and multiple downloads).
+        // Subjects without a value for a field of the chosen filename format, but only for formats
+        // flagged with validation_check = 1. An individual download (one image) goes back to the options
+        // pop-up on the first format (422 below); a bulk download carries on, and those subjects are
+        // downloaded in the first format instead (download_details.filename_format) with a notice.
+        $fallbackKeys = [];
+        $bulkNotice = null;
         if ($tab === PhotographyHelper::TAB_PORTRAITS && !empty($keys)) {
             $chosenFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             if ($chosenFormat && $chosenFormat->validation_check) {
-                $subjectsWithoutValue = Subject::whereIn('ts_subjectkey', $keys)
-                    ->where('is_deleted', 0)
-                    ->get()
-                    ->filter(fn ($subject) => !empty($subject->missingFilenameFields($chosenFormat->format)))
-                    ->map(fn ($subject) => trim(($subject->portal_firstname ?: $subject->firstname) . ' ' . ($subject->portal_lastname ?: $subject->lastname)))
-                    ->values();
+                $missingLabels = [];
+                $missingSubjects = [];
+                foreach (Subject::whereIn('ts_subjectkey', $keys)->where('is_deleted', 0)->get() as $subject) {
+                    $missing = $subject->missingFilenameFields($chosenFormat->format);
+                    if (empty($missing)) {
+                        continue;
+                    }
+                    foreach ($missing as $field) {
+                        $missingLabels[$field] = $this->filenameFieldLabel($field);
+                    }
+                    $fallbackKeys[$subject->ts_subjectkey] = true;
+                    $missingSubjects[] = trim(($subject->portal_firstname ?: $subject->firstname) . ' ' . ($subject->portal_lastname ?: $subject->lastname));
+                }
 
-                if ($subjectsWithoutValue->isNotEmpty()) {
-                    $shown = $subjectsWithoutValue->take(3)->implode(', ');
-                    $more = $subjectsWithoutValue->count() - 3;
-                    $message = $subjectsWithoutValue->count() === 1
-                        ? "This subject has no value for the selected filename format: {$shown}."
-                        : "These subjects have no value for the selected filename format: {$shown}" . ($more > 0 ? " and {$more} more." : '.');
+                if (!empty($missingLabels)) {
+                    // The format used instead: the one named "First Name Last Name".
+                    $fallbackFormat = FilenameFormat::where('name', 'First Name Last Name')->first();
 
-                    return response()->json(['success' => false, 'message' => $message], 422);
+                    if ((int) $category === 1) {
+                        // The page does not show an error: it reopens the options pop-up on the
+                        // first filename format with a red notice (see photography.blade.php).
+                        $labels = implode(', ', array_values($missingLabels));
+
+                        return response()->json([
+                            'success' => false,
+                            'code' => 'missing_filename_value',
+                            'missing_fields' => array_values($missingLabels),
+                            'fallback_format_key' => $fallbackFormat?->format_key,
+                            'fallback_format_name' => $fallbackFormat?->name,
+                            'message' => "Selected subject missing {$labels}.",
+                        ], 422);
+                    }
+
+                    if ($fallbackFormat) {
+                        $quote = fn (string $text) => "'{$text}'";
+                        $shown = implode(', ', array_map($quote, array_slice($missingSubjects, 0, 3)));
+                        $more = count($missingSubjects) - 3;
+                        $bulkNotice = $shown . ($more > 0 ? " and {$more} more" : '')
+                            . ' missing ' . implode(', ', array_map($quote, array_values($missingLabels)))
+                            . ', This will be downloaded in ' . $quote($fallbackFormat->name) . '.';
+                        $fallbackFormatKey = $fallbackFormat->format_key;
+                    } else {
+                        $fallbackKeys = [];
+                    }
                 }
             }
         }
@@ -389,6 +437,11 @@ class PhotographyController extends Controller
                         'ts_jobkey' => $job->ts_jobkey,
                         'keyorigin' => $image->keyorigin,
                         'keyvalue' => $image->keyvalue,
+                        // Format used for this file's name: the chosen one, or the "First Name Last Name"
+                        // format for a subject missing a value for the chosen format.
+                        'filename_format' => isset($fallbackKeys[$image->keyvalue])
+                            ? $fallbackFormatKey
+                            : (int) $request->input('filenameFormat'),
                     ]);
                 }
             }
@@ -485,7 +538,7 @@ class PhotographyController extends Controller
         // remove the nonce from the session
         session()->forget('download-request-nonce');
         
-        return response()->json(['success' => true, 'data' => $data]);
+        return response()->json(['success' => true, 'data' => $data, 'notice' => $bulkNotice]);
     }
 
     public function uploadImage(Request $request)

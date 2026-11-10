@@ -178,6 +178,7 @@
                             <div class="flex flex-col gap-2">
                                 <select id="filename_format" class="input">
                                 </select>
+                                <p id="filename-format-warning" class="hidden mb-0 text-sm" style="color:#991b1b;"></p>
                             </div>
                         </div>
                     </div>  
@@ -212,6 +213,7 @@
             <x-slot name="body">
                 <x-modal.body>
                     <p id="success-download-body">{{ $configMessages['request']['success']  }}</p>
+                    <p id="success-download-notice" class="hidden" style="color:#991b1b;"></p>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
@@ -661,6 +663,7 @@
             
             let result = await response.json();
             $(`#nonce`).val(result.data.nonce);
+            document.getElementById('filename-format-warning')?.classList.add('hidden');
             showOptionsDownloadModal.show();
         } else {
             alert('No images found');
@@ -727,6 +730,7 @@
     }
     
     function showConfirmDownloadRequest(isLightbox = false) {
+        document.getElementById('filename-format-warning')?.classList.add('hidden');
         showOptionsDownloadModal.hide();
         const lightboxModal = document.getElementById('lightbox-modal');
         confirmDownloadRequest(!lightboxModal.classList.contains('hidden'));
@@ -954,9 +958,31 @@
                 )
             });
             
-            // a subject has no value for the selected filename format: tell the user and keep the modal open
+            // a subject has no value for the selected filename format: go back to the options
+            // pop-up on the first format and tell the user in red (no error toast)
             if (response.status === 422) {
                 const errorResult = await response.json().catch(() => null);
+                if (errorResult && errorResult.code === 'missing_filename_value') {
+                    $(downloadBtn).html("Download");
+                    const formatSelect = document.getElementById('filename_format');
+                    // pre-select the "First Name Last Name" format (falls back to the first option)
+                    formatSelect.selectedIndex = 0;
+                    if (errorResult.fallback_format_key) {
+                        const match = Array.from(formatSelect.options).findIndex(o => o.value == errorResult.fallback_format_key);
+                        if (match >= 0) {
+                            formatSelect.selectedIndex = match;
+                        }
+                    }
+                    const firstFormat = errorResult.fallback_format_name
+                        || (formatSelect.options[formatSelect.selectedIndex] ? formatSelect.options[formatSelect.selectedIndex].textContent.trim() : '');
+                    const missing = (errorResult.missing_fields || []).join(', ') || 'a value';
+                    const warning = document.getElementById('filename-format-warning');
+                    warning.textContent = `Selected subject missing '${missing}', Please click 'Next' to download in format '${firstFormat}'.`;
+                    warning.classList.remove('hidden');
+                    document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
+                    showOptionsDownloadModal.show();
+                    return;
+                }
                 if (errorResult && errorResult.message) {
                     window.dispatchEvent(new CustomEvent('show-toast-message', {
                         detail: { status: 'error', message: errorResult.message },
@@ -987,6 +1013,10 @@
             document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
 
             if (selectedImages.length !== 1) {
+                // bulk download where some subjects have no value for the chosen filename format
+                const notice = document.getElementById('success-download-notice');
+                notice.textContent = result.notice || '';
+                notice.classList.toggle('hidden', !result.notice);
                 successDownloadModal.show();
             }
         } catch (error) {
