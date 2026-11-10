@@ -605,12 +605,21 @@ class BulkInviteUsers extends Component
     private function refreshTopErrors(): void
     {
         $messages = [];
-        foreach ($this->rows as $index => $row) {
+        $rowsWithErrors = 0;
+        foreach ($this->rows as $row) {
+            if (!empty($row['errors'])) {
+                $rowsWithErrors++;
+            }
             foreach ($row['errors'] as $error) {
                 $messages[] = $error;
             }
         }
-        $this->topErrors = $messages;
+
+        // One bad row: show its message(s). Several bad rows: one generic
+        // message; the affected rows are highlighted in the table below.
+        $this->topErrors = $rowsWithErrors > 1
+            ? ['Multiple rows in the spreadsheet have errors. Please review the highlighted rows and correct them before inviting.']
+            : $messages;
     }
 
     private function hasRowErrors(): bool
