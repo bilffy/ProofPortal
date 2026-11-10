@@ -550,7 +550,10 @@ class BulkInviteUsers extends Component
     /**
      * @param  array{firstname: string, lastname: string, email: string, role: string}  $row
      * @param  array<int, array{firstname: string, lastname: string, email: string, role: string}>|null  $all
-     * @return array<int, string>
+     * Errors keyed by kind: missing, invalid_email, exists, duplicate, role.
+     * The top error box groups rows by kind (see refreshTopErrors()).
+     *
+     * @return array<string, string>
      */
     private function rowErrors(array $row, int $index, ?array $all = null): array
     {
@@ -565,61 +568,92 @@ class BulkInviteUsers extends Component
         ], $this->rows);
 
         if ($row['firstname'] === '') {
-            $errors[] = "First name is required{$for}.";
+            $errors['missing'] = "First name is required{$for}.";
         }
         if ($row['lastname'] === '') {
-            $errors[] = "Last name is required{$for}.";
+            $errors['missing'] = "Last name is required{$for}.";
         }
         if ($row['email'] === '') {
-            $errors[] = 'Email address is required.';
+            $errors['missing'] = 'Email address is required.';
         } elseif (!filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Invalid email address '{$row['email']}'.";
+            $errors['invalid_email'] = "Invalid email address '{$row['email']}'.";
         } elseif (User::where('email', $row['email'])->exists()) {
-            $errors[] = "Email address '{$row['email']}' already exists. Please contact the Franchise.";
+            $errors['exists'] = "Email address '{$row['email']}' already exists. Please contact the Franchise.";
         } else {
             foreach ($all as $i => $other) {
                 if ($i !== $index && strcasecmp($other['email'] ?? '', $row['email']) === 0) {
-                    $errors[] = "Duplicate email address '{$row['email']}' in spreadsheet.";
+                    $errors['duplicate'] = "Duplicate email address '{$row['email']}' in spreadsheet.";
                     break;
                 }
             }
         }
 
+        // No role, an unknown role label, or a role this user may not assign.
         $role = $row['role'] ?? '';
         if ($role === '') {
-            $errors[] = "Role is required{$for}.";
+            $errors['role'] = "Role is required{$for}.";
         } elseif (!array_key_exists($role, self::ROLE_LABEL_MAP)) {
-            $allowed = implode(', ', array_keys(self::ROLE_LABEL_MAP));
-            $errors[] = "Invalid role \"{$role}\"{$for}. Role must be exactly one of: {$allowed}.";
+            $errors['role'] = "Invalid role \"{$role}\"{$for}.";
         } else {
             $dbName = self::ROLE_LABEL_MAP[$role];
             $allowedDbNames = RoleHelper::getAllowedRoleNames(Auth::user()->getRole());
             if (!in_array($dbName, $allowedDbNames, true)) {
-                $errors[] = "You are not allowed to assign the role \"{$role}\"{$for}.";
+                $errors['role'] = "You are not allowed to assign the role \"{$role}\"{$for}.";
             }
         }
 
         return $errors;
     }
 
+    /**
+     * One message per kind of error, naming every email that has it. Rows
+     * missing a first name, last name or email get the generic message.
+     */
     private function refreshTopErrors(): void
     {
-        $messages = [];
-        $rowsWithErrors = 0;
+        $emailsByKind = [];
+        $hasMissing = false;
+
         foreach ($this->rows as $row) {
-            if (!empty($row['errors'])) {
-                $rowsWithErrors++;
-            }
-            foreach ($row['errors'] as $error) {
-                $messages[] = $error;
+            foreach (array_keys($row['errors'] ?? []) as $kind) {
+                if ($kind === 'missing') {
+                    $hasMissing = true;
+                    continue;
+                }
+                $email = (string) ($row['email'] ?? '');
+                $emailsByKind[$kind][$email] = $email;
             }
         }
 
-        // One bad row: show its message(s). Several bad rows: one generic
-        // message; the affected rows are highlighted in the table below.
-        $this->topErrors = $rowsWithErrors > 1
-            ? ['Spreadsheet is missing information. Please review the highlighted rows and correct them before inviting.']
-            : $messages;
+        // 'a@x.com', 'b@y.com' - every email with that error
+        $list = fn (string $kind, string $quote) => implode(', ', array_map(
+            fn ($email) => $quote . $email . $quote,
+            array_values(array_filter($emailsByKind[$kind] ?? []))
+        ));
+
+        $messages = [];
+
+        if (!empty($emailsByKind['role'])) {
+            $emails = $list('role', "'");
+            $messages[] = "Invalid role selected for {$emails}. Please change the role.";
+        }
+        if (!empty($emailsByKind['exists'])) {
+            $emails = $list('exists', '"');
+            $messages[] = "User {$emails} already exists. Please click 'Remove User'.";
+        }
+        if (!empty($emailsByKind['duplicate'])) {
+            $emails = $list('duplicate', "'");
+            $messages[] = "User {$emails} is duplicated. Please click 'Remove User'.";
+        }
+        if (!empty($emailsByKind['invalid_email'])) {
+            $emails = $list('invalid_email', '"');
+            $messages[] = "User {$emails} is invalid. Please click 'Edit User' and update the email address.";
+        }
+        if ($hasMissing) {
+            $messages[] = 'Spreadsheet is missing information. Please review the highlighted rows and correct them before inviting.';
+        }
+
+        $this->topErrors = $messages;
     }
 
     private function hasRowErrors(): bool

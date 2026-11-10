@@ -2,7 +2,7 @@
     <div class="py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h3 class="text-2xl">Bulk Invite</h3>
-            <p class="text-sm text-xs mt-1">
+            <p class="text-sm text-black-600 mt-1">
                 @if ($showSchoolSelector && $lockedSchoolName === '') 
                     Assign the school, upload the user details, and then send the invitations.
                 @else
@@ -13,7 +13,7 @@
         <!-- <button
             type="button"
             onclick="window.location='{{ route('users') }}'"
-            class="inline-flex items-center gap-2 rounded-lg border border-neutral-400 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-all hover:bg-neutral-200"
+            class="inline-flex items-center gap-2 rounded-lg border border-neutral-400 bg-white px-4 py-2 text-sm font-semibold text-black-800 transition-all hover:bg-neutral-200"
         >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -56,10 +56,10 @@
                         <div class="rounded-xl border border-neutral-300 p-4" style="background:#fff;">
                             <div class="mb-4">
                                 <h4 class="biu-box-title mb-0.5">Assign School</h4>
-                                <p class="mt-5 text-xs mb-0">Select the school the users are to be invited to.</p>
+                                <p class="mt-5 text-sm text-black-600 mb-0">Select the school the users are to be invited to.</p>
                             </div>
                             <div class="max-w-xl">
-                                <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-gray-800">
+                                <label for="bulk-invite-school" class="mb-2 block text-sm font-semibold text-black-800">
                                     Select School <span class="text-alert">*</span>
                                 </label>
                                 <div wire:ignore class="w-full">
@@ -82,7 +82,7 @@
                                 <h4 class="biu-box-title mb-0.5">School Assigned :</h4>
                                 <h4 class="biu-box-title mb-0" style="min-width:0;word-break:break-word;overflow-wrap:anywhere;">{{ $lockedSchoolName }}</h4>
                             </div>
-                            <div style="font-weight:500;margin-top:0.25rem;">Imported users will be assigned to this school.</div>
+                            <div class="text-sm text-black-600 mt-1">Imported users will be assigned to this school.</div>
                         </div>
                     </div>
                 @endif
@@ -109,9 +109,9 @@
 
                 <hr class="w-full my-3" style="border-color:#cbd5e1;">
 
-                <p class="mb-0" style="font-size:13px;color:#273444;">
+                <p class="mb-0 text-sm text-black-600">
                     <strong style="font-weight:600;">User Roles &ndash; </strong>
-                    <span style="font-weight:500;">{{ implode(', ', $roleOptions) }}</span>
+                    <span>{{ implode(', ', $roleOptions) }}</span>
                 </p>
 
             {{-- Drop area (same look as the /order artwork dropzone). Choosing or dropping a file imports it straight away. --}}
@@ -148,7 +148,7 @@
                 wire:loading.class="opacity-70 pointer-events-none"
                 wire:target="file"
             >
-                <span class="text-sm text-gray-600 mt-1" x-text="dragging ? 'Drop your file to import' : 'Drag & drop spreadsheet here, or click to browse'">Drag &amp; drop spreadsheet here, or click to browse</span>
+                <span class="text-sm text-black-600 mt-1" x-text="dragging ? 'Drop your file to import' : 'Drag & drop spreadsheet here, or click to browse'">Drag &amp; drop spreadsheet here, or click to browse</span>
                 <span class="text-xs text-gray-400 mt-1">.xlsx, .xls, .csv, .txt</span>
                 <input
                     type="file"
@@ -159,7 +159,7 @@
                     x-on:change="setTimeout(() => $el.value = '', 0)"
                 />
 
-                <span wire:loading wire:target="file" class="mt-3 mb-0 text-sm text-gray-900">Importing&hellip;</span>
+                <span wire:loading wire:target="file" class="mt-3 mb-0 text-sm text-black-900">Importing&hellip;</span>
 
                 @error('file')
                     <span class="mt-3 text-sm text-alert mb-0">{{ $message }}</span>
@@ -192,7 +192,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                     </div> -->
-                    <p style="margin:0;font-size:12px;line-height:1.4;">After uploading the user details spreadsheet, you can preview the user details here.</p>
+                    <p class="text-sm text-black-600 mt-1">After uploading the user details spreadsheet, you can preview the user details here.</p>
                 </div>
             @else
                 <div id="biu-imported-users-panel" class="w-full">
@@ -353,8 +353,7 @@
         /* Top error list: same look as the proofing alert-danger (e.g. the reports page notice). */
         .biu-errors {
             padding: 0.5rem 0.75rem;
-            background: #f8d7da;
-            border: 1px solid #f1aeb5;
+            border: 1px solid #991b1b;
             border-radius: 0.375rem;
             color: #991b1b;
         }
