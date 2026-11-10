@@ -514,7 +514,7 @@ class BulkInviteUsers extends Component
         }
 
         if (empty($parsed)) {
-            throw new \RuntimeException('No data rows found in the spreadsheet.');
+            throw new \RuntimeException('Imported file is empty.');
         }
 
         return $parsed;
@@ -618,7 +618,7 @@ class BulkInviteUsers extends Component
         // One bad row: show its message(s). Several bad rows: one generic
         // message; the affected rows are highlighted in the table below.
         $this->topErrors = $rowsWithErrors > 1
-            ? ['Multiple rows in the spreadsheet have errors. Please review the highlighted rows and correct them before inviting.']
+            ? ['Spreadsheet is missing information. Please review the highlighted rows and correct them before inviting.']
             : $messages;
     }
 

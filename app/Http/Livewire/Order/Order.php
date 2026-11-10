@@ -111,6 +111,44 @@ class Order extends Component
         $this->artworkRequiredOptions = ArtworkRequired::orderBy('id')->get();
     }
 
+    /** @var array{0: int|string|null, 1: array<int, string[]>}|null */
+    protected ?array $allowedOptionMapMemo = null;
+
+    /**
+     * Option limits of the selected product: [custom_field_id => [option_value, ...]].
+     * A field that is not listed shows all of its options.
+     *
+     * @return array<int, string[]>
+     */
+    protected function allowedOptionMap(): array
+    {
+        if ($this->allowedOptionMapMemo === null || $this->allowedOptionMapMemo[0] !== $this->selectedProductId) {
+            $this->allowedOptionMapMemo = [
+                $this->selectedProductId,
+                $this->selectedProductId ? Product::allowedOptionMapFor((int) $this->selectedProductId) : [],
+            ];
+        }
+
+        return $this->allowedOptionMapMemo[1];
+    }
+
+    /**
+     * The options of a radio / dropdown / checkbox field that the selected
+     * product shows (all of them unless the product limits the field).
+     */
+    public function optionsFor($field)
+    {
+        $allowed = $this->allowedOptionMap()[$field->id] ?? null;
+
+        if ($allowed === null) {
+            return $field->fieldOptions;
+        }
+
+        return $field->fieldOptions
+            ->filter(fn ($option) => in_array((string) $option->option_value, $allowed, true))
+            ->values();
+    }
+
     public function selectProduct($productId): void
     {
         $this->selectedProductId = $productId;
@@ -146,11 +184,22 @@ class Order extends Component
         $user = Auth::user();
 
         foreach ($this->customFields as $field) {
-            if (!$field->prefill_source) {
+            // Fields with a default value start with it (a disabled one keeps it).
+            if ($field->isTextLike() && (string) $field->default_value !== '') {
+                $this->fieldValues[$field->id] = $field->default_value;
+            }
+
+            if ($field->is_disabled || !$field->prefill_source) {
                 continue;
             }
 
             $value = $field->prefillValueFor($user);
+
+            // Don't prefill an option this product doesn't offer.
+            $allowed = $this->allowedOptionMap()[$field->id] ?? null;
+            if ($value !== null && $allowed !== null && !in_array((string) $value, $allowed, true)) {
+                $value = null;
+            }
 
             if ($value !== null) {
                 $this->fieldValues[$field->id] = $value;
@@ -266,6 +315,19 @@ class Order extends Component
                 $rules["fieldValues.{$field->id}"] = $requiredRule . '|array';
             } else {
                 $rules["fieldValues.{$field->id}"] = $requiredRule . '|string|max:2000';
+            }
+
+            // The product may offer only some of the field's options: reject
+            // anything else, even if the request was crafted by hand.
+            $allowedOptions = $this->allowedOptionMap()[$field->id] ?? null;
+            if ($allowedOptions !== null) {
+                if ($field->type === \App\Models\CustomField::TYPE_CHECKBOX) {
+                    $rules["fieldValues.{$field->id}.*"] = [\Illuminate\Validation\Rule::in($allowedOptions)];
+                } elseif (in_array($field->type, [\App\Models\CustomField::TYPE_RADIO, \App\Models\CustomField::TYPE_DROPDOWN], true)) {
+                    $rule = $rules["fieldValues.{$field->id}"];
+                    $rule = is_string($rule) ? explode('|', $rule) : $rule;
+                    $rules["fieldValues.{$field->id}"] = array_merge($rule, [\Illuminate\Validation\Rule::in($allowedOptions)]);
+                }
             }
 
             $otherValue = $field->otherOptionValue();
@@ -384,8 +446,22 @@ class Order extends Component
         ];
     }
 
+    /**
+     * Disabled fields are shown greyed out, so whatever the browser sent for
+     * them is ignored: they always hold their default value.
+     */
+    private function lockDisabledFields(): void
+    {
+        foreach ($this->customFields as $field) {
+            if ($field->is_disabled && $field->isTextLike()) {
+                $this->fieldValues[$field->id] = (string) $field->default_value;
+            }
+        }
+    }
+
     public function submit(StatusService $statusService, EmailService $emailService)
     {
+        $this->lockDisabledFields();
         $this->validate($this->fieldRules());
 
         $showsArtwork = $this->showsArtwork();

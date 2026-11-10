@@ -16,6 +16,10 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('custom_field_id')->constrained('custom_fields')->onDelete('cascade');
             $table->integer('sort_order')->default(0);
+            // For radio / dropdown / checkbox fields: the option_values this product
+            // shows (JSON array). NULL = every option of the field. Stored by value,
+            // not option id, because saving a field in the admin re-creates its options.
+            $table->json('allowed_options')->nullable();
             $table->timestamps();
 
             $table->unique(['product_id', 'custom_field_id']);

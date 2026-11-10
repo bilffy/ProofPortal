@@ -57,6 +57,19 @@
                     </div>
                 @endif
 
+                @if (in_array($type, [\App\Models\CustomField::TYPE_INPUT, \App\Models\CustomField::TYPE_NUMBER, \App\Models\CustomField::TYPE_TEL], true))
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Default value</label>
+                        <input type="text" wire:model="defaultValue" class="bg-gray-50 border border-neutral rounded-md block w-full p-2.5 text-sm" />
+                        <p class="mt-1 text-xs text-gray-500">The field starts with this value on the order page.</p>
+                        @error('defaultValue') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="flex items-start gap-2 md:pt-7">
+                        <input type="checkbox" wire:model="isDisabled" class="mt-0.5 h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="isDisabled" />
+                        <label for="isDisabled" class="text-sm font-medium text-gray-700">Disabled <span class="font-normal text-gray-500">(shown greyed out; the customer can't change the default value)</span></label>
+                    </div>
+                @endif
+
                 <div class="flex items-center gap-2 md:col-span-2">
                     <input type="checkbox" wire:model="isRequired" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="isRequired" />
                     <label for="isRequired" class="text-sm font-medium text-gray-700">Required field</label>
@@ -65,25 +78,47 @@
 
             <div class="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Show this field only when...</label>
-                <select wire:model.live="dependsOnFieldId" class="bg-white border border-neutral rounded-md block w-full p-2.5 text-sm">
-                    <option value="">Always show this field</option>
-                    @foreach ($this->availableParentFields as $parentField)
-                        <option value="{{ $parentField->id }}">{{ $parentField->label }} is...</option>
-                    @endforeach
-                </select>
-                @error('dependsOnFieldId') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
 
-                @if ($dependsOnFieldId)
-                    <div class="flex flex-wrap gap-4 mt-3">
-                        @foreach ($this->dependsOnFieldOptions as $option)
-                            <label class="inline-flex items-center gap-2 text-sm">
-                                <input type="checkbox" wire:model="dependsOnValues" value="{{ $option->option_value }}" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" />
-                                {{ $option->option_name }}
-                            </label>
-                        @endforeach
+                @forelse ($dependsOn as $i => $condition)
+                    <div wire:key="dep-{{ $i }}" class="{{ $i > 0 ? 'mt-4 pt-4 border-t border-gray-200' : '' }}">
+                        @if ($i > 0)
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">or</p>
+                        @endif
+                        <div class="flex items-center gap-2">
+                            <select wire:model.live="dependsOn.{{ $i }}.field_id" class="bg-white border border-neutral rounded-md block w-full p-2.5 text-sm">
+                                <option value="">Select a field...</option>
+                                @foreach ($this->availableParentFields as $parentField)
+                                    <option value="{{ $parentField->id }}">{{ $parentField->label }} is...</option>
+                                @endforeach
+                            </select>
+                            <button type="button" wire:click="removeCondition({{ $i }})" class="shrink-0 rounded-md border border-alert px-3 py-2 text-xs font-semibold text-alert hover:bg-alert-100">Remove</button>
+                        </div>
+                        @error("dependsOn.$i.field_id") <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+
+                        @if ($condition['field_id'])
+                            <div class="flex flex-wrap gap-4 mt-3">
+                                @foreach ($this->parentOptions[(int) $condition['field_id']] ?? [] as $option)
+                                    <label class="inline-flex items-center gap-2 text-sm">
+                                        <input type="checkbox" wire:model="dependsOn.{{ $i }}.values" value="{{ $option->option_value }}" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" />
+                                        {{ $option->option_name }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error("dependsOn.$i.values") <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
+                        @endif
                     </div>
-                    @error('dependsOnValues') <p class="mt-1 text-sm text-alert">{{ $message }}</p> @enderror
-                @endif
+                @empty
+                    <p class="text-sm text-gray-600 mb-0">Always show this field.</p>
+                @endforelse
+
+                <div class="mt-3 flex items-center gap-3">
+                    <button type="button" wire:click="addCondition" class="rounded-md border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary-100">
+                        {{ count($dependsOn) ? '+ Add another condition' : '+ Add a condition' }}
+                    </button>
+                    @if (count($dependsOn) > 1)
+                        <span class="text-xs text-gray-500">The field shows when any one of these conditions is met.</span>
+                    @endif
+                </div>
             </div>
 
             @if ($type === \App\Models\CustomField::TYPE_IMAGE)
@@ -149,7 +184,7 @@
                         <td class="px-4 py-3">
                             {{ $field->label }}
                             @if ($field->hasDependency())
-                                <p class="text-xs text-gray-400">Only if {{ $field->dependsOnField->label ?? '—' }} is set</p>
+                                <p class="text-xs text-gray-400">Only if {{ collect($field->dependencyRules())->map(fn ($rule) => $fieldLabels[$rule['field_id']] ?? '—')->unique()->implode(' or ') }} is set</p>
                             @endif
                         </td>
                         <td class="px-4 py-3">{{ $typeOptions[$field->type] ?? $field->type }}</td>

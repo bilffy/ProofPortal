@@ -103,7 +103,7 @@
 
                                 @if ($field->type === \App\Models\CustomField::TYPE_RADIO)
                                     <div class="flex flex-wrap gap-4">
-                                        @foreach ($field->fieldOptions as $option)
+                                        @foreach ($this->optionsFor($field) as $option)
                                             <label class="inline-flex items-center gap-2 text-sm">
                                                 <input type="radio" wire:model.live="fieldValues.{{ $field->id }}" value="{{ $option->option_value }}" class="h-4 w-4 border-neutral text-primary focus:ring-primary" />
                                                 {{ $option->option_name }}
@@ -119,18 +119,18 @@
                                             data-placeholder="{{ $field->placeholder ?: 'Select an option' }}"
                                         >
                                             <option value="">{{ $field->placeholder ?: 'Select an option' }}</option>
-                                            @foreach ($field->fieldOptions as $option)
+                                            @foreach ($this->optionsFor($field) as $option)
                                                 <option value="{{ $option->option_value }}">{{ $option->option_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_TEL)
-                                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
+                                    <input type="tel" inputmode="tel" autocomplete="tel" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" @if ($field->is_disabled) disabled style="background-color:#f3f4f6;color:#6b7280;cursor:not-allowed;" @endif class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_NUMBER)
-                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
+                                    <input type="number" min="1" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" @if ($field->is_disabled) disabled style="background-color:#f3f4f6;color:#6b7280;cursor:not-allowed;" @endif class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @elseif ($field->type === \App\Models\CustomField::TYPE_CHECKBOX)
                                     <div class="flex flex-wrap gap-4">
-                                        @foreach ($field->fieldOptions as $option)
+                                        @foreach ($this->optionsFor($field) as $option)
                                             <label class="inline-flex items-center gap-2 text-sm">
                                                 <input type="checkbox" wire:model.live="fieldValues.{{ $field->id }}" value="{{ $option->option_value }}" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" />
                                                 {{ $option->option_name }}
@@ -153,7 +153,7 @@
                                         <p class="text-sm text-gray-500">No image provided for this field.</p>
                                     @endif
                                 @else
-                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
+                                    <input type="text" wire:model="fieldValues.{{ $field->id }}" placeholder="{{ $field->placeholder }}" @if ($field->is_disabled) disabled style="background-color:#f3f4f6;color:#6b7280;cursor:not-allowed;" @endif class="bg-white border border-neutral text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-primary block w-full p-2.5" />
                                 @endif
 
                                 @if ($field->type === \App\Models\CustomField::TYPE_RADIO && $field->otherOptionValue() && ($fieldValues[$field->id] ?? null) === $field->otherOptionValue())

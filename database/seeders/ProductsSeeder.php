@@ -374,22 +374,24 @@ class ProductsSeeder extends Seeder
         // Fields that are not pre-filled from the logged-in user.
         $rows = array_map(fn ($row) => $row + ['prefill_source' => null], $rows);
 
-        // depends_on_field_id points at another row of this same table, so
-        // insert every field without it first and link them once they all exist.
-        $dependencies = [];
-        foreach ($rows as &$row) {
-            if ($row['depends_on_field_id'] ?? null) {
-                $dependencies[$row['id']] = $row['depends_on_field_id'];
-                $row['depends_on_field_id'] = null;
-            }
-        }
-        unset($row);
+        // The rows above give a single parent as depends_on_field_id + depends_on_values;
+        // custom_fields stores it as the depends_on list of {field_id, values} conditions.
+        $rows = array_map(function ($row) {
+            $fieldId = $row['depends_on_field_id'] ?? null;
+            $values = $row['depends_on_values'] ?? null;
+            unset($row['depends_on_field_id'], $row['depends_on_values']);
+
+            $row['depends_on'] = $fieldId
+                ? json_encode([[
+                    'field_id' => (int) $fieldId,
+                    'values' => is_string($values) ? (json_decode($values, true) ?: []) : (array) $values,
+                ]])
+                : null;
+
+            return $row;
+        }, $rows);
 
         $this->upsert('custom_fields', $rows);
-
-        foreach ($dependencies as $id => $dependsOn) {
-            DB::table('custom_fields')->where('id', $id)->update(['depends_on_field_id' => $dependsOn]);
-        }
     }
 
     private function seedFieldOptions(): void

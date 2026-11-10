@@ -10,9 +10,8 @@
             <h5 class="text-sm font-semibold text-gray-700 mb-2">Available Fields</h5>
             <ul id="pf-available" data-pf-list="available" class="pf-sortable-list min-h-[160px] border border-dashed border-neutral rounded-md p-2 space-y-2 bg-gray-50">
                 @foreach ($availableFields as $field)
-                    <li wire:key="available-{{ $field->id }}" data-field-id="{{ $field->id }}" class="pf-field-item bg-white border border-neutral rounded-md px-3 py-2 text-sm cursor-move flex items-center justify-between">
-                        <span>{{ $field->label }}</span>
-                        <span class="text-xs text-neutral">{{ \App\Models\CustomField::TYPES[$field->type] ?? $field->type }}</span>
+                    <li wire:key="available-{{ $field->id }}" data-field-id="{{ $field->id }}" class="pf-field-item bg-white border border-neutral rounded-md px-3 py-2 text-sm cursor-move">
+                        @include('livewire.products._pf-item', ['field' => $field])
                     </li>
                 @endforeach
             </ul>
@@ -21,9 +20,8 @@
             <h5 class="text-sm font-semibold text-gray-700 mb-2">Assigned Fields <span class="text-neutral font-normal">(shown in this order)</span></h5>
             <ul id="pf-assigned" data-pf-list="assigned" class="pf-sortable-list min-h-[160px] border border-dashed border-primary rounded-md p-2 space-y-2 bg-white">
                 @foreach ($assignedFields as $field)
-                    <li wire:key="assigned-{{ $field->id }}" data-field-id="{{ $field->id }}" class="pf-field-item bg-white border border-neutral rounded-md px-3 py-2 text-sm cursor-move flex items-center justify-between">
-                        <span>{{ $field->label }}</span>
-                        <span class="text-xs text-neutral">{{ \App\Models\CustomField::TYPES[$field->type] ?? $field->type }}</span>
+                    <li wire:key="assigned-{{ $field->id }}" data-field-id="{{ $field->id }}" class="pf-field-item bg-white border border-neutral rounded-md px-3 py-2 text-sm cursor-move">
+                        @include('livewire.products._pf-item', ['field' => $field])
                     </li>
                 @endforeach
             </ul>
@@ -39,6 +37,10 @@
         border-radius: 0.375rem;
         height: 2.5rem;
         list-style: none;
+    }
+    /* Option pickers only make sense once a field is assigned to the product */
+    #pf-available .pf-opts {
+        display: none;
     }
 </style>
 @endassets
@@ -59,11 +61,37 @@
         }).get();
     }
 
+    // Option limits of the assigned fields: { fieldId: [option values] } for
+    // fields where some options are unticked. Fields with every option ticked
+    // (or none) are left out, meaning "show all options".
+    function getAllowedOptions($) {
+        var map = {};
+        $('#pf-assigned').find('> li').each(function () {
+            var $boxes = $(this).find('input[data-pf-option]');
+            if (!$boxes.length) {
+                return;
+            }
+            var checked = $boxes.filter(':checked').map(function () {
+                return this.value;
+            }).get();
+
+            $(this).find('[data-pf-count]').text(
+                (checked.length || $boxes.length) + ' of ' + $boxes.length
+            );
+
+            if (checked.length && checked.length < $boxes.length) {
+                map[$(this).data('field-id')] = checked;
+            }
+        });
+        return map;
+    }
+
     // No server call here: hand the new order to the parent form's
     // assignedFieldIds (third argument false = update locally, don't send a
     // request). It is submitted along with the form on Create / Save.
     function persistOrder($) {
         $wire.$parent.$set('assignedFieldIds', getAssignedIds($), false);
+        $wire.$parent.$set('fieldAllowedOptions', getAllowedOptions($), false);
     }
 
     function initSortables() {
@@ -89,12 +117,24 @@
             connectWith: '.pf-sortable-list',
             placeholder: 'pf-sortable-placeholder',
             items: '> li',
+            // let the option tick boxes be clicked/selected instead of dragged
+            cancel: 'input, textarea, button, select, option, summary, .pf-opts',
             stop: function () {
                 persistOrder($);
             },
         }).disableSelection();
 
         return true;
+    }
+
+    // Ticking / unticking an option updates the parent form straight away.
+    if (window.jQuery) {
+        window.jQuery(document)
+            .off('change.pfOptions')
+            .on('change.pfOptions', 'input[data-pf-option]', function () {
+                persistOrder(window.jQuery);
+            });
+        getAllowedOptions(window.jQuery);
     }
 
     // initSortables() needs the jQuery UI asset above to have finished

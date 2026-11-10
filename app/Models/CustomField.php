@@ -54,9 +54,10 @@ class CustomField extends Model
         'label',
         'type',
         'image',
-        'depends_on_field_id',
-        'depends_on_values',
+        'depends_on',
         'placeholder',
+        'default_value',
+        'is_disabled',
         'note',
         'is_required',
         'prefill_source',
@@ -64,7 +65,8 @@ class CustomField extends Model
 
     protected $casts = [
         'is_required' => 'boolean',
-        'depends_on_values' => 'array',
+        'depends_on' => 'array',
+        'is_disabled' => 'boolean',
     ];
 
     public function fieldOptions()
@@ -84,15 +86,26 @@ class CustomField extends Model
         return $this->hasMany(OrderFieldValue::class);
     }
 
-    public function dependsOnField()
+    /**
+     * The "show only when" conditions, as [['field_id' => int, 'values' => string[]], ...].
+     * The field shows when any one of them is met.
+     *
+     * @return array<int, array{field_id: int, values: string[]}>
+     */
+    public function dependencyRules(): array
     {
-        return $this->belongsTo(self::class, 'depends_on_field_id');
-    }
+        $rules = [];
 
-    // Other fields that only show up depending on this one's value.
-    public function dependents()
-    {
-        return $this->hasMany(self::class, 'depends_on_field_id');
+        foreach ((array) $this->depends_on as $rule) {
+            $fieldId = (int) ($rule['field_id'] ?? 0);
+            $values = array_values(array_map('strval', (array) ($rule['values'] ?? [])));
+
+            if ($fieldId > 0 && $values !== []) {
+                $rules[] = ['field_id' => $fieldId, 'values' => $values];
+            }
+        }
+
+        return $rules;
     }
 
     /**
@@ -127,6 +140,12 @@ class CustomField extends Model
         return $value;
     }
 
+    /** Types that can carry a default value and be locked (free-typed fields). */
+    public function isTextLike(): bool
+    {
+        return in_array($this->type, [self::TYPE_INPUT, self::TYPE_NUMBER, self::TYPE_TEL], true);
+    }
+
     public function hasOptions(): bool
     {
         return in_array($this->type, self::OPTION_TYPES, true);
@@ -158,7 +177,7 @@ class CustomField extends Model
 
     public function hasDependency(): bool
     {
-        return $this->depends_on_field_id !== null;
+        return $this->dependencyRules() !== [];
     }
 
     /**
@@ -180,28 +199,39 @@ class CustomField extends Model
      */
     public function isVisibleGiven(array $fieldValues, ?array $availableFieldIds = null): bool
     {
-        if (!$this->hasDependency()) {
+        $rules = $this->dependencyRules();
+
+        // Conditions on a field that isn't assigned to this product don't apply.
+        if ($availableFieldIds !== null) {
+            $rules = array_values(array_filter(
+                $rules,
+                fn ($rule) => in_array($rule['field_id'], $availableFieldIds, true)
+            ));
+        }
+
+        if ($rules === []) {
             return true;
         }
 
-        if ($availableFieldIds !== null && !in_array($this->depends_on_field_id, $availableFieldIds, true)) {
-            return true;
+        // Shown when ANY condition is met.
+        foreach ($rules as $rule) {
+            $currentValue = $fieldValues[$rule['field_id']] ?? null;
+
+            if ($currentValue === null || $currentValue === '') {
+                continue;
+            }
+
+            // A checkbox parent can have more than one option selected at once
+            // (Livewire binds a group of same-path checkboxes as an array), so
+            // check whether any of the selected ones match one of the required
+            // values, rather than comparing the whole thing as one scalar.
+            $selected = array_map('strval', (array) $currentValue);
+
+            if (count(array_intersect($selected, $rule['values'])) > 0) {
+                return true;
+            }
         }
 
-        $currentValue = $fieldValues[$this->depends_on_field_id] ?? null;
-
-        if ($currentValue === null || $currentValue === '') {
-            return false;
-        }
-
-        // A checkbox parent can have more than one option selected at once
-        // (Livewire binds a group of same-path checkboxes as an array), so
-        // check whether any of the selected ones match one of the required
-        // values, rather than comparing the whole thing as one scalar.
-        if (is_array($currentValue)) {
-            return count(array_intersect($currentValue, $this->depends_on_values ?? [])) > 0;
-        }
-
-        return in_array($currentValue, $this->depends_on_values ?? [], true);
+        return false;
     }
 }

@@ -26,6 +26,8 @@ class CustomFieldsList extends Component
     public string $note = '';
     public bool $isRequired = true;
     public string $prefillSource = ''; // custom_fields.prefill_source
+    public string $defaultValue = ''; // text-like types: starting value
+    public bool $isDisabled = false;  // text-like types: customer can't change it
     /** @var array<int, array{option_name: string, option_value: string}> */
     public array $options = [];
 
@@ -34,11 +36,13 @@ class CustomFieldsList extends Component
     public ?string $existingImagePath = null;
 
     // Conditional visibility: only show this field on the order page when
-    // another field ("dependsOnFieldId") is set to one of these option
-    // values ("dependsOnValues"). Null/empty dependsOnFieldId = always show.
-    public $dependsOnFieldId = null;
-    /** @var array<int, string> */
-    public array $dependsOnValues = [];
+    // ANY of these conditions is met - another field has one of the listed
+    // option values selected. Empty list = always show.
+    /** @var array<int, array{field_id: int|string|null, values: array<int, string>}> */
+    public array $dependsOn = [];
+
+    // Field types that can have a default value and be locked.
+    private const TEXT_LIKE_TYPES = [CustomField::TYPE_INPUT, CustomField::TYPE_NUMBER, CustomField::TYPE_TEL];
 
     public string $successMessage = '';
 
@@ -66,12 +70,27 @@ class CustomFieldsList extends Component
             $rules['image'] = $imageRequired . '|image|max:5120';
         }
 
-        $rules['dependsOnFieldId'] = 'nullable|exists:custom_fields,id';
-        if ($this->dependsOnFieldId) {
-            $rules['dependsOnValues'] = 'required|array|min:1';
+        if (in_array($this->type, self::TEXT_LIKE_TYPES, true)) {
+            $rules['defaultValue'] = ($this->isDisabled ? 'required' : 'nullable') . '|string|max:255';
+            $rules['isDisabled'] = 'boolean';
         }
 
+        $rules['dependsOn'] = 'array';
+        $rules['dependsOn.*.field_id'] = 'required|distinct|exists:custom_fields,id';
+        $rules['dependsOn.*.values'] = 'required|array|min:1';
+
         return $rules;
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'defaultValue.required' => 'Enter the value this disabled field should show.',
+            'dependsOn.*.field_id.required' => 'Choose a field.',
+            'dependsOn.*.field_id.distinct' => 'This field is already used in another condition.',
+            'dependsOn.*.values.required' => 'Tick at least one option.',
+            'dependsOn.*.values.min' => 'Tick at least one option.',
+        ];
     }
 
     /**
@@ -81,31 +100,49 @@ class CustomFieldsList extends Component
      */
     public function getAvailableParentFieldsProperty()
     {
-        $query = CustomField::whereIn('type', CustomField::OPTION_TYPES)->orderBy('label');
+        $fields = CustomField::whereIn('type', CustomField::OPTION_TYPES)->orderBy('label')->get();
 
         if ($this->editingId) {
-            $query->where('id', '!=', $this->editingId)
-                ->where(function ($q) {
-                    $q->whereNull('depends_on_field_id')
-                        ->orWhere('depends_on_field_id', '!=', $this->editingId);
-                });
+            $fields = $fields->filter(
+                fn ($field) => $field->id !== $this->editingId
+                    && !collect($field->dependencyRules())->contains('field_id', $this->editingId)
+            )->values();
         }
 
-        return $query->get();
+        return $fields;
     }
 
-    public function getDependsOnFieldOptionsProperty()
+    /**
+     * Options of every field used in a condition, keyed by field id, for the
+     * tick boxes under each condition.
+     */
+    public function getParentOptionsProperty()
     {
-        if (!$this->dependsOnFieldId) {
-            return collect();
+        $ids = collect($this->dependsOn)->pluck('field_id')->filter()->map(fn ($id) => (int) $id)->all();
+
+        return FieldOption::whereIn('custom_field_id', $ids)->get()->groupBy('custom_field_id');
+    }
+
+    public function addCondition(): void
+    {
+        $this->dependsOn[] = ['field_id' => '', 'values' => []];
+    }
+
+    public function removeCondition(int $index): void
+    {
+        unset($this->dependsOn[$index]);
+        $this->dependsOn = array_values($this->dependsOn);
+    }
+
+    // Picking a different field in a condition clears its ticked options.
+    public function updatedDependsOn($value, $key): void
+    {
+        if (str_ends_with((string) $key, '.field_id')) {
+            $index = (int) explode('.', (string) $key)[0];
+            if (isset($this->dependsOn[$index])) {
+                $this->dependsOn[$index]['values'] = [];
+            }
         }
-
-        return FieldOption::where('custom_field_id', $this->dependsOnFieldId)->get();
-    }
-
-    public function updatedDependsOnFieldId(): void
-    {
-        $this->dependsOnValues = [];
     }
 
     public function mount()
@@ -119,7 +156,7 @@ class CustomFieldsList extends Component
 
     public function loadFields(): void
     {
-        $this->fields = CustomField::with(['fieldOptions', 'dependsOnField'])->orderBy('label')->get();
+        $this->fields = CustomField::with('fieldOptions')->orderBy('label')->get();
     }
 
     public function createNew(): void
@@ -139,14 +176,15 @@ class CustomFieldsList extends Component
         $this->note = (string) $field->note; // note below the field
         $this->isRequired = (bool) $field->is_required;
         $this->prefillSource = (string) $field->prefill_source;
+        $this->defaultValue = (string) $field->default_value;
+        $this->isDisabled = (bool) $field->is_disabled;
         $this->options = $field->fieldOptions->map(fn ($option) => [
             'option_name' => $option->option_name,
             'option_value' => $option->option_value,
         ])->toArray();
         $this->existingImagePath = $field->image; //get the image type
         $this->image = null;
-        $this->dependsOnFieldId = $field->depends_on_field_id;
-        $this->dependsOnValues = $field->depends_on_values ?? [];
+        $this->dependsOn = $field->dependencyRules();
 
         $this->showForm = true;
         $this->successMessage = '';
@@ -184,6 +222,9 @@ class CustomFieldsList extends Component
             $field->placeholder = $this->placeholder ?: null;
             $field->note = $this->note ?: null;
             $field->is_required = $this->isRequired;
+            $textLike = in_array($this->type, self::TEXT_LIKE_TYPES, true);
+            $field->default_value = $textLike && $this->defaultValue !== '' ? $this->defaultValue : null;
+            $field->is_disabled = $textLike && $this->isDisabled;
             $field->prefill_source = in_array($this->type, [CustomField::TYPE_IMAGE], true) ? null : ($this->prefillSource ?: null);
 
             if ($this->type === CustomField::TYPE_IMAGE) {
@@ -195,8 +236,14 @@ class CustomFieldsList extends Component
                 $field->image = null;
             }
 
-            $field->depends_on_field_id = $this->dependsOnFieldId ?: null;
-            $field->depends_on_values = $this->dependsOnFieldId ? array_values($this->dependsOnValues) : null;
+            $conditions = [];
+            foreach ($this->dependsOn as $condition) {
+                $conditions[] = [
+                    'field_id' => (int) $condition['field_id'],
+                    'values' => array_values(array_map('strval', $condition['values'])),
+                ];
+            }
+            $field->depends_on = $conditions ?: null;
 
             $field->save();
 
@@ -248,11 +295,12 @@ class CustomFieldsList extends Component
         $this->note = '';
         $this->isRequired = true;
         $this->prefillSource = '';
+        $this->defaultValue = '';
+        $this->isDisabled = false;
         $this->options = [];
         $this->image = null;
         $this->existingImagePath = null;
-        $this->dependsOnFieldId = null;
-        $this->dependsOnValues = [];
+        $this->dependsOn = [];
         $this->resetErrorBag();
     }
 
@@ -261,6 +309,7 @@ class CustomFieldsList extends Component
         return view('livewire.products.custom-fields-list', [
             'typeOptions' => CustomField::TYPES,
             'prefillOptions' => CustomField::PREFILL_SOURCES,
+            'fieldLabels' => CustomField::pluck('label', 'id'),
         ])->layout('layouts.authenticated', [
             'user' => new UserResource(Auth::user()),
         ]);

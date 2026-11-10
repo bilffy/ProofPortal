@@ -46,6 +46,16 @@ class ProductsList extends Component
      */
     public array $assignedFieldIds = [];
 
+    /**
+     * Fields that show only some of their options for this product:
+     * [custom_field_id => [option_value, ...]]. A field not listed shows all
+     * of its options. Set from the browser by the field picker, like
+     * $assignedFieldIds, and only written on Create Product / Save Changes.
+     *
+     * @var array<int|string, array<int, string>>
+     */
+    public array $fieldAllowedOptions = [];
+
     public string $successMessage = '';
 
     protected function rules(): array
@@ -72,6 +82,7 @@ class ProductsList extends Component
             'image' => 'nullable|image|max:5120',
             'assignedFieldIds' => 'array',
             'assignedFieldIds.*' => 'integer',
+            'fieldAllowedOptions' => 'array',
         ];
     }
 
@@ -131,6 +142,7 @@ class ProductsList extends Component
         $this->existingImagePath = $product->image;
         $this->image = null;
         $this->assignedFieldIds = $product->customFields()->pluck('custom_fields.id')->map(fn ($id) => (int) $id)->all();
+        $this->fieldAllowedOptions = Product::allowedOptionMapFor($product->id);
 
         $this->showForm = true;
         $this->successMessage = '';
@@ -168,11 +180,15 @@ class ProductsList extends Component
 
             // Assigned fields + their drag order, saved together with the product.
             $ids = array_values(array_unique(array_map('intval', $this->assignedFieldIds)));
-            $validIds = CustomField::whereIn('id', $ids)->pluck('id')->map(fn ($id) => (int) $id)->all();
+            $fields = CustomField::with('fieldOptions')->whereIn('id', $ids)->get()->keyBy('id');
+            $validIds = $fields->keys()->map(fn ($id) => (int) $id)->all();
 
             $pivotData = [];
             foreach (array_values(array_intersect($ids, $validIds)) as $index => $fieldId) {
-                $pivotData[$fieldId] = ['sort_order' => $index];
+                $pivotData[$fieldId] = [
+                    'sort_order' => $index,
+                    'allowed_options' => $this->allowedOptionsJson($fields->get($fieldId)),
+                ];
             }
 
             $product->customFields()->sync($pivotData);
@@ -183,6 +199,32 @@ class ProductsList extends Component
         $this->resetForm();
         $this->showForm = false;
         $this->loadProducts();
+    }
+
+    /**
+     * The JSON stored for a field's option limit, or null for "all options".
+     * Only values the field really has are kept; if nothing is left, or the
+     * product ends up with every option anyway, no limit is stored.
+     */
+    private function allowedOptionsJson(?CustomField $field): ?string
+    {
+        if (!$field || !in_array($field->type, CustomField::OPTION_TYPES, true)) {
+            return null;
+        }
+
+        $requested = $this->fieldAllowedOptions[$field->id] ?? null;
+        if (!is_array($requested) || $requested === []) {
+            return null;
+        }
+
+        $all = $field->fieldOptions->pluck('option_value')->map(fn ($v) => (string) $v)->all();
+        $kept = array_values(array_filter($all, fn ($v) => in_array($v, array_map('strval', $requested), true)));
+
+        if ($kept === [] || count($kept) === count($all)) {
+            return null;
+        }
+
+        return json_encode($kept);
     }
 
     public function delete(int $id): void
@@ -218,6 +260,7 @@ class ProductsList extends Component
         $this->image = null;
         $this->existingImagePath = null;
         $this->assignedFieldIds = [];
+        $this->fieldAllowedOptions = [];
         $this->resetErrorBag();
     }
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -40,9 +41,35 @@ class Product extends Model
     public function customFields()
     {
         return $this->belongsToMany(CustomField::class, 'product_custom_field')
-            ->withPivot('sort_order')
+            ->withPivot('sort_order', 'allowed_options')
             ->withTimestamps()
             ->orderByPivot('sort_order');
+    }
+
+    /**
+     * Fields this product limits to some of their options, as
+     * [custom_field_id => [option_value, ...]]. A field that is not in the
+     * result shows all of its options.
+     *
+     * @return array<int, string[]>
+     */
+    public static function allowedOptionMapFor(int $productId): array
+    {
+        $map = [];
+
+        $rows = DB::table('product_custom_field')
+            ->where('product_id', $productId)
+            ->whereNotNull('allowed_options')
+            ->pluck('allowed_options', 'custom_field_id');
+
+        foreach ($rows as $fieldId => $json) {
+            $values = json_decode((string) $json, true);
+            if (is_array($values) && $values !== []) {
+                $map[(int) $fieldId] = array_map('strval', $values);
+            }
+        }
+
+        return $map;
     }
 
     public function orders()

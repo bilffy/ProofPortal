@@ -110,7 +110,7 @@
                 <hr class="w-full my-3" style="border-color:#cbd5e1;">
 
                 <p class="mb-0" style="font-size:13px;color:#273444;">
-                    <strong style="font-weight:600;">Designated User Roles &ndash; </strong>
+                    <strong style="font-weight:600;">User Roles &ndash; </strong>
                     <span style="font-weight:500;">{{ implode(', ', $roleOptions) }}</span>
                 </p>
 

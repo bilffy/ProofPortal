@@ -18,15 +18,22 @@ class ProductFields extends Component
     public $assignedFields = [];
     public $availableFields = [];
 
+    /** @var array<int|string, array<int, string>> field id => option values this product shows */
+    public array $allowedOptions = [];
+
     /**
      * @param array<int, int|string> $assignedIds Field ids already assigned to
      *  the product, in display order (empty for a new product).
+     * @param array<int|string, array<int, string>> $allowedOptions Option limits
+     *  already saved for the product (field id => option values).
      */
-    public function mount(array $assignedIds = []): void
+    public function mount(array $assignedIds = [], array $allowedOptions = []): void
     {
+        $this->allowedOptions = $allowedOptions;
+
         $assignedIds = array_values(array_map('intval', $assignedIds));
 
-        $assigned = CustomField::whereIn('id', $assignedIds)->get()->keyBy('id');
+        $assigned = CustomField::with('fieldOptions')->whereIn('id', $assignedIds)->get()->keyBy('id');
 
         // Keep the given order; silently skip ids whose field no longer exists.
         $this->assignedFields = collect($assignedIds)
@@ -34,7 +41,7 @@ class ProductFields extends Component
             ->filter()
             ->values();
 
-        $this->availableFields = CustomField::whereNotIn('id', $assignedIds)->orderBy('label')->get();
+        $this->availableFields = CustomField::with('fieldOptions')->whereNotIn('id', $assignedIds)->orderBy('label')->get();
     }
 
     public function render()

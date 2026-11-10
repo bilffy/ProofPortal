@@ -159,7 +159,7 @@ class BulkInviteUsersCommand extends Command
         fclose($handle);
 
         if (empty($rows)) {
-            $this->error('No data rows found in CSV.');
+            $this->error('Imported file is empty.');
 
             return null;
         }

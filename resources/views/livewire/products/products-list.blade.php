@@ -100,7 +100,7 @@
                  for both Add and Edit. Assignments are held in
                  $assignedFieldIds and only written by Create Product / Save Changes. --}}
             <div class="mt-6 pt-6 border-t border-gray-200">
-                <livewire:products.product-fields :assigned-ids="$assignedFieldIds" :key="'product-fields-' . ($editingId ?? 'new')" />
+                <livewire:products.product-fields :assigned-ids="$assignedFieldIds" :allowed-options="$fieldAllowedOptions" :key="'product-fields-' . ($editingId ?? 'new')" />
             </div>
 
             <div class="mt-6 flex items-center gap-3">
