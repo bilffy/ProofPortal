@@ -153,19 +153,33 @@ class ReportRepository
     }
 
     /**
-     * Jobs synced to proofing and assigned to the current user.
+     * Jobs synced to proofing that the current user can report on. Archived jobs are included.
+     * A Franchise user gets every proofing job of their franchise (jobs.ts_account_id =
+     * franchises.ts_account_id), the same for all users of that franchise; other users keep
+     * the jobs assigned to them (job_users).
      */
     protected function syncedJobsForUserQuery(): Builder
     {
         $statusService = app(StatusService::class);
+        $user = Auth::user();
 
-        return Job::query()
-            ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('users', 'users.id', '=', 'job_users.user_id')
-            ->where('users.id', $this->getUserId())
+        $query = Job::query();
+
+        if ($user->isFranchiseLevel()) {
+            $accountId = $user->getFranchise()?->ts_account_id;
+
+            // No account id: match nothing rather than every franchise's jobs.
+            $query->where('jobs.ts_account_id', $accountId ?? -1)
+                ->where('jobs.show_proofing', 1);
+        } else {
+            $query->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
+                ->join('users', 'users.id', '=', 'job_users.user_id')
+                ->where('users.id', $this->getUserId());
+        }
+
+        return $query
             ->where('jobs.jobsync_status_id', $statusService->sync)
             ->whereNotIn('jobs.job_status_id', [
-                $statusService->archived,
                 $statusService->tnjNotFound,
                 $statusService->deleted,
             ]);
@@ -254,13 +268,9 @@ class ReportRepository
 
     protected function subjectsQuery(): Builder
     {
-        $userId = $this->getUserId();
-
         return Subject::query()
             ->join('jobs', 'subjects.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('job_users', 'job_users.ts_job_id', '=', 'jobs.ts_job_id')
-            ->join('users', 'users.id', '=', 'job_users.user_id')
-            ->where('users.id', $userId);
+            ->whereIn('jobs.ts_job_id', $this->syncedJobsForUserQuery()->select('jobs.ts_job_id'));
     }
 
     /**

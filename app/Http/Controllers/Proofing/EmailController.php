@@ -363,8 +363,8 @@ class EmailController extends Controller
     }
 
     /**
-     * Synced proofing jobs (show_proofing = 1, not archived / deleted / not
-     * found) of the Franchise user's franchise, matched on
+     * Synced proofing jobs (show_proofing = 1, not deleted / not found; archived
+     * jobs are included) of the Franchise user's franchise, matched on
      * jobs.ts_account_id = franchises.ts_account_id, not just the jobs
      * assigned to that user. Other users keep the jobs assigned to them.
      */
@@ -387,7 +387,6 @@ class EmailController extends Controller
             ->where('jobs.show_proofing', 1)
             ->where('jobs.jobsync_status_id', $this->statusService->sync)
             ->whereNotIn('jobs.job_status_id', [
-                $this->statusService->archived,
                 $this->statusService->tnjNotFound,
                 $this->statusService->deleted,
             ])
