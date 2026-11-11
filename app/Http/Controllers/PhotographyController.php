@@ -341,12 +341,18 @@ class PhotographyController extends Controller
         // downloaded in the first format instead (download_details.filename_format) with a notice.
         $fallbackKeys = [];
         $bulkNotice = null;
-        if ($tab === PhotographyHelper::TAB_PORTRAITS && !empty($keys)) {
+        // "Download All" sends no images: it covers every subject with a photo in the selected folders.
+        $downloadAll = empty($images);
+        if ($tab === PhotographyHelper::TAB_PORTRAITS && (!empty($keys) || $downloadAll)) {
             $chosenFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
             if ($chosenFormat && $chosenFormat->validation_check) {
                 $missingLabels = [];
                 $missingSubjects = [];
-                foreach (Subject::whereIn('ts_subjectkey', $keys)->where('is_deleted', 0)->get() as $subject) {
+                $subjectsToCheck = $downloadAll
+                    ? Subject::whereIn('ts_folder_id', Folder::whereIn('ts_folderkey', $selectedFilters['class']['folderkey'] ?? [])->pluck('ts_folder_id')->filter()->all())
+                        ->whereHas('images')
+                    : Subject::whereIn('ts_subjectkey', $keys);
+                foreach ($subjectsToCheck->where('is_deleted', 0)->get() as $subject) {
                     $missing = $subject->missingFilenameFields($chosenFormat->format);
                     if (empty($missing)) {
                         continue;

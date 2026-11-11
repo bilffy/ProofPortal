@@ -84,7 +84,7 @@
                 id="tabSuperAdmin"
                 aria-expanded="{{ $superAdminOpen ? 'true' : 'false' }}"
                 aria-controls="superAdminSubmenu"
-                class="flex gap-2 items-center pl-4 pr-4 pt-2 pb-2 mr-2 rounded-e-md whitespace-nowrap hover:bg-primary-100"
+                class="no-underline hover:no-underline flex gap-2 items-center pl-4 pr-4 pt-2 pb-2 mr-2 rounded-e-md whitespace-nowrap hover:bg-primary-100"
                 style="width: calc(100% - 0.5rem); text-align: left; cursor: pointer;">
                 <span class="w-[20px] h-[20px] flex items-center justify-center">
                     <x-icon icon="credit-card"/>
@@ -162,6 +162,10 @@
 @endif
 
 <style>
+    /* The proofing pages load the old CoreUI stylesheet, which underlines links on hover. */
+    #mainNav a, #mainNav a:hover, #mainNav a:focus, #mainNav button {
+        text-decoration: none;
+    }
     .logoRegular, .logoSM {
         background-repeat: no-repeat;
     }
