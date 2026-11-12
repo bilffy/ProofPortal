@@ -157,6 +157,23 @@
     #emailsCategoryTabsContent .emails-table tbody td.text-center {
         text-align: center;
     }
+    /* Links in the cells look like /school: same colour as the text, no underline. */
+    #emailsCategoryTabsContent .emails-table tbody td a:not(.btn-link),
+    #emailsCategoryTabsContent .emails-table tbody td a:not(.btn-link):hover {
+        color: inherit;
+        text-decoration: none;
+    }
+    /* Row height like /users (60px: 1rem padding + a 28px badge line). The Select link is
+       compact so it does not make the row taller than the plain text rows. */
+    #emailsCategoryTabsContent .emails-table tbody tr {
+        height: 60px;
+    }
+    #emailsCategoryTabsContent .emails-table .btn-link {
+        padding: 0;
+        font-size: inherit;
+        line-height: 1.25rem;
+        vertical-align: baseline;
+    }
 </style>
 @endsection
 
@@ -168,7 +185,9 @@
     <x-tabs.tabContainer tabsWrapper="emailsCategoryTabsContent">
         <x-tabs.tab id="tab-proofing" :isActive="true">{{ __('Proofing') }}</x-tabs.tab>
         <x-tabs.tab id="tab-invitation" :isActive="false">{{ __('User Invitation') }}</x-tabs.tab>
-        <x-tabs.tab id="tab-ordering" :isActive="false">{{ __('Promotional Materials') }}</x-tabs.tab>
+        {{-- Promotional Products tab hidden for now (its content below is commented out too).
+        <x-tabs.tab id="tab-ordering" :isActive="false">{{ __('Promotional Products') }}</x-tabs.tab>
+        --}}
     </x-tabs.tabContainer>
 
     <x-tabs.tabContentContainer id="emailsCategoryTabsContent">
@@ -194,9 +213,8 @@
                                 <table class="table emails-table">
                                     <thead>
                                         <tr>
-                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School Name') }}</th>
                                             <th scope="col" class="emails-sortable" data-sort-key="job">{{ __('Job') }}</th>
-                                            <th scope="col" class="text-center">{{ __('Select') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -206,16 +224,12 @@
                                                     ? __(':name (:season)', ['name' => $job->ts_jobname, 'season' => $seasonList[$job->ts_season_id]])
                                                     : $job->ts_jobname;
                                                 $encryptedTsJobId = Crypt::encryptString($job->ts_job_id);
-                                                $choiceName = strtolower(trim($title . ' ' . ($job->school_name ?? '')));
+                                                $choiceName = mb_strtolower(trim($title . ' ' . ($job->school_name ?? '')));
+                                                $proofingUrl = route('emails.show', ['tsJobId' => $encryptedTsJobId]);
                                             @endphp
-                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-sort-school="{{ strtolower($job->school_name ?? '') }}" data-sort-job="{{ strtolower($title) }}">
-                                                <td class="align-middle">{{ $job->school_name ?? '—' }}</td>
-                                                <td class="align-middle">{{ $title }}</td>
-                                                <td class="align-middle text-center">
-                                                    <a href="{{ route('emails.show', ['tsJobId' => $encryptedTsJobId]) }}" class="btn btn-link">
-                                                        {{ __('Select') }}
-                                                    </a>
-                                                </td>
+                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-sort-school="{{ mb_strtolower($job->school_name ?? '') }}" data-sort-job="{{ mb_strtolower($title) }}">
+                                                <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $job->school_name ?? '—' }}</a></td>
+                                                <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $title }}</a></td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -249,22 +263,25 @@
                                 <table class="table emails-table">
                                     <thead>
                                         <tr>
-                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School') }}</th>
-                                            <th scope="col" class="text-center">{{ __('Select') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="schoolkey">{{ __('School Key') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School Name') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="suburb">{{ __('Suburb') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($invitationSchools as $school)
                                             @php
                                                 $encryptedSchoolId = Crypt::encryptString($school->id);
+                                                $invitationUrl = route('emails.invitations.show', ['schoolId' => $encryptedSchoolId]);
                                             @endphp
-                                            <tr class="invitation-choice" data-choice-name="{{ strtolower($school->name) }}" data-sort-school="{{ strtolower($school->name) }}">
-                                                <td class="align-middle">{{ $school->name }}</td>
-                                                <td class="align-middle text-center">
-                                                    <a href="{{ route('emails.invitations.show', ['schoolId' => $encryptedSchoolId]) }}" class="btn btn-link">
-                                                        {{ __('Select') }}
-                                                    </a>
-                                                </td>
+                                            <tr class="invitation-choice"
+                                                data-choice-name="{{ mb_strtolower(trim($school->schoolkey . ' ' . $school->name . ' ' . $school->suburb)) }}"
+                                                data-sort-schoolkey="{{ mb_strtolower((string) $school->schoolkey) }}"
+                                                data-sort-school="{{ mb_strtolower((string) $school->name) }}"
+                                                data-sort-suburb="{{ mb_strtolower((string) $school->suburb) }}">
+                                                <td class="align-middle"><a href="{{ $invitationUrl }}">{{ $school->schoolkey }}</a></td>
+                                                <td class="align-middle"><a href="{{ $invitationUrl }}">{{ $school->name }}</a></td>
+                                                <td class="align-middle"><a href="{{ $invitationUrl }}">{{ $school->suburb }}</a></td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -275,6 +292,7 @@
                         </div>
             </div>
         </x-tabs.tabContent>
+        {{-- Promotional Products tab content hidden for now.
         <x-tabs.tabContent id="tab-ordering">
             <div class="card">
                         <div class="card-header emails-card-head">
@@ -323,6 +341,7 @@
                         </div>
             </div>
         </x-tabs.tabContent>
+        --}}
     </x-tabs.tabContentContainer>
 
     @include('proofing.franchise.emails._modals')
@@ -331,7 +350,7 @@
 @section('js')
 <script>
 $(document).ready(function () {
-    // Shared filter + client-side pagination (10 rows/page) for the Jobs and
+    // Shared filter + client-side pagination (20 rows/page) for the Jobs and
     // Schools choice tables - both tables are rendered in full up-front (no
     // AJAX here), so paging and the existing text filter both just show/hide
     // <tr> elements with the "d-none" class.
@@ -340,7 +359,7 @@ $(document).ready(function () {
         const filterInputSelector = options.filterInputSelector;
         const filterFeedbackSelector = options.filterFeedbackSelector;
         const pagerSelector = options.pagerSelector;
-        const perPage = options.perPage || 10;
+        const perPage = options.perPage || 20;
 
         let currentPage = 1;
 
@@ -383,12 +402,12 @@ $(document).ready(function () {
         }
 
         function matchingRows() {
-            const filterByTextOriginal = $(filterInputSelector).val() || '';
-            const filterByText = filterByTextOriginal.toLowerCase().replace("'", "\\'");
+            const filterByText = ($(filterInputSelector).val() || '').trim().toLowerCase();
 
             if (filterByText.length >= 1) {
                 return $(rowSelector).filter(function () {
-                    return ($(this).data('choice-name') || '').toString().indexOf(filterByText) !== -1;
+                    // attr(), not data(): data() turns numeric-looking text into numbers.
+                    return ($(this).attr('data-choice-name') || '').indexOf(filterByText) !== -1;
                 });
             }
 
@@ -482,7 +501,7 @@ $(document).ready(function () {
         filterInputSelector: '#choice-name-filter',
         filterFeedbackSelector: '#choice-name-filter-feedback',
         pagerSelector: '#choice-pager',
-        perPage: 10,
+        perPage: 20,
     });
 
     setupPaginatedChoiceTable({
@@ -490,7 +509,7 @@ $(document).ready(function () {
         filterInputSelector: '#invitation-choice-name-filter',
         filterFeedbackSelector: '#invitation-choice-name-filter-feedback',
         pagerSelector: '#invitation-choice-pager',
-        perPage: 10,
+        perPage: 20,
     });
 
     setupPaginatedChoiceTable({
@@ -498,7 +517,7 @@ $(document).ready(function () {
         filterInputSelector: '#ordering-choice-name-filter',
         filterFeedbackSelector: '#ordering-choice-name-filter-feedback',
         pagerSelector: '#ordering-choice-pager',
-        perPage: 10,
+        perPage: 20,
     });
 
     // Tab switching itself is handled by Flowbite's Tabs component (initialised
@@ -516,7 +535,7 @@ $(document).ready(function () {
 
     // Deep-link support: /emails#tab-invitation lands directly on that tab
     // (used by the "Back to Schools" link on the per-school invitation page).
-    if (window.location.hash) {
+    if (/^#tab-[a-z-]+$/.test(window.location.hash)) {
         $(window.location.hash + '-tab').trigger('click');
     }
 });

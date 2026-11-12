@@ -72,7 +72,6 @@
                             name="firstname"
                             value="{{ old('firstname', $targetUser->firstname) }}"
                             type="text"
-                            required
                             label="First Name"
                             placeholder="First Name"
                         />
@@ -86,7 +85,6 @@
                             name="lastname"
                             value="{{ old('lastname', $targetUser->lastname) }}"
                             type="text"
-                            required
                             label="Last Name"
                             placeholder="Last Name"
                         />
@@ -97,13 +95,13 @@
 
             <div class="flex flex-row gap-4 max-w-screen-md @if ($targetUser->status === \App\Models\User::STATUS_INVITED && $targetUser->send_invitation_with_proofing) mb-4 @else mb-8 @endif">
                 <div class="w-full">
-                    <x-form.select class="w-full" value="{{ old('role', $targetUser->getRoleId()) }}" context="role" :options="$roleOptions" required>User Role</x-form.select>
+                    <x-form.select class="w-full" value="{{ old('role', $targetUser->getRoleId()) }}" context="role" :options="$roleOptions">User Role</x-form.select>
                     <x-form.input.error errorMessage="{{$roleError}}" />
                 </div>
                 <div id="level" class="w-full invisible">
-                    <x-form.select class="w-full"  value="{{ old('school', $targetUser->getSchoolId()) }}" context="school" :options="$schoolOptions" required>School</x-form.select>
+                    <x-form.select class="w-full"  value="{{ old('school', $targetUser->getSchoolId()) }}" context="school" :options="$schoolOptions">School</x-form.select>
                     <x-form.input.error errorMessage="{{$schoolError}}" />
-                    <x-form.select class="w-full" value="{{ old('franchise', $targetUser->getFranchiseId()) }}" context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
+                    <x-form.select class="w-full" value="{{ old('franchise', $targetUser->getFranchiseId()) }}" context="franchise" :options="$franchiseOptions">Franchise</x-form.select>
                     <x-form.input.error errorMessage="{{$franchiseError}}" />
                 </div>
             </div>

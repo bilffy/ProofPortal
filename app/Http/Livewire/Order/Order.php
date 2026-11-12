@@ -62,6 +62,14 @@ class Order extends Component
     // and readable.
     public const ARTWORK_UPLOAD_MAX_KB = 15360; // 15MB, in KB
 
+    /**
+     * false: this page lists the Promotional Products (/order); true: only the
+     * products flagged is_school_product (/school-products, see SchoolProducts).
+     */
+    protected bool $schoolProducts = false;
+
+    protected string $pageTitle = 'Promotional Products';
+
     public $products = [];
     public $selectedProductId = null;
     public $customFields = [];
@@ -107,7 +115,9 @@ class Order extends Component
             return redirect()->route('dashboard');
         }
 
-        $this->products = Product::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $this->products = Product::where('is_active', true)
+            ->where('is_school_product', $this->schoolProducts)
+            ->orderBy('sort_order')->orderBy('name')->get();
         $this->artworkRequiredOptions = ArtworkRequired::orderBy('id')->get();
     }
 
@@ -280,7 +290,8 @@ class Order extends Component
     protected function fieldRules(): array
     {
         $rules = [
-            'selectedProductId' => 'required|exists:products,id',
+            // only products this page lists (a hand-made request can't order from the other page)
+            'selectedProductId' => ['required', \Illuminate\Validation\Rule::in(collect($this->products)->pluck('id')->all())],
         ];
 
         $availableFieldIds = collect($this->customFields)->pluck('id')->all();
@@ -595,6 +606,7 @@ class Order extends Component
 
         return view('livewire.order', [
             'user' => $user,
+            'pageTitle' => $this->pageTitle,
         ])
             ->layout('layouts.authenticated', [
                 'user' => new UserResource(Auth::user()),

@@ -1,6 +1,31 @@
 {{-- Shared View/Resend modal wiring for the emails pages (index + show).
      Self-contained: safe to @include inside any @section('js') block. --}}
 <script>
+// "..." actions menu in the message tables (rendered inside AJAX responses, so everything is delegated).
+$(document).on('click', '.js-emails-menu-toggle', function (e) {
+    e.stopPropagation();
+    const $btn = $(this);
+    const $menu = $btn.siblings('.emails-menu');
+    const wasOpen = $menu.hasClass('is-open');
+    $('.emails-menu.is-open').removeClass('is-open').siblings('.js-emails-menu-toggle').attr('aria-expanded', 'false');
+    if (wasOpen) { return; }
+
+    const r = $btn[0].getBoundingClientRect();
+    const width = 176; // w-44
+    const height = $menu.outerHeight() || 90;
+    const left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width));
+    const top = (r.bottom + height + 8 > window.innerHeight) ? Math.max(8, r.top - height - 4) : r.bottom + 4;
+    $menu.css({ left: left + 'px', top: top + 'px' }).addClass('is-open');
+    $btn.attr('aria-expanded', 'true');
+});
+$(document).on('click', function () {
+    $('.emails-menu.is-open').removeClass('is-open').siblings('.js-emails-menu-toggle').attr('aria-expanded', 'false');
+});
+$(window).on('scroll resize', function () {
+    $('.emails-menu.is-open').removeClass('is-open').siblings('.js-emails-menu-toggle').attr('aria-expanded', 'false');
+});
+</script>
+<script>
 $(document).ready(function () {
     const spinningHtml = '<div class="text-center py-4"><i class="fa fa-spinner fa-3x fa-spin"></i></div>';
 

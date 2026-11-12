@@ -42,7 +42,6 @@
                             name="email"
                             value="{{ old('email') }}"
                             type="email"
-                            required
                             autofocus
                             label="Email"
                             placeholder="Email"
@@ -59,7 +58,6 @@
                             name="firstname"
                             value="{{ old('firstname') }}"
                             type="text"
-                            required
                             label="First Name"
                             placeholder="First Name"
                         />
@@ -73,7 +71,6 @@
                             name="lastname"
                             value="{{ old('lastname') }}"
                             type="text"
-                            required
                             label="Last Name"
                             placeholder="Last Name"
                         />
@@ -84,13 +81,13 @@
 
             <div class="flex flex-row gap-4 max-w-screen-md mb-8"> {{-- mb-3 --}}
                 <div class="w-full">
-                    <x-form.select class="w-full" value="{{ old('role') }}" context="role" :options="$roleOptions" required>User Role</x-form.select>
+                    <x-form.select class="w-full" value="{{ old('role') }}" context="role" :options="$roleOptions">User Role</x-form.select>
                     <x-form.input.error errorMessage="{{$roleError}}" />
                 </div>
                 <div id="level" class="w-full invisible">
-                    <x-form.select class="w-full"  value="{{ old('school') }}" context="school" :options="$schoolOptions" required>School</x-form.select>
+                    <x-form.select class="w-full"  value="{{ old('school') }}" context="school" :options="$schoolOptions">School</x-form.select>
                     <x-form.input.error errorMessage="{{$schoolError}}" />
-                    <x-form.select class="w-full" value="{{ old('franchise') }}" context="franchise" :options="$franchiseOptions" required>Franchise</x-form.select>
+                    <x-form.select class="w-full" value="{{ old('franchise') }}" context="franchise" :options="$franchiseOptions">Franchise</x-form.select>
                     <x-form.input.error errorMessage="{{$franchiseError}}" />
                 </div>
             </div>

@@ -29,6 +29,8 @@ return new class extends Migration
             $table->boolean('print_to_franchise')->default(false);
             // false: the requestor's copy of this product's order email is not listed in /emails/ordering/{school}
             $table->boolean('show_in_emails')->default(true);
+            // true: listed on the "School Products" page (/school-products) instead of /order
+            $table->boolean('is_school_product')->default(false);
             $table->timestamps();
         });
     }

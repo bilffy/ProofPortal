@@ -13,7 +13,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header emails-filter-head">
-                    <h5 class="emails-head-title">Promotional Materials - {{ $school->name }}</h5>
+                    <h5 class="emails-head-title">Promotional Products - {{ $school->name }}</h5>
                     <div class="emails-search-box">
                         <span class="emails-search-icon"><i class="fa fa-search"></i></span>
                         <input type="search" class="form-control emails-search-input" id="email-filter" aria-label="Keyword search" placeholder="Search..." autocomplete="off">

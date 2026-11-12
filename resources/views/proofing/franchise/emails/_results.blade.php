@@ -22,7 +22,7 @@
                     {!! $sortHead('email_to', __('To')) !!}
                     {!! $sortHead('email_from', __('From')) !!}
                     {!! $sortHead('status_name', __('Status')) !!}
-                    <th scope="col">{{ __('Actions') }}</th>
+                    <th scope="col" class="emails-actions-cell"></th>
                 </tr>
             </thead>
             <tbody>
@@ -36,22 +36,15 @@
                         <td>{{ $message->email_to }}</td>
                         <td>{{ $message->email_from }}</td>
                         <td>{{ $message->status->status_external_name ?? $message->status->status_internal_name ?? '—' }}</td>
-                        <td>
-                            <a
-                                href="#"
-                                class="btn btn-link p-0 js-view-email"
-                                data-message-id="{{ $message->id }}"
-                            >
-                                {{ __('View') }}
-                            </a>
-                            <span class="text-muted mx-1">|</span>
-                            <a
-                                href="#"
-                                class="btn btn-link p-0 js-resend-email"
-                                data-message-id="{{ $message->id }}"
-                            >
-                                {{ __('Resend') }}
-                            </a>
+                        {{-- "..." menu like /users: View / Resend (the js-* classes are what the modal scripts listen for) --}}
+                        <td class="emails-actions-cell">
+                            <button type="button" class="emails-dots-btn js-emails-menu-toggle" aria-haspopup="true" aria-expanded="false" aria-label="{{ __('Actions') }}">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>
+                            </button>
+                            <ul class="emails-menu" role="menu">
+                                <li><a href="#" class="js-view-email" data-message-id="{{ $message->id }}">{{ __('View') }}</a></li>
+                                <li><a href="#" class="js-resend-email" data-message-id="{{ $message->id }}">{{ __('Resend') }}</a></li>
+                            </ul>
                         </td>
                     </tr>
                 @endforeach

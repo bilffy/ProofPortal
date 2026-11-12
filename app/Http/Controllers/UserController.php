@@ -209,10 +209,18 @@ class UserController extends Controller
         if ($validator->fails()) {
             $errors = $validator->errors();
 
-            // Email already registered: tell the user to contact the Franchise.
+            // Email already registered: who to contact depends on who is adding the user.
             if (array_key_exists('Unique', $validator->failed()['email'] ?? [])) {
+                $creator = Auth::user();
                 $errors->forget('email');
-                $errors->add('email', 'User already exists. Please contact the Franchise.');
+
+                if ($creator->isFranchiseLevel()) {
+                    $errors->add('email', 'User already exists. Please contact the IT.');
+                } elseif ($creator->isSchoolLevel()) {
+                    $errors->add('email', 'User already exists. Please contact the Franchise.');
+                } else {
+                    $errors->add('email', 'User already exists.');
+                }
             }
 
             return response()->json(['errors' => $errors], 422);

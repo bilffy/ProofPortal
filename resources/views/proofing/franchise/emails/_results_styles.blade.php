@@ -25,6 +25,54 @@
         border-bottom: 1px solid #E6E7E8;
         vertical-align: middle;
     }
+    /* "..." actions menu like /users (grey dots, hover #f0eeec; white rounded panel, w-44, shadow).
+       The panel is position: fixed and placed by script so the table's scroll wrapper cannot clip it. */
+    #emails-messages-table .emails-actions-cell {
+        width: 40px;
+        text-align: center;
+    }
+    .emails-dots-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
+        border: 0;
+        background: transparent;
+        color: #525252;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .emails-dots-btn:hover,
+    .emails-dots-btn[aria-expanded="true"] { background: #f0eeec; }
+    .emails-dots-btn:focus { outline: none; }
+    .emails-menu {
+        display: none;
+        position: fixed;
+        z-index: 1050;
+        width: 11rem;
+        margin: 0;
+        padding: 0.5rem 0;
+        list-style: none;
+        background: #fff;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+        text-align: left;
+    }
+    .emails-menu.is-open { display: block; }
+    .emails-menu a {
+        display: block;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: #374151;
+        text-decoration: none;
+    }
+    .emails-menu a:hover { background: #f3f4f6; color: #374151; text-decoration: none; }
+
+    /* Row height like /users (60px). */
+    #emails-messages-table tbody tr {
+        height: 60px;
+    }
     #emails-messages-table .btn-link {
         text-decoration: none;
     }

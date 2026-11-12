@@ -99,9 +99,9 @@ class BulkInviteUsers extends Component
         // allowed to assign (same restriction as the role dropdown/validation).
         $allowedLabels = $this->roleOptions;
         $sampleRows = [
-            RoleHelper::ROLE_SCHOOL_ADMIN => ['Jane', 'Smith', 'jane.smith@gmail.com', RoleHelper::ROLE_SCHOOL_ADMIN],
-            RoleHelper::ROLE_PHOTO_COORDINATOR => ['John', 'Doe', 'john.doe@gmail.com', RoleHelper::ROLE_PHOTO_COORDINATOR],
-            RoleHelper::ROLE_TEACHER => ['Amy', 'Lee', 'amy.lee@gmail.com', RoleHelper::ROLE_TEACHER],
+            RoleHelper::ROLE_SCHOOL_ADMIN => ['Jane', 'Smith', 'jane.smith@schoolname.nsw.edu.au', RoleHelper::ROLE_SCHOOL_ADMIN],
+            RoleHelper::ROLE_PHOTO_COORDINATOR => ['John', 'Doe', 'john.doe@schoolname.vic.edu.au', RoleHelper::ROLE_PHOTO_COORDINATOR],
+            RoleHelper::ROLE_TEACHER => ['Amy', 'Lee', 'amy.lee@schoolname.sa.edu.au', RoleHelper::ROLE_TEACHER],
         ];
 
         return response()->streamDownload(function () use ($allowedLabels, $sampleRows) {
@@ -400,14 +400,22 @@ class BulkInviteUsers extends Component
                 ActivityLogHelper::log(LogConstants::CREATE_USER, ['created_user' => $user->id]);
 
                 DB::commit();
+                $created++;
 
                 if ($sendWithProofing) {
                     // Suppress immediate account setup email. Email will be sent when assigned to a folder in proofing.
                 } else {
-                    $this->userService->sendInvite($user, $creator->id);
+                    try {
+                        $this->userService->sendInvite($user, $creator->id);
+                    } catch (\Throwable $e) {
+                        // The user already exists: report the email problem, not a failed creation.
+                        Log::error('Import users invite email failed', [
+                            'email' => $row['email'],
+                            'exception' => $e->getMessage(),
+                        ]);
+                        $failed[] = "User '{$row['email']}' was created but the invitation email could not be sent.";
+                    }
                 }
-
-                $created++;
             } catch (\Throwable $e) {
                 DB::rollBack();
                 Log::error('Import users create failed', [
@@ -490,10 +498,10 @@ class BulkInviteUsers extends Component
         // Optional header row — skip when the first row looks like labels.
         $first = array_map(fn ($value) => strtolower(trim((string) $value)), $raw[0] ?? []);
         if (
-            ($first[0] ?? '') === 'firstname'
-            || ($first[1] ?? '') === 'lastname'
-            || ($first[2] ?? '') === 'email'
-            || ($first[3] ?? '') === 'role'
+            in_array($first[0] ?? '', ['firstname', 'first name'], true)
+            || in_array($first[1] ?? '', ['lastname', 'last name'], true)
+            || in_array($first[2] ?? '', ['email', 'email address'], true)
+            || in_array($first[3] ?? '', ['role', 'user role'], true)
         ) {
             array_shift($raw);
         }
@@ -598,7 +606,7 @@ class BulkInviteUsers extends Component
             $dbName = self::ROLE_LABEL_MAP[$role];
             $allowedDbNames = RoleHelper::getAllowedRoleNames(Auth::user()->getRole());
             if (!in_array($dbName, $allowedDbNames, true)) {
-                $errors['role'] = "You are not allowed to assign the role \"{$role}\"{$for}.";
+                $errors['role'] = "You are not allowed to assign the user role \"{$role}\"{$for}.";
             }
         }
 
@@ -635,7 +643,7 @@ class BulkInviteUsers extends Component
 
         if (!empty($emailsByKind['role'])) {
             $emails = $list('role', "'");
-            $messages[] = "Invalid role selected for {$emails}. Please change the role.";
+            $messages[] = "Selected user role for {$emails} is unavailable. Please change the user role.";
         }
         if (!empty($emailsByKind['exists'])) {
             $emails = $list('exists', "'");

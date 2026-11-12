@@ -52,7 +52,11 @@
 
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
-        <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Promotional Materials</x-layout.navItem>
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Promotional Products</x-layout.navItem>
+    @endcan
+
+    @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
+        <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolProducts" navIcon="th-large" href="{{ route('school-products') }}" :activeNav="request()->routeIs('school-products')">School Products</x-layout.navItem>
     @endcan
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
@@ -89,7 +93,7 @@
                 <span class="w-[20px] h-[20px] flex items-center justify-center">
                     <x-icon icon="credit-card"/>
                 </span>
-                <div class="hideOnCollapse {{ $visibility ? 'textCollapsed' : 'textExpanded' }}">Promotional Materials</div>
+                <div class="hideOnCollapse {{ $visibility ? 'textCollapsed' : 'textExpanded' }}">Promotional Products</div>
                 <span id="superAdminChevron" style="margin-left: auto; transition: transform .15s;{{ $superAdminOpen ? ' transform: rotate(180deg);' : '' }}">
                     <x-icon icon="angle-down"/>
                 </span>
@@ -126,6 +130,8 @@
         let tabId = getNavTabId(getCurrentNav());
         if (window.location.pathname.includes('/franchise-dashboard')) {
             tabId = 'tabFranchiseDashboard';
+        } else if (window.location.pathname.includes('/school-products')) {
+            tabId = 'tabSchoolProducts';
         } else if (window.location.pathname.includes('/emails')) {
             tabId = 'tabEmails';
         }

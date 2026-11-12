@@ -32,6 +32,7 @@ class ProductsList extends Component
     public bool $showArtwork = true;
     public string $printRequestEmail = '';
     public bool $showInEmails = true;
+    public bool $isSchoolProduct = false;
     public bool $printToFranchise = false;
     public $sortOrder = 0;
     public $image = null; // new upload, if any
@@ -69,6 +70,7 @@ class ProductsList extends Component
             'isActive' => 'boolean',
             'showArtwork' => 'boolean',
             'showInEmails' => 'boolean',
+            'isSchoolProduct' => 'boolean',
             'printToFranchise' => 'boolean',
             'printRequestEmail' => ['nullable', 'string', 'max:1000', function ($attribute, $value, $fail) {
                 foreach (Product::splitEmails($value) as $email) {
@@ -137,6 +139,7 @@ class ProductsList extends Component
         $this->showArtwork = (bool) $product->show_artwork;
         $this->printRequestEmail = implode(', ', Product::splitEmails($product->print_request_email));
         $this->showInEmails = (bool) $product->show_in_emails;
+        $this->isSchoolProduct = (bool) $product->is_school_product;
         $this->printToFranchise = (bool) $product->print_to_franchise;
         $this->sortOrder = (int) $product->sort_order;
         $this->existingImagePath = $product->image;
@@ -167,6 +170,7 @@ class ProductsList extends Component
         $product->show_artwork = $this->showArtwork;
         $product->print_request_email = implode(', ', Product::splitEmails($this->printRequestEmail)) ?: null;
         $product->show_in_emails = $this->showInEmails;
+        $product->is_school_product = $this->isSchoolProduct;
         $product->print_to_franchise = $this->printToFranchise;
         $product->sort_order = $this->sortOrder !== '' ? (int) $this->sortOrder : 0;
 
@@ -255,6 +259,7 @@ class ProductsList extends Component
         $this->showArtwork = true;
         $this->printRequestEmail = '';
         $this->showInEmails = true;
+        $this->isSchoolProduct = false;
         $this->printToFranchise = false;
         $this->sortOrder = 0;
         $this->image = null;

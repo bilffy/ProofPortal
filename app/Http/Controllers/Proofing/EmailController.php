@@ -98,7 +98,7 @@ class EmailController extends Controller
             ->with(['status', 'template'])
             ->where('ts_jobkey', $job->ts_jobkey)
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate(20);
 
         $user = Auth::user();
         $seasonList = Season::orderBy('code', 'asc')->pluck('code', 'ts_season_id')->toArray();
@@ -177,7 +177,7 @@ class EmailController extends Controller
 
         $emails = $this->schoolInvitationEmailsQuery($school)
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate(20);
 
         return view('proofing.franchise.emails.invitations-show', [
             'school' => $school,
@@ -239,7 +239,7 @@ class EmailController extends Controller
 
         $emails = $this->schoolOrderingEmailsQuery($school)
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate(20);
 
         return view('proofing.franchise.emails.ordering-show', [
             'school' => $school,
@@ -545,7 +545,7 @@ class EmailController extends Controller
     protected function parseFilterInput(Request $request): array
     {
         $filter = trim((string) $request->input('email_filter_value', ''));
-        $limit = (int) $request->input('email_filter_limit', 10);
+        $limit = (int) $request->input('email_filter_limit', 20);
         $orderBy = $request->input('email_filter_order_by', 'created_at');
         $orderDirection = $request->input('email_filter_order_direction', 'descending');
         $page = max(1, (int) $request->input('page', 1));
@@ -563,7 +563,7 @@ class EmailController extends Controller
         ];
         $orderColumn = $allowedOrderBy[$orderBy] ?? 'created_at';
         $direction = $orderDirection === 'ascending' ? 'asc' : 'desc';
-        $limit = in_array($limit, [10, 20, 50, 100], true) ? $limit : 10;
+        $limit = in_array($limit, [10, 20, 50, 100], true) ? $limit : 20;
 
         return [$orderColumn, $direction, $limit, $filter, $page];
     }

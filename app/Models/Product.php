@@ -26,6 +26,7 @@ class Product extends Model
         'print_request_email',
         'print_to_franchise',
         'show_in_emails',
+        'is_school_product',
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class Product extends Model
         'show_artwork' => 'boolean',
         'show_in_emails' => 'boolean',
         'print_to_franchise' => 'boolean',
+        'is_school_product' => 'boolean',
         'sort_order' => 'integer',
         // 'base_price' => 'decimal:4',
     ];

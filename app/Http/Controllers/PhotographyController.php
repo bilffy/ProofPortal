@@ -385,11 +385,13 @@ class PhotographyController extends Controller
 
                     if ($fallbackFormat) {
                         $quote = fn (string $text) => "'{$text}'";
-                        $shown = implode(', ', array_map($quote, array_slice($missingSubjects, 0, 3)));
-                        $more = count($missingSubjects) - 3;
-                        $bulkNotice = $shown . ($more > 0 ? " and {$more} more" : '')
+                        // One subject is named; several are summed up as "Multiple Subjects".
+                        $who = count($missingSubjects) > 1
+                            ? 'Multiple Subjects'
+                            : implode(', ', array_map($quote, $missingSubjects));
+                        $bulkNotice = $who
                             . ' missing ' . implode(', ', array_map($quote, array_values($missingLabels)))
-                            . ', This will be downloaded in ' . $quote($fallbackFormat->name) . '.';
+                            . ', File downloads will be named ' . $quote($fallbackFormat->name) . '.';
                         $fallbackFormatKey = $fallbackFormat->format_key;
                     } else {
                         $fallbackKeys = [];

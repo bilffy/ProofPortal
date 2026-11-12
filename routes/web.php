@@ -120,6 +120,7 @@ Route::middleware(['auth', NoCacheHeaders::class])->group(function () {
 
     // Order routes
     Route::get('/order', Order::class)->name('order');
+    Route::get('/school-products', \App\Http\Livewire\Order\SchoolProducts::class)->name('school-products');
 
     // Products / Product Fields / Orders admin (Super Admin only - each
     // component's own mount() also redirects non-Super Admins, this route

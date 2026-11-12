@@ -16,7 +16,7 @@
              mb-4 used to give. --}}
 
         <div class="py-4 flex" style="gap: 16px; align-items: center;">
-            <h3 class="text-2xl" style="margin: 0; line-height: 1.2;">{{ $selectedProductId ? (collect($products)->firstWhere('id', $selectedProductId)?->name ?? 'Promotional Materials') : 'Promotional Materials' }}</h3>
+            <h3 class="text-2xl" style="margin: 0; line-height: 1.2;">{{ $selectedProductId ? (collect($products)->firstWhere('id', $selectedProductId)?->name ?? $pageTitle) : $pageTitle }}</h3>
             @if ($selectedProductId && collect($products)->firstWhere('id', $selectedProductId)?->name === 'Other')
                 <p class="font-medium" style="color: #dc2626; margin: 0 !important; font-weight:700 !important;">* Contact MSP for more details.</p>
             @endif
@@ -96,9 +96,6 @@
                             <div wire:key="field-{{ $selectedProductId }}-{{ $field->id }}" @if ($field->type === \App\Models\CustomField::TYPE_IMAGE) style="grid-column: 1 / -1;" @endif>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     {{ $field->label }}
-                                    @if ($field->is_required)
-                                        <span class="text-alert">*</span>
-                                    @endif
                                 </label>
 
                                 @if ($field->type === \App\Models\CustomField::TYPE_RADIO)
@@ -211,7 +208,7 @@
                     <div class="grid grid-cols-1 gap-4 custom-fields-grid">
                         <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Artwork Required? <span class="text-alert">*</span>
+                                Artwork Required?
                             </label>
                             <div class="artwork-radio-list">
                                 @foreach ($artworkRequiredOptions as $option)
@@ -226,7 +223,7 @@
 
                         <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Due Date <span class="text-alert">*</span>
+                                Due Date
                             </label>
                             <div wire:ignore>
                                 <div class="relative">
@@ -255,7 +252,7 @@
 
                         <div class="artwork-field">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Artwork Brief <span class="text-alert">*</span>
+                                Artwork Brief
                             </label>
                             <div wire:ignore class="artwork-wide">
                                 <textarea data-artwork-brief>{!! $artworkBrief !!}</textarea>

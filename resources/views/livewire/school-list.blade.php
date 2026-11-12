@@ -21,7 +21,11 @@
             </div>
         </div>
     </div>
-    <table class="w-full text-sm text-left rtl:text-right">
+    <style>
+        /* Row height like /users (60px). */
+        #school-list-table tbody tr { height: 60px; }
+    </style>
+    <table id="school-list-table" class="w-full text-sm text-left rtl:text-right">
         <thead>
             <tr>
                 <x-table.headerCell id="schoolkey" isLivewire="{{true}}" wireEvent="sortBy('schoolkey')" sortBy="{{$sortField}}" sortDirection="{{$sortDirection}}" >School Key</x-table.headerCell>

@@ -91,8 +91,13 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <input type="checkbox" wire:model="isSchoolProduct" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="isSchoolProduct" />
+                    <label for="isSchoolProduct" class="text-sm font-medium text-gray-700">School product (listed on the School Products page instead of Promotional Products)</label>
+                </div>
+
+                <div class="flex items-center gap-2">
                     <input type="checkbox" wire:model="showInEmails" class="h-4 w-4 rounded border-neutral text-primary focus:ring-primary" id="showInEmails" />
-                    <label for="showInEmails" class="text-sm font-medium text-gray-700">Show this product's order emails on the Emails &gt; Promotional Materials page</label>
+                    <label for="showInEmails" class="text-sm font-medium text-gray-700">Show this product's order emails on the Emails &gt; Promotional Products page</label>
                 </div>
             </div>
 
