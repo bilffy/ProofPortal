@@ -1,3 +1,4 @@
+@php \App\Models\Email::attachRecipientNames($messages); @endphp
 @if ($messages->count())
     <div class="table-responsive">
         <table id="emails-messages-table" class="table">
@@ -17,10 +18,10 @@
                     @if ($showOrder ?? false)
                         {!! $sortHead('order_number', __('Order')) !!}
                     @endif
-                    {!! $sortHead('created_at', __('Created')) !!}
-                    {!! $sortHead('sentdate', __('Sent')) !!}
-                    {!! $sortHead('email_to', __('To')) !!}
-                    {!! $sortHead('email_from', __('From')) !!}
+                    {!! $sortHead('first_name', __('First Name')) !!}
+                    {!! $sortHead('last_name', __('Last Name')) !!}
+                    {!! $sortHead('email_to', __('Email To')) !!}
+                    {!! $sortHead('email_from', __('Email From')) !!}
                     {!! $sortHead('status_name', __('Status')) !!}
                     <th scope="col" class="emails-actions-cell"></th>
                 </tr>
@@ -31,8 +32,9 @@
                         @if ($showOrder ?? false)
                             <td>{{ $message->order->order_number ?? '—' }}</td>
                         @endif
-                        <td>{{ $message->created_at ? $message->created_at->format('Y-m-d H:i') : '' }}</td>
-                        <td>{{ $message->sentdate ? \Carbon\Carbon::parse($message->sentdate)->format('Y-m-d H:i') : '—' }}</td>
+                        {{-- First / last name of the user the email was sent to (blank if no user has that address) --}}
+                        <td>{{ $message->recipient_firstname }}</td>
+                        <td>{{ $message->recipient_lastname }}</td>
                         <td>{{ $message->email_to }}</td>
                         <td>{{ $message->email_from }}</td>
                         <td>{{ $message->status->status_external_name ?? $message->status->status_internal_name ?? '—' }}</td>

@@ -244,7 +244,34 @@
         line-height: 1.1;
         color: #000;
     }
+    /* The job / school name sits under the tab title ("Proofing", "User Invitation", ...). */
+    .emails-filter-head .emails-head-sub {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.25rem;
+        color: #536c79;
+    }
     .emails-filter-head .emails-search-box {
         width: 216px;
         margin-left: auto;
+    }
+
+    /* Show pages look like /emails: no box around the table, the tab title and the job / school name
+       sit under the page heading. */
+    .emails-list { background: #fff; }
+    /* Page title with the job / school name directly under it: the same look as the franchise dashboard's
+       "Resource Centre" title + subtitle (text-2xl title with no margin, 0.875rem #7A8699 line, 0.25rem gap). */
+    .emails-show-title h3 {
+        margin: 0;
+        font-size: 1.75rem;
+        line-height: 2rem;
+        font-weight: 500;
+        color: #212529;
+    }
+    .emails-show-title .emails-head-sub {
+        margin: 0.25rem 0 0;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: #7A8699;
     }

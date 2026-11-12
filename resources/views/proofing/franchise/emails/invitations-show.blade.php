@@ -5,31 +5,32 @@
 @section('css')
 <style>
     @include('proofing.franchise.emails._results_styles')
+    @include('proofing.franchise.emails._page_search_styles')
 </style>
 @endsection
 
 @section('content')
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header emails-filter-head">
-                    <h5 class="emails-head-title">User Invitation - {{ $school->name }}</h5>
-                    <div class="emails-search-box">
-                        <span class="emails-search-icon"><i class="fa fa-search"></i></span>
-                        <input type="search" class="form-control emails-search-input" id="email-filter" aria-label="Keyword search" placeholder="Search..." autocomplete="off">
-                        <button type="button" class="emails-search-clear" aria-label="Clear search"
-                            onclick="var i = document.getElementById('email-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
-                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="email-filter-response">
-                        @include('proofing.franchise.emails._results', ['messages' => $emails])
-                    </div>
-                </div>
+    {{-- Same layout as /emails: heading row with the search on the right, then the table straight on the page. --}}
+    <div class="py-4 flex items-center justify-between">
+        <div class="emails-show-title">
+            <h3 class="text-2xl">{{ __('User Invitation Emails') }}</h3>
+            <div class="emails-head-sub">{{ $school->name }}</div>
+        </div>
+        <div class="emails-page-tools">
+            <div class="emails-page-search">
+                <span class="emails-page-search-icon"><i class="fa fa-search"></i></span>
+                <input type="text" id="email-filter" aria-label="Keyword search" placeholder="Search..." autocomplete="off">
+                <button type="button" class="emails-page-search-clear" aria-label="Clear search"
+                    onclick="var i = document.getElementById('email-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
         </div>
+    </div>
+
+
+    <div id="email-filter-response" class="emails-list">
+        @include('proofing.franchise.emails._results', ['messages' => $emails])
     </div>
 
     <div class="emails-back-row">

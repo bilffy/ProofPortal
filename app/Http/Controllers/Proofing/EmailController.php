@@ -13,7 +13,9 @@ use App\Models\School;
 use App\Models\Season;
 use App\Models\Status;
 use App\Models\Template;
+use App\Models\User;
 use App\Repositories\ReportRepository;
+use App\Services\Proofing\SeasonService;
 use App\Services\Proofing\StatusService;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,17 +53,29 @@ class EmailController extends Controller
         // Prefer school_id (schools.id) when the job has one; ts_schoolkey is a
         // legacy key that isn't guaranteed unique across schools (e.g. DEMO),
         // so it's only used as a fallback when school_id is null.
-        $schoolNamesById = School::whereIn('id', $jobs->pluck('school_id')->filter()->unique()->values())
-            ->pluck('name', 'id');
+        $schoolsById = School::whereIn('id', $jobs->pluck('school_id')->filter()->unique()->values())
+            ->get(['id', 'name', 'schoolkey'])->keyBy('id');
 
-        $schoolNamesByKey = School::whereIn('schoolkey', $jobs->pluck('ts_schoolkey')->filter()->unique()->values())
-            ->pluck('name', 'schoolkey');
+        $schoolsByKey = School::whereIn('schoolkey', $jobs->pluck('ts_schoolkey')->filter()->unique()->values())
+            ->get(['name', 'schoolkey'])->keyBy('schoolkey');
 
-        $jobs->each(function ($job) use ($schoolNamesById, $schoolNamesByKey) {
-            $job->school_name = $job->school_id
-                ? ($schoolNamesById[$job->school_id] ?? null)
-                : ($job->ts_schoolkey ? ($schoolNamesByKey[$job->ts_schoolkey] ?? null) : null);
+        $jobs->each(function ($job) use ($schoolsById, $schoolsByKey) {
+            $school = $job->school_id
+                ? $schoolsById->get($job->school_id)
+                : ($job->ts_schoolkey ? $schoolsByKey->get($job->ts_schoolkey) : null);
+
+            $job->school_name = $school?->name;
+            // The school's own key; the job's legacy ts_schoolkey is the fallback when the school is not found.
+            $job->school_key = $school?->schoolkey ?? $job->ts_schoolkey;
         });
+
+        // Same season list as the franchise dashboard's Season dropdown (newest code first).
+        $seasons = app(SeasonService::class)
+            ->getAllSeasonDataForPortalAndProofing('code', 'ts_season_id', 'is_default')
+            ->orderBy('code', 'desc')
+            ->get()
+            ->unique('ts_season_id')
+            ->values();
 
         $franchise = $user->getFranchise();
         $invitationSchools = $this->invitationSchoolsQuery($franchise)->get();
@@ -70,6 +84,7 @@ class EmailController extends Controller
         return view('proofing.franchise.emails.index', [
             'jobs' => $jobs,
             'seasonList' => $seasonList,
+            'seasons' => $seasons,
             'user' => new UserResource($user),
             'invitationSchools' => $invitationSchools,
             'orderingSchools' => $orderingSchools,
@@ -523,6 +538,15 @@ class EmailController extends Controller
                     $direction
                 );
                 break;
+            case 'first_name':
+            case 'last_name':
+                // Name of the user the email was sent to (matched on the address).
+                $column = $request->input('email_filter_order_by') === 'first_name' ? 'firstname' : 'lastname';
+                $query->orderBy(
+                    User::withoutGlobalScopes()->select($column)->whereColumn('users.email', 'emails.email_to')->limit(1),
+                    $direction
+                );
+                break;
             case 'order_number':
                 $query->orderBy(
                     Order::select('order_number')->whereColumn('orders.id', 'emails.order_id'),
@@ -555,6 +579,8 @@ class EmailController extends Controller
             'started' => 'created_at',
             'completed' => 'sentdate',
             'sentdate' => 'sentdate',
+            'first_name' => 'created_at', // real ordering is in applySort()
+            'last_name' => 'created_at',
             'email_to' => 'email_to',
             'email_from' => 'email_from',
             'template_id' => 'template_id',
@@ -611,7 +637,11 @@ class EmailController extends Controller
         $query->where(function ($q) use ($filter) {
             $q->where('email_to', 'like', '%' . $filter . '%')
                 ->orWhere('email_from', 'like', '%' . $filter . '%')
-                ->orWhere('email_content', 'like', '%' . $filter . '%');
+                ->orWhere('email_content', 'like', '%' . $filter . '%')
+                // the recipient's first / last name
+                ->orWhereIn('email_to', User::withoutGlobalScopes()->select('email')
+                    ->where(fn ($u) => $u->where('firstname', 'like', '%' . $filter . '%')
+                        ->orWhere('lastname', 'like', '%' . $filter . '%')));
         });
     }
 }

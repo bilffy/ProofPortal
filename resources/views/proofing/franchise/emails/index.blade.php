@@ -11,80 +11,11 @@
         text-decoration: underline;
     }
 
-    /* Section boxes ("Select a Job" / "Select a School"): same as the franchise dashboard "Overview" box
-       (.fd-box-head + .fd-jobs-title: #f0f3f5 strip, 1.09375rem / 600 / black title). */
-    #emailsCategoryTabsContent .card {
-        border: 1px solid #c2cfd6;
-        border-radius: 0.25rem;
-        overflow: hidden;
-    }
-    #emailsCategoryTabsContent .card-header {
-        padding: 0.75rem 1.25rem;
-        background: #f0f3f5;
-        border-bottom: 1px solid #c2cfd6;
-        margin-bottom: 0;
-        color: #000;
-        font-size: 1.09375rem;
-        font-weight: 600;
-        line-height: 1.1;
-    }
+    /* The lists sit directly on the page like /school (no box around them); the search is in the
+       heading row (#emails-search, same classes as the /school search). */
+    #emailsCategoryTabsContent .emails-list { background: #fff; }
 
-    /* Search box in each card header (right side), same look as the franchise dashboard search. */
-    #emailsCategoryTabsContent .emails-card-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-    }
-    #emailsCategoryTabsContent .emails-search-box {
-        position: relative;
-        width: 216px;
-        height: 36px;
-        font-size: 0.875rem;
-        font-weight: 400;
-    }
-    #emailsCategoryTabsContent .emails-search-icon {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0.75rem;
-        display: flex;
-        align-items: center;
-        color: #000;
-        pointer-events: none;
-    }
-    #emailsCategoryTabsContent .emails-search-input {
-        display: block;
-        width: 216px;
-        height: 36px;
-        padding: 0 2.25rem;
-        border: 0;
-        border-radius: 0.5rem;
-        background: #fff;
-        color: #111827;
-        font-size: 0.875rem;
-        line-height: 36px;
-        box-sizing: border-box;
-    }
-    #emailsCategoryTabsContent .emails-search-input:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px #005890;
-    }
-    #emailsCategoryTabsContent .emails-search-clear {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        display: flex;
-        align-items: center;
-        padding: 0 0.75rem;
-        color: #6b7280;
-        background: transparent;
-        border: 0;
-        cursor: pointer;
-    }
-    #emailsCategoryTabsContent .emails-search-clear:hover { color: #111827; }
-    #emailsCategoryTabsContent .emails-search-clear svg { width: 1rem; height: 1rem; }
+    @include('proofing.franchise.emails._page_search_styles')
 
     /* Pagination like /school: "< Prev 1 2 3 ... Next >", current page on a #e9e6e3 square with blue text. */
     #emailsCategoryTabsContent .emails-pager {
@@ -178,8 +109,30 @@
 @endsection
 
 @section('content')
+    {{-- Same heading row as /school: title on the left, search box on the right. One search box filters
+         the visible tab's table (both tables listen to it). --}}
     <div class="py-4 flex items-center justify-between">
         <h3 class="text-2xl">{{ __('Emails') }}</h3>
+        <div class="emails-page-tools">
+            <div class="emails-page-search">
+                <span class="emails-page-search-icon"><i class="fa fa-search"></i></span>
+                <input type="text" id="emails-search" placeholder="{{ __('Search...') }}" autocomplete="off">
+                <button type="button" class="emails-page-search-clear" aria-label="{{ __('Clear search') }}"
+                    onclick="var i = document.getElementById('emails-search'); i.value = ''; $(i).trigger('keyup'); i.focus();">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {{-- Season filter for the Proofing tab only (same seasons as the franchise dashboard's Season dropdown);
+                 hidden while the User Invitation tab is open. --}}
+            @if ($jobs->isNotEmpty())
+                <select id="emails-season" class="emails-page-select" aria-label="{{ __('Season') }}">
+                    <option value="">{{ __('All seasons') }}</option>
+                    @foreach ($seasons as $season)
+                        <option value="{{ $season->ts_season_id }}">{{ $season->code }}</option>
+                    @endforeach
+                </select>
+            @endif
+        </div>
     </div>
 
     <x-tabs.tabContainer tabsWrapper="emailsCategoryTabsContent">
@@ -192,27 +145,15 @@
 
     <x-tabs.tabContentContainer id="emailsCategoryTabsContent">
         <x-tabs.tabContent id="tab-proofing">
-            <div class="card">
-                        <div class="card-header emails-card-head">
-                            <span>{{ __('Select a Job') }}</span>
-                            @if ($jobs->isNotEmpty())
-                                <div class="emails-search-box">
-                                    <span class="emails-search-icon"><i class="fa fa-search"></i></span>
-                                    <input class="emails-search-input" id="choice-name-filter" type="text" placeholder="{{ __('Search...') }}" autocomplete="off">
-                                    <button type="button" class="emails-search-clear" aria-label="{{ __('Clear search') }}"
-                                        onclick="var i = document.getElementById('choice-name-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
-                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="card-body">
+            <div class="emails-list">
+                        <div>
                             @if ($jobs->isEmpty())
                                 <p class="mb-0">{{ __('No Jobs have been synced for proofing yet.') }}</p>
                             @else
                                 <table class="table emails-table">
                                     <thead>
                                         <tr>
+                                            <th scope="col" class="emails-sortable" data-sort-key="schoolkey">{{ __('School Key') }}</th>
                                             <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School Name') }}</th>
                                             <th scope="col" class="emails-sortable" data-sort-key="job">{{ __('Job') }}</th>
                                         </tr>
@@ -224,10 +165,11 @@
                                                     ? __(':name (:season)', ['name' => $job->ts_jobname, 'season' => $seasonList[$job->ts_season_id]])
                                                     : $job->ts_jobname;
                                                 $encryptedTsJobId = Crypt::encryptString($job->ts_job_id);
-                                                $choiceName = mb_strtolower(trim($title . ' ' . ($job->school_name ?? '')));
+                                                $choiceName = mb_strtolower(trim(($job->school_key ?? '') . ' ' . $title . ' ' . ($job->school_name ?? '')));
                                                 $proofingUrl = route('emails.show', ['tsJobId' => $encryptedTsJobId]);
                                             @endphp
-                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-sort-school="{{ mb_strtolower($job->school_name ?? '') }}" data-sort-job="{{ mb_strtolower($title) }}">
+                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-season="{{ $job->ts_season_id }}" data-sort-schoolkey="{{ mb_strtolower($job->school_key ?? '') }}" data-sort-school="{{ mb_strtolower($job->school_name ?? '') }}" data-sort-job="{{ mb_strtolower($title) }}">
+                                                <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $job->school_key ?? '—' }}</a></td>
                                                 <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $job->school_name ?? '—' }}</a></td>
                                                 <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $title }}</a></td>
                                             </tr>
@@ -242,21 +184,8 @@
         </x-tabs.tabContent>
 
         <x-tabs.tabContent id="tab-invitation">
-            <div class="card">
-                        <div class="card-header emails-card-head">
-                            <span>{{ __('Select a School') }}</span>
-                            @if ($invitationSchools->isNotEmpty())
-                                <div class="emails-search-box">
-                                    <span class="emails-search-icon"><i class="fa fa-search"></i></span>
-                                    <input class="emails-search-input" id="invitation-choice-name-filter" type="text" placeholder="{{ __('Search...') }}" autocomplete="off">
-                                    <button type="button" class="emails-search-clear" aria-label="{{ __('Clear search') }}"
-                                        onclick="var i = document.getElementById('invitation-choice-name-filter'); i.value = ''; $(i).trigger('keyup'); i.focus();">
-                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="card-body">
+            <div class="emails-list">
+                        <div>
                             @if ($invitationSchools->isEmpty())
                                 <p class="mb-0">{{ __('No user invitation emails have been sent yet.') }}</p>
                             @else
@@ -403,15 +332,23 @@ $(document).ready(function () {
 
         function matchingRows() {
             const filterByText = ($(filterInputSelector).val() || '').trim().toLowerCase();
+            // Optional season dropdown (Proofing tab): "" = all seasons.
+            const season = options.seasonSelector ? String($(options.seasonSelector).val() || '') : '';
 
-            if (filterByText.length >= 1) {
-                return $(rowSelector).filter(function () {
-                    // attr(), not data(): data() turns numeric-looking text into numbers.
-                    return ($(this).attr('data-choice-name') || '').indexOf(filterByText) !== -1;
-                });
-            }
+            return $(rowSelector).filter(function () {
+                // attr(), not data(): data() turns numeric-looking text into numbers.
+                if (season !== '' && String($(this).attr('data-season') || '') !== season) {
+                    return false;
+                }
+                return filterByText.length < 1 || ($(this).attr('data-choice-name') || '').indexOf(filterByText) !== -1;
+            });
+        }
 
-            return $(rowSelector);
+        if (options.seasonSelector) {
+            $(options.seasonSelector).on('change', function () {
+                currentPage = 1;
+                render();
+            });
         }
 
         function render() {
@@ -498,7 +435,8 @@ $(document).ready(function () {
 
     setupPaginatedChoiceTable({
         rowSelector: '.choice',
-        filterInputSelector: '#choice-name-filter',
+        filterInputSelector: '#emails-search',
+        seasonSelector: '#emails-season',
         filterFeedbackSelector: '#choice-name-filter-feedback',
         pagerSelector: '#choice-pager',
         perPage: 20,
@@ -506,7 +444,7 @@ $(document).ready(function () {
 
     setupPaginatedChoiceTable({
         rowSelector: '.invitation-choice',
-        filterInputSelector: '#invitation-choice-name-filter',
+        filterInputSelector: '#emails-search',
         filterFeedbackSelector: '#invitation-choice-name-filter-feedback',
         pagerSelector: '#invitation-choice-pager',
         perPage: 20,
@@ -526,6 +464,8 @@ $(document).ready(function () {
     // sync so links can deep-link to a specific tab.
     $('#tab-proofing-tab, #tab-invitation-tab, #tab-ordering-tab').on('click', function () {
         const target = $(this).data('tabs-target');
+        // The season dropdown filters the Proofing tab only.
+        $('#emails-season').toggle(target === '#tab-proofing');
         if (history.replaceState) {
             history.replaceState(null, '', target);
         } else {
