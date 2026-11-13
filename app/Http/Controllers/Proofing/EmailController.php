@@ -54,10 +54,10 @@ class EmailController extends Controller
         // legacy key that isn't guaranteed unique across schools (e.g. DEMO),
         // so it's only used as a fallback when school_id is null.
         $schoolsById = School::whereIn('id', $jobs->pluck('school_id')->filter()->unique()->values())
-            ->get(['id', 'name', 'schoolkey'])->keyBy('id');
+            ->get(['id', 'name', 'schoolkey', 'suburb'])->keyBy('id');
 
         $schoolsByKey = School::whereIn('schoolkey', $jobs->pluck('ts_schoolkey')->filter()->unique()->values())
-            ->get(['name', 'schoolkey'])->keyBy('schoolkey');
+            ->get(['name', 'schoolkey', 'suburb'])->keyBy('schoolkey');
 
         $jobs->each(function ($job) use ($schoolsById, $schoolsByKey) {
             $school = $job->school_id
@@ -65,6 +65,7 @@ class EmailController extends Controller
                 : ($job->ts_schoolkey ? $schoolsByKey->get($job->ts_schoolkey) : null);
 
             $job->school_name = $school?->name;
+            $job->school_suburb = $school?->suburb;
             // The school's own key; the job's legacy ts_schoolkey is the fallback when the school is not found.
             $job->school_key = $school?->schoolkey ?? $job->ts_schoolkey;
         });

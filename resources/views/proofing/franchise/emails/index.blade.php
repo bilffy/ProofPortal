@@ -126,7 +126,7 @@
                  hidden while the User Invitation tab is open. --}}
             @if ($jobs->isNotEmpty())
                 <select id="emails-season" class="emails-page-select" aria-label="{{ __('Season') }}">
-                    <option value="">{{ __('All seasons') }}</option>
+                    <option value="">{{ __('All Seasons') }}</option>
                     @foreach ($seasons as $season)
                         <option value="{{ $season->ts_season_id }}">{{ $season->code }}</option>
                     @endforeach
@@ -155,6 +155,7 @@
                                         <tr>
                                             <th scope="col" class="emails-sortable" data-sort-key="schoolkey">{{ __('School Key') }}</th>
                                             <th scope="col" class="emails-sortable" data-sort-key="school">{{ __('School Name') }}</th>
+                                            <th scope="col" class="emails-sortable" data-sort-key="suburb">{{ __('Suburb') }}</th>
                                             <th scope="col" class="emails-sortable" data-sort-key="job">{{ __('Job') }}</th>
                                         </tr>
                                     </thead>
@@ -165,12 +166,13 @@
                                                     ? __(':name (:season)', ['name' => $job->ts_jobname, 'season' => $seasonList[$job->ts_season_id]])
                                                     : $job->ts_jobname;
                                                 $encryptedTsJobId = Crypt::encryptString($job->ts_job_id);
-                                                $choiceName = mb_strtolower(trim(($job->school_key ?? '') . ' ' . $title . ' ' . ($job->school_name ?? '')));
+                                                $choiceName = mb_strtolower(trim(($job->school_key ?? '') . ' ' . $title . ' ' . ($job->school_name ?? '') . ' ' . ($job->school_suburb ?? '')));
                                                 $proofingUrl = route('emails.show', ['tsJobId' => $encryptedTsJobId]);
                                             @endphp
-                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-season="{{ $job->ts_season_id }}" data-sort-schoolkey="{{ mb_strtolower($job->school_key ?? '') }}" data-sort-school="{{ mb_strtolower($job->school_name ?? '') }}" data-sort-job="{{ mb_strtolower($title) }}">
+                                            <tr class="choice" data-choice-name="{{ $choiceName }}" data-season="{{ $job->ts_season_id }}" data-sort-schoolkey="{{ mb_strtolower($job->school_key ?? '') }}" data-sort-school="{{ mb_strtolower($job->school_name ?? '') }}" data-sort-suburb="{{ mb_strtolower($job->school_suburb ?? '') }}" data-sort-job="{{ mb_strtolower($title) }}">
                                                 <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $job->school_key ?? '—' }}</a></td>
                                                 <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $job->school_name ?? '—' }}</a></td>
+                                                <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $job->school_suburb ?? '—' }}</a></td>
                                                 <td class="align-middle"><a href="{{ $proofingUrl }}">{{ $title }}</a></td>
                                             </tr>
                                         @endforeach

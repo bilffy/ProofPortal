@@ -45,12 +45,14 @@
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch biu-upload-import-grid">
         {{-- Upload users --}}
         <section class="biu-box flex flex-col">
+            {{-- "Upload Users" heading hidden for now:
             <div class="biu-box-head">
                 <h4 class="biu-box-title flex items-center gap-2">
                     <i class="fa fa-upload"></i>
                     Upload Users
                 </h4>
             </div>
+            --}}
             <div class="biu-box-body flex-1 flex flex-col">
 
                 @if ($showSchoolSelector)
@@ -167,8 +169,8 @@
             </div>
         </section>
 
-        {{-- Imported users --}}
-        <section class="biu-box flex flex-col">
+        {{-- Imported users: boxed, with its heading inside (the Upload Users section has no box) --}}
+        <section class="biu-box biu-box-bordered flex flex-col">
             <div class="biu-box-head flex items-center justify-between gap-3 flex-shrink-0">
                 <h4 class="biu-box-title">User Invitation Details</h4>
                 <span
@@ -181,7 +183,7 @@
             <div class="biu-box-body flex-1 flex flex-col">
             @if (empty($rows))
                 <div
-                    style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;min-height:160px;padding:28px 16px;text-align:center;background:#fff;border:1px dashed #D9DDE2;border-radius:12px;"
+                    style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;"
                 >
                     <!-- <div
                         style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;margin-bottom:12px;color:#4A90BC;background:#B9E4FF;border-radius:14px;"
@@ -365,13 +367,13 @@
 
     @push('styles')
     <style>
-        /* Boxes match the franchise dashboard (.fd-box): same border, radius, shadow and header strip. */
+        /* "Upload Users" and "User Invitation Details": no outer box, no grey header strip - only the
+           heading text (and icon) sit above the content. */
         .biu-box {
-            background: #fff;
-            border: 1px solid #c2cfd6;
-            border-radius: 0.25rem;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
             box-shadow: none;
-            overflow: hidden;
             min-width: 0;
         }
 
@@ -450,8 +452,35 @@
         }
 
         .biu-box-head {
-            padding: 0.75rem 1.25rem;
-            background: #f0f3f5;
+            padding: 0 0 0.75rem;
+            background: transparent;
+        }
+
+        /* "User Invitation Details": plain white card with a thin light border and large rounded corners;
+           the heading sits inside on white (no grey strip, no divider). The font utilities are
+           !important in this app, so the count's size / weight / colour are too. */
+        .biu-box-bordered {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .biu-box-bordered .biu-box-head {
+            padding: 1.25rem 1.5rem;
+            background: #fff;
+        }
+        /* The title keeps the base .biu-box-title look (1rem / 700 / #1A2B4A), the same as "Assign School";
+           the count copies it. */
+        .biu-box-bordered .biu-box-head span {
+            padding: 0 !important;
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            line-height: 1.5rem !important;
+            color: #1A2B4A;
+        }
+        .biu-box-bordered .biu-box-body {
+            padding: 0 1.5rem 1.5rem;
+            border-top: 0;
         }
 
         .biu-box-title {
@@ -468,8 +497,8 @@
         }
 
         .biu-box-body {
-            padding: 1rem 1.1rem 1.1rem;
-            border-top: 1px solid #c2cfd6;
+            padding: 0;
+            border-top: 0;
         }
 
         .biu-dropzone {

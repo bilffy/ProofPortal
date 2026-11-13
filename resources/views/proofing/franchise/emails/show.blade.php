@@ -12,7 +12,7 @@
 @section('content')
     {{-- Same layout as /emails: heading row with the search on the right, then the table straight on the page. --}}
     <div class="py-4 flex items-center justify-between">
-        <div>
+        <div class="emails-show-title">
             <h3 class="text-2xl">{{ __('Proofing Emails') }}</h3>
             <div class="emails-head-sub">{{ $jobTitle }}</div>
         </div>

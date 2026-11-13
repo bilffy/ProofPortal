@@ -335,12 +335,11 @@ class PhotographyController extends Controller
             } 
         }
         
-        // Subjects without a value for a field of the chosen filename format, but only for formats
-        // flagged with validation_check = 1. An individual download (one image) goes back to the options
-        // pop-up on the first format (422 below); a bulk download carries on, and those subjects are
-        // downloaded in the first format instead (download_details.filename_format) with a notice.
-        $fallbackKeys = [];
-        $bulkNotice = null;
+        // Subjects without a value for a field of the chosen filename format (e.g. no Student ID), but only
+        // for formats flagged with validation_check = 1. Any download - individual, "Download Selected"
+        // or "Download All" - is stopped here with a 422; the page then reopens the options pop-up on the
+        // "First Name Last Name" format with the message under the dropdown (see photography.blade.php).
+        // The request is only created once the user picks a format that every subject has a value for.
         // "Download All" sends no images: it covers every subject with a photo in the selected folders.
         $downloadAll = empty($images);
         if ($tab === PhotographyHelper::TAB_PORTRAITS && (!empty($keys) || $downloadAll)) {
@@ -360,42 +359,32 @@ class PhotographyController extends Controller
                     foreach ($missing as $field) {
                         $missingLabels[$field] = $this->filenameFieldLabel($field);
                     }
-                    $fallbackKeys[$subject->ts_subjectkey] = true;
                     $missingSubjects[] = trim(($subject->portal_firstname ?: $subject->firstname) . ' ' . ($subject->portal_lastname ?: $subject->lastname));
                 }
 
                 if (!empty($missingLabels)) {
                     // The format used instead: the one named "First Name Last Name".
                     $fallbackFormat = FilenameFormat::where('name', 'First Name Last Name')->first();
+                    $labels = implode(', ', array_values($missingLabels));
+                    $quote = fn (string $text) => "'{$text}'";
 
-                    if ((int) $category === 1) {
-                        // The page does not show an error: it reopens the options pop-up on the
-                        // first filename format with a red notice (see photography.blade.php).
-                        $labels = implode(', ', array_values($missingLabels));
+                    // Names the subject(s): a single download or "Download Selected" lists every subject missing
+                    // the value; "Download All" names one subject, or says "Multiple Subjects" for several.
+                    $who = ($downloadAll && count($missingSubjects) > 1)
+                        ? 'Multiple Subjects'
+                        : implode(', ', array_map($quote, array_values(array_unique($missingSubjects))));
+                    $message = $who . ' missing ' . implode(', ', array_map($quote, array_values($missingLabels)));
 
-                        return response()->json([
-                            'success' => false,
-                            'code' => 'missing_filename_value',
-                            'missing_fields' => array_values($missingLabels),
-                            'fallback_format_key' => $fallbackFormat?->format_key,
-                            'fallback_format_name' => $fallbackFormat?->name,
-                            'message' => "Selected subject missing {$labels}.",
-                        ], 422);
-                    }
-
-                    if ($fallbackFormat) {
-                        $quote = fn (string $text) => "'{$text}'";
-                        // One subject is named; several are summed up as "Multiple Subjects".
-                        $who = count($missingSubjects) > 1
-                            ? 'Multiple Subjects'
-                            : implode(', ', array_map($quote, $missingSubjects));
-                        $bulkNotice = $who
-                            . ' missing ' . implode(', ', array_map($quote, array_values($missingLabels)))
-                            . ', File downloads will be named ' . $quote($fallbackFormat->name) . '.';
-                        $fallbackFormatKey = $fallbackFormat->format_key;
-                    } else {
-                        $fallbackKeys = [];
-                    }
+                    return response()->json([
+                        'success' => false,
+                        'code' => 'missing_filename_value',
+                        'missing_fields' => array_values($missingLabels),
+                        'missing_subjects' => array_values(array_unique($missingSubjects)),
+                        'download_all' => $downloadAll,
+                        'fallback_format_key' => $fallbackFormat?->format_key,
+                        'fallback_format_name' => $fallbackFormat?->name,
+                        'message' => $message . '.',
+                    ], 422);
                 }
             }
         }
@@ -445,11 +434,7 @@ class PhotographyController extends Controller
                         'ts_jobkey' => $job->ts_jobkey,
                         'keyorigin' => $image->keyorigin,
                         'keyvalue' => $image->keyvalue,
-                        // Format used for this file's name: the chosen one, or the "First Name Last Name"
-                        // format for a subject missing a value for the chosen format.
-                        'filename_format' => isset($fallbackKeys[$image->keyvalue])
-                            ? $fallbackFormatKey
-                            : (int) $request->input('filenameFormat'),
+                        'filename_format' => (int) $request->input('filenameFormat'),
                     ]);
                 }
             }
@@ -546,7 +531,7 @@ class PhotographyController extends Controller
         // remove the nonce from the session
         session()->forget('download-request-nonce');
         
-        return response()->json(['success' => true, 'data' => $data, 'notice' => $bulkNotice]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     public function uploadImage(Request $request)

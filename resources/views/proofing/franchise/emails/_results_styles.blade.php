@@ -224,9 +224,7 @@
         user-select: none;
         white-space: nowrap;
     }
-    #emails-messages-table thead th.emails-sortable:hover {
-        background: #f5f7fa;
-    }
+    /* No hover background on the sortable headers, same as the /emails tables. */
 
     /* Card header: title on the left (same as the franchise dashboard "Overview" title), search on the right. */
     .emails-filter-head {
@@ -245,7 +243,7 @@
         color: #000;
     }
     /* The job / school name sits under the tab title ("Proofing", "User Invitation", ...). */
-    .emails-filter-head .emails-head-sub {
+    .emails-filter-head{
         margin-top: 0.25rem;
         font-size: 0.875rem;
         font-weight: 400;
@@ -261,17 +259,19 @@
        sit under the page heading. */
     .emails-list { background: #fff; }
     /* Page title with the job / school name directly under it: the same look as the franchise dashboard's
-       "Resource Centre" title + subtitle (text-2xl title with no margin, 0.875rem #7A8699 line, 0.25rem gap). */
+       "Resource Centre" title + subtitle (text-2xl h3, weight 700 as typography.scss sets for h3, #212529; 0.875rem #7A8699 line, 0.25rem gap).
+       !important so the older proofing stylesheets cannot change the weight or colour. */
     .emails-show-title h3 {
-        margin: 0;
-        font-size: 1.75rem;
-        line-height: 2rem;
-        font-weight: 500;
-        color: #212529;
+        margin: 0 !important;
+        font-size: 1.5rem !important;
+        line-height: 2rem !important;
+        font-weight: 700 !important; /* typography.scss gives every h3 700; the page only loads Montserrat 400, so it shows as the browser's medium-looking faux bold, like the dashboard */
+        color: #212529 !important;
     }
     .emails-show-title .emails-head-sub {
-        margin: 0.25rem 0 0;
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-        color: #7A8699;
+        margin: 0.25rem 0 0 !important;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+        font-weight: 400 !important;
+        color: #7A8699 !important;
     }

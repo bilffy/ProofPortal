@@ -3,7 +3,7 @@
         return $total > 0 ? (int) round(($value / $total) * 100) : 0;
     };
 
-    $selectedSeasonLabel = 'All seasons';
+    $selectedSeasonLabel = 'All Seasons';
     if ($selectedSeasonId !== '' && $selectedSeasonId !== null) {
         $matchedSeason = $seasons->first(
             fn ($season) => (string) $season->ts_season_id === (string) $selectedSeasonId
@@ -142,26 +142,30 @@
         white-space: nowrap;
     }
 
+    /* Same look as the Season dropdown on /emails: grey #E6E7E8, 36px, rounded, no border. */
     .sd-season-select {
-        min-width: 12rem;
+        height: 36px;
+        min-width: 11rem;
         max-width: 100%;
-        background: #fff;
-        border: 1px solid #D0D7E2;
-        color: #1A2B4A;
-        font-size: 0.875rem;
+        margin: 0;
+        padding: 0 2rem 0 0.75rem;
+        border: 0;
         border-radius: 0.5rem;
-        padding: 0.55rem 2rem 0.55rem 0.75rem;
-        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+        background-color: #E6E7E8;
+        color: #111827;
+        font-size: 0.875rem;
+        box-shadow: none;
         outline: none;
         appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235B6575' d='M1.4.6 6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");
+        -webkit-appearance: none;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23374151' d='M1.4.6 6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 0.75rem center;
     }
 
     .sd-season-select:focus {
-        border-color: #1E88E5;
-        box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.15);
+        box-shadow: 0 0 0 2px #005890;
     }
 
     /* Shared box for the "Overview" and "Proofing Jobs" containers. .sd-panel is
@@ -1033,7 +1037,7 @@
     <div class="sd-header">
         <div class="sd-header-left">
             <div>
-                <h3 class="text-2xl">Resource Centre</h3>
+                <h3 class="text-2xl">{{ $franchiseName ?: '' }}</h3>
                 <p class="sd-school-sub">Review the status of your schools' photography and proofing jobs.</p>
             </div>
         </div>
@@ -1049,7 +1053,7 @@
                     value="{{ route('franchise.dashboard') }}"
                     @selected($selectedSeasonId === '')
                 >
-                    All seasons
+                    All Seasons
                 </option>
                 @foreach ($seasons as $season)
                     <option

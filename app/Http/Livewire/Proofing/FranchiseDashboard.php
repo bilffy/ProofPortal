@@ -85,6 +85,8 @@ class FranchiseDashboard extends Component
         return view('livewire.proofing.franchise-dashboard', [
             'seasons' => $seasons,
             'selectedSeasonId' => $this->selectedSeasonId,
+            // Heading: the name of the franchise the user belongs to.
+            'franchiseName' => $user->getFranchise()?->name,
             'showArchived' => $this->showArchived,
             'showDeleted' => $this->showDeleted,
             'showCompleted' => $this->showCompleted,

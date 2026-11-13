@@ -23,6 +23,7 @@
                     {!! $sortHead('email_to', __('Email To')) !!}
                     {!! $sortHead('email_from', __('Email From')) !!}
                     {!! $sortHead('status_name', __('Status')) !!}
+                    {!! $sortHead('email_from', __('Sent')) !!}
                     <th scope="col" class="emails-actions-cell"></th>
                 </tr>
             </thead>
@@ -38,6 +39,7 @@
                         <td>{{ $message->email_to }}</td>
                         <td>{{ $message->email_from }}</td>
                         <td>{{ $message->status->status_external_name ?? $message->status->status_internal_name ?? '—' }}</td>
+                        <td>{{ $message->sentdate ? \Carbon\Carbon::parse($message->sentdate)->format('Y-m-d H:i') : '—' }}</td>
                         {{-- "..." menu like /users: View / Resend (the js-* classes are what the modal scripts listen for) --}}
                         <td class="emails-actions-cell">
                             <button type="button" class="emails-dots-btn js-emails-menu-toggle" aria-haspopup="true" aria-expanded="false" aria-label="{{ __('Actions') }}">

@@ -197,15 +197,16 @@
                 <x-modal.body>
                     <p id="confirm-download-body"></p>
                     <p id="confirm-download-notes" class="text-neutral-600"></p>
-                    <p id="confirm-download-tnc" class="text-neutral-600">
-                        View MSP Portal's <a href="https://www.msp.com.au/msp-terms-conditions/" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a>
-                    </p>
+                    <label id="confirm-download-tnc" class="flex items-start text-neutral-600 cursor-pointer">
+                        <input type="checkbox" id="confirm-download-tnc-check" class="form-checkbox mr-2 mt-1 focus:ring-0 cursor-pointer" onchange="syncDownloadButton()">
+                        <span>View MSP Portal's <a href="https://www.msp.com.au/msp-terms-conditions/" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a></span>
+                    </label>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
                 <x-modal.footer>
                     <x-button.secondary data-modal-hide="confirmDownloadModal">Cancel</x-button.secondary>
-                    <x-button.primary onclick="submitDownloadRequest()"  id="confirm-download-btn">Download</x-button.primary>
+                    <x-button.primary onclick="submitDownloadRequest()"  id="confirm-download-btn" disabled>Download</x-button.primary>
                 </x-modal.footer>
             </x-slot>
         </x-modal.base>
@@ -213,7 +214,6 @@
             <x-slot name="body">
                 <x-modal.body>
                     <p id="success-download-body">{{ $configMessages['request']['success']  }}</p>
-                    <p id="success-download-notice" class="hidden" style="color:#991b1b;"></p>
                 </x-modal.body>
             </x-slot>
             <x-slot name="footer">
@@ -736,11 +736,28 @@
         confirmDownloadRequest(!lightboxModal.classList.contains('hidden'));
     }
     
+    // The Download button in the Confirm Download pop-up is only enabled once the Terms of Use box is ticked.
+    function syncDownloadButton() {
+        const checked = document.getElementById('confirm-download-tnc-check')?.checked === true;
+        const btn = document.getElementById('confirm-download-btn');
+        if (btn) {
+            btn.disabled = !checked;
+            btn.classList.toggle('opacity-50', !checked);
+            btn.classList.toggle('cursor-not-allowed', !checked);
+        }
+    }
+
     function confirmDownloadRequest(isLightbox = false) {
         const selectedImages = JSON.parse(localStorage.getItem(isLightbox ? 'selectedLightboxImages' : 'selectedImages'));
         const category = localStorage.getItem('photographyCategory');
         const imgsOrigin = isLightbox ? $("#lightbox-modal").find(".grid") : $(`#${category.toLowerCase()} .grid`);
         if (imgsOrigin.attr('total-image-count') != 0) {
+            // every time the pop-up opens the Terms box starts unticked and Download is disabled
+            const tncCheck = document.getElementById('confirm-download-tnc-check');
+            if (tncCheck) {
+                tncCheck.checked = false;
+            }
+            syncDownloadButton();
             confirmDownloadModal.show();
             const selectedImagesLength = selectedImages.length === 0 ? imgsOrigin.attr('total-image-count') : selectedImages.length;
             $('#confirm-download-body').html("{{ $configMessages['request']['confirm']  }} <b>" + selectedImagesLength + "</b> {{ $configMessages['request']['number_of']  }}?");
@@ -911,6 +928,9 @@
     });
     
     async function submitDownloadRequest() {
+        if (document.getElementById('confirm-download-tnc-check')?.checked !== true) {
+            return;
+        }
         const lightboxModal = document.getElementById('lightbox-modal');
         const isLightbox = !lightboxModal.classList.contains('hidden');
         const tab = getActiveTabId();
@@ -977,7 +997,9 @@
                         || (formatSelect.options[formatSelect.selectedIndex] ? formatSelect.options[formatSelect.selectedIndex].textContent.trim() : '');
                     const missing = (errorResult.missing_fields || []).join(', ') || 'a value';
                     const warning = document.getElementById('filename-format-warning');
-                    warning.textContent = `Selected subject missing '${missing}', Please click 'Next' to download in format '${firstFormat}'.`;
+                    // The server names the subject(s) ("'A B' missing 'Student ID'", "Multiple Subjects missing ...").
+                    const who = (errorResult.message || `Selected subject missing '${missing}'`).replace(/\.$/, '');
+                    warning.textContent = `${who}, Please click 'Next' to download in format '${firstFormat}'.`;
                     warning.classList.remove('hidden');
                     document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
                     showOptionsDownloadModal.show();
@@ -1013,10 +1035,6 @@
             document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
 
             if (selectedImages.length !== 1) {
-                // bulk download where some subjects have no value for the chosen filename format
-                const notice = document.getElementById('success-download-notice');
-                notice.textContent = result.notice || '';
-                notice.classList.toggle('hidden', !result.notice);
                 successDownloadModal.show();
             }
         } catch (error) {
@@ -1028,6 +1046,7 @@
     window.showConfirmDownloadRequest = showConfirmDownloadRequest;
     window.submitDownloadRequest = submitDownloadRequest;
     window.confirmDownloadRequest = confirmDownloadRequest;
+    window.syncDownloadButton = syncDownloadButton;
     window.reloadPage = reloadPage;
     window.cancelConfigReloadModal = cancelConfigReloadModal;
     window.updateSchoolConfig = updateSchoolConfig;
