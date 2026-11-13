@@ -178,7 +178,6 @@
                             <div class="flex flex-col gap-2">
                                 <select id="filename_format" class="input">
                                 </select>
-                                <p id="filename-format-warning" class="hidden mb-0 text-sm" style="color:#991b1b;"></p>
                             </div>
                         </div>
                     </div>  
@@ -199,7 +198,7 @@
                     <p id="confirm-download-notes" class="text-neutral-600"></p>
                     <label id="confirm-download-tnc" class="flex items-start text-neutral-600 cursor-pointer">
                         <input type="checkbox" id="confirm-download-tnc-check" class="form-checkbox mr-2 mt-1 focus:ring-0 cursor-pointer" onchange="syncDownloadButton()">
-                        <span>View MSP Portal's <a href="https://www.msp.com.au/msp-terms-conditions/" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a></span>
+                        <span>I accept the MSP Portal's <a href="https://www.msp.com.au/msp-terms-conditions/" target="_blank" class="text-blue-600 underline">Terms of Use & Copyright Conditions</a></span>
                     </label>
                 </x-modal.body>
             </x-slot>
@@ -663,7 +662,30 @@
             
             let result = await response.json();
             $(`#nonce`).val(result.data.nonce);
-            document.getElementById('filename-format-warning')?.classList.add('hidden');
+
+            // A single subject without a value for a filename format (e.g. no Student ID) is not offered that format.
+            let excludedFormatKeys = [];
+            if (selectedImages.length === 1 && category === 'PORTRAITS') {
+                try {
+                    const formatResponse = await fetch('{{ route('photography.download-format-options') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            images: selectedImages.map(img => img.replace('img-lb_', 'img_')),
+                            tab: category,
+                        })
+                    });
+                    if (formatResponse.ok) {
+                        excludedFormatKeys = (await formatResponse.json()).excluded_format_keys || [];
+                    }
+                } catch (error) {
+                    console.error('Could not load the filename formats for this subject:', error);
+                }
+            }
+            renderFormatOptions(excludedFormatKeys);
             showOptionsDownloadModal.show();
         } else {
             alert('No images found');
@@ -730,7 +752,6 @@
     }
     
     function showConfirmDownloadRequest(isLightbox = false) {
-        document.getElementById('filename-format-warning')?.classList.add('hidden');
         showOptionsDownloadModal.hide();
         const lightboxModal = document.getElementById('lightbox-modal');
         confirmDownloadRequest(!lightboxModal.classList.contains('hidden'));
@@ -873,17 +894,32 @@
         return true;
     }
 
-    function updateFormatOptions(options) {
+    // The full list of filename formats of the active tab; the dropdown may show fewer of them
+    // (see showOptionsDownloadRequest(): a single subject without a Student ID is not offered the Student ID formats).
+    let allFilenameFormats = [];
+
+    function updateFormatOptions(options, excludedKeys = []) {
+        allFilenameFormats = Object.values(options);
+        renderFormatOptions(excludedKeys);
+    }
+
+    function renderFormatOptions(excludedKeys = []) {
         const formatSelect = document.getElementById('filename_format');
+        const excluded = excludedKeys.map(String);
+        const previous = formatSelect.value;
         // Clear existing options
         formatSelect.innerHTML = '';
         // Add new options
-        Object.values(options).forEach(({name, format_key}) => {
+        allFilenameFormats.filter(({format_key}) => !excluded.includes(String(format_key))).forEach(({name, format_key}) => {
             const newOption = document.createElement('option');
             newOption.value = format_key;
             newOption.textContent = name;
             formatSelect.appendChild(newOption);
         });
+        // keep the previous choice when it is still offered
+        if (previous && Array.from(formatSelect.options).some(o => o.value === previous)) {
+            formatSelect.value = previous;
+        }
     }
 
     function toggleDisableForImgButtons(isLightboxShowing) {
@@ -978,33 +1014,8 @@
                 )
             });
             
-            // a subject has no value for the selected filename format: go back to the options
-            // pop-up on the first format and tell the user in red (no error toast)
             if (response.status === 422) {
                 const errorResult = await response.json().catch(() => null);
-                if (errorResult && errorResult.code === 'missing_filename_value') {
-                    $(downloadBtn).html("Download");
-                    const formatSelect = document.getElementById('filename_format');
-                    // pre-select the "First Name Last Name" format (falls back to the first option)
-                    formatSelect.selectedIndex = 0;
-                    if (errorResult.fallback_format_key) {
-                        const match = Array.from(formatSelect.options).findIndex(o => o.value == errorResult.fallback_format_key);
-                        if (match >= 0) {
-                            formatSelect.selectedIndex = match;
-                        }
-                    }
-                    const firstFormat = errorResult.fallback_format_name
-                        || (formatSelect.options[formatSelect.selectedIndex] ? formatSelect.options[formatSelect.selectedIndex].textContent.trim() : '');
-                    const missing = (errorResult.missing_fields || []).join(', ') || 'a value';
-                    const warning = document.getElementById('filename-format-warning');
-                    // The server names the subject(s) ("'A B' missing 'Student ID'", "Multiple Subjects missing ...").
-                    const who = (errorResult.message || `Selected subject missing '${missing}'`).replace(/\.$/, '');
-                    warning.textContent = `${who}, Please click 'Next' to download in format '${firstFormat}'.`;
-                    warning.classList.remove('hidden');
-                    document.querySelector('[data-modal-hide="confirmDownloadModal"]').click();
-                    showOptionsDownloadModal.show();
-                    return;
-                }
                 if (errorResult && errorResult.message) {
                     window.dispatchEvent(new CustomEvent('show-toast-message', {
                         detail: { status: 'error', message: errorResult.message },

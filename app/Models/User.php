@@ -507,6 +507,11 @@ class User extends Authenticatable
             return false;
         }
 
+        // Super Admin users are only visible to, and editable by, Super Admins.
+        if ($targetUser->isSuperAdmin() && !$this->isSuperAdmin()) {
+            return false;
+        }
+
         $targetRole = $targetUser->getRole();
         if (!$targetRole) {
             return false;

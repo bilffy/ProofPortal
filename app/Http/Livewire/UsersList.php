@@ -224,6 +224,12 @@ class UsersList extends Component
             });
         }
 
+        // Super Admin users are only visible to Super Admins (Admin, Franchise and school-level users never see them,
+        // even when one is linked to their franchise or school).
+        if (!$user->isSuperAdmin()) {
+            $usersQuery->whereDoesntHave('roles', fn ($q) => $q->where('roles.name', RoleHelper::ROLE_SUPER_ADMIN));
+        }
+
         if ($user->isPhotoCoordinator()) {
             $usersQuery->where('users.status', '!=', User::STATUS_DISABLED);
         }

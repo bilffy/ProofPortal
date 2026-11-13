@@ -123,18 +123,44 @@ class PhotographyController extends Controller
     }
     
     /**
-     * Readable name for a `table.column` filename format placeholder.
+     * Filename formats the options pop-up must not offer for a single portrait download: the formats
+     * flagged validation_check = 1 that have no value for this subject (e.g. the Student ID formats
+     * when the subject has no Student ID). Bulk downloads offer every format.
      */
-    private function filenameFieldLabel(string $field): string
+    public function downloadFormatOptions(Request $request)
     {
-        return [
-            'subjects.subjectID' => 'Student ID',
-            'subjects.ts_subjectkey' => 'Subject Key',
-            'subjects.portal_firstname' => 'First Name',
-            'subjects.portal_lastname' => 'Last Name',
-            'folders.portal_ts_foldername' => 'Folder Name',
-            'seasons.code' => 'Year',
-        ][$field] ?? Str::headline(substr(strrchr('.' . $field, '.'), 1));
+        $school = SchoolContextHelper::getSchool();
+        $user = Auth::user();
+
+        if (UserService::isCanAccessImage($user, $school) === false) {
+            abort(403, 'Access denied.');
+        }
+
+        $tab = $request->input('tab');
+        if (!DigitalDownloadPermissionHelper::canViewAndDownloadTabBySchoolId($user, $school->id ?? null, $tab)) {
+            abort(403, 'You do not have permission to download these images.');
+        }
+
+        $images = $request->input('images', []);
+        if ($tab !== PhotographyHelper::TAB_PORTRAITS || !is_array($images) || count($images) !== 1) {
+            return response()->json(['success' => true, 'excluded_format_keys' => []]);
+        }
+
+        $decoded = preg_replace('/^img_/', '', (string) $images[0]);
+        $firstPass = base64_decode($decoded);
+        $key = $firstPass === false ? null : base64_decode($firstPass);
+        $subject = $key ? Subject::where('ts_subjectkey', $key)->where('is_deleted', 0)->first() : null;
+
+        $excluded = [];
+        if ($subject) {
+            foreach (FilenameFormat::where('validation_check', 1)->get() as $format) {
+                if (!empty($subject->missingFilenameFields($format->format))) {
+                    $excluded[] = (int) $format->format_key;
+                }
+            }
+        }
+
+        return response()->json(['success' => true, 'excluded_format_keys' => $excluded]);
     }
 
     public function requestDownloadDetails(Request $request)
@@ -335,57 +361,29 @@ class PhotographyController extends Controller
             } 
         }
         
-        // Subjects without a value for a field of the chosen filename format (e.g. no Student ID), but only
-        // for formats flagged with validation_check = 1. Any download - individual, "Download Selected"
-        // or "Download All" - is stopped here with a 422; the page then reopens the options pop-up on the
-        // "First Name Last Name" format with the message under the dropdown (see photography.blade.php).
-        // The request is only created once the user picks a format that every subject has a value for.
+        // Bulk downloads ("Download Selected" / "Download All"): a subject without a value for a field of the
+        // chosen filename format (e.g. no Student ID) - only for formats flagged validation_check = 1 - is
+        // downloaded in the "First Name Last Name" format instead (download_details.filename_format). No message
+        // is shown. A single download never gets here with such a format: the options pop-up does not offer it
+        // (see downloadFormatOptions()), and requestDownloadDetails() falls back the same way below as a safeguard.
         // "Download All" sends no images: it covers every subject with a photo in the selected folders.
+        $fallbackKeys = [];
+        $fallbackFormatKey = null;
         $downloadAll = empty($images);
-        if ($tab === PhotographyHelper::TAB_PORTRAITS && (!empty($keys) || $downloadAll)) {
+        if ($tab === PhotographyHelper::TAB_PORTRAITS && (int) $category !== 1 && (!empty($keys) || $downloadAll)) {
             $chosenFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
-            if ($chosenFormat && $chosenFormat->validation_check) {
-                $missingLabels = [];
-                $missingSubjects = [];
+            $fallbackFormat = FilenameFormat::where('name', 'First Name Last Name')->first();
+            if ($chosenFormat && $chosenFormat->validation_check && $fallbackFormat) {
                 $subjectsToCheck = $downloadAll
                     ? Subject::whereIn('ts_folder_id', Folder::whereIn('ts_folderkey', $selectedFilters['class']['folderkey'] ?? [])->pluck('ts_folder_id')->filter()->all())
                         ->whereHas('images')
                     : Subject::whereIn('ts_subjectkey', $keys);
                 foreach ($subjectsToCheck->where('is_deleted', 0)->get() as $subject) {
-                    $missing = $subject->missingFilenameFields($chosenFormat->format);
-                    if (empty($missing)) {
-                        continue;
+                    if (!empty($subject->missingFilenameFields($chosenFormat->format))) {
+                        $fallbackKeys[$subject->ts_subjectkey] = true;
                     }
-                    foreach ($missing as $field) {
-                        $missingLabels[$field] = $this->filenameFieldLabel($field);
-                    }
-                    $missingSubjects[] = trim(($subject->portal_firstname ?: $subject->firstname) . ' ' . ($subject->portal_lastname ?: $subject->lastname));
                 }
-
-                if (!empty($missingLabels)) {
-                    // The format used instead: the one named "First Name Last Name".
-                    $fallbackFormat = FilenameFormat::where('name', 'First Name Last Name')->first();
-                    $labels = implode(', ', array_values($missingLabels));
-                    $quote = fn (string $text) => "'{$text}'";
-
-                    // Names the subject(s): a single download or "Download Selected" lists every subject missing
-                    // the value; "Download All" names one subject, or says "Multiple Subjects" for several.
-                    $who = ($downloadAll && count($missingSubjects) > 1)
-                        ? 'Multiple Subjects'
-                        : implode(', ', array_map($quote, array_values(array_unique($missingSubjects))));
-                    $message = $who . ' missing ' . implode(', ', array_map($quote, array_values($missingLabels)));
-
-                    return response()->json([
-                        'success' => false,
-                        'code' => 'missing_filename_value',
-                        'missing_fields' => array_values($missingLabels),
-                        'missing_subjects' => array_values(array_unique($missingSubjects)),
-                        'download_all' => $downloadAll,
-                        'fallback_format_key' => $fallbackFormat?->format_key,
-                        'fallback_format_name' => $fallbackFormat?->name,
-                        'message' => $message . '.',
-                    ], 422);
-                }
+                $fallbackFormatKey = $fallbackFormat->format_key;
             }
         }
 
@@ -434,7 +432,10 @@ class PhotographyController extends Controller
                         'ts_jobkey' => $job->ts_jobkey,
                         'keyorigin' => $image->keyorigin,
                         'keyvalue' => $image->keyvalue,
-                        'filename_format' => (int) $request->input('filenameFormat'),
+                        // The chosen format, or "First Name Last Name" for a subject missing a value for it.
+                        'filename_format' => isset($fallbackKeys[$image->keyvalue])
+                            ? $fallbackFormatKey
+                            : (int) $request->input('filenameFormat'),
                     ]);
                 }
             }
@@ -460,6 +461,12 @@ class PhotographyController extends Controller
             }
             
             $fileFormat = FilenameFormat::where('format_key', $request->input('filenameFormat'))->first();
+            // Safeguard: a format the subject has no value for is never offered, but if one is sent anyway the
+            // file is named with "First Name Last Name" instead of an empty value.
+            if ($fileFormat && $fileFormat->validation_check && $object instanceof Subject
+                && !empty($object->missingFilenameFields($fileFormat->format))) {
+                $fileFormat = FilenameFormat::where('name', 'First Name Last Name')->first() ?: $fileFormat;
+            }
             $filename = null == $fileFormat ? $key : $object->getFilename($fileFormat->format);
             
             // get the path of the image in .env IMAGE_REPOSITORY/print_quality
