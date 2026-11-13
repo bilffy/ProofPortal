@@ -1,7 +1,7 @@
 <div class="bulk-invite-page pb-8">
     <div class="py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h3 class="text-2xl">Bulk Invite</h3>
+            <h3 class="text-2xl">Add Bulk Users</h3>
             <p class="text-sm text-gray-600 mt-1">
                 @if ($showSchoolSelector && $lockedSchoolName === '') 
                     Assign the school, upload the user details, and then send the invitations.
