@@ -65,11 +65,12 @@
                 </div>
             </div>
             <div class="flex flex-row gap-4 max-w-screen-md">
-                <div class="w-full">
+                <div class="w-full min-w-0 flex-1">
                     <div class="mt-1 w-full flex flex-col mb-2">
                         <x-form.input.text
                             id="edit-firstname"
                             name="firstname"
+                            class="w-full"
                             value="{{ old('firstname', $targetUser->firstname) }}"
                             type="text"
                             label="First Name"
@@ -78,11 +79,12 @@
                         <x-form.input.error errorMessage="{{$fNameError}}" />
                     </div>
                 </div>
-                <div class="w-full">
+                <div class="w-full min-w-0 flex-1">
                     <div class="mt-1 w-full flex flex-col mb-2">
                         <x-form.input.text
                             id="edit-lastname"
                             name="lastname"
+                            class="w-full"
                             value="{{ old('lastname', $targetUser->lastname) }}"
                             type="text"
                             label="Last Name"
