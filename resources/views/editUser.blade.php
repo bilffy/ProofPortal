@@ -184,6 +184,7 @@
         $('#select_role').change(toggleLevelOptions);
         $('#select_school').select2({
             placeholder: "Select",
+            width: '100%',
             ajax: {
                 url: '{{ route("schools.search") }}',
                 dataType: 'json',
