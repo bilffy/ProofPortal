@@ -94,11 +94,11 @@
             </div>
 
             <div class="flex flex-row gap-4 max-w-screen-md @if ($targetUser->status === \App\Models\User::STATUS_INVITED && $targetUser->send_invitation_with_proofing) mb-4 @else mb-8 @endif">
-                <div class="w-full">
+                <div class="w-full min-w-0 flex-1">
                     <x-form.select class="w-full" value="{{ old('role', $targetUser->getRoleId()) }}" context="role" :options="$roleOptions">User Role</x-form.select>
                     <x-form.input.error errorMessage="{{$roleError}}" />
                 </div>
-                <div id="level" class="w-full invisible">
+                <div id="level" class="w-full min-w-0 flex-1 invisible">
                     <x-form.select class="w-full"  value="{{ old('school', $targetUser->getSchoolId()) }}" context="school" :options="$schoolOptions">School</x-form.select>
                     <x-form.input.error errorMessage="{{$schoolError}}" />
                     <x-form.select class="w-full" value="{{ old('franchise', $targetUser->getFranchiseId()) }}" context="franchise" :options="$franchiseOptions">Franchise</x-form.select>
@@ -178,7 +178,7 @@
     };
     
     window.addEventListener('load', () => {
-        $('#select_role').select2({minimumResultsForSearch: Infinity, placeholder: "Select"});
+        $('#select_role').select2({minimumResultsForSearch: Infinity, placeholder: "Select", width: '100%'});
         $('#select_role').change(toggleLevelOptions);
         $('#select_school').select2({
             placeholder: "Select",
@@ -204,7 +204,7 @@
                 cache: true
             }
         });
-        $('#select_franchise').select2({placeholder: "Select"});
+        $('#select_franchise').select2({placeholder: "Select", width: '100%'});
         
         if (selectedRole) {
             updateSelectByRole(roles[selectedRole]);
