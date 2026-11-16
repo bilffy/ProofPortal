@@ -10,10 +10,10 @@
             'text' => 'UAT SYSTEM ENVIRONMENT',
             'style' => 'background-color: #fee2e2; color: #991b1b; border-color: #fecaca;',
         ],
-        'staging' => [
+        /*'staging' => [
             'text' => 'STAGING SYSTEM ENVIRONMENT',
             'style' => 'background-color: #fef3c7; color: #92400e; border-color: #fde68a;',
-        ],
+        ],*/
         default => null,
     };
 @endphp
