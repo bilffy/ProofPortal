@@ -50,8 +50,12 @@ class SessionController extends Controller
             return response()->json(['is_alive' => false]);
         }
 
-        $isAlive = $this->sessionExists($request->session()->getId())
-            && ! \App\Http\Middleware\EnforceIdleTimeout::isIdleExpired($request);
+        // Auth::check() above already proves the session was found and loaded by whichever
+        // driver is configured (an expired or evicted session arrives empty, so the user would
+        // not be authenticated). Do not probe the store by hand: the Redis key Laravel really
+        // uses is "<redis prefix><cache prefix><id>" on the cache connection, which the old
+        // probe did not match, so it reported live sessions as dead.
+        $isAlive = ! \App\Http\Middleware\EnforceIdleTimeout::isIdleExpired($request);
 
         return response()->json([
             'is_alive' => $isAlive,
