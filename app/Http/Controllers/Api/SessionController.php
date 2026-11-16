@@ -50,7 +50,8 @@ class SessionController extends Controller
             return response()->json(['is_alive' => false]);
         }
 
-        $isAlive = $this->sessionExists($request->session()->getId());
+        $isAlive = $this->sessionExists($request->session()->getId())
+            && ! \App\Http\Middleware\EnforceIdleTimeout::isIdleExpired($request);
 
         return response()->json([
             'is_alive' => $isAlive,
