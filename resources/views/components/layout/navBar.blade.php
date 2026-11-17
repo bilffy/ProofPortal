@@ -50,7 +50,7 @@
     @endhasanyrole
     
 
-
+    {{--
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <x-layout.navItem visibility="{{ $visibility }}" id="tabOrder" navIcon="credit-card" href="{{ route('order') }}">Promotional Products</x-layout.navItem>
     @endcan
@@ -58,11 +58,12 @@
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ORDERING))
         <x-layout.navItem visibility="{{ $visibility }}" id="tabSchoolProducts" navIcon="th-large" href="{{ route('school-products') }}" :activeNav="request()->routeIs('school-products')">School Products</x-layout.navItem>
     @endcan
+    --}}
 
     @can ($PermissionHelper->getAccessToPage($PermissionHelper::SUB_ADMIN_TOOLS))
         <x-layout.navItem visibility="{{ $visibility }}" subNav="{{ $subNav }}" id="tabManageUsers" navIcon="user" href="{{ route('users') }}">Manage Users</x-layout.navItem>
     @endcan
-    
+
     {{-- Franchise-wide, like Dashboard - no school needs to be selected to reach it --}}
     @role($RoleHelper::ROLE_FRANCHISE)
         @if (!$SchoolContextHelper->isSchoolContext())

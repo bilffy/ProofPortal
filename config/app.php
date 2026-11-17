@@ -43,6 +43,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Scheduled Maintenance Banner
+    |--------------------------------------------------------------------------
+    |
+    | When APP_MAINTENANCE is true, the maintenance banner is shown with the
+    | APP_MAINTENANCE_FROM / APP_MAINTENANCE_TO text. Quote values that contain
+    | spaces or brackets in .env.
+    |
+    */
+
+    'maintenance_banner' => [
+        'enabled' => filter_var(env('APP_MAINTENANCE', false), FILTER_VALIDATE_BOOLEAN),
+        'from' => env('APP_MAINTENANCE_FROM'),
+        'to' => env('APP_MAINTENANCE_TO'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |
