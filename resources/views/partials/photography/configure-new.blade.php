@@ -586,7 +586,7 @@
                                 <span class="jobs-archive-heading font-bold text-red-600 text-lg">Warning!</span>
                             </div>
                             <p class="text-sm text-amber-700 mt-1">
-                                If a Job has finished its proofing stage (either marked as "Completed" or the proofing start date has passed), it won't sync automatically until it is "Archived". 
+                                If a Job has finished its proofing stage (either marked as "Completed" or the proofing due date has passed), it won't sync automatically until it is "Archived". 
                                 Please archive these jobs so the system can sync them and pull in any new portrait updates.
                             </p>
                             <p class="jobs-archive-description text-sm text-red-600">
