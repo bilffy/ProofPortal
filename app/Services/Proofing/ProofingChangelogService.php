@@ -268,7 +268,7 @@ class ProofingChangelogService
         ->get();
 
         $schoolNameChange = ProofingChangelog::join('issues', 'issues.id', '=', 'changelogs.issue_id')
-        ->with(['user:id,firstname,lastname'])
+        // ->with(['user:id,firstname,lastname'])
         ->where([
             ['issues.issue_name', 'SCHOOL_NAME_SPELL'],
             ['ts_jobkey', $jobKey],
