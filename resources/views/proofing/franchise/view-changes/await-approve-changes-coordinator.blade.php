@@ -57,6 +57,7 @@
                             <table class="table table-bordered table-striped table-sm">
                                 <thead>
                                     <tr>
+                                        <th scope="col">School Name</th>
                                         <th scope="col">Issue Type</th>
                                         <th scope="col">Note</th>
                                         <th scope="col">Change Requested</th>
@@ -71,6 +72,7 @@
                                             $signedUrl = URL::signedRoute('subject-change-coordinator.submitApproveChangeCoordinator', ['hash' => $jobHash]);
                                         @endphp
                                         <tr id="{{ $rowIdSelector }}">
+                                            <td>{{ $change->change_from }}</td>
                                             <td>{{ $change->external_issue_name }}</td>
                                             <td>{{ $change->notes }}</td>
                                             <td>{{ $change->change_datetime ? \Carbon\Carbon::parse($change->change_datetime)->format('Y-m-d H:i:s') : '' }}</td>
