@@ -586,7 +586,7 @@
                                 <span class="jobs-archive-heading font-bold text-red-600 text-lg">Warning!</span>
                             </div>
                             <p class="text-sm text-amber-700 mt-1">
-                                New or updated data\images will sync to the photo library after 7pm each night. The sync will only occur for the schools that have completed the proofing process and have had their proofing jobs archived.
+                                New or updated data/images will sync to the photo library after 7pm each night. The sync will only occur for the schools that have completed the proofing process and have had their proofing jobs archived.
                             </p>
                             <!-- <p class="jobs-archive-description text-sm text-red-600">
                                 Any Jobs that have a digital download date will sync automatically every night after 7:00 PM.
