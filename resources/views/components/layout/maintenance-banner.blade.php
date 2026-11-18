@@ -8,7 +8,7 @@
 @if ($show)
     <div
         class="maintenance-banner w-full border-b px-4 py-2.5 text-center text-sm font-semibold shrink-0"
-        style="background-color: #fee2e2; color: #991b1b; border-color: #fecaca;"
+        style="background-color: #fee2e2; color: #FF0000; border-color: #fecaca;"
         role="status"
     >
         Please be advised that the MSP portal will be undergoing scheduled maintenance from {{ $from }} to {{ $to }}
