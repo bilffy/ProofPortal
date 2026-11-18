@@ -586,16 +586,15 @@
                                 <span class="jobs-archive-heading font-bold text-red-600 text-lg">Warning!</span>
                             </div>
                             <p class="text-sm text-amber-700 mt-1">
-                                If a Job has finished its proofing stage (either marked as "Completed" or the proofing due date has passed), it won't sync automatically until it is "Archived". 
-                                Please archive these jobs so the system can sync them and pull in any new portrait updates.
+                                New or updated data\images will sync to the photo library after 7pm each night. The sync will only occur for the schools that have completed the proofing process and have had their proofing jobs archived.
                             </p>
-                            <p class="jobs-archive-description text-sm text-red-600">
+                            <!-- <p class="jobs-archive-description text-sm text-red-600">
                                 Any Jobs that have a digital download date will sync automatically every night after 7:00 PM.
-                            </p>
+                            </p> -->
                         </div>
                     </div>
 
-                <button
+                <!-- <button
                     type="button"
                     id="open-jobs-needing-archive-modal"
                     class="jobs-archive-banner-btn"
@@ -604,7 +603,7 @@
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                </button>
+                </button> -->
                  <!-- <button
                     type="button"
                     id="open-jobs-needing-archive-modal"
