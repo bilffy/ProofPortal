@@ -1104,7 +1104,7 @@
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#07a88f">Schools Active Proofing Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#07a88f">School Active Proofing Jobs</span>
                         </div>
                         <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
                     </div>
@@ -1116,7 +1116,7 @@
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#00b4df">Schools Photo Library Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#00b4df">School Photo Library Jobs</span>
                         </div>
                         <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
                     </div>
@@ -1175,7 +1175,7 @@
                     >
                         <div class="sd-panel-head">
                             <h6 class="sd-card-title">
-                                Schools Photo Library Status
+                                School Photo Library Status
                             </h6>
                             <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
                         </div>
