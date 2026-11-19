@@ -196,7 +196,9 @@ class CleanupStagingImages extends Command
         $deletedCount = 0;
 
         /** @var SplFileInfo $file */
-        foreach (File::allFiles($cacheRoot) as $file) {
+        // Iterate lazily: File::allFiles() builds an array of every cache file first, which
+        // exhausts memory when the cache directory has grown large.
+        foreach (\Symfony\Component\Finder\Finder::create()->files()->ignoreDotFiles(false)->in($cacheRoot) as $file) {
             if ($file->getFilename() === '.gitignore') {
                 continue;
             }

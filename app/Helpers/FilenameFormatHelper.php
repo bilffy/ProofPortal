@@ -26,8 +26,11 @@ class FilenameFormatHelper
      * Returns the `table.column` placeholders of the format that have no value
      * (missing row, NULL or blank) for the given record ids.
      */
-    public static function emptyFields(string $format, array $options): array
+    public static function emptyFields(string $format, array $options, array $rows = []): array
     {
+        // $rows: optional already-loaded rows keyed by table name (avoids a query per subject on bulk checks).
+        // Lookups are also cached for the rest of the request (folders / seasons are shared by many subjects).
+        static $cache = [];
         $empty = [];
         foreach (self::extractValuesFromBraces($format) as $variable) {
             $parts = explode('.', $variable);
@@ -35,7 +38,15 @@ class FilenameFormatHelper
                 continue;
             }
             $id = $options[$parts[0]] ?? null;
-            $row = $id ? DB::table($parts[0])->find($id) : null;
+            if ($id && isset($rows[$parts[0]])) {
+                $row = (object) $rows[$parts[0]];
+            } elseif ($id) {
+                $cacheKey = $parts[0] . ':' . $id;
+                $row = $cache[$cacheKey] ??= (DB::table($parts[0])->find($id) ?: false);
+                $row = $row ?: null;
+            } else {
+                $row = null;
+            }
             $value = $row ? ($row->{$parts[1]} ?? null) : null;
             if ($value === null || trim((string) $value) === '') {
                 $empty[$variable] = $variable;

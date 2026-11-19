@@ -29,7 +29,9 @@
     $statusUnlocked = max(0, (int) ($metrics['status_unlocked'] ?? 0));
 
     $statusMixTotal = $statusOpened + $statusNotOpened + $statusCompleted + $statusArchived + $statusDeleted + $statusIncomplete + $statusModified + $statusUnlocked;
-    $syncedJobsLabel = ($synced === 1) ? 'Synced Job' : 'Synced Jobs';
+    $activeJobs = max(0, (int) ($metrics['active_jobs'] ?? 0));
+    $completedJobsLabel = ($statusCompleted === 1) ? 'Completed Job' : 'Completed Jobs';
+    $activeJobsLabel = ($activeJobs === 1) ? 'Active Job' : 'Active Jobs';
     $deletedJobsLabel = ($statusDeleted === 1) ? 'Deleted Job' : 'Deleted Jobs';
 
     // Rainbow palette from MSP chart colour reference (left → right).
@@ -811,10 +813,6 @@
         background: #fff;
     }
 
-    .fd-jobs-table tbody tr.is-completed td {
-        background: #d0eeea;
-    }
-
     .fd-jobs-table .is-date-start.is-due {
         color: #07A88F;
         font-weight: 700;
@@ -1106,7 +1104,7 @@
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="refresh" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#07a88f">Your Active Proofing Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#07a88f">Schools Active Proofing Jobs</span>
                         </div>
                         <span class="sd-kpi-count-badge">{{ number_format($activeProofing) }}</span>
                     </div>
@@ -1118,7 +1116,7 @@
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#00b4df">Your Photography Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#00b4df">Schools Photo Library Jobs</span>
                         </div>
                         <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
                     </div>
@@ -1139,8 +1137,11 @@
                             <p class="sd-empty">No proofing status data found.</p>
                         @else
                             <div class="sd-progress-summary">
-                                <strong>{{ number_format($synced) }}</strong>
-                                <span>{{ $syncedJobsLabel }}</span>
+                                <strong>{{ number_format($statusCompleted) }}</strong>
+                                <span>{{ $completedJobsLabel }}</span>
+                                <span aria-hidden="true">•</span>
+                                <strong>{{ number_format($activeJobs) }}</strong>
+                                <span>{{ $activeJobsLabel }}</span>
                                 <span aria-hidden="true">•</span>
                                 <strong>{{ number_format($statusDeleted) }}</strong>
                                 <span>{{ $deletedJobsLabel }}</span>
@@ -1174,7 +1175,7 @@
                     >
                         <div class="sd-panel-head">
                             <h6 class="sd-card-title">
-                                School Photography Status
+                                Schools Photo Library Status
                             </h6>
                             <span class="sd-badge is-status">Season: {{ $selectedSeasonLabel }}</span>
                         </div>
@@ -1182,8 +1183,8 @@
                             <p class="sd-empty">No photography jobs found.</p>
                         @else
                             <div class="sd-progress-summary">
-                                <strong>{{ number_format($photographyTotal) }}</strong>
-                                <span>{{ $photographyTotal === 1 ? 'Photography Job' : 'Photography Jobs' }}</span>
+                                <!-- <strong>{{ number_format($photographyTotal) }}</strong> -->
+                                <!-- <span>{{ $photographyTotal === 1 ? 'Photography Job' : 'Photography Jobs' }}</span> -->
                             </div>
                             <div class="sd-pie-layout">
                                 <div class="sd-chart-box" wire:ignore>

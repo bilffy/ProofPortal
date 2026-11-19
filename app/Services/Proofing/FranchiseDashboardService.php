@@ -124,6 +124,7 @@ class FranchiseDashboardService
             'active_proofing' => 0,
             'schools_count' => count($schoolIds),
             'synced' => 0,
+            'active_jobs' => 0,
             'status_opened' => 0,
             'status_not_opened' => 0,
             'status_completed' => 0,
@@ -232,6 +233,18 @@ class FranchiseDashboardService
                 }
             }
         }
+
+        // Active jobs: the number of rows in the "Your Active Proofing Jobs" table
+        // (same filters as getProofingJobsTable() without a status switch).
+        $activeJobsQuery = Job::query()
+            ->where('jobs.show_proofing', 1)
+            ->where('jobs.jobsync_status_id', $syncId)
+            ->whereNotIn('jobs.job_status_id', array_values(array_filter([
+                (int) $this->statusService->tnjNotFound, $completedId, $archivedId, (int) $this->statusService->deleted,
+            ])));
+        $this->constrainJobsToSchools($activeJobsQuery, $schoolIds, $schoolKeys);
+        $activeJobsQuery->when(!empty($seasonIds), fn (Builder $q) => $q->whereIn('jobs.ts_season_id', $seasonIds));
+        $metrics['active_jobs'] = (int) $activeJobsQuery->count();
 
         // Deleted jobs (show_proofing null)
         $deletedJobs = $this->deletedJobsQuery($schoolIds, $schoolKeys, $seasonIds)

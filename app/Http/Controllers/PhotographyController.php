@@ -378,7 +378,8 @@ class PhotographyController extends Controller
                     ? Subject::whereIn('ts_folder_id', Folder::whereIn('ts_folderkey', $selectedFilters['class']['folderkey'] ?? [])->pluck('ts_folder_id')->filter()->all())
                         ->whereHas('images')
                     : Subject::whereIn('ts_subjectkey', $keys);
-                foreach ($subjectsToCheck->where('is_deleted', 0)->get() as $subject) {
+                // eager load so each subject costs no extra queries
+                foreach ($subjectsToCheck->where('is_deleted', 0)->with('folder.job.seasons')->get() as $subject) {
                     if (!empty($subject->missingFilenameFields($chosenFormat->format))) {
                         $fallbackKeys[$subject->ts_subjectkey] = true;
                     }
@@ -414,6 +415,7 @@ class PhotographyController extends Controller
                 ->keyBy('ts_job_id');
         }
 
+        $detailRows = [];
         foreach ($images as $image) {
 
             // remove the img_ prefix, then decode the base64 encoded image
@@ -427,7 +429,7 @@ class PhotographyController extends Controller
             if ($image) {
                 $job = $jobsById->get($image->ts_job_id);
                 if ($job) {
-                    DownloadDetail::create([
+                    $detailRows[] = [
                         'download_id' => $downloadRequest->id,
                         'ts_jobkey' => $job->ts_jobkey,
                         'keyorigin' => $image->keyorigin,
@@ -436,9 +438,14 @@ class PhotographyController extends Controller
                         'filename_format' => isset($fallbackKeys[$image->keyvalue])
                             ? $fallbackFormatKey
                             : (int) $request->input('filenameFormat'),
-                    ]);
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 }
             }
+        }
+        foreach (array_chunk($detailRows, 500) as $chunk) {
+            DownloadDetail::insert($chunk);
         }
         // If there are multiple images, return images list
         $data = [$images];
@@ -473,23 +480,7 @@ class PhotographyController extends Controller
             // UPDATED: Refer to filesystems' disks configuration for the path
             // $path = base_path(config('app.image_repository') . '/print_quality/' . $key . ".jpg");
             //CODE BY chromedia
-            $files = ImageHelper::findImageFiles($key);
-            // check if the file exists in the print_quality
-            if (!empty($files)) {
-                $printQualityFiles = array_filter($files, function($file) {
-                    return str_contains($file, 'print_quality');
-                });
-                if (!empty($printQualityFiles)) {
-                    $path = array_values($printQualityFiles)[0];
-                } else {
-                    $path = $files[0];
-                }
-                $basePath = ImageHelper::getStorageBasePath();
-                $path = str_replace($basePath, "", $path);
-            } else {
-                $path = '';
-            }
-            $fileExtension = File::extension($path);
+            // (the glob-based lookup that was here was overwritten below, so it only added disk scans)
             //CODE BY chromedia
 
             //CODE BY IT

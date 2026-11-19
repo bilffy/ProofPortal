@@ -79,12 +79,12 @@ class Subject extends Model
     public function missingFilenameFields(string $format): array
     {
         $folder = $this->folder;
-        $season = $folder?->job()->first()?->seasons()->first();
+        $season = $folder?->job?->seasons;
         return FilenameFormatHelper::emptyFields($format, [
             'subjects' => $this->id,
             'folders' => $folder?->id,
             'seasons' => $season?->id,
-        ]);
+        ], ['subjects' => $this->getAttributes()]);
     }
 
     //Proofing
