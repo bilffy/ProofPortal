@@ -90,7 +90,7 @@
                     <span class="text-warning d-block mt-2">
                         Catchup notification emails will be sent on this date. Please ensure this date is set after the school's actual photo catchup day.
                         <br>Selecting a catchup date will automatically set the Due Date to one week later.
-                        <br>Portraits will be temporarily hidden for this TNJ from the Photography section between the catchup date and the due date and will be available once the due date passes.
+                        <!-- <br>Portraits will be temporarily hidden for this TNJ from the Photography section between the catchup date and the due date and will be available once the due date passes. -->
                     </span>
                 </div>
             </div>
