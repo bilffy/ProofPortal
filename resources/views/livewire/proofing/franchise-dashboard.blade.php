@@ -15,7 +15,8 @@
 
     $photographyTotal = max(0, (int) ($metrics['photography_total'] ?? 0));
     $photographyConfigured = max(0, (int) ($metrics['photography_configured'] ?? 0));
-    $photographyNotConfigured = max(0, (int) ($metrics['photography_not_configured'] ?? 0));
+    $photographyConfiguredSchools = max(0, (int) ($metrics['photography_configured_schools'] ?? 0));
+    $photographyNotConfigured =max(0, (int) ($metrics['photography_not_configured'] ?? 0));
     $activeProofing = max(0, (int) ($metrics['active_proofing'] ?? 0));
     $schoolsCount = max(0, (int) ($metrics['schools_count'] ?? 0));
     $synced = max(0, (int) ($metrics['synced'] ?? 0));
@@ -1116,9 +1117,9 @@
                     <div class="sd-kpi-top-row">
                         <div class="sd-kpi-icon-label">
                             <span class="sd-kpi-icon"><x-icon icon="camera" /></span>
-                            <span class="sd-kpi-tile-label" style="color:#00b4df">School Photo Library Jobs</span>
+                            <span class="sd-kpi-tile-label" style="color:#00b4df">School Active Photo Library</span>
                         </div>
-                        <span class="sd-kpi-count-badge">{{ number_format($photographyTotal) }}</span>
+                        <span class="sd-kpi-count-badge">{{ number_format($photographyConfiguredSchools) }}</span>
                     </div>
                 </div>
             </div>

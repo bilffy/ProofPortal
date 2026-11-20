@@ -121,6 +121,7 @@ class FranchiseDashboardService
             'photography_total' => 0,
             'photography_configured' => 0,
             'photography_not_configured' => 0,
+            'photography_configured_schools' => 0,
             'active_proofing' => 0,
             'schools_count' => count($schoolIds),
             'synced' => 0,
@@ -194,6 +195,23 @@ class FranchiseDashboardService
                 ->flip()
                 ->all();
         }
+
+        // Schools with at least one configured photography job (grouped by school).
+        $configuredSchoolIds = [];
+        foreach ($photoJobs as $job) {
+            if (!isset($portraitVisibleJobIds[(int) $job->ts_job_id])) {
+                continue;
+            }
+            $ids = ($job->school_id !== null && (int) $job->school_id > 0)
+                ? [(int) $job->school_id]
+                : ($keyToIds[trim((string) $job->ts_schoolkey)] ?? []);
+            foreach ($ids as $id) {
+                if (isset($validSchoolIds[$id])) {
+                    $configuredSchoolIds[$id] = true;
+                }
+            }
+        }
+        $metrics['photography_configured_schools'] = count($configuredSchoolIds);
 
         foreach ($photoJobs as $job) {
             $configured = isset($portraitVisibleJobIds[(int) $job->ts_job_id]);
