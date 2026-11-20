@@ -313,21 +313,22 @@ class PhotographyController extends Controller
             //CODE BY CHROMEDIA
 
             //CODE BY IT
-            $imageCountQuery = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
-                ->whereIn('images.id', function($query) use ($keys) {
-                    $query->selectRaw('COALESCE(
-                            MAX(CASE WHEN is_primary = 1 THEN id END), 
-                            MAX(id)
-                        )')
-                        ->from('images')
-                        ->whereIn('keyvalue', $keys)
-                        ->groupBy('keyvalue');
-                })
-                ->where('jobs.school_id', '=', $schoolId);
-            if ($tsAccountId !== null) {
-                $imageCountQuery->where('jobs.ts_account_id', $tsAccountId);
-            }
-            $imageCount = $imageCountQuery->count();
+            // One pass instead of a grouped sub-select run twice: resolve each key's primary (else newest)
+            // image id first, then check those images' jobs against the school / franchise in PHP.
+            $primaryImageIds = Image::query()
+                ->whereIn('keyvalue', $keys)
+                ->selectRaw('COALESCE(MAX(CASE WHEN is_primary = 1 THEN id END), MAX(id)) as primary_id')
+                ->groupBy('keyvalue')
+                ->pluck('primary_id');
+            $ownerRows = $primaryImageIds->isEmpty()
+                ? collect()
+                : Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
+                    ->whereIn('images.id', $primaryImageIds)
+                    ->get(['jobs.school_id', 'jobs.ts_account_id']);
+            $imageCount = $ownerRows->filter(function ($row) use ($schoolId, $tsAccountId) {
+                return (int) $row->school_id === (int) $schoolId && $row->school_id !== null
+                    && ($tsAccountId === null || (int) $row->ts_account_id === (int) $tsAccountId);
+            })->count();
             //CODE BY IT
 
             if ($imageCount != count($keys)) {
@@ -343,24 +344,11 @@ class PhotographyController extends Controller
             //CODE BY CHROMEDIA
 
             //CODE BY IT
-            $foundCountQuery = Image::join('jobs', 'images.ts_job_id', '=', 'jobs.ts_job_id')
-                ->whereIn('images.id', function($query) use ($keys) {
-                    $query->selectRaw('COALESCE(
-                            MAX(CASE WHEN is_primary = 1 THEN id END), 
-                            MAX(id)
-                        )')
-                        ->from('images')
-                        ->whereIn('keyvalue', $keys)
-                        ->groupBy('keyvalue');
-                })
-                ->where(function ($q) use ($schoolId, $tsAccountId) {
-                    $q->where('jobs.school_id', '!=', $schoolId)
-                      ->orWhereNull('jobs.school_id');
-                    if ($tsAccountId !== null) {
-                        $q->orWhere('jobs.ts_account_id', '!=', $tsAccountId);
-                    }
-                });
-            $foundCount = $foundCountQuery->count();
+            $foundCount = $ownerRows->filter(function ($row) use ($schoolId, $tsAccountId) {
+                return $row->school_id === null
+                    || (int) $row->school_id !== (int) $schoolId
+                    || ($tsAccountId !== null && $row->ts_account_id !== null && (int) $row->ts_account_id !== (int) $tsAccountId);
+            })->count();
             //CODE BY IT
         
             if ($foundCount) {
