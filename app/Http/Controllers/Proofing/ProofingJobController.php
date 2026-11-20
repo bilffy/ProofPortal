@@ -204,6 +204,17 @@ class ProofingJobController extends Controller
             ]);
             \Log::info('Proxy sync skipped, job exists; assigned to user', ['jobKey' => $jobKey, 'user_id' => Auth::id()]);
 
+            // Archived jobs are not opened: list it under Archived Jobs and stay on the page
+            if ($selectedJob->job_status_id == $this->statusService->archived) {
+                $this->jobService->updateJobData($jobKey, 'show_proofing', 1);
+
+                return response()->json([
+                    'success'  => true,
+                    'existing' => true,
+                    'archived' => true
+                ]);
+            }
+
             return response()->json(['success' => true, 'existing' => true]);
         }
 

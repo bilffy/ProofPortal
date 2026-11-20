@@ -341,6 +341,17 @@ $(document).ready(function () {
             type: "POST",
             data: { _token: csrfToken, jobKey: jobKey },
             success: function (proxyResponse) {
+                if (proxyResponse.success && proxyResponse.archived) {
+                    // Archived job: do not open it, stay here and show the Archived Jobs list
+                    $overlay.fadeOut(200);
+                    $btn.prop('disabled', false);
+                    $btn.removeData('loading');
+                    $row.fadeOut(400);
+                    isArchivedHidden = true; // the toggle click below flips this to "showing archived"
+                    $('.show-hide-archived').first().trigger('click');
+                    return;
+                }
+
                 if (proxyResponse.success) {
 
                     // Slowly remove row
