@@ -196,6 +196,17 @@ class ProofingJobController extends Controller
         \Log::info('Proxy sync started', ['jobKey' => $jobKey]);
         $selectedJob = $this->jobService->getJobByJobKey($jobKey)->first();
 
+        // Job already exists: skip the sync and only assign it to the logged-in user
+        if ($selectedJob) {
+            JobUser::firstOrCreate([
+                'user_id'   => Auth::id(),
+                'ts_job_id' => $selectedJob->ts_job_id
+            ]);
+            \Log::info('Proxy sync skipped, job exists; assigned to user', ['jobKey' => $jobKey, 'user_id' => Auth::id()]);
+
+            return response()->json(['success' => true, 'existing' => true]);
+        }
+
         $baseUrl = config('services.bpsync.url');
     
         try {
