@@ -165,11 +165,6 @@ class PhotographyController extends Controller
 
     public function requestDownloadDetails(Request $request)
     {
-        // Phase marks (ms since the request started) for the slow request-download investigation.
-        $marks = ['controller_start' => round((microtime(true) - LARAVEL_START) * 1000)];
-        $mark = function (string $name) use (&$marks) {
-            $marks[$name] = round((microtime(true) - LARAVEL_START) * 1000);
-        };
         $school = SchoolContextHelper::getSchool();
 
         $user = Auth::user();
@@ -205,7 +200,6 @@ class PhotographyController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         
-        $mark('after_checks');
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
         $schoolId = $school->id ?? null;
@@ -255,7 +249,6 @@ class PhotographyController extends Controller
             }
         }
 
-        $mark('after_folder_lookup');
         $jobsById = Job::whereIn('ts_job_id', collect($folders)->pluck('ts_job_id')->unique()->filter())
             ->get()
             ->keyBy('ts_job_id');
@@ -362,9 +355,6 @@ class PhotographyController extends Controller
         // is shown. A single download never gets here with such a format: the options pop-up does not offer it
         // (see downloadFormatOptions()), and requestDownloadDetails() falls back the same way below as a safeguard.
         // "Download All" sends no images: it covers every subject with a photo in the selected folders.
-        $mark('after_image_ownership');
-        $timingBeforeFallback = $marks['after_image_ownership'];
-        $fallbackStart = microtime(true);
         $fallbackKeys = [];
         $fallbackFormatKey = null;
         $downloadAll = empty($images);
@@ -385,8 +375,6 @@ class PhotographyController extends Controller
                 $fallbackFormatKey = $fallbackFormat->format_key;
             }
         }
-
-        $timingFallbackMs = round((microtime(true) - $fallbackStart) * 1000);
 
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
@@ -509,16 +497,7 @@ class PhotographyController extends Controller
 
             // retrieve the image content using the ImageService - as is?
             // $imageContent = base64_encode($this->imageService->getImageContent($key)); //CODE BY Chromedia
-            $fetchStart = microtime(true);
             $imageContent = $this->imageService->getDownloadImageContent($key, $selectedFilters['resolution'], $tab); //CODE BY IT
-            // Timing for the slow single-download investigation (image fetch + resize is the usual cost).
-            \Log::info('photography.request-download single', [
-                'image_ms' => round((microtime(true) - $fetchStart) * 1000),
-                'marks' => $marks,
-                'fallback_check_ms' => $timingFallbackMs,
-                'total_ms' => round((microtime(true) - LARAVEL_START) * 1000),
-                'resolution' => $selectedFilters['resolution'] ?? null,
-            ]);
             return response()->json([
                 'success' => true,
                 'data' => $imageContent,
@@ -537,16 +516,6 @@ class PhotographyController extends Controller
         
         // remove the nonce from the session
         session()->forget('download-request-nonce');
-
-        \Log::info('photography.request-download bulk', [
-            'mode' => $downloadAll ? 'all' : 'selected',
-            'images' => count($images ?? []),
-            'folders' => count($folders ?? []),
-            'marks' => $marks,
-            'fallback_check_ms' => $timingFallbackMs,
-            'fallback_subjects' => count($fallbackKeys),
-            'total_ms' => round((microtime(true) - LARAVEL_START) * 1000),
-        ]);
 
         return response()->json(['success' => true, 'data' => $data]);
     }
