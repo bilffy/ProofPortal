@@ -367,6 +367,8 @@ class PhotographyController extends Controller
         // is shown. A single download never gets here with such a format: the options pop-up does not offer it
         // (see downloadFormatOptions()), and requestDownloadDetails() falls back the same way below as a safeguard.
         // "Download All" sends no images: it covers every subject with a photo in the selected folders.
+        $timingBeforeFallback = round((microtime(true) - LARAVEL_START) * 1000);
+        $fallbackStart = microtime(true);
         $fallbackKeys = [];
         $fallbackFormatKey = null;
         $downloadAll = empty($images);
@@ -387,6 +389,8 @@ class PhotographyController extends Controller
                 $fallbackFormatKey = $fallbackFormat->format_key;
             }
         }
+
+        $timingFallbackMs = round((microtime(true) - $fallbackStart) * 1000);
 
         $downloadRequest = DownloadRequested::create([
             'user_id' => auth()->id(),
@@ -509,7 +513,16 @@ class PhotographyController extends Controller
 
             // retrieve the image content using the ImageService - as is?
             // $imageContent = base64_encode($this->imageService->getImageContent($key)); //CODE BY Chromedia
+            $fetchStart = microtime(true);
             $imageContent = $this->imageService->getDownloadImageContent($key, $selectedFilters['resolution'], $tab); //CODE BY IT
+            // Timing for the slow single-download investigation (image fetch + resize is the usual cost).
+            \Log::info('photography.request-download single', [
+                'image_ms' => round((microtime(true) - $fetchStart) * 1000),
+                'before_fallback_ms' => $timingBeforeFallback,
+                'fallback_check_ms' => $timingFallbackMs,
+                'total_ms' => round((microtime(true) - LARAVEL_START) * 1000),
+                'resolution' => $selectedFilters['resolution'] ?? null,
+            ]);
             return response()->json([
                 'success' => true,
                 'data' => $imageContent,
@@ -528,7 +541,17 @@ class PhotographyController extends Controller
         
         // remove the nonce from the session
         session()->forget('download-request-nonce');
-        
+
+        \Log::info('photography.request-download bulk', [
+            'mode' => $downloadAll ? 'all' : 'selected',
+            'images' => count($images ?? []),
+            'folders' => count($folders ?? []),
+            'before_fallback_ms' => $timingBeforeFallback,
+            'fallback_check_ms' => $timingFallbackMs,
+            'fallback_subjects' => count($fallbackKeys),
+            'total_ms' => round((microtime(true) - LARAVEL_START) * 1000),
+        ]);
+
         return response()->json(['success' => true, 'data' => $data]);
     }
 
