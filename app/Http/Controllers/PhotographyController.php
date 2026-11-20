@@ -164,7 +164,12 @@ class PhotographyController extends Controller
     }
 
     public function requestDownloadDetails(Request $request)
-    {   
+    {
+        // Phase marks (ms since the request started) for the slow request-download investigation.
+        $marks = ['controller_start' => round((microtime(true) - LARAVEL_START) * 1000)];
+        $mark = function (string $name) use (&$marks) {
+            $marks[$name] = round((microtime(true) - LARAVEL_START) * 1000);
+        };
         $school = SchoolContextHelper::getSchool();
 
         $user = Auth::user();
@@ -200,6 +205,7 @@ class PhotographyController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         
+        $mark('after_checks');
         $category = $request->input('category');
         $selectedFilters = $request->input('filters');
         $schoolId = $school->id ?? null;
@@ -249,10 +255,11 @@ class PhotographyController extends Controller
             }
         }
 
+        $mark('after_folder_lookup');
         $jobsById = Job::whereIn('ts_job_id', collect($folders)->pluck('ts_job_id')->unique()->filter())
             ->get()
             ->keyBy('ts_job_id');
-        
+
         foreach ($folders as $folder) {
             $selectedFilters['class']['folderkey'][] = $folder->ts_folderkey;
             $job = $jobsById->get($folder->ts_job_id);
@@ -367,7 +374,8 @@ class PhotographyController extends Controller
         // is shown. A single download never gets here with such a format: the options pop-up does not offer it
         // (see downloadFormatOptions()), and requestDownloadDetails() falls back the same way below as a safeguard.
         // "Download All" sends no images: it covers every subject with a photo in the selected folders.
-        $timingBeforeFallback = round((microtime(true) - LARAVEL_START) * 1000);
+        $mark('after_image_ownership');
+        $timingBeforeFallback = $marks['after_image_ownership'];
         $fallbackStart = microtime(true);
         $fallbackKeys = [];
         $fallbackFormatKey = null;
@@ -518,7 +526,7 @@ class PhotographyController extends Controller
             // Timing for the slow single-download investigation (image fetch + resize is the usual cost).
             \Log::info('photography.request-download single', [
                 'image_ms' => round((microtime(true) - $fetchStart) * 1000),
-                'before_fallback_ms' => $timingBeforeFallback,
+                'marks' => $marks,
                 'fallback_check_ms' => $timingFallbackMs,
                 'total_ms' => round((microtime(true) - LARAVEL_START) * 1000),
                 'resolution' => $selectedFilters['resolution'] ?? null,
@@ -546,7 +554,7 @@ class PhotographyController extends Controller
             'mode' => $downloadAll ? 'all' : 'selected',
             'images' => count($images ?? []),
             'folders' => count($folders ?? []),
-            'before_fallback_ms' => $timingBeforeFallback,
+            'marks' => $marks,
             'fallback_check_ms' => $timingFallbackMs,
             'fallback_subjects' => count($fallbackKeys),
             'total_ms' => round((microtime(true) - LARAVEL_START) * 1000),
