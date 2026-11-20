@@ -389,7 +389,8 @@ $(document).ready(function () {
                                     $overlay.fadeOut(200);
                                     $btn.prop('disabled', false);
                                     $btn.removeData('loading');
-                                    alert('Server error while opening job: ' + error);
+                                    const openMessage = (xhr.responseJSON && xhr.responseJSON.message) || error || 'Unknown error';
+                                    alert('Server error while opening job: ' + openMessage);
                                 }
                             });
                         });
@@ -406,7 +407,8 @@ $(document).ready(function () {
                 $overlay.fadeOut(200);
                 $btn.prop('disabled', false);
                 $btn.removeData('loading');
-                alert('Please upload the tnj and sync after it completed.');
+                const serverMessage = xhr.responseJSON && xhr.responseJSON.message;
+                alert(serverMessage || 'Please upload the tnj and sync after it completed.');
             }
         });
     });
