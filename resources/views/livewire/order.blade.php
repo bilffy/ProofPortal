@@ -37,7 +37,7 @@
                     @if (count($products))
                         @php
                             // Pill colours, following the rainbow ribbon from the brand artwork (left to right).
-                            $tileColours = ['blue', 'orange', 'amber', 'yellow', 'lime', 'teal', 'cyan', 'deepblue', 'navy', 'redorange', 'red'];
+                            $tileColours = ['blue', 'redorange', 'amber', 'deepblue', 'lime', 'teal', 'cyan', 'yellow', 'navy', 'orange', 'red'];
                         @endphp
                         <div class="product-grid">
                             @foreach ($products as $product)
@@ -450,7 +450,7 @@
     }
     .order-box-head {
         padding: 0.75rem 1.25rem;
-        background: #f0f3f5;
+        background: #ffffff;
         border-bottom: 1px solid #c2cfd6;
     }
     .order-box-title {
@@ -558,15 +558,15 @@
     }
     
     .tile-blue      { --tile-bg: #0090d4; }
-    .tile-orange    { --tile-bg: #f6921e; }
+    .tile-redorange { --tile-bg: #ee4b27; }
     .tile-amber     { --tile-bg: #fbb61a; }
-    .tile-yellow    { --tile-bg: #f2d600; }
+    .tile-deepblue  { --tile-bg: #0072b5; }
     .tile-lime      { --tile-bg: #b5d334; }
     .tile-teal      { --tile-bg: #4cc0a6; }
     .tile-cyan      { --tile-bg: #00b4e6; }
-    .tile-deepblue  { --tile-bg: #0072b5; }
+    .tile-yellow    { --tile-bg: #f2d600; }
     .tile-navy      { --tile-bg: #005890; }
-    .tile-redorange { --tile-bg: #ee4b27; }
+    .tile-orange    { --tile-bg: #f6921e; }
     .tile-red       { --tile-bg: #e2231a; }
     .product-tile-thumb {
         position: relative;
