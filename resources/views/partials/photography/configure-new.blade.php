@@ -548,7 +548,6 @@
             </div>
         </div>
         <form id="digital_download_form" class="pt-8">
-        @if($jobsNeedingArchiving->isNotEmpty())
         <div
             id="jobs-needing-archive-banner"
             class="w-50 mb-4 p-4"
@@ -556,30 +555,6 @@
             aria-live="polite"
         >
             <div class="jobs-archive-banner-inner">
-                <!-- <div class="jobs-archive-left">
-                    <div class="jobs-archive-bell-wrap" aria-hidden="true">
-                        <div class="jobs-archive-bell-circle">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M12 4.5C9.51472 4.5 7.5 6.51472 7.5 9V11.25C7.5 11.6642 7.33579 12.0623 7.04289 12.3552L6.21967 13.1784C5.65893 13.7392 6.05279 14.75 6.85355 14.75H17.1464C17.9472 14.75 18.3411 13.7392 17.7803 13.1784L16.9571 12.3552C16.6642 12.0623 16.5 11.6642 16.5 11.25V9C16.5 6.51472 14.4853 4.5 12 4.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M10 16.25C10.2761 17.2175 11.0537 17.95 12 17.95C12.9463 17.95 13.7239 17.2175 14 16.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <span id="jobs-needing-archive-badge-count" class="jobs-archive-bell-badge">{{ $jobsNeedingArchiving->count() }}</span>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <span class="jobs-archive-heading">Action Required</span>
-                            <span id="jobs-needing-archive-count-label" class="jobs-archive-count-pill">
-                                <span id="jobs-needing-archive-count">{{ $jobsNeedingArchiving->count() }}</span>{{ $jobsNeedingArchiving->count() === 1 ? ' job' : ' jobs' }}
-                            </span>
-                        </div>
-                        <p class="jobs-archive-title">Proofing Jobs Ready for Archive</p>
-                        <p class="jobs-archive-description">
-                            These jobs have finished proofing but are not archived yet.
-                            Archive them to configure and view digital images in Photography.
-                        </p>
-                    </div>
-                </div> -->
                     <div class="jobs-archive-left">
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2 mb-1">
@@ -588,13 +563,10 @@
                             <p class="text-sm text-amber-700 mt-1">
                                 New or updated data/images will sync to the photo library after 7pm each night. The sync will only occur for the schools that have completed the proofing process and have had their proofing jobs archived.
                             </p>
-                            <!-- <p class="jobs-archive-description text-sm text-red-600">
-                                Any Jobs that have a digital download date will sync automatically every night after 7:00 PM.
-                            </p> -->
                         </div>
                     </div>
 
-                <!-- <button
+                {{--<button
                     type="button"
                     id="open-jobs-needing-archive-modal"
                     class="jobs-archive-banner-btn"
@@ -603,17 +575,9 @@
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                </button> -->
-                 <!-- <button
-                    type="button"
-                    id="open-jobs-needing-archive-modal"
-                    class="jobs-archive-banner-btn"
-                >
-                    <span>View Completed Jobs</span>
-                </button> -->
+                </button> --}}
             </div>
         </div>
-        @endif
         <div class="w-full p-4">
             <div>
                 <p class="mb-2"><strong>Digital Images Permissions</strong></p>
