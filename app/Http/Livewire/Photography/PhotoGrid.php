@@ -242,7 +242,10 @@ class PhotoGrid extends Component
         if ($category != $this->category) {
             return;
         }
-        $this->setupFilters($year, $view, $class);
+        // The filter dropdowns can send null (e.g. no matching option selected yet).
+        $view = ($view === null || $view === '') ? 'ALL' : (string) $view;
+        $class = is_array($class) ? $class : ($class === null || $class === '' ? [] : [$class]);
+        $this->setupFilters((int) $year, $view, $class);
         $this->resetPage();
         
     }
