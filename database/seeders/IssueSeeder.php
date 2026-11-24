@@ -143,7 +143,7 @@ class IssueSeeder extends Seeder
             [
                 'issue_name' => 'SUBJECT_ISSUE_SPELLING',
                 'external_issue_name' => 'Spelling',
-                'issue_description' => 'Spelling mistake in FULLNAME',
+                'issue_description' => 'Modify First name and Last name of FULLNAME',
                 'issue_error_message' => NULL,
                 'approval_status_id' => 3,
                 'issue_category_id' => 2,

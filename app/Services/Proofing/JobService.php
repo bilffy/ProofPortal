@@ -263,7 +263,7 @@ class JobService
                 'status.status_external_name as job_status_name',
                 'status.status_internal_name as job_status_internal_name',
             ])
-            ->orderBy('jobs.ts_jobname')
+            ->orderBy('season_code', 'desc')
             ->get();
     }
 
@@ -305,20 +305,23 @@ class JobService
     public function getPortalJobFolderConfig(int $tsJobId): array
     {
         $folders = Folder::query()
-            ->where('ts_job_id', $tsJobId)
-            ->whereNotNull('ts_folderkey')
+            // Join in SQL (case-insensitive) rather than eager loading, which matches tags in PHP
+            // case-sensitively (e.g. folder_tag 'ID' would not match folder_tags.tag 'id').
+            ->leftJoin('folder_tags', 'folder_tags.tag', '=', 'folders.folder_tag')
+            ->where('folders.ts_job_id', $tsJobId)
+            ->whereNotNull('folders.ts_folderkey')
             ->where(function ($query) {
-                $query->where('is_deleted', 0)->orWhereNull('is_deleted');
+                $query->where('folders.is_deleted', 0)->orWhereNull('folders.is_deleted');
             })
-            ->with(['folderTags'])
             ->select([
                 'folders.ts_folder_id',
                 'folders.portal_ts_foldername',
                 'folders.folder_tag',
+                'folder_tags.external_name as tag_external_name',
                 'folders.is_visible_for_portrait',
                 'folders.is_visible_for_group',
             ])
-            ->orderBy('portal_ts_foldername')
+            ->orderBy('folders.portal_ts_foldername')
             ->get();
 
         if ($folders->isEmpty()) {
@@ -331,7 +334,8 @@ class JobService
             ->map(fn ($folder) => [
                 'ts_foldername' => $folder->portal_ts_foldername,
                 'ts_folder_id' => $folder->ts_folder_id,
-                'tag' => $folder->folderTags->external_name ?? null,
+                'tag' => $folder->tag_external_name,
+                'folder_tag' => $folder->folder_tag,
                 'is_visible_for_portrait' => $folder->is_visible_for_portrait,
                 'is_visible_for_group' => $folder->is_visible_for_group,
                 'groupCount' => $counts['group'][$folder->ts_folder_id] ?? 0,

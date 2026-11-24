@@ -53,11 +53,17 @@
                         @endif
                         @foreach($group['items'] as $folder)
                             @php
+                                // Skip folders whose folder_tag is set but does not exist in folder_tags
+                                $hasRawTag = isset($folder['folder_tag']) && $folder['folder_tag'] !== '';
+                                $skipUnknownTag = $hasRawTag && ($folder['tag'] ?? null) === null;
+                            @endphp
+                            @continue($skipUnknownTag)
+                            @php
                                 $folderName = $folder['ts_foldername'];
                                 $allowPortraitVisible = isset($folder['is_visible_for_portrait']) && $folder['is_visible_for_portrait'] == 1;
                                 $allowGroupVisible = isset($folder['is_visible_for_group']) && $folder['is_visible_for_group'] == 1;
                             @endphp
-                            <tr id="{{ $folder['tag'] }}" class="folder-row" @if($folder['tag'] !== 'Speciality Group') data-tagid="portrait" @elseif($folder['tag'] === 'Speciality Group') data-tagid="special_group" @endif>
+                            <tr id="{{ $folder['tag'] }}" class="folder-row" @if($folder['tag'] === 'Speciality Group') data-tagid="special_group" @else data-tagid="portrait" @endif>
                                 <x-table.cell><?= $folderName ?></x-table.cell>
                                 <x-table.cell class="flex items-center">
                                     <input type="checkbox"

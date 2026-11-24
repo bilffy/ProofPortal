@@ -910,7 +910,15 @@ configureJQ(document).ready(function ($) {
     let jobsNeedingArchivePage = 1;
 
     function paginateJobsNeedingArchiveList() {
-        const $rows = $('#jobs-needing-archive-list .archive-job-row');
+        const term = ($('#jobs-needing-archive-search').val() || '').trim().toLowerCase();
+        $('#jobs-needing-archive-list .archive-job-row').each(function () {
+            const match = term === '' || $(this).text().toLowerCase().indexOf(term) !== -1;
+            $(this).attr('data-filtered-out', match ? '0' : '1');
+            if (!match) {
+                $(this).hide();
+            }
+        });
+        const $rows = $('#jobs-needing-archive-list .archive-job-row[data-filtered-out="0"]');
         const total = $rows.length;
         const totalPages = Math.max(1, Math.ceil(total / JOBS_NEEDING_ARCHIVE_PER_PAGE));
 
@@ -928,30 +936,90 @@ configureJQ(document).ready(function ($) {
             $(this).toggle(index >= startIndex && index < endIndex);
         });
 
-        const showingCount = total === 0 ? 0 : Math.min(endIndex, total) - startIndex;
-        $('#jobs-needing-archive-pagination-summary').text(
-            total === 0
-                ? 'No jobs to show.'
-                : 'Page ' + jobsNeedingArchivePage + ' of ' + totalPages + ', showing ' + showingCount + ' of ' + total + ' total'
-        );
-
-        $('#jobs-needing-archive-prev-page').prop('disabled', jobsNeedingArchivePage <= 1);
-        $('#jobs-needing-archive-next-page').prop('disabled', jobsNeedingArchivePage >= totalPages);
+        renderJobsNeedingArchivePager(totalPages);
     }
 
-    $(document).on('click', '#jobs-needing-archive-prev-page', function () {
-        if ($(this).prop('disabled')) {
+    // Same look as the app's pagination view: "< Prev  1 2 3  Next >", current page on a grey block.
+    function renderJobsNeedingArchivePager(totalPages) {
+        const $pager = $('#jobs-needing-archive-pagination');
+        if (totalPages <= 1) {
+            $pager.empty();
             return;
         }
-        jobsNeedingArchivePage -= 1;
+
+        const cur = jobsNeedingArchivePage;
+        const btn = 'relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white leading-5 hover:text-gray-500';
+        const edge = 'relative inline-flex items-center px-2 py-2 text-sm font-medium bg-white leading-5 ';
+        let html = '<nav role="navigation" aria-label="Pagination Navigation"><div class="inline-flex -space-x-px text-sm">';
+
+        html += cur <= 1
+            ? '<span class="' + edge + 'text-gray-500 cursor-default"><i class="fa fa-angle-left px-2"></i> Prev</span>'
+            : '<button type="button" class="' + edge + 'text-gray-500 hover:text-gray-400" data-archive-page="' + (cur - 1) + '"><i class="fa fa-angle-left px-2"></i> Prev</button>';
+
+        for (let p = 1; p <= totalPages; p++) {
+            html += p === cur
+                ? '<span aria-current="page" class="flex items-center justify-center px-3 h-9 text-blue-600 bg-[#e9e6e3]">' + p + '</span>'
+                : '<button type="button" class="' + btn + '" data-archive-page="' + p + '">' + p + '</button>';
+        }
+
+        html += cur >= totalPages
+            ? '<span class="' + edge + '-ml-px text-gray-500 cursor-default">Next <i class="fa fa-angle-right px-2"></i></span>'
+            : '<button type="button" class="' + edge + '-ml-px text-gray-500 hover:text-gray-400" data-archive-page="' + (cur + 1) + '">Next <i class="fa fa-angle-right px-2"></i></button>';
+
+        html += '</div></nav>';
+        $pager.html(html);
+    }
+
+    // Column sorting, same behaviour as /school: click sorts asc, click again desc, arrow on the sorted column only.
+    let jobsArchiveSortCol = null;
+    let jobsArchiveSortDir = 'asc';
+
+    $(document).on('click', '#jobs-archive-table th[data-archive-sort]', function () {
+        const col = parseInt($(this).attr('data-archive-sort'), 10);
+        if (jobsArchiveSortCol === col) {
+            jobsArchiveSortDir = jobsArchiveSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            jobsArchiveSortCol = col;
+            jobsArchiveSortDir = 'asc';
+        }
+
+        const $tbody = $('#jobs-needing-archive-list');
+        const dir = jobsArchiveSortDir === 'asc' ? 1 : -1;
+        const cellText = function (row) {
+            const t = $(row).children().eq(col).text().trim();
+            return t === '—' ? '' : t;
+        };
+        const rows = $tbody.children('.archive-job-row').get().sort(function (a, b) {
+            const x = cellText(a);
+            const y = cellText(b);
+            if (x === '' && y !== '') return 1;   // empty values always last
+            if (y === '' && x !== '') return -1;
+            return dir * x.localeCompare(y, undefined, { numeric: true, sensitivity: 'base' });
+        });
+        $tbody.append(rows);
+
+        $('#jobs-archive-table .archive-sort-icon').empty();
+        $(this).find('.archive-sort-icon').html(
+            '<i class="fa fa-arrow-' + (jobsArchiveSortDir === 'asc' ? 'up' : 'down') + ' fa-sm"></i>'
+        );
+
+        jobsNeedingArchivePage = 1;
         paginateJobsNeedingArchiveList();
     });
 
-    $(document).on('click', '#jobs-needing-archive-next-page', function () {
-        if ($(this).prop('disabled')) {
-            return;
-        }
-        jobsNeedingArchivePage += 1;
+    $(document).on('input', '#jobs-needing-archive-search', function () {
+        jobsNeedingArchivePage = 1;
+        paginateJobsNeedingArchiveList();
+    });
+
+    $(document).on('click', '#jobs-needing-archive-search-clear', function () {
+        $('#jobs-needing-archive-search').val('');
+        jobsNeedingArchivePage = 1;
+        paginateJobsNeedingArchiveList();
+    });
+
+    $(document).on('click', '#jobs-needing-archive-pagination [data-archive-page]', function () {
+        jobsNeedingArchivePage = parseInt($(this).attr('data-archive-page'), 10) || 1;
         paginateJobsNeedingArchiveList();
     });
 
@@ -1023,6 +1091,7 @@ configureJQ(document).ready(function ($) {
                     jobIds.forEach(function (jobId) {
                         $('.archive-job-row[data-job-id="' + jobId + '"]').remove();
                     });
+                    paginateJobsNeedingArchiveList();
                     // Job list is cached from page load — refresh so archived jobs appear immediately.
                     refreshConfigureJobsAfterArchive();
                 }
@@ -1058,7 +1127,8 @@ configureJQ(document).ready(function ($) {
     $('#archive-all-photography-jobs-btn').on('click', function () {
         const jobIds = [];
 
-        $('#jobs-needing-archive-list .archive-job-row').each(function () {
+        // Only the jobs matching the search (all of them when the search is empty).
+        $('#jobs-needing-archive-list .archive-job-row[data-filtered-out!="1"]').each(function () {
             const jobId = $(this).attr('data-job-id');
             if (jobId) {
                 jobIds.push(jobId);

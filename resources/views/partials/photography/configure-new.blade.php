@@ -164,17 +164,25 @@
         #jobsNeedingArchiveModal .jobs-archive-modal-header {
             position: relative;
             display: flex;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0;
+            background: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        #jobsNeedingArchiveModal .jobs-archive-header-row {
+            display: flex;
+            align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            padding: 1.5rem 1.5rem 1.25rem;
-            border-bottom: 1px solid #e5e7eb;
-            background: #fff;
         }
         #jobsNeedingArchiveModal .jobs-archive-modal-header-main {
             display: flex;
+            flex-direction: column;
             align-items: flex-start;
-            gap: 0.85rem;
+            gap: 0.35rem;
             z-index: 1;
             min-width: 0;
             flex: 1 1 auto;
@@ -191,11 +199,11 @@
             flex-shrink: 0;
         }
         #jobsNeedingArchiveModal .jobs-archive-modal-title {
-            margin: 0 0 0.35rem;
-            color: #0f172a;
-            font-size: 1.15rem;
-            font-weight: 700;
-            line-height: 1.25;
+            margin: 0;
+            color: #111827;
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.75rem;
         }
         #jobsNeedingArchiveModal .jobs-archive-modal-subtitle {
             margin: 0;
@@ -565,17 +573,17 @@
                             </p>
                         </div>
                     </div>
-
-                {{--<button
-                    type="button"
-                    id="open-jobs-needing-archive-modal"
-                    class="jobs-archive-banner-btn"
-                >
-                    <span>View Jobs</span>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button> --}}
+                    {{--
+                    @if($jobsNeedingArchiving->isNotEmpty())
+                        <button
+                            type="button"
+                            id="open-jobs-needing-archive-modal"
+                            class="jobs-archive-banner-btn"
+                        >
+                            <span>View Jobs</span>
+                        </button>
+                    @endif
+                    --}}
             </div>
         </div>
         <div class="w-full p-4">
@@ -745,189 +753,115 @@
     aria-labelledby="jobs-archive-modal-title"
     aria-modal="true"
 >
-    <!-- <div class="relative p-4 w-50 max-w-[calc(100vw-2rem)] max-h-full mx-auto">
-        <div class="jobs-archive-modal-panel">
-            <div class="jobs-archive-modal-header">
-                <div class="jobs-archive-modal-header-main">
-                    <div class="jobs-archive-modal-header-icon" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2.5 4.5H13.5L12 13.5H4L2.5 4.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                            <path d="M6 6.5V11.5M10 6.5V11.5M5 4.5L5.5 2.5H10.5L11 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 id="jobs-archive-modal-title" class="jobs-archive-modal-title">Proofing Jobs to Archive</h2>
-                        <p class="jobs-archive-modal-subtitle">
-                            These proofing jobs must be archived before they can be configured or viewed in Photography.
-                        </p>
-                    </div>
-                </div>
-                <div class="jobs-archive-modal-header-actions">
-                    <button type="button" id="archive-all-photography-jobs-btn" class="jobs-archive-modal-footer-all">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path d="M2.5 4.5H13.5L12 13.5H4L2.5 4.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                            <path d="M6 6.5V11.5M10 6.5V11.5M5 4.5L5.5 2.5H10.5L11 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Archive All
-                    </button>
-                </div>
-                <button type="button" class="jobs-archive-modal-close-top jobs-archive-modal-close" aria-label="Close modal">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="jobs-archive-modal-info" role="status">
-                <svg class="jobs-archive-modal-info-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M10 9V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="10" cy="6.25" r="0.9" fill="currentColor"/>
-                </svg>
-                <p class="mb-0">
-                    These jobs have finished proofing (proofing completed date has passed or job is marked as completed) but are not archived yet.
-                    Archive them to configure and view digital images in Photography.
-                </p>
-            </div>
-
-            <div class="jobs-archive-modal-body">
-                <div id="jobs-needing-archive-list" class="jobs-archive-modal-grid">
-                    @foreach($jobsNeedingArchiving as $job)
-                        @php
-                            $encryptedJobId = Crypt::encryptString((string) $job->ts_job_id);
-                            $proofDueLabel = $job->proof_due
-                                ? Carbon::parse($job->proof_due)->format('d/m/Y g:i A')
-                                : '—';
-                            $jobStatusName = $job->job_status_name
-                                ?? $job->job_status_internal_name
-                                ?? '—';
-                        @endphp
-                        <div
-                            class="archive-job-row jobs-archive-job-card"
-                            data-job-id="{{ $encryptedJobId }}"
-                            data-ts-job-id="{{ $job->ts_job_id }}"
-                        >
-                            <div class="jobs-archive-job-card-top">
-                                <div class="jobs-archive-job-icon" aria-hidden="true">
-                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M5 2.5H10.5L13.5 5.5V14.5C13.5 15.0523 13.0523 15.5 12.5 15.5H5C4.44772 15.5 4 15.0523 4 14.5V3.5C4 2.94772 4.44772 2.5 5 2.5Z" stroke="currentColor" stroke-width="1.3"/>
-                                        <path d="M10.5 2.5V5.5H13.5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                                        <path d="M6.5 8.5H10.5M6.5 11H9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                                    </svg>
-                                </div>
-                                <span class="jobs-archive-job-season">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <rect x="1.5" y="2.5" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1"/>
-                                        <path d="M1.5 5H10.5" stroke="currentColor" stroke-width="1"/>
-                                    </svg>
-                                    Season {{ $job->season_code }}
-                                </span>
-                            </div>
-                            <div class="jobs-archive-job-content">
-                                <p class="jobs-archive-job-name">{{ $job->ts_jobname }}</p>
-                                <p class="jobs-archive-job-due">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1"/>
-                                        <path d="M6 4V6.5L7.5 7.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-                                    </svg>
-                                    Proof due {{ $proofDueLabel }}
-                                </p>
-                                <p class="jobs-archive-job-status">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1"/>
-                                        <path d="M4 6H8" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-                                    </svg>
-                                    Job status: {{ $jobStatusName }}
-                                </p>
-                            </div>
-                            <div class="jobs-archive-job-card-footer">
-                                <button
-                                    type="button"
-                                    class="archive-photography-job-btn jobs-archive-job-btn"
-                                    data-job-id="{{ $encryptedJobId }}"
-                                    data-job-name="{{ $job->ts_jobname }}"
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path d="M2.5 4.5H13.5L12 13.5H4L2.5 4.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                                        <path d="M6 6.5V11.5M10 6.5V11.5M5 4.5L5.5 2.5H10.5L11 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Archive
-                                </button>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="jobs-archive-modal-footer">
-                <button type="button" class="jobs-archive-modal-close-btn jobs-archive-modal-close">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div> -->
-
     <div class="relative p-4 w-50 max-w-[calc(100vw-2rem)] max-h-full mx-auto">
         <div class="jobs-archive-modal-panel">
-            <div class="jobs-archive-modal-header flex items-center justify-between pb-3 border-b border-gray-200">
-                <div class="jobs-archive-modal-header-main">
-                    <h2 id="jobs-archive-modal-title" class="jobs-archive-modal-title text-xl font-bold text-gray-800">
+            <div class="jobs-archive-modal-header modal-header p-4 border-b border-b-neutral-300 rounded-t">
+                <div class="jobs-archive-header-row">
+                    <h2 id="jobs-archive-modal-title" class="jobs-archive-modal-title text-xl font-semibold text-gray-900">
                         Proofing Jobs to Archive
                     </h2>
+                    <button
+                        type="button"
+                        class="jobs-archive-modal-close text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        data-modal-hide="jobsNeedingArchiveModal"
+                        aria-label="Close"
+                    >
+                        <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" aria-hidden="true">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <div class="jobs-archive-header-row">
+                    <button type="button" id="archive-all-photography-jobs-btn" class="jobs-archive-all-link" style="color:#005890;text-decoration:underline;background:none;border:0;padding:0;cursor:pointer;font-size:0.875rem;white-space:nowrap;">
+                        Archive All
+                    </button>
+                    <div class="relative" style="width:260px;max-width:100%;">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <i class="fa fa-search"></i>
+                        </div>
+                        <input
+                            type="text"
+                            id="jobs-needing-archive-search"
+                            placeholder="Search..."
+                            autocomplete="off"
+                            class="block w-full p-4 py-2 ps-10 text-sm text-gray-900 rounded-lg bg-neutral-300 border-0"
+                            style="background:#E6E7E8;border:0;border-radius:0.5rem;padding:0.5rem 2.25rem 0.5rem 2.5rem;width:100%;"
+                        />
+                        <!-- <button type="button" id="jobs-needing-archive-search-clear" class="absolute inset-y-0 end-0 flex items-center pe-3" aria-label="Clear search" style="background:none;border:0;">
+                            <svg class="w-4 h-4 text-gray-500 hover:text-gray-900" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="width:1rem;height:1rem;">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button> -->
+                    </div>
                 </div>
             </div>
 
             <div class="jobs-archive-modal-body py-4">
-                <div id="jobs-needing-archive-list" class="jobs-archive-modal-grid grid gap-3">
-                    @foreach($jobsNeedingArchiving as $job)
-                        @php
-                            $encryptedJobId = Crypt::encryptString((string) $job->ts_job_id);
-                            $proofDueLabel = $job->proof_due
-                                ? Carbon::parse($job->proof_due)->format('d/m/Y g:i A')
-                                : '—';
-                            $jobStatusName = $job->job_status_name
-                                ?? $job->job_status_internal_name
-                                ?? '—';
-                        @endphp
-                        <div
-                            class="archive-job-row jobs-archive-job-card p-4 border rounded-lg bg-white shadow-sm"
-                            data-job-id="{{ $encryptedJobId }}"
-                            data-ts-job-id="{{ $job->ts_job_id }}"
-                        >
-                            <div class="jobs-archive-job-card-top flex items-center justify-between mb-2">
-                                <span class="jobs-archive-job-season text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Season {{ $job->season_code }}
-                                </span>
-                            </div>
-                            <div class="jobs-archive-job-content space-y-1">
-                                <p class="jobs-archive-job-name text-base font-semibold text-gray-900">{{ $job->ts_jobname }}</p>
-                                <p class="jobs-archive-job-due text-sm text-gray-600">
-                                    Proof due {{ $proofDueLabel }}
-                                </p>
-                                <p class="jobs-archive-job-status text-sm text-gray-500">
-                                    Job status: <span class="font-medium text-gray-700">{{ $jobStatusName }}</span>
-                                </p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                <style>
+                    /* Same look as the /school table; row height like /users (60px). */
+                    #jobs-archive-table tbody tr { height: 60px; }
+                    #jobs-archive-table .archive-sort-icon:empty { display: none; }
+                    #jobs-archive-table .jobs-archive-link { color: #005890; cursor: pointer; background: none; border: 0; padding: 0; text-decoration: underline; }
+                    #jobs-archive-table .jobs-archive-link:hover { color: #003d66; }
+                    #jobs-archive-table .jobs-archive-link:disabled { opacity: 0.55; cursor: not-allowed; }
+                </style>
+                <table id="jobs-archive-table" class="w-full text-sm text-left rtl:text-right">
+                    <thead>
+                        <tr>
+                            <x-table.headerCell :hoverBg="false" data-archive-sort="0"><span class="archive-sort-icon"></span>Job Key</x-table.headerCell>
+                            <x-table.headerCell :hoverBg="false" data-archive-sort="1"><span class="archive-sort-icon"></span>Job </x-table.headerCell>
+                            <x-table.headerCell :hoverBg="false" data-archive-sort="2"><span class="archive-sort-icon"></span>Season</x-table.headerCell>
+                            <x-table.headerCell :hoverBg="false" data-archive-sort="3"><span class="archive-sort-icon"></span>Job Proofing Status</x-table.headerCell>
+                            <x-table.headerCell :hoverBg="false" data-archive-sort="4"><span class="archive-sort-icon"></span>Proofing Due</x-table.headerCell>
+                            <x-table.headerCell :hoverBg="false" :sortable="false" :clickable="false">Actions</x-table.headerCell>
+                        </tr>
+                    </thead>
+                    <tbody id="jobs-needing-archive-list">
+                        @foreach($jobsNeedingArchiving as $job)
+                            @php
+                                $encryptedJobId = Crypt::encryptString((string) $job->ts_job_id);
+                                $proofDueLabel = $job->proof_due
+                                    ? Carbon::parse($job->proof_due)->format('Y-m-d')
+                                    : '—';
+                                $jobStatusName = $job->job_status_name
+                                    ?? $job->job_status_internal_name
+                                    ?? '—';
+                                // Same status colours / due-date rule as the franchise dashboard jobs table.
+                                $archiveStatusColors = [
+                                    'active' => '#b5d334', 'archived' => '#fdb913', 'deleted' => '#ee3124',
+                                    'incomplete' => '#005b8e', 'modified' => '#f99b1c', 'unlocked' => '#84b0c7',
+                                    'none' => '#00B9D5', 'completed' => '#07a88f',
+                                ];
+                                $archiveStatusColor = $archiveStatusColors[strtolower((string) $jobStatusName)] ?? null;
+                                $archiveIsDue = $job->proof_due && Carbon::today()->gte(Carbon::parse($job->proof_due));
+                            @endphp
+                            <tr
+                                class="archive-job-row"
+                                data-job-id="{{ $encryptedJobId }}"
+                                data-ts-job-id="{{ $job->ts_job_id }}"
+                            >
+                                <x-table.cell>{{ $job->ts_jobkey }}</x-table.cell>
+                                <x-table.cell>{{ $job->ts_jobname }}</x-table.cell>
+                                <x-table.cell>{{ $job->season_code }}</x-table.cell>
+                                <x-table.cell style="{{ $archiveStatusColor ? 'color: ' . $archiveStatusColor . ';' : '' }} font-weight: 700;">{{ $jobStatusName }}</x-table.cell>
+                                <x-table.cell style="{{ $archiveIsDue ? 'color: #ED2124; font-weight: 700;' : '' }}">{{ $proofDueLabel }}</x-table.cell>
+                                <x-table.cell>
+                                    <button
+                                        type="button"
+                                        class="jobs-archive-link archive-photography-job-btn"
+                                        data-job-id="{{ $encryptedJobId }}"
+                                        data-job-name="{{ $job->ts_jobname }}"
+                                    >Archive</button>
+                                </x-table.cell>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
 
-                <div class="mt-3 flex items-center justify-center gap-4">
-                    <button type="button" id="jobs-needing-archive-prev-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                        &lt; Previous
-                    </button>
-                    <button type="button" id="jobs-needing-archive-next-page" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-700">
-                        Next &gt;
-                    </button>
-                </div>
-                <p class="mt-2 text-sm text-gray-500 text-center" id="jobs-needing-archive-pagination-summary"></p>
+                <div id="jobs-needing-archive-pagination" class="w-full flex items-center justify-center py-4"></div>
             </div>
 
-            <div class="jobs-archive-modal-footer">
-                <button type="button" class="jobs-archive-modal-close-btn jobs-archive-modal-close">
-                    Close
-                </button>
-            </div>
         </div>
     </div>
 </div>

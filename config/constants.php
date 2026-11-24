@@ -23,7 +23,7 @@ return [
     'GENERAL_ISSUES_NOTE' => 'The following general issues are present in this Folder: "DATA"',
     'GROUP_COMMENTS_NOTE' => 'DATA',
 
-	'SUBJECT_ISSUE_SPELLING' => 'Spelling mistake in FULLNAME',
+	'SUBJECT_ISSUE_SPELLING' => 'Modify First name and Last name of FULLNAME',
     'SUBJECT_ISSUE_PICTURE' => 'Wrong picture for FULLNAME',
     'SUBJECT_ISSUE_CLASS' => 'FULLNAME does not belong in this Class/Group.',
     'SUBJECT_ISSUE_LEFT_SCHOOL' => 'FULLNAME has left this School.',
